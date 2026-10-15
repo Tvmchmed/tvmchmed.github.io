@@ -1,7 +1,7 @@
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Keeps the website's own files on the device so it opens without internet. Records live in IndexedDB, never here.
 const CACHE = 'tvmchmed-web-2.0';
-const FILES = ["./", "index.html", "style.css", "manifest.webmanifest", "quiz.html", "lib/sql-wasm.wasm", "res/dept_logo.png", "res/icd11.txt", "res/icon-192.png", "res/icon-512.png", "res/apple-touch-icon.png", "res/logo.png", "lib/sql-wasm.js", "lib/fflate.js", "config.js", "tvmchmed.js"];
+const FILES = ["./", "index.html", "style.css", "manifest.webmanifest", "quiz.html", "sql-wasm.wasm", "dept_logo.png", "icd11.txt", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.png", "sql-wasm.js", "fflate.js", "config.js", "tvmchmed.js"];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => c.add(f.indexOf('.js') > 0 && f.indexOf('?') < 0 ? f + '?v=2.0' : f).catch(() => {})))).then(() => self.skipWaiting()));
 });
