@@ -153,3 +153,8 @@ input[type=date].in, input[type=time].in { min-height: 1.5em; }
 @keyframes tvmbar { to { left: 100%; } }
 #splash.done { opacity: 0; pointer-events: none; }
 #fatal { position: fixed; inset: 0; background: #fff; color: #B91C1C; padding: 24px; font: 14px/1.5 monospace; white-space: pre-wrap; overflow: auto; z-index: 4000; }
+
+/* 8.10: Settings > Look > Dark. The whole app is drawn inverted; pictures and drawn icons are turned back. */
+html.dark #app, html.dark .dlg { filter: invert(1) hue-rotate(180deg); }
+html.dark #app img, html.dark #app canvas, html.dark #app video, html.dark .dlg img, html.dark .dlg canvas { filter: invert(1) hue-rotate(180deg); }
+html.dark body { background: #0b0f17; }
