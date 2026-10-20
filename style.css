@@ -158,3 +158,7 @@ input[type=date].in, input[type=time].in { min-height: 1.5em; }
 html.dark #app, html.dark .dlg { filter: invert(1) hue-rotate(180deg); }
 html.dark #app img, html.dark #app canvas, html.dark #app video, html.dark .dlg img, html.dark .dlg canvas { filter: invert(1) hue-rotate(180deg); }
 html.dark body { background: #0b0f17; }
+
+/* department wall screen (8.60): full width on a TV, and its own dark colours stay as drawn in dark mode */
+html body.wall-screen #app { max-width: none; box-shadow: none; filter: none; }
+html.dark body.wall-screen #app img, html.dark body.wall-screen #app canvas { filter: none; }

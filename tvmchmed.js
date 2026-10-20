@@ -5052,6 +5052,86 @@ class ObjKeyMap {
 if (Paint.STRIKE_THRU_TEXT_FLAG === undefined) Paint.STRIKE_THRU_TEXT_FLAG = 16;
 if (Paint.UNDERLINE_TEXT_FLAG === undefined) Paint.UNDERLINE_TEXT_FLAG = 8;
 ;
+/* ---- app/_shim_L.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+// Batch L (8.70, live scan): string lists in a Bundle and an Intent, as on Android.
+Bundle.prototype.putStringArrayList = function (k, v) { this.m[k] = v == null ? null : Array.from(v); };
+Bundle.prototype.getStringArrayList = function (k) { const v = this.m[k]; return v == null ? null : Array.from(v); };
+Intent.prototype.putStringArrayListExtra = function (k, v) { this.extras.m[k] = v == null ? null : Array.from(v); return this; };
+;
+/* ---- app/_shim_M.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/* 8.80: android.text.TextPaint, Layout and a word-wrapping StaticLayout (left aligned) for pictures drawn on a Canvas. */
+if (typeof TextPaint === 'undefined') {
+  window.TextPaint = class extends Paint {};
+}
+if (typeof Layout === 'undefined') {
+  window.Layout = { Alignment: { ALIGN_NORMAL: 'ALIGN_NORMAL', ALIGN_CENTER: 'ALIGN_CENTER', ALIGN_OPPOSITE: 'ALIGN_OPPOSITE' } };
+}
+if (typeof StaticLayout === 'undefined') {
+  window.StaticLayout = class {
+    constructor(text, paint, width, align, mult, add) {
+      this.paint = paint; this.width = width;
+      this.lineH = Math.round(paint.getTextSize() * 1.17 * (mult || 1) + (add || 0));
+      this.lines = [];
+      for (const para of String(text == null ? '' : text).split('\n')) {
+        let line = '';
+        for (const word of para.split(/(\s+)/)) {
+          if (word === '') continue;
+          const tryLine = line + word;
+          if (line !== '' && paint.measureText(tryLine.replace(/\s+$/, '')) > width) {
+            this.lines.push(line.replace(/\s+$/, ''));
+            line = word.trim() === '' ? '' : word;
+            while (paint.measureText(line) > width && line.length > 1) {   // a word longer than the line
+              const n = Math.max(1, paint.breakText(line, true, width, null));
+              this.lines.push(line.slice(0, n));
+              line = line.slice(n);
+            }
+          } else line = tryLine;
+        }
+        this.lines.push(line.replace(/\s+$/, ''));
+      }
+    }
+    getHeight() { return this.lines.length * this.lineH; }
+    getLineCount() { return this.lines.length; }
+    getWidth() { return this.width; }
+    draw(canvas) {
+      const base = Math.round(this.paint.getTextSize() * 0.93);
+      for (let i = 0; i < this.lines.length; i++) canvas.drawText(this.lines[i], 0, i * this.lineH + base, this.paint);
+    }
+  };
+}
+;
+/* ---- app/_shim_N.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+// Batch N (8.90 Copilot): InputType.TYPE_MASK_CLASS, and Activity.addContentView: a view laid over the screen (the ✨ button),
+// placed by its FrameLayout.LayoutParams gravity and margins. setContentView clears the page, so the overlay goes with it.
+if (InputType.TYPE_MASK_CLASS == null) InputType.TYPE_MASK_CLASS = 0x0F;
+
+if (!Activity.prototype.addContentView) {
+  Activity.prototype.addContentView = function (v, lp) {
+    if (!this.page || !v) return;
+    const el = v.el, g = lp && lp.gravity != null && lp.gravity !== -1 ? lp.gravity : (Gravity.TOP | Gravity.START);
+    el.style.position = 'absolute';
+    el.style.zIndex = '50';
+    if (lp && lp.width > 0) el.style.width = lp.width + 'px';
+    if (lp && lp.height > 0) el.style.height = lp.height + 'px';
+    const vert = g & 0x70, horiz = g & 0x07;
+    if (vert === Gravity.BOTTOM) el.style.bottom = ((lp && lp.bottomMargin) || 0) + 'px';
+    else el.style.top = ((lp && lp.topMargin) || 0) + 'px';
+    if (horiz === 5) el.style.right = ((lp && lp.rightMargin) || 0) + 'px';
+    else el.style.left = ((lp && lp.leftMargin) || 0) + 'px';
+    v.parent = null;
+    this.page.appendChild(el);
+  };
+}
+
+// TextView/EditText.getHint (the Copilot reads typed values with their hints)
+if (!TextView.prototype.getHint) TextView.prototype.getHint = function () { return this.hint == null || this.hint === '' ? null : this.hint; };
+;
 /* ---- app/_shim_P.js ---- */
 'use strict';
 // Runtime gaps found while testing the whole site in a browser.
@@ -5805,7 +5885,7 @@ class Db extends SQLiteOpenHelper {
     "ENT", "Ophthalmology", "Neurosurgery", "Urology", "Cardiothoracic", "Emergency / casualty", "Dermatology", "Other"];
 
   static TABLES = ["units", "staff", "patients", "events", "classes", "academics", "cmchis", "settings",
-    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes"];
+    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos"];
   /** Tables kept on this phone only (in the backup file, never synced online). Case sheets are shared since 7.62. */
   static LOCAL_TABLES = [];
 
@@ -5817,7 +5897,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 51);
+    super(c, "tvmchmed.db", null, 56);
     this.ctx = c;
   }
 
@@ -6198,6 +6278,49 @@ class Db extends SQLiteOpenHelper {
       db.execSQL("CREATE TABLE IF NOT EXISTS learn_notes(id INTEGER PRIMARY KEY, title TEXT, subject TEXT DEFAULT '', points TEXT, "
         + "by_staff INTEGER, by_name TEXT, created TEXT, updated TEXT)");
     }
+    if (oldV < 52) {
+      // 8.40: ECG photo readings, the patient's weight for kidney doses, and PG thesis data (form on the dissertation, one row per case)
+      db.execSQL("CREATE TABLE IF NOT EXISTS ecg_reads(id INTEGER PRIMARY KEY, patient_id INTEGER, date TEXT, time TEXT, rate TEXT DEFAULT '', rhythm TEXT DEFAULT '', "
+        + "axis TEXT DEFAULT '', pr TEXT DEFAULT '', qrs TEXT DEFAULT '', qtc TEXT DEFAULT '', findings TEXT DEFAULT '', impression TEXT DEFAULT '', "
+        + "urgent TEXT DEFAULT '', change TEXT DEFAULT '', by_name TEXT DEFAULT '', created TEXT)");
+      db.execSQL("CREATE TABLE IF NOT EXISTS thesis_cases(id INTEGER PRIMARY KEY, diss_id INTEGER, case_no INTEGER, patient_id INTEGER DEFAULT 0, data TEXT, "
+        + "date TEXT, by_name TEXT DEFAULT '', created TEXT)");
+      Db.addColumn(db, "patients", "weight_kg", "TEXT DEFAULT ''");
+      Db.addColumn(db, "patients", "dialysis", "TEXT DEFAULT ''");
+      Db.addColumn(db, "dissertations", "fields", "TEXT DEFAULT ''");
+      Db.addColumn(db, "dissertations", "match_words", "TEXT DEFAULT ''");
+    }
+    if (oldV < 53) {
+      // 8.50: emergency protocol timers (snake bite, OP poisoning, DKA …): one row per run, its recorded steps as a JSON list
+      db.execSQL("CREATE TABLE IF NOT EXISTS protocol_runs(id INTEGER PRIMARY KEY, patient_id INTEGER, protocol TEXT, started TEXT, ended TEXT DEFAULT '', "
+        + "events TEXT DEFAULT '[]', by_name TEXT DEFAULT '', note TEXT DEFAULT '')");
+    }
+    if (oldV < 54) {
+      // 8.60: investigations sent and awaited (pending results), and cultures with their sensitivity (the antibiogram)
+      db.execSQL("CREATE TABLE IF NOT EXISTS inv_sent(id INTEGER PRIMARY KEY, patient_id INTEGER, test TEXT, kind TEXT DEFAULT '', sent TEXT, due TEXT DEFAULT '', "
+        + "lab TEXT DEFAULT '', sample_no TEXT DEFAULT '', status TEXT DEFAULT '', result TEXT DEFAULT '', abnormal TEXT DEFAULT '', back_at TEXT DEFAULT '', "
+        + "back_by TEXT DEFAULT '', seen_by TEXT DEFAULT '', seen_at TEXT DEFAULT '', by_name TEXT DEFAULT '', note TEXT DEFAULT '')");
+      db.execSQL("CREATE TABLE IF NOT EXISTS cultures(id INTEGER PRIMARY KEY, patient_id INTEGER, specimen TEXT, sent_date TEXT, report_date TEXT DEFAULT '', "
+        + "growth TEXT DEFAULT 'Growth', organism TEXT DEFAULT '', colony TEXT DEFAULT '', sens TEXT DEFAULT '{}', flags TEXT DEFAULT '', ward TEXT DEFAULT '', "
+        + "unit TEXT DEFAULT '', onset TEXT DEFAULT '', inv_id INTEGER DEFAULT 0, by_name TEXT DEFAULT '', created TEXT DEFAULT '', note TEXT DEFAULT '')");
+    }
+    if (oldV < 55) {
+      // 8.80: latest journal articles shared in the department
+      db.execSQL("CREATE TABLE IF NOT EXISTS journals(id INTEGER PRIMARY KEY, title TEXT, journal TEXT DEFAULT '', year TEXT DEFAULT '', "
+        + "authors TEXT DEFAULT '', link TEXT DEFAULT '', doi TEXT DEFAULT '', file TEXT DEFAULT '', size INTEGER DEFAULT 0, subject TEXT DEFAULT '', "
+        + "summary TEXT DEFAULT '', pinned TEXT DEFAULT '', by_name TEXT DEFAULT '', staff_id TEXT DEFAULT '', added_on TEXT DEFAULT '')");
+    }
+    if (oldV < 56) {
+      // 9.00: the leave nodal officer's approval before the HOD's, and memos to PGs and students
+      Db.addColumn(db, "pg_leaves", "nodal_status", "TEXT DEFAULT ''");
+      Db.addColumn(db, "pg_leaves", "nodal_by", "TEXT DEFAULT ''");
+      Db.addColumn(db, "pg_leaves", "nodal_date", "TEXT DEFAULT ''");
+      db.execSQL("CREATE TABLE IF NOT EXISTS memos(id INTEGER PRIMARY KEY, no TEXT DEFAULT '', date TEXT, from_staff TEXT DEFAULT '', from_name TEXT DEFAULT '', "
+        + "from_role TEXT DEFAULT '', to_staff TEXT DEFAULT '', to_name TEXT DEFAULT '', to_role TEXT DEFAULT '', unit TEXT DEFAULT '', "
+        + "category TEXT DEFAULT '', subject TEXT DEFAULT '', details TEXT DEFAULT '', incident_date TEXT DEFAULT '', reply_by TEXT DEFAULT '', "
+        + "explanation TEXT DEFAULT '', explained_on TEXT DEFAULT '', status TEXT DEFAULT 'Issued', decision TEXT DEFAULT '', remarks TEXT DEFAULT '', "
+        + "closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '', seen TEXT DEFAULT '')");
+    }
     // Every synced table notes its changes for upload (IF NOT EXISTS, so new tables get theirs too).
     {
       for (const t of Db.TABLES) {
@@ -6263,6 +6386,7 @@ class Db extends SQLiteOpenHelper {
 
   insert(table, cv) {
     if (table.equals("staff") && !cv.containsKey("approval")) Approvals.stamp(this.ctx, cv, null);
+    if (Conduct.blocks(this.ctx, this, table, cv)) return -1;
     const id = this.ins(this.getWritableDatabase(), table, cv);
     Sync.kick(this.ctx);
     return id;
@@ -6322,6 +6446,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   update(table, cv, id) {
+    if (Conduct.blocks(this.ctx, this, table, cv)) return;
     this.getWritableDatabase().update(table, cv, "id=?", [String(id)]);
     Sync.kick(this.ctx);
   }
@@ -6674,7 +6799,7 @@ class Db extends SQLiteOpenHelper {
     if (l != null) return l.get("type").startsWith("On duty") ? "OD" : l.get("type").equals("Week off") ? "WO" : "L";
     const fl = this.row("SELECT type FROM faculty_leaves WHERE staff_id=? AND status='Approved' AND ? BETWEEN from_date AND to_date", String(staffId), date);
     if (fl != null) return fl.get("type").equals("Week off") ? "WO" : "L";
-    if (this.num("SELECT COUNT(*) FROM pg_leaves WHERE staff_id=? AND ? BETWEEN from_date AND to_date AND ap_status='Approved' AND prof_status='Approved' AND hod_status='Approved'",
+    if (this.num("SELECT COUNT(*) FROM pg_leaves WHERE staff_id=? AND ? BETWEEN from_date AND to_date AND ap_status='Approved' AND prof_status='Approved' AND IFNULL(nodal_status,'') IN ('','Approved') AND hod_status='Approved'",
       String(staffId), date) > 0) return "L";
     return "";
   }
@@ -8256,6 +8381,9 @@ class Form {
     this.view = Ui.v(c);
     this.fields = new JMap();
     this.boxes = new JMap();
+    /** Field labels in the order shown, and the allowed values of choice fields (for the Copilot, 8.90). */
+    this.labels = new LinkedHashMap();
+    this.options = new JMap();
     /** Where new fields go: the form itself, or a row of two while a row is open. */
     this.row = null;
     /** Ticks in a row of colour bands; consecutive ticks share one wrapping row. */
@@ -8276,6 +8404,7 @@ class Form {
       this.view.addView(b, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     }
     this.boxes.put(key, b);
+    if (label != null || !this.labels.containsKey(key)) this.labels.put(key, Ui.nz(label));
     return b;
   }
 
@@ -8325,6 +8454,7 @@ class Form {
   bands(key, label, labels, values, selected, normal, onChange) {
     const c = this.c;
     const b = this.box(key, label);
+    this.options.put(key, values);
     let clearable = false;
     let n = 0, len = 0;
     for (let i = 0; i < values.length; i++) {
@@ -8478,6 +8608,10 @@ class Form {
 
   set(key, value) {
     const v = this.fields.get(key);
+    if (v instanceof CompoundButton) {
+      v.setChecked("1" === value || "true" === value);
+      return;
+    }
     if (v instanceof NumberPicker) {
       const np = v;
       const shown = np.getDisplayedValues();
@@ -8490,6 +8624,10 @@ class Form {
       const vals = v.getTag();
       for (let i = 0; i < vals.length; i++) if (vals[i] === value) v.setSelection(i);
     } else if (v instanceof TextView && typeof v.getTag() === 'string' && Dates.parse(value) != null) Form.setDate(v, value);
+    else if (v instanceof TextView && typeof v.getTag() === 'string' && Ui.nz(value).matches("\\d{2}:\\d{2}")) {
+      v.setTag(value);
+      v.setText(value);
+    }
   }
 
   static setDate(t, iso) {
@@ -8529,6 +8667,7 @@ class Form {
     for (const l of labels) len = Math.max(len, l.length);
     if (values.length <= 14 && len <= 30) return this.bands(key, label, labels, values, selected, null, onChange == null ? null : onChange);
     const b = this.box(key, label);
+    this.options.put(key, values);
     const s = new Spinner(c);
     const a = new ArrayAdapter(c, ANDROID_R.layout.simple_spinner_item, labels);
     a.setDropDownViewResource(ANDROID_R.layout.simple_spinner_dropdown_item);
@@ -8594,6 +8733,8 @@ class Form {
     } else {
       this.boxes.put(key, this.tickFlow.getParent());
     }
+    this.labels.put(key, Ui.nz(label));
+    this.options.put(key, ["0", "1"]);
     const cb = new Bands.Band(c, label, Bands.color(this.ticks++));
     cb.setChecked(on);
     this.tickFlow.addView(cb);
@@ -8613,6 +8754,44 @@ class Form {
 
   has(key) {
     return this.fields.containsKey(key);
+  }
+
+  /** True when the field and its box are on screen (not hidden by show(key, false)). */
+  shown(key) {
+    const f = this.fields.get(key);
+    const b = f instanceof Bands.Band ? f : this.boxes.get(key);
+    for (let v = b; v != null && v !== this.view; v = v.getParent() instanceof View ? v.getParent() : null)
+      if (v.getVisibility() !== View.VISIBLE) return false;
+    return true;
+  }
+
+  labelOf(key) {
+    return Ui.nz(this.labels.get(key));
+  }
+
+  /** One line per shown field: key | label | value | allowed values (empty for free text). */
+  describe() {
+    const sb = new StringBuilder();
+    for (const e of this.labels.entrySet()) {
+      const k = e.getKey();
+      if (!this.fields.containsKey(k) || !this.shown(k)) continue;
+      const v = this.fields.get(k);
+      let kind = "";
+      if (v instanceof EditText) {
+        const t = v.getInputType() & InputType.TYPE_MASK_CLASS;
+        kind = t === InputType.TYPE_CLASS_NUMBER ? "number" : t === InputType.TYPE_CLASS_PHONE ? "phone" : "text";
+      } else if (v instanceof NumberPicker) kind = "number";
+      else if (!(v instanceof ViewGroup) && v instanceof TextView && !(v instanceof CheckBox)) kind = "date or HH:MM";
+      const o = this.options.get(k);
+      sb.append(k).append(" | ").append(e.getValue()).append(" | ").append(this.get(k)).append(" | ");
+      if (o != null) {
+        const ob = new StringBuilder();
+        for (const x of o) if (!x.isEmpty()) ob.append(ob.length() === 0 ? "" : " / ").append(x);
+        sb.append("one of: ").append(ob);
+      } else sb.append(kind);
+      sb.append('\n');
+    }
+    return sb.toString();
   }
 
   get(key) {
@@ -8952,8 +9131,10 @@ class Cloud {
 
   /** Registers the person with the department (first one becomes admin) and refreshes their role. */
   static join(c, name) {
+    Conduct.flush(c);   // evidence of a vulgar post goes first, so the server blocks the account before it answers
     const r = Cloud.json(c, "POST", "/rest/v1/rpc/join_department", new JSONObject().put("p_name", name == null ? "" : name)).text();
     const role = r.split("\"").join("").trim();
+    if (!role.equals("blocked")) Conduct.prefs(c).edit().remove("removed").apply();
     const e = Cloud.prefs(c).edit().putString("role", role);
     try {
       const me = new JSONArray(Cloud.json(c, "GET", "/rest/v1/members?select=staff_id,name&user_id=eq." + Cloud.prefs(c).getString("user_id", ""), null).text());
@@ -8969,8 +9150,10 @@ class Cloud {
 
   /** Web: join() without blocking the page (Sync's role check). */
   static async joinA(c, name) {
+    Conduct.flush(c);   // evidence of a vulgar post goes first, so the server blocks the account before it answers
     const r = (await Cloud.jsonA(c, "POST", "/rest/v1/rpc/join_department", new JSONObject().put("p_name", name == null ? "" : name))).text();
     const role = r.split("\"").join("").trim();
+    if (!role.equals("blocked")) Conduct.prefs(c).edit().remove("removed").apply();
     const e = Cloud.prefs(c).edit().putString("role", role);
     try {
       const me = new JSONArray((await Cloud.jsonA(c, "GET", "/rest/v1/members?select=staff_id,name&user_id=eq." + Cloud.prefs(c).getString("user_id", ""), null)).text());
@@ -9204,7 +9387,7 @@ class Store {
     }
   }
 
-  /** Saves a square, centre-cropped profile photo from a picked or captured image. */
+  /** Saves a square, centre-cropped profile photo from a picked or captured image (under people/, which every member can see: 9.00). */
   static savePhoto(c, src, srcFile, staffId) {
     let bm;
     if (src != null) bm = Store.decode(c, src, 1400);
@@ -9222,7 +9405,7 @@ class Store {
     // Java: createBitmap(bm, x, y, s, s, scale matrix k, true)
     let sq = Bitmap.createBitmap(bm, idiv(bm.getWidth() - s, 2), idiv(bm.getHeight() - s, 2), s, s);
     if (k < 1) sq = Bitmap.createScaledBitmap(sq, Math.round(s * k), Math.round(s * k), true);
-    const rel = "faculty/" + staffId + "/photo_" + System.currentTimeMillis() + ".jpg";
+    const rel = "people/" + staffId + "_photo_" + System.currentTimeMillis() + ".jpg";
     Store.writeJpeg(sq, Db.get(c).file(rel), 90);
     return rel;
   }
@@ -10128,12 +10311,14 @@ class Sync {
         Sync.lockOut(c);
         return true;
       }
+      Conduct.poll(c);
     }
     let changed = E2e.purgeLocal(c) > 0;
     await Sync.pushDeletedFiles(c, db);
     await Sync.push(c, db);
     changed = (await Sync.pull(c, db)) || changed;
     changed = E2e.purgeLocal(c) > 0 || changed;
+    changed = PgConnect.purgeOld(c) > 0 || changed;
     const keyed = await E2e.ensureKey(c, db);
     if (E2e.reseal(c, db) | keyed) await Sync.push(c, db);
     await E2e.purgeServer(c);
@@ -10206,7 +10391,7 @@ class Sync {
 
   static fileOf(t, data) {
     if (t.equals("settings")) return "hod_photo".equals(data.optString("k")) && !data.isNull("v") ? data.optString("v", "") : "";
-    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : null;
+    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : null;
     return col == null || data.isNull(col) ? "" : data.optString(col, "");
   }
 
@@ -10290,6 +10475,7 @@ class Sync {
       if (Ui.nz(data.optString("time")).compareTo(E2e.dutyStart()) < 0) return;
       await E2e.open(c, data);
     } else if (E2e.isWardRow(t)) {
+      if (Ui.nz(data.optString("time")).compareTo(PgConnect.cutoff()) < 0) return;
       await E2e.open(c, data);
     }
   }
@@ -10309,6 +10495,9 @@ class Sync {
     if (c != null && E2e.isDutyRow(t, data)) {
       if (Ui.nz(data.optString("time")).compareTo(E2e.dutyStart()) < 0) return w.delete(t, key + "=?", [pk]) > 0;
       // E2e.open(c, data) already ran in prepare()
+    } else if (c != null && E2e.isWardRow(t)) {
+      // older than a month: PG Connect messages are not kept (9.00)
+      if (Ui.nz(data.optString("time")).compareTo(PgConnect.cutoff()) < 0) return w.delete(t, key + "=?", [pk]) > 0;
     }
     const cols = Sync.columns(w, t);
     const cv = new ContentValues();
@@ -10352,7 +10541,7 @@ class Sync {
 
   /** Only our own folders, no climbing out of them: file names come from other phones. */
   static safeRel(rel) {
-    return rel.matches("(faculty|notices|leaves|academics|chat|spots|achievements|imaging)/[A-Za-z0-9_./-]+") && !rel.contains("..");
+    return rel.matches("(people|faculty|notices|leaves|academics|chat|spots|achievements|imaging)/[A-Za-z0-9_./-]+") && !rel.contains("..");
   }
 
   /** Downloads one shared file now (presentations are fetched only when someone opens them). Returns a Promise. */
@@ -10781,7 +10970,7 @@ class Reminders {
       .setAutoCancel(true)
       .setContentIntent(pi);
     if (Build.VERSION.SDK_INT < 26) b.setPriority(Notification.PRIORITY_HIGH).setDefaults(Notification.DEFAULT_ALL);
-    nm.notify(it.key.hashCode(), b.build());
+    if (Notify.on(c)) nm.notify(it.key.hashCode(), b.build());
   }
 
   /** Android 13 and later: notifications need the user's permission. */
@@ -10865,7 +11054,7 @@ class Background extends JobService {
   static JOB = 7300;
   static CHANNEL = "alerts";
   static PERIOD_MS = 15 * 60 * 1000;
-  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207;
+  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211;
   /** Web: the repeating timer, started once. */
   static timer = null;
 
@@ -10892,6 +11081,7 @@ class Background extends JobService {
       if (Cloud.active(c)) {
         const changed = await Sync.run(c);
         if (changed) Reminders.schedule(c);
+        if (changed) Protocols.schedule(c);
         Chat.notifyNew(c);
         Background.check(c);
         try {
@@ -10943,6 +11133,21 @@ class Background extends JobService {
       if (n > 0) Background.show(c, Background.N_PGC, "💬 New message in PG Connect", n == 1 ? "1 new message for your ward" : n + " new messages for your ward", PgConnect.GREEN, PgConnectActivity);
     }
 
+    // memos (9.00): a new memo for this person, or an explanation on one they issued (never the content on the lock screen)
+    if (Memo.on(db)) {
+      const me = Memo.me(c);
+      if (!me.isEmpty()) {
+        const mw = Memo.waitingForMe(c, db), md = Memo.toDecide(c, db);
+        const was = p.getString("memo_seen", "");
+        if (!was.isEmpty()) {
+          const w = was.jsplit(":");
+          if (mw > Ui.toInt(w[0], 0)) Background.show(c, Background.N_MEMO, "📩 Memo", "You have received a memo. Open the app to give your explanation.", Memo.COLOR, MemoActivity);
+          else if (md > (w.length > 1 ? Ui.toInt(w[1], 0) : 0)) Background.show(c, Background.N_MEMO, "📩 Memo", "An explanation has come in on a memo you issued.", Memo.COLOR, MemoActivity);
+        }
+        e.putString("memo_seen", mw + ":" + md);
+      }
+    }
+
     // early warning: a patient newly at a red NEWS2 (never names or numbers on the lock screen)
     try {
       if (SessionAttendance.canRun(c) || Cloud.isAdmin(c)) {
@@ -10981,6 +11186,28 @@ class Background extends JobService {
       // optional
     }
 
+    // pending results (8.60): a test newly overdue, or a result newly back and not yet seen (no names on the lock screen)
+    try {
+      if (SessionAttendance.canRun(c) || Cloud.isAdmin(c) || "pg" === Cloud.role(c)) {
+        const due = [];
+        for (const r of Results.overdue(db, Protocols.now())) due.push("o" + r.get("id"));
+        for (const r of Results.unseen(db)) due.push("b" + r.get("id"));
+        due.sort();
+        const prev = p.getString("results_due", "");
+        let late = 0, back = 0;
+        for (const id of due) if (!(("," + prev + ",").includes("," + id + ","))) { if (id.startsWith("o")) late++; else back++; }
+        e.putString("results_due", due.join(","));
+        if (late + back > 0 && p.contains("results_due")) {
+          const bits = [];
+          if (late > 0) bits.push(late + (late == 1 ? " test is overdue" : " tests are overdue"));
+          if (back > 0) bits.push(back + (back == 1 ? " result is back" : " results are back") + " to be seen");
+          Background.show(c, Background.N_RESULTS, "🧪 Pending results", bits.join(", "), Results.COLOR, ResultsActivity);
+        }
+      }
+    } catch (ignored) {
+      // optional
+    }
+
     // the handover from last night's team, once each morning
     const day = Dates.admitDay().minusDays(1).toString();
     const items = db.num("SELECT COUNT(*) FROM handovers WHERE day=?", day);
@@ -10998,7 +11225,7 @@ class Background extends JobService {
     total += ap;
     if (SessionAttendance.canRun(c)) {
       let lv = 0;
-      for (const r of db.rows("SELECT ap_status, prof_status, hod_status FROM pg_leaves"))
+      for (const r of db.rows("SELECT ap_status, prof_status, nodal_status, hod_status FROM pg_leaves"))
         if (PgLeaveActivity.overall(r).equals("Awaiting approval")) lv++;
       if (lv > 0) lines.add(lv + " PG leave " + (lv == 1 ? "letter" : "letters") + " awaiting approval");
       const lb = Logbook.waitingToSign(c, db);
@@ -11060,7 +11287,7 @@ class Background extends JobService {
       .setContentIntent(pi);
     if (Build.VERSION.SDK_INT < 26) b.setPriority(Notification.PRIORITY_HIGH).setDefaults(Notification.DEFAULT_ALL);
     try {
-      nm.notify(id, b.build());
+      if (Notify.on(c)) nm.notify(id, b.build());
     } catch (ignored) {
       // notifications not allowed on this phone
     }
@@ -11093,6 +11320,14 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["9.01", "The AI Copilot switch is now the first thing in Settings (with the notifications switch), there is an AI Copilot on/off item in the Menu, and a Turn off button inside the ✨ panel."],
+    ["9.00", "Version 9.00. No more \"What's new\" slide after an update (it stays in Settings → What's new). Settings → On this phone: one switch turns off all notifications, and a separate on/off switch for the ✨ AI Copilot (or long-press ✨). PG Connect messages are deleted automatically after one month. Each unit's and special ward's page now opens with a colourful team board: unit chief, Professors, Assistant Professors, PGs by year, CRMIs and students with their photos. Your photo: tap your picture beside your name on the home page, in Account or in the Students list to add it, so everyone can recognise you. PG leave: after the unit Assistant Professor and Professor, the leave nodal officer (Dr. S. Rajkumar) approves before the HOD. Memo (home → Memo): faculty issue a memo calling for an explanation from a PG, CRMI or student for indiscipline or mismanagement of patients; the student writes the explanation in the app and the faculty member closes it with a decision; only they, the admin, HOD and Medical Registrar can see it; PDF / Word copy; the admin switches it on or off in Settings → Admin control. Run the latest supabase-setup.sql once."],
+    ["8.90", "AI Copilot (8.90): a ✨ button on every screen. Tap it and ask, typed or spoken (🎤), in English or Tamil, about the screen you are on: a patient, the case sheet, a form, the census, tasks or anything else. It knows what the screen shows and the department's in-patients, and can do things for you: fill the form on screen (✎ buttons), draft a progress note for you to check, add a pending task, or open the right screen. Nothing is saved until you tap Save. Patient names, IP numbers and phone numbers never leave the phone (patients go as codes and their names come back only on your phone), and private chats are never read. It uses the Claude or Gemini key in Settings, or a free AI app with copy and paste. Drag the button up or down to move it; hide it in Settings → AI. Decision support only."],
+    ["8.80", "Department rule, Presentations and Latest journals (8.80). Department rule: posting pornographic photos or videos and vulgar chatting is strictly prohibited. Every member (not the admin) sees the rule once and agrees. A vulgar word typed in a chat, PG Connect, learning board, comment, PG question, journal or presentation is not posted: the writer is blocked and removed at once, the department's records leave their phone, and a screenshot of what they wrote goes to the admin. Photos and files: long-press a chat message (or 🚩 Report on a post) to report it; it is hidden for everyone, and the sender is removed at once when a faculty member reports it or a second member does (the HOD and the Medical Registrar only by the admin). The admin sees every report with its screenshot in Conduct reports and can remove, restore or dismiss, and add extra words. Presentations (home → Presentations): the department's PowerPoint presentations in one place (seminars, case presentations, CMEs, lectures, Physicon, journal club, classes), by category with a search; post PPT, PPTX, PDF or Word up to 45 MB; others download one only when they open it. Latest journals (home → Latest journals): share an article by link, DOI or PubMed number (title, journal, year, authors and abstract fill in by themselves) or as a PDF, with the key points; filter by subject, search, send on WhatsApp; faculty mark must-reads. Run the latest supabase-setup.sql once for the conduct rule."],
+    ["8.70", "Live scan, WhatsApp admission paste and Daily MCQ from a book (8.70). Live scan (case sheet → Scan the paper case sheet → Live scan, and Live quiz → Questions from a book): hold the phone over the page; when it is still and in focus the page is taken by itself with a beep, turn the page and it takes the next; the white button takes one at once, and Light turns the torch on. Done reads all the pages as before. Admission form → Paste the WhatsApp admission message: copy the message in WhatsApp and paste; name, age, sex, IP number, phone, address, diagnosis, bed, CMCHIS, MLC / NMLC, AR number, date and time fill in, and complaints, history, examination, vitals and treatment open in the case sheet after saving to check and add. The message is read on the phone, not sent to an AI. Daily MCQ → Fill from a book or question paper: live scan, camera, or a photo or PDF from the gallery or files; the case, question, options, answer, explanation and subject fill in. With several questions on the page, choose one, and the others can be saved as the MCQs of the next days. The phone now asks once for the camera permission."],
+    ["8.60", "Pending results, antibiogram and wall screen (8.60). Pending results (patient page → Results awaited, home → Pending results): note each test when it is sent (one-tap sets: admission bloods, fever panel, sepsis, chest pain, viral markers); each has its usual report time, shows 'due in' or OVERDUE, and stays until the result is entered; a result that is back stays marked until a doctor taps Seen. Overdue and unseen results show on the home page and as a notification, and Lab turnaround shows how long each test really takes. Antibiogram (patient page → 🧫 culture, home → Antibiogram): enter the organism and S / I / R of each antibiotic, or photograph the microbiology report and let AI read it; ESBL, CRE, CRAB, CRPA, MRSA, VRE and MDR are worked out from the pattern. The department table shows % susceptible for each organism, first isolate per patient, with filters for period, specimen, ICU or wards and community or hospital onset, the antibiotics most often susceptible, and a PDF or Word copy for the notice board. Wall screen (home → Wall screen, or Live census → Show on the duty room TV): a full-screen dark board for a TV or wall tablet with the clock, today's admitting unit and DAP, the HOD's urgent message, the census of every ward with today's movement, patients getting worse, protocol timers, pending results and today's academics; it updates every 30 seconds, keeps the screen on, and shows initials only unless names are switched on."],
+    ["8.50", "Infusion calculator, protocol timers and death certificate helper (8.50). Infusion calculator (patient page or home → Infusion calculator): 18 drugs (noradrenaline, adrenaline, dopamine, dobutamine, vasopressin, nitroglycerin, insulin, heparin, potassium, furosemide, amiodarone, labetalol, midazolam, fentanyl, octreotide, pantoprazole, atropine, pralidoxime) with the usual dilution; type the dose to get ml/hr or the pump rate to get the dose, with a titration table, a warning outside the usual range, a bedside label to share and 'Add to treatment list'. Protocol timers (patient page → Emergency protocol, home → Protocol timers): snake bite (20WBCT every 6 hours, ASV vials, neostigmine), OP poisoning (atropine doubling every 5 minutes until atropinised, then the infusion at 10-20%), DKA, hyperkalaemia and status epilepticus; record each step, see the countdown to the next one, get an alarm and a notification when it is due, and share the timeline. Every phone sees the same run. Death certificate helper (patient page of a patient who died, or home → Death certificate): MCCD Form 4 with Part I (a), (b), (c) and intervals, Part II, manner of death and the pregnancy question, filled from the case sheet; rule checks (no 'cardiac arrest', one condition per line, no abbreviations, intervals, external causes need the MLC), an AI-suggested chain, ICD-11 picker, and the form as PDF or Word. Decision support only: check every dose and the certificate yourself."],
+    ["8.40", "ECG reader, kidney doses, Wrapped and thesis helper (8.40). ECG reader (patient page or home → ECG reader): photograph an ECG and an AI reads rate, rhythm, axis, PR, QRS, QTc, findings and an impression, compared with the patient's last saved ECG; dangerous patterns (STEMI, VT, complete heart block, hyperkalaemia, QTc 500+) are flagged by rules too; check every field before saving. Kidney dose check (patient page, case sheet treatment list, home → Kidney doses): creatinine clearance (add the weight) and eGFR, AKI warning when creatinine is rising, dialysis tick, and each drug on the treatment list against the usual dose for that kidney band (too high, avoid, check or OK); a ward list shows every patient with a dose to change. TVMCHMED Wrapped (home → Wrapped): your year, your unit's or the department's in animated story cards (duty days, case sheets, presentations, MCQs, procedures, top diagnoses, transfers, average stay) to share as a picture. Thesis helper (Dissertation → Thesis data): build the data-collection form (common fields, AI suggestions or your own), add cases or pick them from the wards with age, sex, diagnosis, stay and labs filled in, see the summaries, compare groups (chi-square / Fisher, t-test / ANOVA) and correlations, and download the de-identified master chart for Excel and a PDF/Word summary."],
     ["8.30", "AI assistant (8.30), all decision support that the doctor checks. Discharge summary: one tap writes the whole summary with AI from the case sheet and the stay (progress notes, labs, vitals, imaging). Morning brief at 7:30 AM per unit: the night in numbers and who to see first, with a one-minute AI version (no names sent) and WhatsApp. Ask TVMCHMED: ask questions about the records in plain words; patients go to the AI only as codes. Deterioration watch: warns when vitals, NEWS2 or labs are trending worse (pill, patient card, home card, notification). Live quiz: Make questions with AI from a learning board topic or notes. Viva coach: an AI examiner asks, marks each answer out of 10 and gives a model answer; answer by typing or voice. Guideline checklist on the patient page for common diagnoses, ticks shared with the team, or an AI checklist for others. Progress notes: speak in Tamil and get an English note to check and save."],
     ["8.20", "Learning board on the home page: any member writes a topic (its name, an optional subject and numbered points 1., 2., 3.), and everyone reads it and downloads it as PDF or Word or sends it on WhatsApp. The writer or the admin can edit or delete it, and copied notes can be pasted in as points. The old daily topic board is now called Topic of the day. Live quiz: Camera and Gallery buttons read a book page into the question and option slots (Gemini with your key, or the free ChatGPT, Claude or Gemini app); you check each question before it is added. Copied MCQ text can be pasted the same way."],
     ["8.10", "A new look for every role: the home page opens with My day (your unit and whether it admits today, approvals and tasks waiting, patients with a raised NEWS, today's classes), then the eight sections you use most, and All sections folded away with a search box. Every PDF and Word file now has the department template with a QR code and a code; Verify a document checks that a paper came from the app. Each patient has a Timeline (beside the patient on tablets). The chip at the top right says whether your changes are saved online; tap it to sync now. Dark mode is in Settings > Look. The app sends the admin a report when it stops with an error, opens faster, and shows this note after each update."],
@@ -11385,6 +11620,18 @@ class Base extends Activity {
 
   /** abstract void render(); */
   render() {}
+
+  /** Profile photos (People, 9.00) come back here on any screen; screens with their own results call super first. */
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    People.onResult(this, req, res, data);
+  }
+
+  /** Every screen gets the ✨ Copilot button over its content (8.90). */
+  setContentView(v) {
+    super.setContentView(v);
+    Copilot.attach(this);
+  }
 
   onTitleChanged(t, color) {
     super.onTitleChanged(t, color);
@@ -12140,7 +12387,9 @@ class AccountActivity extends Base {
     c.addView(Ui.iconBadge(this, R.drawable.ic_lock, Ui.AMBER, 48));
     const blocked = "blocked".equals(Cloud.role(this));
     c.addView(Ui.title(this, blocked ? "Removed from the app" : "Waiting for approval"));
-    c.addView(Ui.muted(this, blocked ? "The admin, the HOD or a faculty member of your unit has removed this account, so the department's records, case sheets and files have been deleted from this phone. Contact the HOD if this is a mistake."
+    c.addView(Ui.muted(this, blocked && Conduct.removedForConduct(this) ? "This account was removed for breaking the department rule: " + Conduct.RULE
+        + "\n\nThe department's records have been deleted from this phone. Contact the admin if this is a mistake."
+      : blocked ? "The admin, the HOD or a faculty member of your unit has removed this account, so the department's records, case sheets and files have been deleted from this phone. Contact the HOD if this is a mistake."
       : "You're signed in as " + Cloud.prefs(this).getString("email", "") + ". Ask the admin, the HOD or the Medical Registrar to approve you in the app, then tap Check again."));
     c.addView(Ui.buttonRow(this,
       Ui.button(this, "Check again", Ui.TEAL, {
@@ -12232,6 +12481,20 @@ class AccountActivity extends Base {
     const sid = Cloud.myStaff(this);
     const me = sid > 0 ? this.db.row("SELECT name FROM staff WHERE id=?", String(sid)) : null;
     c.addView(Ui.kv(this, "Linked to (Students / Staff list)", me == null ? "Not linked yet (the admin links it)" : me.get("name")));
+    // your photo beside your name everywhere (9.00)
+    const pic = People.mine(this, 64, Ui.TEAL);
+    if (pic != null) {
+      const pr = Ui.h(this);
+      pr.setGravity(Gravity.CENTER_VERTICAL);
+      pr.addView(pic);
+      const pt = Ui.v(this);
+      pt.setPadding(Ui.dp(this, 12), 0, 0, 0);
+      pt.addView(Ui.tv(this, "Your photo", 15, Ui.TEXT, true));
+      pt.addView(Ui.muted(this, "Shown beside your name on the team boards, lists and chats, so everyone can recognise you. Tap the picture to add or change it."));
+      pr.addView(pt, Ui.weight(1));
+      c.addView(pr);
+      Ui.margins(pr, 0, 12, 0, 0);
+    }
     const out = Ui.outlineButton(this, "Sign out of this phone", Ui.RED, { onClick: (v) => { this.signOut(); } });
     c.addView(out);
     Ui.margins(out, 0, 12, 0, 0);
@@ -13281,6 +13544,10 @@ class Ai {
     return Ai.visionPages(c, [jpeg], prompt, schema, true);
   }
 
+  static isPdf(b) {
+    return b != null && b.length > 4 && b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
+  }
+
   /** Several pictures in one question (the pages of a paper case sheet, 8.00). json false: the answer is plain text. */
   static visionPages(c, jpegs, prompt, schema, json) {
     const key = Ai.geminiKey(c);
@@ -13292,8 +13559,8 @@ class Ai {
       if (json) gen.put('responseMimeType', 'application/json');
       if (json && schema != null) gen.put('responseSchema', schema);
       const parts = new JSONArray().put(new JSONObject().put('text', prompt));
-      for (const jpeg of jpegs)
-        parts.put(new JSONObject().put('inline_data', new JSONObject().put('mime_type', 'image/jpeg')
+      for (const jpeg of jpegs)   // a PDF file (8.70) goes as it is: Gemini reads PDFs too
+        parts.put(new JSONObject().put('inline_data', new JSONObject().put('mime_type', Ai.isPdf(jpeg) ? 'application/pdf' : 'image/jpeg')
             .put('data', Base64.encodeToString(jpeg, Base64.NO_WRAP))));
       body = new JSONObject()
           .put('contents', new JSONArray().put(new JSONObject().put('role', 'user').put('parts', parts)))
@@ -13775,6 +14042,74 @@ class AiRun {
     return Ai.clean(text);
   }
 
+  /**
+   * Reads a picture (8.40): the test fake, or Gemini with the user's key on a background thread. Returns false when there is no
+   * Gemini key, so the caller offers the free apps (imageToApp).
+   */
+  static vision(a, title, prompt, jpg, got) {
+    if (AiRun.fake != null) {
+      got.got(AiRun.fake.answer(prompt, "[picture]"), "Test AI");
+      return true;
+    }
+    if (Ai.geminiKey(a).isEmpty()) return false;
+    const wait = new AlertDialog.Builder(a).setTitle("✨ " + title)
+        .setMessage("Google Gemini is reading the picture. Only the picture is sent. Keep the app open.").setCancelable(false).show();
+    new Thread({
+      run: () => {
+        let res = null, err = null;
+        try {
+          const one = [];
+          one.add(jpg);
+          res = Ai.visionPages(a, one, prompt, null, false);
+        } catch (f) {
+          if (f instanceof Ai.Failure) err = f.getMessage();
+          else err = "Could not read it: " + f.getMessage();
+        }
+        const text = res, error = err;
+        a.runOnUiThread({
+          run: () => {
+            if (a.isFinishing()) return;
+            try { wait.dismiss(); } catch (ignored) { }
+            if (error != null || text == null || text.trim().isEmpty()) {
+              new AlertDialog.Builder(a).setTitle("Not read").setMessage(error == null ? "The AI sent nothing back. Try a clearer photo." : error)
+                  .setPositiveButton("OK", null).show();
+              return;
+            }
+            got.got(text, "Gemini AI");
+          }
+        });
+      }
+    }).start();
+    return true;
+  }
+
+  /** Sends a picture (a file under the app's folder) with the request to a free AI app, and marks the wait key. */
+  static imageToApp(a, app, prompt, rel, waitKey) {
+    const cm = a.getSystemService(Context.CLIPBOARD_SERVICE);
+    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Request for AI", prompt));
+    const u = DocProvider.uri(rel);
+    const i = new Intent(Intent.ACTION_SEND);
+    i.setType("image/jpeg");
+    i.putExtra(Intent.EXTRA_STREAM, u);
+    i.putExtra(Intent.EXTRA_TEXT, prompt);
+    i.setClipData(ClipData.newRawUri("picture", u));
+    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+    Ai.prefs(a).edit().putString(waitKey, app[0]).apply();
+    i.setPackage(app[1]);
+    try {
+      a.startActivity(i);
+      Ui.toast(a, "In " + app[0] + " send the picture with the request (it is copied too), copy the answer, then come back and tap Paste");
+    } catch (noApp) {
+      try {
+        i.setPackage(null);
+        a.startActivity(Intent.createChooser(i, "Send the picture to " + app[0]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+      } catch (e) {
+        Ai.prefs(a).edit().remove(waitKey).apply();
+        Ui.toast(a, app[0] + " is not installed on this phone");
+      }
+    }
+  }
+
   static forget(c, waitKey) {
     Ai.prefs(c).edit().remove(waitKey).apply();
   }
@@ -13899,6 +14234,715 @@ class Alerts {
         return true;
       }
     });
+  }
+}
+;
+/* ---- app/Antibiogram.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Antibiogram (8.60): each culture with growth is saved with its organism and the S / I / R of each antibiotic. The department's
+ * table shows, for each organism, the percentage of isolates susceptible to each antibiotic, counting only the first isolate of an
+ * organism per patient in the period (CLSI M39). Filters: period, specimen, ICU or wards, community or hospital onset. Resistance
+ * flags (ESBL likely, CRE, carbapenem-resistant Acinetobacter / Pseudomonas, MRSA, VRE, MDR) are worked out from the pattern.
+ */
+class Antibiogram {
+  constructor() {}
+
+  static COLOR = 0xFF15803D;
+  static TABLE = "cultures";
+  /** Fewer isolates than this: the percentage is shown but marked as not reliable (CLSI). */
+  static MIN_RELIABLE = 30;
+
+  static SPECIMENS = ["Blood", "Urine", "Sputum / BAL", "ET aspirate", "Pus / wound", "CSF", "Pleural fluid", "Ascitic fluid", "Other"];
+  static GROWTH = ["Growth", "No growth", "Contaminant"];
+
+  /** Antibiotic: code, name, class (for MDR), panel letters (E Enterobacterales, N non-fermenter, P gram-positive, F fungus), other spellings. */
+  static ABX = [
+            ["AMP", "Ampicillin", "penicillin", "EP", "ampicillin"],
+            ["PEN", "Penicillin", "penicillin", "P", "penicillin g|benzylpenicillin"],
+            ["AMC", "Amoxicillin-clavulanate", "bl-bli", "E", "amoxyclav|amoxiclav|augmentin|co-amoxiclav|amoxicillin clav"],
+            ["PIT", "Piperacillin-tazobactam", "bl-bli", "EN", "pip-taz|piptaz|piperacillin|tazobactam"],
+            ["CSL", "Cefoperazone-sulbactam", "bl-bli", "EN", "cefoperazone|sulbactam"],
+            ["CZA", "Ceftazidime-avibactam", "bl-bli", "EN", "avibactam"],
+            ["CRO", "Ceftriaxone", "ceph", "EP", "ceftriaxone"],
+            ["CTX", "Cefotaxime", "ceph", "E", "cefotaxime"],
+            ["CAZ", "Ceftazidime", "ceph", "EN", "ceftazidime"],
+            ["FEP", "Cefepime", "ceph", "EN", "cefepime"],
+            ["FOX", "Cefoxitin / oxacillin", "anti-staph", "P", "cefoxitin|oxacillin|methicillin"],
+            ["IPM", "Imipenem", "carbapenem", "EN", "imipenem"],
+            ["MEM", "Meropenem", "carbapenem", "EN", "meropenem"],
+            ["ETP", "Ertapenem", "carbapenem", "E", "ertapenem"],
+            ["ATM", "Aztreonam", "monobactam", "EN", "aztreonam"],
+            ["AK", "Amikacin", "aminoglycoside", "EN", "amikacin"],
+            ["GEN", "Gentamicin", "aminoglycoside", "ENP", "gentamicin|gentamycin|high level gentamicin|hlg"],
+            ["CIP", "Ciprofloxacin", "quinolone", "ENP", "ciprofloxacin|cipro"],
+            ["LEV", "Levofloxacin", "quinolone", "ENP", "levofloxacin|levo"],
+            ["SXT", "Cotrimoxazole", "folate", "ENP", "cotrimoxazole|co-trimoxazole|trimethoprim|septran|bactrim"],
+            ["NIT", "Nitrofurantoin", "urinary", "EP", "nitrofurantoin"],
+            ["FOS", "Fosfomycin", "urinary", "E", "fosfomycin"],
+            ["DOX", "Doxycycline", "tetracycline", "ENP", "doxycycline|tetracycline"],
+            ["MIN", "Minocycline", "tetracycline", "N", "minocycline"],
+            ["TGC", "Tigecycline", "tetracycline", "EN", "tigecycline"],
+            ["CL", "Colistin", "polymyxin", "EN", "colistin|polymyxin"],
+            ["AZM", "Azithromycin", "macrolide", "EP", "azithromycin"],
+            ["ERY", "Erythromycin", "macrolide", "P", "erythromycin"],
+            ["CLI", "Clindamycin", "lincosamide", "P", "clindamycin"],
+            ["LZD", "Linezolid", "oxazolidinone", "P", "linezolid"],
+            ["VAN", "Vancomycin", "glycopeptide", "P", "vancomycin"],
+            ["TEC", "Teicoplanin", "glycopeptide", "P", "teicoplanin"],
+            ["RIF", "Rifampicin", "rifamycin", "P", "rifampicin|rifampin"],
+            ["FLU", "Fluconazole", "azole", "F", "fluconazole"],
+            ["VOR", "Voriconazole", "azole", "F", "voriconazole"],
+            ["AMB", "Amphotericin B", "polyene", "F", "amphotericin"],
+            ["CAS", "Caspofungin", "echinocandin", "F", "caspofungin"],
+            ["MCF", "Micafungin", "echinocandin", "F", "micafungin"]];
+
+  static ORGS = [
+            ["Escherichia coli", "E", "coli"], ["Klebsiella pneumoniae", "E", "klebsiella"], ["Enterobacter species", "E", "enterobacter"],
+            ["Citrobacter species", "E", "citrobacter"], ["Proteus species", "E", "proteus"], ["Serratia species", "E", "serratia"],
+            ["Salmonella Typhi / Paratyphi", "E", "salmonella|typhi"], ["Pseudomonas aeruginosa", "N", "pseudomonas"],
+            ["Acinetobacter baumannii", "N", "acinetobacter"], ["Burkholderia pseudomallei", "N", "burkholderia|melioid"],
+            ["Stenotrophomonas maltophilia", "N", "stenotrophomonas"], ["Staphylococcus aureus", "P", "aureus|mrsa|mssa"],
+            ["Coagulase-negative staphylococcus", "P", "coagulase negative|cons|epidermidis|haemolyticus"], ["Enterococcus species", "P", "enterococ"],
+            ["Streptococcus pneumoniae", "P", "pneumococ|pneumoniae strep|streptococcus pneumoniae"], ["Beta-haemolytic streptococcus", "P", "pyogenes|haemolytic strep|hemolytic strep|agalactiae"],
+            ["Candida albicans", "F", "albicans"], ["Candida auris", "F", "auris"], ["Candida, non-albicans", "F", "candida|tropicalis|glabrata|parapsilosis|krusei"],
+            ["Other gram-negative", "E", "gram negative|gnb"], ["Other gram-positive", "P", "gram positive|gpc"]];
+
+  static orgNames() {
+    const n = new Array(Antibiogram.ORGS.length).fill(null);
+    for (let i = 0; i < Antibiogram.ORGS.length; i++) n[i] = Antibiogram.ORGS[i][0];
+    return n;
+  }
+
+  static groupOf(organism) {
+    for (const o of Antibiogram.ORGS) if (o[0].equals(organism)) return o[1];
+    return "E";
+  }
+
+  /** The antibiotics listed for an organism's group. */
+  static panel(organism) {
+    const g = Antibiogram.groupOf(organism);
+    const out = [];
+    for (const a of Antibiogram.ABX) if (a[3].contains(g)) out.add(a);
+    return out;
+  }
+
+  static abx(code) {
+    for (const a of Antibiogram.ABX) if (a[0].equals(code)) return a;
+    return null;
+  }
+
+  static name(code) {
+    const a = Antibiogram.abx(code);
+    return a == null ? code : a[1];
+  }
+
+  /** An organism named in free text (a report, an AI answer) as one on the list; "" when nothing matches. */
+  static matchOrganism(text) {
+    const t = " " + Ui.nz(text).toLowerCase().replaceAllRx("[^a-z ]+", " ") + " ";
+    for (const o of Antibiogram.ORGS) if (t.contains(" " + o[0].toLowerCase().replaceAllRx("[^a-z ]+", " ").trim() + " ")) return o[0];
+    // specific organisms before the broad groups (Candida auris before any Candida)
+    for (const o of Antibiogram.ORGS)
+      for (const w of o[2].jsplit("\\|")) if (t.contains(w.length <= 4 ? " " + w + " " : w)) return o[0];
+    return "";
+  }
+
+  /** An antibiotic named in a report line, as its code; null when none matches. */
+  static matchAbx(text) {
+    const t = Ui.nz(text).toLowerCase().trim();
+    if (t.isEmpty()) return null;
+    const head = t.jsplit("[^a-z0-9]+")[0].toUpperCase();
+    for (const a of Antibiogram.ABX) if (a[0].equals(head) && t.length <= 5) return a[0];
+    let best = null;
+    let bestLen = 0;
+    for (const a of Antibiogram.ABX)
+      for (const w of (a[1].toLowerCase() + "|" + a[4]).jsplit("\\|"))
+        if (w.length > bestLen && t.contains(w)) {
+          best = a[0];
+          bestLen = w.length;
+        }
+    return best;
+  }
+
+  // ---------------------------------------------------------------- one culture
+
+  static sens(c) {
+    try {
+      return new JSONObject(Ui.nz(c.get("sens")).isEmpty() ? "{}" : c.get("sens"));
+    } catch (e) {
+      return new JSONObject();
+    }
+  }
+
+  static resistant(s) {
+    const out = [];
+    for (const a of Antibiogram.ABX) if ("R".equals(s.optString(a[0]))) out.add(a[0]);
+    return out;
+  }
+
+  static susceptible(s) {
+    const out = [];
+    for (const a of Antibiogram.ABX) if ("S".equals(s.optString(a[0]))) out.add(a[0]);
+    return out;
+  }
+
+  static r(s, ...codes) {
+    if (codes.length === 1 && Array.isArray(codes[0])) codes = codes[0];
+    for (const c of codes) if ("R".equals(s.optString(c))) return true;
+    return false;
+  }
+
+  /** Resistance flags from the pattern: ESBL likely, CRE, CRAB, CRPA, MRSA, VRSA, VRE, MDR. */
+  static flags(organism, s) {
+    const f = [];
+    const g = Antibiogram.groupOf(organism);
+    if (g.equals("E")) {
+      if (Antibiogram.r(s, "IPM", "MEM", "ETP")) f.add("CRE");
+      else if (Antibiogram.r(s, "CRO", "CTX", "CAZ")) f.add("ESBL likely");
+    }
+    if (organism.startsWith("Acinetobacter") && Antibiogram.r(s, "IPM", "MEM")) f.add("CRAB");
+    if (organism.startsWith("Pseudomonas") && Antibiogram.r(s, "IPM", "MEM")) f.add("CRPA");
+    if (organism.equals("Staphylococcus aureus")) {
+      if (Antibiogram.r(s, "FOX")) f.add("MRSA");
+      if (Antibiogram.r(s, "VAN")) f.add("VRSA");
+    }
+    if (organism.startsWith("Enterococcus") && Antibiogram.r(s, "VAN", "TEC")) f.add("VRE");
+    if (!g.equals("F")) {
+      const classes = new JSet();
+      for (const code of Antibiogram.resistant(s)) classes.add(Antibiogram.abx(code)[2]);
+      if (classes.size() >= 3) f.add("MDR");
+    }
+    return f;
+  }
+
+  /** Community onset unless sent 2 or more days after admission (hospital onset). */
+  static onset(admitDate, sentDate) {
+    try {
+      return !LocalDate.parse(sentDate).isBefore(LocalDate.parse(admitDate).plusDays(2)) ? "Hospital" : "Community";
+    } catch (e) {
+      return "Community";
+    }
+  }
+
+  static icu(ward) {
+    return Db.IMCU.equals(ward) || Db.CCB.equals(ward);
+  }
+
+  /** Saves a culture (new when id is null); fills ward, unit, onset and flags from the patient. */
+  static save(db, id, pid, v, s, by) {
+    const p = db.row("SELECT * FROM patients WHERE id=?", String(pid));
+    const org = Ui.nz(v.get("organism"));
+    const growth = "Growth".equals(v.get("growth"));
+    const cv = new ContentValues();
+    cv.put("specimen", Ui.nz(v.get("specimen")));
+    cv.put("sent_date", Ui.nz(v.get("sent_date")));
+    cv.put("report_date", Ui.nz(v.get("report_date")));
+    cv.put("growth", Ui.nz(v.get("growth")));
+    cv.put("organism", growth ? org : "");
+    cv.put("colony", Ui.nz(v.get("colony")));
+    cv.put("sens", growth ? s.toString() : "{}");
+    cv.put("flags", growth ? TextUtils.join(", ", Antibiogram.flags(org, s)) : "");
+    cv.put("note", Ui.nz(v.get("note")));
+    if (id == null) {
+      cv.put("patient_id", pid);
+      cv.put("ward", p == null ? "" : Ui.nz(p.get("location")));
+      cv.put("unit", p == null ? "" : Ui.nz(p.get("home_unit")));
+      cv.put("onset", p == null ? "Community" : Antibiogram.onset(Ui.nz(p.get("admit_date")), Ui.nz(v.get("sent_date"))));
+      cv.put("inv_id", Ui.toInt(v.get("inv_id"), 0));
+      cv.put("by_name", Ui.nz(by));
+      cv.put("created", Protocols.stamp(Protocols.now()));
+      return db.insert(Antibiogram.TABLE, cv);
+    }
+    if (p != null) cv.put("onset", Antibiogram.onset(Ui.nz(p.get("admit_date")), Ui.nz(v.get("sent_date"))));
+    db.update(Antibiogram.TABLE, cv, id);
+    return id;
+  }
+
+  static forPatient(db, pid) {
+    return db.rows("SELECT * FROM " + Antibiogram.TABLE + " WHERE patient_id=? ORDER BY sent_date DESC, id DESC", String(pid));
+  }
+
+  /** One line: "Urine 18 Oct: E. coli  ·  ESBL likely". */
+  static line(c) {
+    const g = Ui.nz(c.get("growth"));
+    return Ui.nz(c.get("specimen")) + " " + Dates.nice(c.get("sent_date")) + ": " + (g.equals("Growth") ? Ui.nz(c.get("organism")) : g)
+        + (Ui.nz(c.get("flags")).isEmpty() ? "" : "  ·  " + c.get("flags"));
+  }
+
+  // ---------------------------------------------------------------- the table
+
+  /** All the filters: since (ISO date or ""), specimen ("" all), area ("", "ICU", "Wards"), onset ("", "Community", "Hospital"). */
+  static build(db, since, specimen, area, onset) {
+    const t = new Antibiogram.Table();
+    const w = new StringBuilder("SELECT * FROM " + Antibiogram.TABLE + " WHERE 1=1");
+    const args = [];
+    if (!Ui.nz(since).isEmpty()) {
+      w.append(" AND sent_date>=?");
+      args.add(since);
+    }
+    if (!Ui.nz(specimen).isEmpty()) {
+      w.append(" AND specimen=?");
+      args.add(specimen);
+    }
+    if ("ICU".equals(area)) w.append(" AND ward IN ('IMCU','CCB')");
+    if ("Wards".equals(area)) w.append(" AND ward NOT IN ('IMCU','CCB')");
+    if (!Ui.nz(onset).isEmpty()) {
+      w.append(" AND onset=?");
+      args.add(onset);
+    }
+    w.append(" ORDER BY sent_date, id");
+    const firstSeen = new JSet();
+    const codes = new JSet();
+    for (const c of db.rows(w.toString(), args)) {
+      t.cultures++;
+      if (!"Growth".equals(c.get("growth"))) {
+        if ("No growth".equals(c.get("growth"))) t.noGrowth++;
+        continue;
+      }
+      const org = Ui.nz(c.get("organism"));
+      if (org.isEmpty() || !firstSeen.add(c.get("patient_id") + "|" + org)) continue;   // first isolate per patient
+      t.isolates++;
+      t.used.add(c);
+      if (!t.n.containsKey(org)) {
+        t.n.put(org, 0);
+        t.orgs.add(org);
+      }
+      t.n.put(org, t.n.get(org) + 1);
+      const s = Antibiogram.sens(c);
+      for (const code of s.keySet()) {
+        const v = s.optString(code);
+        if (!v.equals("S") && !v.equals("I") && !v.equals("R")) continue;
+        codes.add(code);
+        const k = org + "|" + code;
+        let cell = t.cells.get(k);
+        if (cell == null) t.cells.put(k, cell = [0, 0]);
+        cell[1]++;
+        if (v.equals("S")) cell[0]++;
+      }
+      for (const f of Antibiogram.flags(org, s)) t.flagCount.put(f, t.flagCount.containsKey(f) ? t.flagCount.get(f) + 1 : 1);
+    }
+    for (const a of Antibiogram.ABX) if (codes.contains(a[0])) t.abx.add(a[0]);
+    const n = t.n;
+    t.orgs.sort((a, b) => n.get(b) - n.get(a));
+    return t;
+  }
+
+  /** The antibiotics most often susceptible across one group's isolates (E+N gram-negative, P gram-positive): code, %S, tested. */
+  static best(t, groups, minTested) {
+    const pool = new JMap();
+    for (const org of t.orgs) {
+      if (!groups.contains(Antibiogram.groupOf(org))) continue;
+      for (const code of t.abx) {
+        const c = t.cell(org, code);
+        if (c == null) continue;
+        let p = pool.get(code);
+        if (p == null) pool.put(code, p = [0, 0]);
+        p[0] += c[0];
+        p[1] += c[1];
+      }
+    }
+    const out = [];
+    let i = 0;
+    for (const a of Antibiogram.ABX) {
+      const p = pool.get(a[0]);
+      if (p != null && p[1] >= minTested) out.add([i, Math.round(100 * p[0] / p[1]), p[1]]);
+      i++;
+    }
+    out.sort((a, b) => b[1] !== a[1] ? b[1] - a[1] : b[2] - a[2]);
+    return out;
+  }
+
+  /** Green 80% and above, amber 60-79%, red below 60%. */
+  static colorOf(pct) {
+    if (pct < 0) return 0xFFF1F5F9;
+    if (pct >= 80) return 0xFFBBF7D0;
+    if (pct >= 60) return 0xFFFDE68A;
+    return 0xFFFECACA;
+  }
+
+  static since(period, today) {
+    if (period.equals("3 months")) return today.minusMonths(3).toString();
+    if (period.equals("6 months")) return today.minusMonths(6).toString();
+    if (period.equals("12 months")) return today.minusMonths(12).toString();
+    return "";
+  }
+
+  // ---------------------------------------------------------------- reading a report photo
+
+  static MARK = "Read this microbiology culture and sensitivity report";
+
+  static prompt() {
+    return Antibiogram.MARK + " photo. Copy only what is printed; do not guess. Leave out the patient's name, IP number and any other identifier. "
+        + "Reply only with these labelled lines, no markdown:\n"
+        + "SPECIMEN: blood, urine, sputum, ET aspirate, pus, CSF, pleural fluid, ascitic fluid or other\n"
+        + "GROWTH: Growth, No growth or Contaminant\n"
+        + "ORGANISM: the organism isolated, as printed\n"
+        + "COLONY: colony count if printed, else blank\n"
+        + "Then one line per antibiotic in the form: Antibiotic name = S or I or R (S sensitive, I intermediate, R resistant).";
+  }
+
+  /** The AI's (or a typed) report: specimen, growth, organism, colony and code -> S/I/R. */
+  static parse(text, out) {
+    const v = new JMap();
+    v.put("specimen", "");
+    v.put("growth", "");
+    v.put("organism", "");
+    v.put("colony", "");
+    for (const raw of Ui.nz(text).jsplit("\n")) {
+      const line = raw.split("*").join("").split("•").join("").trim();
+      if (line.isEmpty()) continue;
+      const up = line.toUpperCase();
+      const colon = line.indexOf(':');
+      if (colon > 0 && (up.startsWith("SPECIMEN") || up.startsWith("GROWTH") || up.startsWith("ORGANISM") || up.startsWith("COLONY"))) {
+        const val = line.substring(colon + 1).trim();
+        if (up.startsWith("SPECIMEN")) v.put("specimen", Antibiogram.specimenOf(val));
+        else if (up.startsWith("GROWTH")) v.put("growth", val.toLowerCase().contains("no growth") || val.toLowerCase().startsWith("no")
+            ? "No growth" : val.toLowerCase().contains("contamin") ? "Contaminant" : "Growth");
+        else if (up.startsWith("ORGANISM")) v.put("organism", Antibiogram.matchOrganism(val));
+        else v.put("colony", val);
+        continue;
+      }
+      const m = Pattern.compile("^(.+?)\\s*[=:\\-–]+\\s*(S|I|R|SENSITIVE|INTERMEDIATE|RESISTANT|SUSCEPTIBLE)\\b.*$",
+          Pattern.CASE_INSENSITIVE).matcher(line);
+      if (!m.matches()) continue;
+      const code = Antibiogram.matchAbx(m.group(1));
+      if (code == null) continue;
+      const r = m.group(2).substring(0, 1).toUpperCase();
+      try {
+        out.put(code, r.equals("S") || r.equals("I") || r.equals("R") ? r : "S");
+      } catch (ignored) {
+      }
+    }
+    if (v.get("growth").isEmpty()) v.put("growth", v.get("organism").isEmpty() && out.length() === 0 ? "" : "Growth");
+    return v;
+  }
+
+  static specimenOf(s) {
+    const t = Ui.nz(s).toLowerCase();
+    if (t.contains("blood")) return "Blood";
+    if (t.contains("urine")) return "Urine";
+    if (t.contains("endotracheal") || t.contains("et ") || t.startsWith("et") || t.contains("tracheal")) return "ET aspirate";
+    if (t.contains("sputum") || t.contains("bal") || t.contains("bronch")) return "Sputum / BAL";
+    if (t.contains("pus") || t.contains("wound") || t.contains("swab")) return "Pus / wound";
+    if (t.contains("csf")) return "CSF";
+    if (t.contains("pleural")) return "Pleural fluid";
+    if (t.contains("ascitic") || t.contains("peritoneal")) return "Ascitic fluid";
+    return t.isEmpty() ? "" : "Other";
+  }
+
+  // ---------------------------------------------------------------- the printed antibiogram
+
+  static doc(db, t, filters) {
+    const d = new FormDoc();
+    d.college = db.setting("college", "Tirunelveli Medical College Hospital");
+    d.address = "Tirunelveli";
+    d.dept = db.setting("dept", "Department of General Medicine");
+    d.title = "CUMULATIVE ANTIBIOGRAM";
+    d.footer = "Antibiogram from TVMCHMED  •  first isolate per patient (CLSI M39)  •  % susceptible";
+    d.fileBase = "Antibiogram_" + Dates.todayIso();
+    d.plain(1).row(14, new FormDoc.Cell(filters + "  •  " + t.isolates + " isolates from " + t.cultures + " cultures").size(8.5).center());
+    const per = 9;
+    for (let from = 0; from < Math.max(1, t.abx.size()); from += per) {
+      const cols = t.abx.subList(from, Math.min(t.abx.size(), from + per));
+      const w = new Array(cols.size() + 2).fill(0);
+      w[0] = 0.26;
+      w[1] = 0.07;
+      for (let i = 0; i < cols.size(); i++) w[i + 2] = cols.isEmpty() ? 0.67 : 0.67 / cols.size();
+      const b = d.block(from === 0 ? "% SUSCEPTIBLE" : "% SUSCEPTIBLE (continued)", 0xFF15803D, w);
+      const head = new Array(cols.size() + 2).fill(null);
+      head[0] = new FormDoc.Cell("Organism").b().size(8).fill(0xFFE2E8F0);
+      head[1] = new FormDoc.Cell("n").b().size(8).fill(0xFFE2E8F0).center();
+      for (let i = 0; i < cols.size(); i++) head[i + 2] = new FormDoc.Cell(Antibiogram.name(cols.get(i))).b().size(6.5).fill(0xFFE2E8F0).center();
+      b.row(22, head);
+      for (const org of t.orgs) {
+        const row = new Array(cols.size() + 2).fill(null);
+        const n = t.n.get(org);
+        row[0] = new FormDoc.Cell(org).size(8).b();
+        row[1] = new FormDoc.Cell(n + (n < Antibiogram.MIN_RELIABLE ? "*" : "")).size(8).center();
+        for (let i = 0; i < cols.size(); i++) {
+          const p = t.pct(org, cols.get(i));
+          row[i + 2] = new FormDoc.Cell(p < 0 ? "" : String(p)).size(8).center().fill(p < 0 ? 0 : Antibiogram.colorOf(p));
+        }
+        b.row(16, row);
+      }
+    }
+    const fl = new StringBuilder();
+    for (const e of t.flagCount.entrySet())
+      fl.append(fl.length() === 0 ? "" : "   •   ").append(e.getKey()).append(": ").append(e.getValue());
+    if (fl.length() > 0) d.block("RESISTANCE", 0xFFDC2626, 1).row(16, new FormDoc.Cell(fl.toString()).size(8.5));
+    d.plain(1).row(30, new FormDoc.Cell("* fewer than " + Antibiogram.MIN_RELIABLE + " isolates: interpret with care. Green 80% or more, amber 60-79%, red below 60%. "
+        + "Blank: not tested. ESBL likely = resistant to a third-generation cephalosporin. Local data for empirical choice only; treat by the patient's own culture "
+        + "and the microbiologist's advice.").size(7.5).color(0xFF475569));
+    return d;
+  }
+}
+
+Antibiogram.Table = class {
+  constructor() {
+    this.orgs = [];
+    this.abx = [];
+    /** organism -> isolates counted. */
+    this.n = new JMap();
+    /** "organism|code" -> {susceptible, tested}. */
+    this.cells = new JMap();
+    /** flag -> isolates with it. */
+    this.flagCount = new JMap();
+    this.isolates = 0;
+    this.cultures = 0;
+    this.noGrowth = 0;
+    this.used = [];
+  }
+
+  cell(org, code) {
+    return this.cells.get(org + "|" + code);
+  }
+
+  /** Percentage susceptible, or -1 when not tested. */
+  pct(org, code) {
+    const c = this.cell(org, code);
+    return c == null || c[1] === 0 ? -1 : Math.round(100 * c[0] / c[1]);
+  }
+};
+;
+/* ---- app/AntibiogramActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The department's cumulative antibiogram: % susceptible for each organism and antibiotic, coloured green / amber / red, with
+ * filters, the resistance flags, the antibiotics most often susceptible for gram-negative and gram-positive infections, the
+ * recent isolates, and a PDF or Word copy for the notice board.
+ */
+class AntibiogramActivity extends Base {
+  static PERIODS = ["3 months", "6 months", "12 months", "All"];
+  static AREAS = ["", "ICU", "Wards"];
+  static AREA_LABELS = ["All areas", "ICU (IMCU + CCB)", "Wards"];
+  static ONSETS = ["", "Community", "Hospital"];
+  static ONSET_LABELS = ["Any onset", "Community", "Hospital (48 h+)"];
+  static NAME_W = 150;
+  static CELL_W = 46;
+  static N_W = 40;
+
+  constructor() { super(); this.period = "12 months"; this.specimen = ""; this.area = ""; this.onset = ""; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    if (b != null) {
+      this.period = b.getString("period", this.period);
+      this.specimen = b.getString("specimen", "");
+      this.area = b.getString("area", "");
+      this.onset = b.getString("onset", "");
+    }
+    this.setTitle("Antibiogram");
+    this.subtitle = "% of isolates susceptible, from our own cultures";
+    this.headerColor(Antibiogram.COLOR);
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("period", this.period);
+    out.putString("specimen", this.specimen);
+    out.putString("area", this.area);
+    out.putString("onset", this.onset);
+  }
+
+  chips(values, labels, current, color, p) {
+    const row = Ui.h(this);
+    row.setPadding(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), 0);
+    for (let i = 0; i < values.length; i++) {
+      const v = values[i];
+      const c = Ui.chip(this, labels[i], v.equals(current), color);
+      c.setOnClickListener({
+        onClick: (x) => {
+          p.pick(v);
+          this.render();
+        }
+      });
+      row.addView(c);
+    }
+    return Ui.hscroll(this, row);
+  }
+
+  filters() {
+    return (this.period.equals("All") ? "All time" : "Last " + this.period) + "  •  " + (this.specimen.isEmpty() ? "All specimens" : this.specimen)
+        + "  •  " + AntibiogramActivity.AREA_LABELS[AntibiogramActivity.AREAS.indexOf(this.area)] + "  •  " + AntibiogramActivity.ONSET_LABELS[AntibiogramActivity.ONSETS.indexOf(this.onset)];
+  }
+
+  table() {
+    return Antibiogram.build(this.db, Antibiogram.since(this.period, Dates.today()), this.specimen, this.area, this.onset);
+  }
+
+  render() {
+    const t = this.table();
+    const page = Ui.v(this);
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Antibiogram.COLOR), 20));
+    hero.addView(Ui.tv(this, "🧫  " + t.isolates + (t.isolates === 1 ? " isolate" : " isolates"), 22, Color.WHITE, true));
+    hero.addView(Ui.tv(this, "from " + t.cultures + " cultures (" + t.noGrowth + " no growth)  ·  first isolate per patient", 13, 0xE6FFFFFF, false));
+    if (!t.flagCount.isEmpty()) {
+      const b = new StringBuilder();
+      for (const e of t.flagCount.entrySet())
+        b.append(b.length() === 0 ? "" : "   ").append(e.getKey()).append(" ").append(e.getValue())
+            .append(" (").append(Math.round(100 * e.getValue() / Math.max(1, t.isolates))).append("%)");
+      const fl = Ui.tv(this, b.toString(), 13, Color.WHITE, true);
+      fl.setBackground(Glass.frost(this, 12));
+      fl.setPadding(Ui.dp(this, 10), Ui.dp(this, 5), Ui.dp(this, 10), Ui.dp(this, 5));
+      hero.addView(fl);
+      Ui.margins(fl, 0, 8, 0, 0);
+    }
+    page.addView(hero);
+
+    page.addView(this.chips(AntibiogramActivity.PERIODS, AntibiogramActivity.PERIODS, this.period, Antibiogram.COLOR, {
+      pick: (v) => { this.period = v; }
+    }));
+    const sv = new Array(Antibiogram.SPECIMENS.length + 1).fill(null), sl = new Array(sv.length).fill(null);
+    sv[0] = "";
+    sl[0] = "All specimens";
+    for (let i = 0; i < Antibiogram.SPECIMENS.length; i++) sv[i + 1] = sl[i + 1] = Antibiogram.SPECIMENS[i];
+    page.addView(this.chips(sv, sl, this.specimen, Ui.TEAL, {
+      pick: (v) => { this.specimen = v; }
+    }));
+    page.addView(this.chips(AntibiogramActivity.AREAS, AntibiogramActivity.AREA_LABELS, this.area, Ui.RED, {
+      pick: (v) => { this.area = v; }
+    }));
+    page.addView(this.chips(AntibiogramActivity.ONSETS, AntibiogramActivity.ONSET_LABELS, this.onset, Ui.PURPLE, {
+      pick: (v) => { this.onset = v; }
+    }));
+
+    if (t.isolates === 0) {
+      page.addView(this.emptyNote("No culture with growth for these filters yet. Cultures are added from a patient's page (🧫), or from a culture result in Pending results."));
+    } else {
+      page.addView(Ui.heading(this, "% susceptible  ·  tap a name for the full word", Antibiogram.COLOR));
+      page.addView(this.grid(t));
+      const key = Ui.muted(this, "Green 80% or more · amber 60-79% · red below 60% · blank not tested · * fewer than " + Antibiogram.MIN_RELIABLE
+          + " isolates, interpret with care.");
+      key.setPadding(Ui.dp(this, 16), Ui.dp(this, 6), Ui.dp(this, 16), 0);
+      page.addView(key);
+
+      this.bestCard(page, t, "EN", "Gram-negative: most often susceptible");
+      this.bestCard(page, t, "P", "Gram-positive: most often susceptible");
+      this.bestCard(page, t, "F", "Fungi: most often susceptible");
+
+      page.addView(Ui.heading(this, "Recent isolates", Ui.SLATE));
+      let shown = 0;
+      for (let i = t.used.size() - 1; i >= 0 && shown < 15; i--, shown++) {
+        const c = t.used.get(i);
+        const p = this.db.row("SELECT name, location FROM patients WHERE id=?", c.get("patient_id"));
+        const bad = !Ui.nz(c.get("flags")).isEmpty();
+        page.addView(this.entryCard(bad ? c.get("flags") : Ui.nz(c.get("specimen")), bad ? Ui.RED : Antibiogram.COLOR, Ui.nz(c.get("organism")),
+            (p == null ? "" : Ui.nz(p.get("name")) + "  ·  ") + Db.shortName(c.get("ward")) + "  ·  " + Ui.nz(c.get("specimen")) + "  ·  " + Ui.nz(c.get("onset")) + " onset",
+            Dates.nice(c.get("sent_date")), this.opener(CultureActivity, "id", c.get("patient_id"))));
+      }
+    }
+
+    const bb = Ui.v(this);
+    bb.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    bb.addView(Ui.buttonRow(this, Ui.button(this, "PDF", Antibiogram.COLOR, {
+      onClick: (v) => { this.export_(true); }
+    }), Ui.outlineButton(this, "Word", Antibiogram.COLOR, {
+      onClick: (v) => { this.export_(false); }
+    })));
+    page.addView(bb);
+    const note = Ui.muted(this, "Local data to guide the first antibiotic before the patient's own culture is back. Always treat by the patient's culture "
+        + "and the microbiologist's advice, and follow the hospital antibiotic policy.");
+    note.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+
+  cell(s, w, fill, bold) {
+    const c = Ui.tv(this, s, 12, Ui.TEXT, bold);
+    c.setGravity(Gravity.CENTER);
+    c.setSingleLine(true);
+    c.setBackground(Ui.round(this, fill, 4));
+    const lp = new LinearLayout.LayoutParams(Ui.dp(this, w), Ui.dp(this, 32));
+    lp.setMargins(Ui.dp(this, 1), Ui.dp(this, 1), Ui.dp(this, 1), Ui.dp(this, 1));
+    c.setLayoutParams(lp);
+    return c;
+  }
+
+  /** Organisms down, antibiotics across (codes; tap a code for its name). */
+  grid(t) {
+    const card = Ui.card(this);
+    const rows = Ui.v(this);
+    const head = Ui.h(this);
+    const o = this.cell("Organism", AntibiogramActivity.NAME_W, 0xFFE2E8F0, true);
+    o.setGravity(Gravity.CENTER_VERTICAL);
+    head.addView(o);
+    head.addView(this.cell("n", AntibiogramActivity.N_W, 0xFFE2E8F0, true));
+    for (const code of t.abx) {
+      const h = this.cell(code, AntibiogramActivity.CELL_W, 0xFFE2E8F0, true);
+      h.setOnClickListener({
+        onClick: (v) => { Ui.toast(this, code + " = " + Antibiogram.name(code)); }
+      });
+      head.addView(h);
+    }
+    rows.addView(head);
+    for (const org of t.orgs) {
+      const r = Ui.h(this);
+      const n = t.n.get(org);
+      const name = this.cell(org, AntibiogramActivity.NAME_W, 0xFFF8FAFC, true);
+      name.setGravity(Gravity.CENTER_VERTICAL);
+      name.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 4), 0);
+      name.setTextSize(11);
+      r.addView(name);
+      r.addView(this.cell(n + (n < Antibiogram.MIN_RELIABLE ? "*" : ""), AntibiogramActivity.N_W, 0xFFF8FAFC, false));
+      for (const code of t.abx) {
+        const p = t.pct(org, code);
+        r.addView(this.cell(p < 0 ? "" : String(p), AntibiogramActivity.CELL_W, Antibiogram.colorOf(p), p >= 0 && p < 60));
+      }
+      rows.addView(r);
+    }
+    card.addView(Ui.hscroll(this, rows));
+    return card;
+  }
+
+  bestCard(page, t, groups, title) {
+    const best = Antibiogram.best(t, groups, 5);
+    if (best.isEmpty()) return;
+    page.addView(Ui.heading(this, title, Antibiogram.COLOR));
+    const card = Ui.card(this);
+    let shown = 0;
+    for (const b of best) {
+      if (shown++ === 6) break;
+      const r = Ui.h(this);
+      r.setGravity(Gravity.CENTER_VERTICAL);
+      r.setPadding(0, Ui.dp(this, 3), 0, Ui.dp(this, 3));
+      r.addView(Ui.tv(this, Antibiogram.ABX[b[0]][1], 14, Ui.TEXT, true), Ui.weight(1));
+      const pct = Ui.tv(this, b[1] + "%", 14, Ui.TEXT, true);
+      pct.setGravity(Gravity.CENTER);
+      pct.setBackground(Ui.round(this, Antibiogram.colorOf(b[1]), 8));
+      pct.setPadding(Ui.dp(this, 10), Ui.dp(this, 3), Ui.dp(this, 10), Ui.dp(this, 3));
+      r.addView(pct);
+      const n = Ui.muted(this, "  of " + b[2]);
+      r.addView(n);
+      card.addView(r);
+    }
+    page.addView(card);
+  }
+
+  export_(pdf) {
+    const t = this.table();
+    if (t.isolates === 0) {
+      Ui.toast(this, "No isolates for these filters");
+      return;
+    }
+    let rel;
+    try {
+      const d = Antibiogram.doc(this.db, t, this.filters());
+      rel = pdf ? d.pdf(this) : d.docx(this);
+    } catch (e) {
+      Ui.toast(this, "Could not make the file: " + e.getMessage());
+      return;
+    }
+    new AlertDialog.Builder(this).setTitle((pdf ? "PDF" : "Word") + " antibiogram ready")
+        .setItems(["Share", "Open"], {
+          onClick: (d, w) => {
+            if (w === 0) Store.share(this, rel, "Antibiogram");
+            else Store.openWith(this, rel);
+          }
+        }).setNegativeButton("Close", null).show();
   }
 }
 ;
@@ -15149,7 +16193,7 @@ class Beacon {
       .setColor(Ui.GREEN)
       .setAutoCancel(true)
       .setContentIntent(pi);
-    nm.notify(("att" + s.get("id")).hashCode(), b.build());
+    if (Notify.on(c)) nm.notify(("att" + s.get("id")).hashCode(), b.build());
   }
 }
 
@@ -19398,6 +20442,8 @@ class CaseSheetActivity extends Base {
     this.p = null;
     this.data = null;
     this.editable = true;
+    this.prefillShown = false;
+    this.notePrefillShown = false;
     this.askedThisFocus = false;
     this.dictTarget = null;
     this.dictMulti = false;
@@ -19409,6 +20455,7 @@ class CaseSheetActivity extends Base {
   static REQ_DICT_ALL = 92;
   static REQ_SCAN_CAMERA = 93;
   static REQ_SCAN_PICK = 94;
+  static REQ_SCAN_LIVE = 95;
   /** The Tamil voice note (8.30): the browser's speech dialog in Tamil, then the AI writes the English note. */
   static REQ_TAMIL = 95;
   static PROGRESS_COLOR = 0xFF0891B2;
@@ -19484,6 +20531,23 @@ class CaseSheetActivity extends Base {
       page.addView(this.sectionCard(s, CaseSheetActivity.groupColor(g)));
     }
     this.setPage(page);
+    // the clinical lines of a WhatsApp admission message (8.70), once, through the same preview as a scanned sheet
+    const prefill = this.getIntent().getStringExtra("prefill");
+    if (prefill != null && !this.prefillShown && this.editable) {
+      this.prefillShown = true;
+      const parts = CaseScan.parse(prefill);
+      if (!parts.isEmpty()) this.previewParts(parts, "From the WhatsApp message", null);
+    }
+    // a progress note drafted by the Copilot (8.90), opened once for the doctor to check and save
+    const notePre = this.getIntent().getStringExtra("note_prefill");
+    if (notePre != null && !this.notePrefillShown && this.editable) {
+      this.notePrefillShown = true;
+      try {
+        this.note(-1, new JSONObject(notePre));
+      } catch (e) {
+        this.note(-1);
+      }
+    }
   }
 
   liveRefresh() {
@@ -19692,10 +20756,18 @@ class CaseSheetActivity extends Base {
     const hint = Ui.muted(this, "Photograph the handwritten pages (up to " + CaseScan.MAX_PAGES + "). An AI reads them into the sections; nothing is saved until you check the preview.");
     card.addView(hint);
     Ui.margins(hint, 0, 4, 0, 6);
-    card.addView(Ui.buttonRow(this, Ui.button(this, "📷  Scan pages", Ui.PRIMARY, {
+    card.addView(Ui.buttonRow(this, Ui.button(this, "📹  Live scan", Ui.PRIMARY, {
+      onClick: (v) => { if (!this.locked()) this.scanLive(); }
+    }), Ui.outlineButton(this, "📷  Photos", Ui.PRIMARY, {
       onClick: (v) => { if (!this.locked()) this.scanStart(); }
     })));
     return card;
+  }
+
+  /** Live scan (8.70): hold the phone over the pages; each is taken by itself. Read when Done is tapped. */
+  scanLive() {
+    this.scanClean();
+    LiveScanActivity.start(this, "casescan", CaseScan.MAX_PAGES, "Paper case sheet: cover the name and IP number", CaseSheetActivity.REQ_SCAN_LIVE);
   }
 
   scanStart() {
@@ -19950,6 +21022,13 @@ class CaseSheetActivity extends Base {
     super.onActivityResult(req, res, data);
     if (req === CaseSheetActivity.REQ_SCAN_CAMERA || req === CaseSheetActivity.REQ_SCAN_PICK) {
       this.scanResult(req, res, data);
+      return;
+    }
+    if (req === CaseSheetActivity.REQ_SCAN_LIVE) {
+      if (res === RESULT_OK) {
+        this.scanPages.addAll(LiveScanActivity.pagesOf(data));
+        if (!this.scanPages.isEmpty()) this.scanRead();
+      }
       return;
     }
     if (req === CaseSheetActivity.REQ_TAMIL) {
@@ -21329,6 +22408,11 @@ class CaseSheetActivity extends Base {
       });
       card.addView(chk);
       Ui.margins(chk, 0, 8, 0, 0);
+      if (CaseSheet.TREATMENT === key) {
+        const kd = Ui.outlineButton(this, "💧 Kidney doses", KidneyDose.COLOR, this.opener(KidneyDoseActivity, "id", String(this.id)));
+        card.addView(kd);
+        Ui.margins(kd, 0, 6, 0, 0);
+      }
       const dn = Ui.muted(this, "Decision support, check a drug reference. Offline list, not complete.");
       dn.setTextSize(11);
       card.addView(dn);
@@ -21806,7 +22890,7 @@ class Census {
     b.setSmallIcon(R.drawable.ic_census).setContentTitle("Daily census posted · " + o.optString("unit") + " admission day")
         .setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text + "\nTap to see it and share it on WhatsApp."))
         .setColor(Ui.PRIMARY).setAutoCancel(true).setContentIntent(pi);
-    nm.notify(7307, b.build());
+    if (Notify.on(c)) nm.notify(7307, b.build());
   }
 
   static headline(o) {
@@ -24018,7 +25102,7 @@ class Chat {
         .setContentIntent(pi);
     if (Build.VERSION.SDK_INT < 26) b.setPriority(Notification.PRIORITY_HIGH).setDefaults(Notification.DEFAULT_ALL);
     try {
-      nm.notify(7100, b.build());
+      if (Notify.on(c)) nm.notify(7100, b.build());
     } catch (ignored) {
       // notifications not allowed on this phone
     }
@@ -24214,7 +25298,7 @@ class ChatActivity extends Base {
         + " ORDER BY time, id", String(this.chatId), duty ? E2e.dutyStart() : "");
     if (ms.isEmpty()) {
       const t = Ui.tv(this, this.onlyImportant ? "No important messages." : "🔒 Messages here are shared only with "
-          + (Chat.isGroup(this.chat) && Ui.nz(this.chat.get("members")).isEmpty() ? "the department faculty." : "the members of this chat.") + "\nSay hello 👋", 13, 0xFF54656F, false);
+          + (Chat.isGroup(this.chat) && Ui.nz(this.chat.get("members")).isEmpty() ? "the department faculty." : "the members of this chat.") + "\n" + Conduct.ruleLine() + "\nSay hello 👋", 13, 0xFF54656F, false);
       t.setGravity(Gravity.CENTER);
       t.setBackground(Ui.round(this, 0xFFFFF5C4, 10));
       t.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
@@ -24252,7 +25336,7 @@ class ChatActivity extends Base {
     const team = Chat.dutyTeam(this.db);
     const ready = E2e.ready(this.db, team);
     let s = "🔒 End-to-end encrypted: only today's duty team can read these messages and files.\n"
-        + "⏱ Everything here disappears at 7:30 AM when the DAP's duty ends.\n🚫 Screenshots are blocked.";
+        + "⏱ Everything here disappears at 7:30 AM when the DAP's duty ends.\n🚫 Screenshots are blocked.\n" + Conduct.ruleLine();
     if (ready < team.size()) s += "\n⚠ " + (team.size() - ready) + " of " + team.size() + " team members need to open the latest app before they can read new messages.";
     const t = Ui.tv(this, s, 12, 0xFF54656F, false);
     t.setBackground(Ui.round(this, 0xFFFFF5C4, 10));
@@ -24466,6 +25550,7 @@ class ChatActivity extends Base {
     if (mine) items.add("1" === m.get("important") ? "Remove important mark" : "Mark as important");
     if (mine) items.add("Message info");
     if (mine) items.add("Delete for everyone");
+    if (!mine && Conduct.canReport(this, m.get("sender_id"))) items.add("🚩 Report to admin");
     new AlertDialog.Builder(this).setItems(items.slice(), {
       onClick: (d, w) => {
         const it = items.get(w);
@@ -24484,6 +25569,8 @@ class ChatActivity extends Base {
           cv.put("important", "1" === m.get("important") ? "" : "1");
           db.update("chat_messages", cv, Long.parseLong(m.get("id")));
           this.render();
+        } else if (it.equals("🚩 Report to admin")) {
+          Conduct.report(this, "chat_messages", m.get("id"), m.get("sender_id"), m.get("sender_name"), m.get("text"), m.get("file"));
         } else if (it.equals("Message info")) {
           this.messageInfo(m);
         } else if (it.equals("Delete for everyone")) {
@@ -26481,6 +27568,566 @@ class CmchisStages {
   }
 }
 ;
+/* ---- app/Conduct.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The department's conduct rule (8.80): pornographic photos or videos and vulgar chat are strictly prohibited. Anyone other than the
+ * admin who writes a vulgar word where members post (chats, PG Connect, learning boards, comments, PG questions, journals,
+ * presentations, achievements) is not posted: the account is blocked and removed at once, the department's records leave the phone,
+ * and the evidence (a picture of what was written, the app's own screenshot) goes to the admin. Photos and files cannot be checked by
+ * the phone, so any member can report one: it is hidden for everyone and its sender is removed at once when a faculty member reports
+ * it (or a second member does); otherwise the admin decides. Only the admin sees the reports and can restore a member.
+ * Clinical records (case sheets, notes, call overs) are never checked: they may quote what a patient said.
+ */
+class Conduct {
+  static COLOR = 0xFFB91C1C;
+  static RULE = "Posting pornographic photos or videos and vulgar chatting is strictly prohibited. Any member other than the admin " + "who does so is blocked and removed from the app immediately, and a screenshot of what was posted is sent to the admin.";
+  /** Tables where members post to each other. */
+  static POSTING = ["chat_messages", "pgc_msgs", "learn_points", "learn_notes", "spot_comments", "spots", "achievements", "doubts", "doubt_answers", "journals", "acad_files"];
+  static PLACES = ["Chat", "PG Connect", "Topic of the day", "Learning board", "Spot diagnosis comment", "Spot diagnosis", "Achievements", "PG questions", "PG questions answer", "Journals", "Presentations"];
+  /** Columns that hold no words a person typed. */
+  static SKIP = ["file", "image", "members", "time", "date", "created", "added_on", "doi", "link", "patient"];
+
+  /** Strong vulgar words in English, Hindi and Tamil (typed in English letters or Tamil script), and porn sites. */
+  static WORDS = ["f+u+c*k+(?:e?d|er|ers|ing|in|s|off|face|head)?", "f[*#.@]+c?k\\w*", "f+u+k+(?:ing|er|ed)?", "m+o+t+h+e+r+f+\\w*", "bitch\\w*", "bastard\\w*", "slut\\w*", "whore\\w*", "cunt\\w*", "dickhead\\w*", "puss(?:y|ies)", "boob(?:s|ies)?", "tits", "porn\\w*", "nudes", "send nude\\w*", "blow ?jobs?", "hand ?jobs?", "jerk(?:ing)? off", "wank(?:er|ers|ing)?", "assholes?", "sex ?(?:chat|video|tape|clip)s?", "madar ?chod\\w*", "behen ?chod\\w*", "bhen ?chod\\w*", "bhosd\\w*", "chutiy\\w*", "gaand(?:u|oo)?", "gandu", "pund(?:a|ai|e)", "o+t+h+a+", "o+m+m+a+l+a+\\w*", "the+v[ui]?d[iy]+y\\w*", "koo+thi", "oomb\\w*", "baadu", "pornhub", "xvideos", "xnxx", "xhamster", "onlyfans", "redtube", "youporn", "brazzers", "spankbang", "chaturbate", "stripchat"];
+  static TAMIL = ["புண்டை", "ஓத்த", "ஓம்மால", "தேவிடியா", "தேவுடியா", "கூதி", "ஊம்பு", "சுன்னி"];
+
+  static pattern_ = null;
+  static patternFor = null;
+  static ruleShowing = false;
+
+  /** The admin's own extra words (Conduct reports: Extra words), one per comma. */
+  static extraWords(db) {
+    return Ui.nz(db.setting("admin_conduct_words", ""));
+  }
+
+  /** Web: a native RegExp with the u flag, so \p{L} and \p{N} work as in Java. */
+  static pattern(extra) {
+    if (Conduct.pattern_ != null && extra === Conduct.patternFor) return Conduct.pattern_;
+    const sb = new StringBuilder();
+    for (const w of Conduct.WORDS) sb.append(sb.length() === 0 ? "" : "|").append(w);
+    for (const w of extra.split(",")) {
+      const t = w.trim().toLowerCase();
+      if (t.length >= 3) sb.append('|').append(Pattern.quote(t)).append("\\w*");
+    }
+    Conduct.pattern_ = new RegExp("(?<![\\p{L}\\p{N}])(?:" + sb.toString() + ")(?![\\p{L}\\p{N}])", "u");
+    Conduct.patternFor = extra;
+    return Conduct.pattern_;
+  }
+
+  /** Lower case, with look-alike digits and signs as letters, so "f0ck" or "b1tch" are caught. */
+  static norm(s) {
+    const b = new StringBuilder();
+    for (const ch of Ui.nz(s).toLowerCase().split("")) {
+      switch (ch) {
+        case '0': b.append('o'); break;
+        case '1': b.append('i'); break;
+        case '3': b.append('e'); break;
+        case '4': b.append('a'); break;
+        case '5': b.append('s'); break;
+        case '7': b.append('t'); break;
+        case '@': b.append('a'); break;
+        case '$': b.append('s'); break;
+        default: b.append(ch);
+      }
+    }
+    return b.toString();
+  }
+
+  /** The first vulgar word in the text, as written, or null. */
+  static find(text, extra) {
+    const t = Ui.nz(text);
+    if (t.trim().isEmpty()) return null;
+    for (const w of Conduct.TAMIL) if (t.contains(w)) return w;
+    const n = Conduct.norm(t);
+    const m = Conduct.pattern(Ui.nz(extra)).exec(n);
+    if (m == null) return null;
+    return t.length === n.length ? t.substring(m.index, m.index + m[0].length) : m[0];
+  }
+
+  static place(table) {
+    for (let i = 0; i < Conduct.POSTING.length; i++) if (Conduct.POSTING[i].equals(table)) return i;
+    return -1;
+  }
+
+  static placeLabel(table) {
+    const i = Conduct.place(table);
+    return i < 0 ? table : Conduct.PLACES[i];
+  }
+
+  /** The words a person typed into a row (not file names, ids or times). */
+  static typed(cv) {
+    const b = new StringBuilder();
+    for (const k of cv.keySet()) {
+      const v = cv.get(k);
+      if (typeof v !== 'string' || k.equals("id") || k.endsWith("_id") || k.endsWith("_staff")) continue;
+      let skip = false;
+      for (const s of Conduct.SKIP) if (s.equals(k)) skip = true;
+      if (!skip) b.append(v).append('\n');
+    }
+    return b.toString().trim();
+  }
+
+  /** The admin's phone, and a phone that does not share records, are never blocked (offline the message is only refused). */
+  static exempt(c) {
+    return Cloud.isOwner(c);
+  }
+
+  /** Called by Db before a row is added or changed: true when it must not be saved. */
+  static blocks(c, db, table, cv) {
+    if (Conduct.place(table) < 0 || Conduct.exempt(c)) return false;
+    const text = Conduct.typed(cv);
+    const word = Conduct.find(text, Conduct.extraWords(db));
+    if (word == null) return false;
+    if (!Cloud.active(c)) {
+      Conduct.toast(c, "Not saved: vulgar words are not allowed in TVMCHMED.");
+      return true;
+    }
+    Conduct.violation(c, db, table, text, word);
+    return true;
+  }
+
+  static toast(c, s) {
+    new Handler(Looper.getMainLooper()).post({ run: () => { Toast.makeText(c, s, Toast.LENGTH_LONG).show(); } });
+  }
+
+  // ---------- removing the writer ----------
+
+  static prefs(c) {
+    return c.getApplicationContext().getSharedPreferences("conduct", Context.MODE_PRIVATE);
+  }
+
+  // interface Server { self(c, evidence); report(c, tbl, pk, staff, evidence); list(c); decide(c, id, what); }  Talks to the server; tests put in their own.
+
+  /** Not posted: the evidence waits on the phone until the server has it, the account is shut and the records leave the phone. */
+  static violation(c, db, table, text, word) {
+    const app = c.getApplicationContext();
+    try {
+      const who = Chat.myName(app, db);
+      const when = Dates.todayIso() + " " + Dates.now();
+      const where = Conduct.placeLabel(table);
+      const e = new JSONObject();
+      e.put("where", where);
+      e.put("text", text.length > 2000 ? text.substring(0, 2000) + "…" : text);
+      e.put("word", word);
+      e.put("user", Cloud.prefs(app).getString("user_id", ""));
+      e.put("image", Conduct.evidence(app, "Removed automatically: vulgar words", ["Written by: " + who, "In: " + where, "When: " + Dates.nice(Dates.todayIso()) + " " + Dates.now(),
+        "Word found: " + word], text, null));
+      Conduct.prefs(app).edit().putString("pending", e.toString()).putBoolean("removed", true).putString("when", when).apply();
+    } catch (ignored) {
+      // the account is still shut below
+    }
+    Cloud.prefs(app).edit().putString("role", "blocked").apply();
+    new Handler(Looper.getMainLooper()).post({ run: () => {
+      Sync.lockOut(app);
+      app.startActivity(new Intent(app, AccountActivity).putExtra("gate", true)
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+      new Thread({ run: () => {
+        try {
+          Conduct.flush(app);
+        } catch (ignored) {
+          // tried again whenever the phone asks the server for its role
+        }
+      } }).start();
+    } });
+  }
+
+  static hasPending(c) {
+    return !Conduct.prefs(c).getString("pending", "").isEmpty();
+  }
+
+  /** Sends waiting evidence to the server (which blocks the account there). Throws when it could not, so the role check waits. */
+  static flush(c) {
+    const p = Conduct.prefs(c).getString("pending", "");
+    if (p.isEmpty()) return;
+    const e = new JSONObject(p);
+    const user = e.optString("user");
+    if (!user.isEmpty() && !user.equals(Cloud.prefs(c).getString("user_id", ""))) return;   // another account on this phone
+    Conduct.server.self(c, e);
+    Conduct.prefs(c).edit().remove("pending").apply();
+  }
+
+  static removedForConduct(c) {
+    return Conduct.prefs(c).getBoolean("removed", false);
+  }
+
+  // ---------- reporting a photo, file or message ----------
+
+  /** Who may report: any approved member except about their own post. */
+  static canReport(c, senderStaff) {
+    if (!Cloud.active(c)) return false;
+    return senderStaff == null || !String(senderStaff).equals(String(Cloud.myStaff(c)));
+  }
+
+  /** "Report to admin" for a member's post: the post is hidden for everyone and the evidence goes to the admin. */
+  static report(a, table, pk, senderStaff, senderName, text, fileRel) {
+    const db = Db.get(a);
+    new AlertDialog.Builder(a).setTitle("🚩 Report to the admin?")
+      .setMessage("For pornographic photos or videos, or vulgar words, from " + (Ui.nz(senderName).isEmpty() ? "this member" : senderName) + ".\n\n"
+        + "It is hidden for everyone at once and a screenshot goes to the admin. When a faculty member reports it (or a second member "
+        + "does), the sender is blocked and removed at once; otherwise the admin decides.")
+      .setPositiveButton("Report", { onClick: (d, w) => {
+        Conduct.work(a, "Reporting…", { run: () => {
+          const photo = fileRel != null && !fileRel.isEmpty() && Store.isImage(fileRel) && db.file(fileRel).exists() ? db.file(fileRel) : null;
+          const lines = [];
+          lines.add("Posted by: " + Ui.nz(senderName));
+          lines.add("In: " + Conduct.placeLabel(table));
+          lines.add("Reported by: " + Chat.myName(a, db) + " on " + Dates.nice(Dates.todayIso()) + " " + Dates.now());
+          if (fileRel != null && !fileRel.isEmpty() && photo == null) lines.add("File: " + new File(fileRel).getName());
+          const e = new JSONObject();
+          e.put("where", Conduct.placeLabel(table));
+          e.put("text", Ui.nz(text).length > 2000 ? text.substring(0, 2000) + "…" : Ui.nz(text));
+          e.put("image", Conduct.evidence(a, "Reported to the admin", lines, text, photo));
+          let staff = -1;
+          try { staff = Long.parseLong(Ui.nz(senderStaff)); } catch (ignored) {}
+          const r = Conduct.server.report(a, table, pk, staff, e);
+          Conduct.hideLocal(db, table, pk);
+          return "blocked".equals(r) ? "Reported. The post is hidden and " + (Ui.nz(senderName).isEmpty() ? "the sender" : senderName) + " has been removed from the app."
+            : "Reported. The post is hidden for everyone and the admin will decide.";
+        } });
+      } }).setNegativeButton("Cancel", null).show();
+  }
+
+  /** The server hides the post for everyone; this phone drops it now, without sending a delete of its own. */
+  static hideLocal(db, table, pk) {
+    const w = db.getWritableDatabase();
+    w.beginTransaction();
+    try {
+      w.execSQL("INSERT INTO sync_mute VALUES (1)");
+      w.delete(table, Db.keyCol(table) + "=?", [String(pk)]);
+      w.execSQL("DELETE FROM sync_mute");
+      w.setTransactionSuccessful();
+    } finally {
+      w.endTransaction();
+    }
+  }
+
+  // interface Task { String run(); }
+
+  /** Network work off the main thread with a spinner; shows the returned message or the error, then redraws the screen. */
+  static work(a, what, task) {
+    const pd = new ProgressDialog(a);
+    pd.setMessage(what);
+    pd.setCancelable(false);
+    pd.show();
+    new Thread({ run: () => {
+      let msg;
+      try { msg = task.run(); } catch (e) { msg = "Failed: " + (e.getMessage() == null ? String(e) : e.getMessage()); }
+      const m = msg;
+      a.runOnUiThread({ run: () => {
+        try { pd.dismiss(); } catch (ignored) {}
+        if (a.isFinishing()) return;
+        if (m != null) new AlertDialog.Builder(a).setMessage(m).setPositiveButton("OK", null).show();
+        a.render();
+      } });
+    } }).start();
+  }
+
+  // ---------- the evidence picture ----------
+
+  /** A picture of what was posted (the app's own screenshot, since screenshots are blocked in chats), as base64 JPEG. */
+  static evidence(c, title, lines, text, photo) {
+    const w = 720, pad = 28;
+    const head = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+    head.setColor(Color.WHITE);
+    head.setTextSize(30);
+    head.setFakeBoldText(true);
+    const small = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+    small.setColor(0xFF334155);
+    small.setTextSize(22);
+    const body = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+    body.setColor(0xFF111827);
+    body.setTextSize(26);
+    const info = new StringBuilder();
+    for (const l of lines) info.append(info.length() === 0 ? "" : "\n").append(l);
+    const infoL = new StaticLayout(info.toString(), small, w - 2 * pad, Layout.Alignment.ALIGN_NORMAL, 1.15, 0, false);
+    const t = Ui.nz(text).length > 1500 ? text.substring(0, 1500) + "…" : Ui.nz(text);
+    const textL = t.isEmpty() ? null : new StaticLayout(t, body, w - 2 * pad - 24, Layout.Alignment.ALIGN_NORMAL, 1.15, 0, false);
+    let pic = null;
+    if (photo != null) {
+      try {
+        pic = Ui.loadScaled(photo, w - 2 * pad);
+      } catch (ignored) {
+        // the words still go
+      }
+      // web: a photo not yet decoded in this page cannot be drawn now
+      if (pic != null && (!pic.source() || pic.getWidth() <= 0)) pic = null;
+    }
+    const picH = pic == null ? 0 : toInt(pic.getHeight() * ((w - 2 * pad) / pic.getWidth()));
+    const h = 70 + pad + infoL.getHeight() + pad + (textL == null ? 0 : textL.getHeight() + 24 + pad) + (pic == null ? 0 : picH + pad) + 40;
+    const bm = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+    const cv = new Canvas(bm);
+    cv.drawColor(0xFFF8FAFC);
+    const fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+    fill.setColor(Conduct.COLOR);
+    cv.drawRect(0, 0, w, 70, fill);
+    cv.drawText("TVMCHMED  ·  " + title, pad, 46, head);
+    let y = 70 + pad;
+    cv.save();
+    cv.translate(pad, y);
+    infoL.draw(cv);
+    cv.restore();
+    y += infoL.getHeight() + pad;
+    if (textL != null) {
+      fill.setColor(0xFFDCF8C6);
+      cv.drawRoundRect(pad, y, w - pad, y + textL.getHeight() + 24, 18, 18, fill);
+      cv.save();
+      cv.translate(pad + 12, y + 12);
+      textL.draw(cv);
+      cv.restore();
+      y += textL.getHeight() + 24 + pad;
+    }
+    if (pic != null) {
+      cv.drawBitmap(pic, null, new Rect(pad, y, w - pad, y + picH), null);
+      y += picH + pad;
+    }
+    small.setColor(0xFF64748B);
+    cv.drawText("Evidence kept for the admin only", pad, h - 14, small);
+    const out = new ByteArrayOutputStream();
+    bm.compress(Bitmap.CompressFormat.JPEG, 72, out);
+    return Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
+  }
+
+  // ---------- the admin's side ----------
+
+  static reports(c) {
+    return Conduct.server.list(c);
+  }
+
+  static decide(c, id, what) {
+    Conduct.server.decide(c, id, what);
+  }
+
+  /** New reports for the admin (checked with the role, at most every two minutes); notifies once for each new one. */
+  static poll(c) {
+    if (!Cloud.isOwner(c)) return;
+    try {
+      const a = new JSONArray(Cloud.json(c, "GET", "/rest/v1/conduct_reports?select=id,target_name,action&seen=eq.false&order=id.desc", null).text());
+      const p = Conduct.prefs(c);
+      const told = p.getLong("told", 0);
+      let top = told;
+      p.edit().putInt("unseen", a.length()).apply();
+      let newest = null;
+      for (let i = 0; i < a.length(); i++) {
+        const r = a.getJSONObject(i);
+        if (r.optLong("id") > told && newest == null) newest = r;
+        top = Math.max(top, r.optLong("id"));
+      }
+      p.edit().putLong("told", top).apply();
+      if (newest != null) Background.show(c, Background.N_CONDUCT, "🚩 Conduct report",
+        Ui.nz(newest.optString("target_name")) + ": " + Conduct.actionLabel(newest.optString("action")), Conduct.COLOR, ConductActivity);
+    } catch (ignored) {
+      // older server without the conduct table, or no internet
+    }
+  }
+
+  static unseen(c) {
+    return Conduct.prefs(c).getInt("unseen", 0);
+  }
+
+  static actionLabel(a) {
+    switch (Ui.nz(a)) {
+      case "auto": return "removed automatically (vulgar words)";
+      case "blocked": return "removed on a report";
+      case "waiting": return "reported, waiting for you";
+      case "senior": return "reported (HOD / Registrar: not removed automatically)";
+      case "admin": return "reported (the admin)";
+      default: return a;
+    }
+  }
+
+  // ---------- the rule ----------
+
+  /** Shows the rule once to each member (not the admin) on this phone. */
+  static showRuleOnce(a) {
+    if (!Cloud.active(a) || Cloud.isOwner(a)) return;
+    const key = "rule_ok_" + Cloud.prefs(a).getString("user_id", "");
+    if (Conduct.prefs(a).getBoolean(key, false) || Conduct.ruleShowing) return;
+    Conduct.ruleShowing = true;
+    new AlertDialog.Builder(a).setTitle("🚫 Department rule").setMessage(Conduct.RULE + "\n\nThis covers chats, PG Connect, learning boards, comments, PG questions, journals, presentations and achievements.")
+      .setCancelable(false).setPositiveButton("I agree", { onClick: (d, w) => {
+        Conduct.ruleShowing = false;
+        Conduct.prefs(a).edit().putBoolean(key, true).apply();
+      } }).show();
+  }
+
+  /** The one-line reminder for screens where members post. */
+  static ruleLine() {
+    return "🚫 Porn and vulgar words are prohibited: the sender is removed at once and the admin gets a screenshot.";
+  }
+}
+
+/** Talks to the server (Cloud is synchronous in the browser too). */
+Conduct.server = {
+  self: (c, e) => {
+    const b = new JSONObject().put("p_where", e.optString("where")).put("p_text", e.optString("text"))
+      .put("p_word", e.optString("word")).put("p_image", e.optString("image"));
+    return Cloud.json(c, "POST", "/rest/v1/rpc/conduct_self", b).text().split("\"").join("").trim();
+  },
+  report: (c, tbl, pk, staff, e) => {
+    const b = new JSONObject().put("p_tbl", tbl).put("p_pk", pk).put("p_staff", staff > 0 ? staff : JSONObject.NULL)
+      .put("p_where", e.optString("where")).put("p_text", e.optString("text")).put("p_image", e.optString("image"));
+    return Cloud.json(c, "POST", "/rest/v1/rpc/conduct_report", b).text().split("\"").join("").trim();
+  },
+  list: (c) => new JSONArray(Cloud.json(c, "GET", "/rest/v1/conduct_reports?select=*&order=created_at.desc&limit=100", null).text()),
+  decide: (c, id, what) => { Cloud.json(c, "POST", "/rest/v1/rpc/conduct_decide", new JSONObject().put("p_id", id).put("p_what", what)); }
+};
+;
+/* ---- app/ConductActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Conduct reports (8.80), for the admin only: members removed automatically for vulgar words, and photos, files or messages that
+ * members reported, each with its evidence picture. The admin removes the member, restores them (the post comes back too) or
+ * dismisses the report, and keeps a list of extra words to catch.
+ */
+class ConductActivity extends Base {
+  constructor() { super(); this.reportsArr = null; this.err = null; this.isLoading = false; this.marked = new JSet(); }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Conduct reports");
+    this.subtitle = "Porn and vulgar posts · admin only";
+    this.headerColor(Conduct.COLOR);
+    if (!Cloud.isOwner(this)) {
+      Ui.toast(this, "Only the admin sees conduct reports");
+      this.finish();
+      return;
+    }
+    this.load();
+  }
+
+  load() {
+    if (this.isLoading) return;
+    this.isLoading = true;
+    new Thread({ run: () => {
+      let got = null;
+      let err = null;
+      try {
+        got = Conduct.reports(this);
+      } catch (e) {
+        err = e.getMessage() == null ? String(e) : e.getMessage();
+      }
+      const g = got;
+      const e2 = err;
+      this.runOnUiThread({ run: () => {
+        this.isLoading = false;
+        this.reportsArr = g;
+        this.err = e2;
+        if (g != null) {
+          let unseen = 0;
+          for (let i = 0; i < g.length(); i++) if (!g.optJSONObject(i).optBoolean("seen")) unseen++;
+          Conduct.prefs(this).edit().putInt("unseen", unseen).apply();
+        }
+        if (!this.isFinishing()) this.render();
+      } });
+    } }).start();
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const top = Ui.card(this);
+    top.setBackground(Glass.hero(this, Ui.shades(Conduct.COLOR), 20));
+    top.addView(Ui.tv(this, "🚫 Department rule", 18, 0xFFFFFFFF, true));
+    top.addView(Ui.tv(this, Conduct.RULE, 13, 0xE6FFFFFF, false));
+    const extra = Conduct.extraWords(db);
+    top.addView(Ui.tv(this, extra.isEmpty() ? "Extra words: none added" : "Extra words: " + extra, 12, 0xE6FFFFFF, false));
+    const row = Ui.buttonRow(this, Ui.button(this, "Extra words", Conduct.COLOR, { onClick: (v) => { this.editWords(); } }),
+      Ui.button(this, "Refresh", Conduct.COLOR, { onClick: (v) => { this.load(); this.render(); } }));
+    top.addView(row);
+    Ui.margins(row, 0, 10, 0, 0);
+    page.addView(top);
+
+    if (this.reportsArr == null) {
+      page.addView(this.emptyNote(this.isLoading ? "Loading the reports…" : this.err != null ? "Could not load: " + this.err
+        + "\n\nIf the server is older than 8.80, run the latest supabase-setup.sql in the Supabase SQL Editor." : "No reports."));
+      this.setPage(page);
+      return;
+    }
+    if (this.reportsArr.length() === 0) page.addView(this.emptyNote("No reports. Nobody has broken the rule."));
+    for (let i = 0; i < this.reportsArr.length(); i++) page.addView(this.card(this.reportsArr.optJSONObject(i)));
+    this.setPage(page);
+  }
+
+  card(r) {
+    const card = Ui.card(this);
+    const action = r.optString("action"), decision = r.optString("decision");
+    const removed = (action.equals("auto") || action.equals("blocked")) && !decision.equals("restore") || decision.equals("block");
+    const head = Ui.h(this);
+    if (!r.optBoolean("seen")) head.addView(Ui.softPill(this, "NEW", Conduct.COLOR));
+    head.addView(Ui.softPill(this, removed ? "Removed" : decision.equals("restore") ? "Restored" : decision.equals("dismiss") ? "Dismissed" : "Waiting for you",
+      removed ? Ui.RED : decision.isEmpty() ? Ui.AMBER : Ui.TEAL));
+    card.addView(head);
+    card.addView(Ui.tv(this, Ui.nz(r.optString("target_name", "Unknown member")) + "  ·  " + Ui.nz(r.optString("place")), 15, Ui.TEXT, true));
+    let when = r.optString("created_at");
+    when = when.length >= 16 ? when.substring(0, 10) + " " + when.substring(11, 16) + " UTC" : when;
+    card.addView(Ui.muted(this, ("auto".equals(r.optString("kind")) ? "Caught by the app (word: " + r.optString("word") + ")"
+      : "Reported by " + Ui.nz(r.optString("reporter_name"))) + "  ·  " + when + "\n" + Conduct.actionLabel(action)));
+    const img = r.optString("image");
+    if (!img.isEmpty() && !r.isNull("image")) {
+      try {
+        const b = Base64.decode(img, Base64.DEFAULT);
+        const bm = BitmapFactory.decodeByteArray(b, 0, b.length);
+        if (bm != null) {
+          const iv = new ImageView(this);
+          iv.setImageBitmap(bm);
+          iv.setAdjustViewBounds(true);
+          card.addView(iv, Ui.lp(-1, -2));
+          Ui.margins(iv, 0, 8, 0, 0);
+        }
+      } catch (ignored) {
+        // the words below still show
+      }
+    } else if (!r.optString("body").isEmpty()) card.addView(Ui.body(this, r.optString("body")));
+    const id = r.optLong("id");
+    const block = Ui.outlineButton(this, "Remove member", Ui.RED, this.decider(id, "block", "Remove " + r.optString("target_name") + " from the app?"));
+    const restore = Ui.outlineButton(this, "Restore member", Ui.TEAL, this.decider(id, "restore", "Give " + r.optString("target_name") + " back their access (and show the post again)?"));
+    const dismiss = Ui.outlineButton(this, "Dismiss", Ui.SLATE, this.decider(id, "dismiss", null));
+    const btns = removed ? Ui.buttonRow(this, restore) : decision.isEmpty() ? Ui.buttonRow(this, block, dismiss) : Ui.buttonRow(this, block);
+    card.addView(btns);
+    Ui.margins(btns, 0, 8, 0, 0);
+    if (!r.optBoolean("seen")) this.markSeen(id);
+    return card;
+  }
+
+  decider(id, what, ask) {
+    return { onClick: (v) => {
+      const go = { run: () => {
+        Conduct.work(this, "Saving…", { run: () => {
+          Conduct.decide(this, id, what);
+          this.reportsArr = Conduct.reports(this);
+          return what.equals("block") ? "Removed." : what.equals("restore") ? "Restored." : null;
+        } });
+      } };
+      if (ask == null) go.run();
+      else Ui.confirm(this, ask, "", what.equals("block") ? "Remove" : "Restore", go);
+    } };
+  }
+
+  markSeen(id) {
+    if (!this.marked.add(id)) return;
+    new Thread({ run: () => {
+      try {
+        Conduct.decide(this, id, "seen");
+      } catch (ignored) {
+        // shown as new again next time
+      }
+    } }).start();
+  }
+
+  editWords() {
+    const f = new Form(this);
+    f.multi("words", "Extra words to catch (separate with commas; at least 3 letters each)", Conduct.extraWords(this.db));
+    Ui.formDialog(this, "Extra words", f, "Save", { run: () => {
+      this.db.setSetting("admin_conduct_words", f.get("words").trim());
+      this.render();
+      return true;
+    } });
+  }
+}
+;
 /* ---- app/ConvictActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -26528,6 +28175,778 @@ class ConvictActivity extends Base {
     this.setPage(page);
   }
 }
+;
+/* ---- app/Copilot.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Copilot (8.90): a ✨ button on every screen opens an AI assistant that knows the screen. It sees what the screen shows (patients as
+ * codes, never names, IP numbers or phone numbers), the form being filled, the open patient's record and the department's
+ * in-patients, and answers in English or Tamil, typed or spoken. It can also propose actions the doctor taps to do: fill the form
+ * on screen, open a screen, add a pending task, or draft a progress note. Nothing is saved until the doctor saves it.
+ * Private chats (Duty team, PG Connect) are never read. Decision support only.
+ */
+class Copilot {
+  static COLOR = 0xFF7C3AED;
+  static MARK = "You are TVMCHMED Copilot";
+  static WAIT = "copilot_wait";
+  static REQ_SPEAK = 8901;
+
+  /** Screens the copilot may open: name for the AI, label for the button, the screen, and whether it needs a patient. */
+  static $clinit() {
+    Copilot.SCREENS = [
+      ["patient", "the patient page", PatientActivity, true],
+      ["case_sheet", "the case sheet", CaseSheetActivity, true],
+      ["discharge", "the discharge summary", DischargeActivity, true],
+      ["labs", "the lab results", LabsActivity, true],
+      ["timeline", "the patient timeline", TimelineActivity, true],
+      ["home", "Home", MainActivity, false],
+      ["census", "Census", CensusActivity, false],
+      ["live_census", "Live census", LiveCensusActivity, false],
+      ["bed_board", "Bed board", BedBoardActivity, false],
+      ["tasks", "Tasks", TasksActivity, false],
+      ["pending_results", "Pending results", ResultsActivity, false],
+      ["antibiogram", "Antibiogram", AntibiogramActivity, false],
+      ["charts", "Charts", ChartsActivity, false],
+      ["deterioration_watch", "Deterioration watch", WatchActivity, false],
+      ["morning_brief", "Morning brief", MorningBriefActivity, false],
+      ["handover", "Handover", HandoverActivity, false],
+      ["dap_register", "DAP register", DapActivity, false],
+      ["call_over", "Call over", CallOverActivity, false],
+      ["call_duty", "Call duty", CallDutyActivity, false],
+      ["pg_leave", "PG leave", PgLeaveActivity, false],
+      ["attendance", "Attendance", AttendanceActivity, false],
+      ["duty_swaps", "Duty swaps", SwapsActivity, false],
+      ["calendar", "Calendar", CalendarActivity, false],
+      ["phone_book", "Phone book", PhoneDirectoryActivity, false],
+      ["academic", "Academic", AcademicActivity, false],
+      ["daily_mcq", "Daily MCQ", McqActivity, false],
+      ["live_quiz", "Live quiz", LiveQuizActivity, false],
+      ["learning_board", "Learning board", TopicNotesActivity, false],
+      ["presentations", "Presentations", PresentationsActivity, false],
+      ["journals", "Latest journals", JournalsActivity, false],
+      ["exam_cases", "Exam cases", ExamCasesActivity, false],
+      ["logbook", "Logbook", LogbookActivity, false],
+      ["protocol_timers", "Protocol timers", ProtocolActivity, false],
+      ["infusion_calculator", "Infusion calculator", InfusionActivity, false],
+      ["kidney_doses", "Kidney doses", KidneyDoseActivity, false],
+      ["viva_coach", "Viva coach", VivaActivity, false],
+      ["ask", "Ask TVMCHMED", AskActivity, false],
+      ["search", "Search", SearchActivity, false],
+      ["settings", "Settings", SettingsActivity, false]];
+  }
+
+  /** Screens whose content is never sent: private, end-to-end encrypted chats. */
+  static privateScreen(a) {
+    return a instanceof ChatActivity || a instanceof PgChatActivity || a instanceof PgConnectActivity || a instanceof ChatListActivity;
+  }
+
+  static prefs(c) {
+    return c.getApplicationContext().getSharedPreferences("copilot", Context.MODE_PRIVATE);
+  }
+
+  static enabled(c) {
+    return !Copilot.prefs(c).getBoolean("off", false);
+  }
+
+  static setEnabled(c, on) {
+    Copilot.prefs(c).edit().putBoolean("off", !on).apply();
+  }
+
+  // ---------- the ✨ button ----------
+
+  /** Puts the ✨ button over the screen (Base calls this after every setContentView). */
+  static attach(a) {
+    if (!Copilot.enabled(a) || a instanceof AccountActivity || a instanceof LockActivity || Copilot.privateScreen(a)) return;
+    const b = new TextView(a);
+    b.setText("✨");
+    b.setTextSize(24);
+    b.setGravity(Gravity.CENTER);
+    b.setContentDescription("Copilot");
+    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFF8B5CF6, 0xFFDB2777]);
+    bg.setShape(GradientDrawable.OVAL);
+    b.setBackground(bg);
+    b.setElevation(Ui.dp(a, 8));
+    const size = Ui.dp(a, 54);
+    const lp = new FrameLayoutParams(size, size, Gravity.BOTTOM | Gravity.END);
+    lp.rightMargin = Ui.dp(a, 16);
+    lp.bottomMargin = Ui.dp(a, a instanceof MainActivity ? 106 : 22);
+    b.setTranslationY(Copilot.prefs(a).getFloat("y", 0));
+    // drag it up or down out of the way; a tap opens the copilot
+    let downY = 0, startT = 0, moved = false, downAt = 0;
+    b.setOnTouchListener({
+      onTouch: (v, e) => {
+        switch (e.getActionMasked()) {
+          case MotionEvent.ACTION_DOWN:
+            downY = e.getRawY();
+            startT = v.getTranslationY();
+            moved = false;
+            downAt = Date.now();
+            // the browser keeps sending moves to the button while the finger drags it
+            try { if (e.e && e.e.pointerId != null) v.el.setPointerCapture(e.e.pointerId); } catch (ignored) { /* not supported */ }
+            return true;
+          case MotionEvent.ACTION_MOVE: {
+            if (e.e && e.e.buttons === 0 && e.e.pointerType === 'mouse') return true;
+            const d = e.getRawY() - downY;
+            if (Math.abs(d) > Ui.dp(a, 8)) moved = true;
+            if (moved) {
+              const page = v.el.parentNode;
+              const max = 0, min = -(page ? page.clientHeight : 600) + Ui.dp(a, 160);
+              v.setTranslationY(Math.max(min, Math.min(max, startT + d)));
+            }
+            return true;
+          }
+          case MotionEvent.ACTION_UP:
+            if (moved) Copilot.prefs(a).edit().putFloat("y", v.getTranslationY()).apply();
+            else if (Date.now() - downAt > 600) Copilot.askHide(a);
+            else Copilot.open(a);
+            return true;
+          default:
+            return false;
+        }
+      }
+    });
+    b.el.style.touchAction = 'none';
+    b.el.style.cursor = 'pointer';
+    a.addContentView(b, lp);
+  }
+
+  /** A long press on ✨ offers to turn the Copilot off (Settings → On this phone turns it back on). */
+  static askHide(a) {
+    Ui.confirm(a, "Turn off AI Copilot?", "The ✨ button goes away from every screen. Turn it back on in Settings (the AI Copilot switch at the top).", "Turn off", {
+      run: () => {
+        Copilot.setEnabled(a, false);
+        a.recreate();
+      }
+    });
+  }
+
+  // ---------- what the copilot sees ----------
+
+  /** The patient this screen is about, or null. */
+  static patientOf(a, db) {
+    const i = a.getIntent();
+    if (i == null) return null;
+    let id = i.getStringExtra("patient");
+    if (id == null) {
+      const byId = a instanceof PatientActivity || a instanceof CaseSheetActivity || a instanceof DischargeActivity || a instanceof LabsActivity
+          || a instanceof ChartActivity || a instanceof TimelineActivity || a instanceof MccdActivity
+          || (a instanceof FormActivity && "patient" === i.getStringExtra("kind"));
+      if (byId) id = i.getStringExtra("id");
+    }
+    if (id == null || String(id).isEmpty()) return null;
+    return db.row("SELECT * FROM patients WHERE id=?", String(id));
+  }
+
+  /** The Form an activity is filling (any field of type Form), or null. (Java reads the fields by reflection; here: the object's own properties.) */
+  static formOf(a) {
+    for (const k of Object.keys(a)) {
+      let form = null;
+      try { form = a[k]; } catch (ignored) { continue; }
+      if (form instanceof Form && form.view.isShown()) return form;
+    }
+    return null;
+  }
+
+  /** The words on the screen, top to bottom (texts, and typed values with their hints), up to max characters. */
+  static screenText(root, max) {
+    const b = new StringBuilder();
+    Copilot.collect(root, b, max);
+    return b.toString().trim();
+  }
+
+  static collect(v, b, max) {
+    if (v == null || v.getVisibility() !== View.VISIBLE || b.length() >= max) return;
+    if (v instanceof EditText) {
+      const t = v.getText().toString().trim();
+      const h = v.getHint();
+      if (!t.isEmpty()) b.append(h == null ? "" : h + ": ").append(t).append('\n');
+    } else if (v instanceof TextView) {
+      const t = v.getText().toString().trim();
+      if (!t.isEmpty()) b.append(t.split('\n').join(' ')).append('\n');
+    }
+    if (v instanceof ViewGroup) {
+      for (let i = 0; i < v.getChildCount(); i++) Copilot.collect(v.getChildAt(i), b, max);
+    }
+    if (b.length() > max) b.setLength(max);
+  }
+
+  /** Names, IP numbers, phones and addresses of every coded patient replaced by the code; any other phone number removed. */
+  static deidentify(text, pack) {
+    let t = Ui.nz(text);
+    for (const e of pack.byCode.entrySet()) {
+      const p = e.getValue();
+      if (Ui.nz(p.get("name")).trim().isEmpty()) continue;
+      t = Ai.deidentify(t, p).split(Ai.GONE).join(e.getKey());
+      t = t.split("[removed]").join(e.getKey() + "'s number");
+    }
+    return t.replaceAllRx("(?<!\\d)(\\+?91[\\s-]?)?[6-9]\\d{4}[\\s-]?\\d{5}(?!\\d)", "[phone removed]");
+  }
+
+  /** Any other patient (discharged, or not in the department list) named in the text becomes "a patient". */
+  static others(db, text) {
+    let low = Ui.nz(text).toLowerCase();
+    let t = text;
+    for (const p of db.rows("SELECT name, ip_no, phone, address, cmchis_no FROM patients")) {
+      const name = Ui.nz(p.get("name")).trim().toLowerCase();
+      const ip = Ui.nz(p.get("ip_no")).trim().toLowerCase();
+      if ((name.length >= 3 && low.contains(name)) || (ip.length >= 3 && low.contains(ip))) {
+        t = Ai.deidentify(t, p).split(Ai.GONE).join("a patient");
+        low = t.toLowerCase();
+      }
+    }
+    return t;
+  }
+
+  static capture(a, db) {
+    const x = new Copilot.Context2();
+    x.db = db;
+    x.pack = Ask.build(db, LocalDateTime.of(Dates.today(), Dates.time()));
+    x.title = String(a.getTitle()) + (Ui.nz(a.subtitle).isEmpty() ? "" : " · " + a.subtitle);
+    x.patient = Copilot.patientOf(a, db);
+    if (x.patient != null) {
+      for (const e of x.pack.codes.entrySet()) if (String(e.getValue()).equals(String(x.patient.get("id")))) x.patientCode = e.getKey();
+      if (x.patientCode == null) {
+        x.patientCode = "P0";
+        x.pack.codes.put("P0", x.patient.get("id"));
+        x.pack.byCode.put("P0", x.patient);
+      }
+      let rec = "";
+      try {
+        rec = DischargeAi.record(db, Long.parseLong(x.patient.get("id")));
+      } catch (ignored) {
+        // the screen text still goes
+      }
+      const p = x.patient;
+      x.patientText = x.patientCode + ": " + Ui.nz(p.get("age")) + Ui.nz(p.get("sex")) + ", " + Ui.nz(p.get("diagnosis")) + ", unit "
+          + Ui.nz(p.get("home_unit")) + ", ward " + Db.shortName(Ui.nz(p.get("location"))) + ", admitted " + Ui.nz(p.get("admit_date"))
+          + ", status " + Ui.nz(p.get("status")) + "\n" + Copilot.deidentify(rec.length > 9000 ? rec.substring(rec.length - 9000) : rec, x.pack);
+    }
+    x.form = Copilot.formOf(a);
+    if (x.form != null) for (const k of Copilot.IDENTITY) if (x.form.has(k) && !x.form.get(k).isEmpty()) x.typed.put(k, x.form.get(k));
+    if (Copilot.privateScreen(a)) x.screen = "(a private chat screen: its messages are not shared with the copilot)";
+    else x.screen = x.scrub(Copilot.screenText(a.getWindow().getDecorView(), 7000));
+    if (x.form != null) x.formText = x.scrub(x.form.describe());
+    x.title = x.scrub(x.title);
+    return x;
+  }
+
+  static screenList() {
+    const b = new StringBuilder();
+    for (const s of Copilot.SCREENS) b.append(b.length() === 0 ? "" : ", ").append(s[0]).append(s[3] ? " (needs P code)" : "");
+    return b.toString();
+  }
+
+  static system() {
+    return Copilot.MARK + ", the assistant inside the TVMCHMED app of the Department of General Medicine, Tirunelveli Medical College Hospital "
+        + "(TVMCH), Tamil Nadu, India. Doctors (faculty and postgraduates) ask you about the screen they are on, their patients and the "
+        + "department, and ask you to fill forms, draft notes and find things.\n"
+        + "Rules:\n"
+        + "- Use the DEPARTMENT, SCREEN, FORM and PATIENT data given. Patients appear only as codes (P1, P2…): refer to them only by code, "
+        + "never invent names. If the data cannot answer, say what is missing.\n"
+        + "- Answer in the language of the request (English, or Tamil if they wrote or spoke Tamil). Keep it short and plain: the answer first. "
+        + "No markdown, no asterisks, no tables.\n"
+        + "- Clinical suggestions are decision support for doctors: never give orders, say doses must be checked, follow standard Indian and "
+        + "international guidelines.\n"
+        + "- You may propose actions; the doctor taps a button to do each one and nothing is saved without them. Put each action on its own "
+        + "line after the answer, exactly like this:\n"
+        + "[[FILL key = value]] fills one field of the FORM on screen (use only the keys listed; dates YYYY-MM-DD, times HH:MM, a choice must be "
+        + "one of the listed values)\n"
+        + "[[OPEN screen]] or [[OPEN screen P3]] opens a screen. Screens: " + Copilot.screenList() + "\n"
+        + "[[TASK P3 | what is pending | YYYY-MM-DD]] adds a pending task for a patient (the date is optional)\n"
+        + "[[NOTE P3]] then the progress note as lines STATUS: (Better, Same, Worse or Critical), HISTORY:, VITALS:, FINDINGS:, RESULTS:, "
+        + "NEW DIAGNOSIS:, PLAN: and then [[/NOTE]] drafts a progress note. Write only what the doctor said or the data shows; never invent "
+        + "findings or values.\n"
+        + "- Propose actions only when the doctor asks for them or they clearly help with the request.";
+  }
+
+  static user(x, request, turns) {
+    const u = new StringBuilder();
+    u.append("<department>\n").append(x.pack.data).append("</department>\n\n");
+    u.append("<screen title=\"").append(x.title.split("\"").join("'")).append("\">\n").append(x.screen).append("\n</screen>\n\n");
+    if (x.form != null) u.append("<form>\nkey | label | current value | allowed values\n").append(x.formText).append("</form>\n\n");
+    if (x.patientCode != null) u.append("<patient code=\"").append(x.patientCode).append("\" note=\"the patient on this screen\">\n")
+        .append(x.patientText).append("\n</patient>\n\n");
+    const from = Math.max(0, turns.size() - 3);
+    for (let i = from; i < turns.size(); i++) u.append("Earlier request: ").append(x.scrub(turns.get(i)[0])).append("\nYour earlier answer: ").append(turns.get(i)[2]).append("\n\n");
+    u.append("Request: ").append(x.scrub(request.trim()));
+    return u.toString();
+  }
+
+  // ---------- the answer ----------
+
+  static parse(answer) {
+    const r = new Copilot.Reply();
+    let t = Ui.nz(answer);
+    const n = Copilot.NOTE.matcher(t);
+    const rest = new StringBuilder();
+    let last = 0;
+    while (n.find()) {
+      const act = new Copilot.Action();
+      act.kind = "NOTE";
+      act.code = n.group(1).toUpperCase();
+      act.a = n.group(2).trim();
+      r.actions.add(act);
+      rest.append(t.substring(last, n.start()));
+      last = n.end();
+    }
+    rest.append(t.substring(last));
+    t = rest.toString();
+    const m = Copilot.TAG.matcher(t);
+    while (m.find()) {
+      const kind = m.group(1).toUpperCase(), body = m.group(2).trim();
+      const act = new Copilot.Action();
+      act.kind = kind;
+      if (kind === "FILL") {
+        const eq = body.indexOf('=');
+        if (eq <= 0) continue;
+        act.a = body.substring(0, eq).trim();
+        act.b = body.substring(eq + 1).trim();
+      } else if (kind === "OPEN") {
+        const w = body.jsplit("\\s+");
+        act.a = w[0].toLowerCase();
+        if (w.length > 1 && w[1].matches("(?i)P\\d+")) act.code = w[1].toUpperCase();
+      } else {
+        const parts = body.split("|");
+        const first = parts[0].trim();
+        if (!first.matches("(?i)P\\d+")) continue;
+        act.code = first.toUpperCase();
+        act.a = parts.length > 1 ? parts[1].trim() : "";
+        act.b = parts.length > 2 ? parts[2].trim() : "";
+        if (act.a.isEmpty()) continue;
+      }
+      r.actions.add(act);
+    }
+    r.text = Ai.clean(Copilot.TAG.matcher(t).replaceAll("")).trim();
+    return r;
+  }
+
+  static screen(name) {
+    for (const s of Copilot.SCREENS) if (s[0] === name) return s;
+    return null;
+  }
+
+  // ---------- the conversation ----------
+
+  /** This app session's turns: [request, answer as shown, answer as the AI wrote it (codes), who]. */
+  static turns = [];
+  static replies = [];
+  static last = null;
+
+  /** Opens the copilot over the screen. */
+  static open(a) {
+    new Copilot.Panel(a).show();
+  }
+
+  /** Ideas to start with, for the screen in front. */
+  static suggestions(a, db) {
+    const s = [];
+    if (Copilot.patientOf(a, db) != null) {
+      s.add("Summarise this patient in 5 lines");
+      s.add("What is pending or abnormal for this patient?");
+      s.add("Draft today's progress note: …");
+      s.add("Suggest a differential diagnosis and next investigations");
+    }
+    if (Copilot.formOf(a) != null) {
+      s.add("Fill this form: …");
+      s.add("Check this form for anything missing");
+    }
+    if (s.isEmpty()) {
+      s.add("What needs attention in the wards today?");
+      s.add("Explain what this screen shows");
+      s.add("Which patients have a high NEWS2 or a worsening trend?");
+      s.add("Open the pending results");
+    }
+    return s;
+  }
+}
+
+/** Form fields that say who the patient is: their values are never sent. */
+Copilot.IDENTITY = ["name", "ip_no", "phone", "address", "cmchis_no", "ar_no", "attender", "attender_phone", "mobile", "aadhaar"];
+Copilot.NOTE = Pattern.compile("\\[\\[\\s*NOTE\\s+(P\\d+)\\s*\\]\\]([\\s\\S]*?)(?:\\[\\[\\s*/\\s*NOTE\\s*\\]\\]|$)", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+Copilot.TAG = Pattern.compile("\\[\\[\\s*(FILL|OPEN|TASK)\\s+(.*?)\\]\\]", Pattern.CASE_INSENSITIVE);
+
+/** Everything the AI gets: the department, the screen, the form, the open patient. */
+Copilot.Context2 = class {
+  constructor() {
+    this.pack = null;
+    this.screen = "";
+    this.title = "";
+    this.patientCode = null;
+    this.patient = null;
+    this.form = null;
+    this.formText = "";
+    this.patientText = "";
+    this.db = null;
+    /** Who-the-patient-is values typed on the form (name, IP number, phone…), never sent. */
+    this.typed = new JMap();
+  }
+
+  /** The text with every patient identity taken out: coded patients become codes, others "a patient". */
+  scrub(t) {
+    let r = Copilot.deidentify(t, this.pack);
+    if (!this.typed.isEmpty()) {
+      r = Ai.deidentify(r, this.typed).split(Ai.GONE).join(this.patientCode != null ? this.patientCode : "the patient");
+      for (const e of this.typed.entrySet()) {
+        const v = e.getValue().trim();
+        if (v.length >= 3) r = Pattern.compile(Pattern.quote(v), Pattern.CASE_INSENSITIVE).matcher(r).replaceAll("[removed]");
+      }
+    }
+    return this.db == null ? r : Copilot.others(this.db, r);
+  }
+};
+
+Copilot.Action = class {
+  constructor() {
+    this.kind = null;     // FILL, OPEN, TASK, NOTE
+    this.code = "";
+    this.a = ""; this.b = ""; this.c = "";
+  }
+};
+
+Copilot.Reply = class {
+  constructor() {
+    this.text = "";
+    this.actions = [];
+  }
+};
+
+/** The copilot's panel: the conversation, suggestions, and the box to type or speak. */
+Copilot.Panel = class {
+  constructor(a) {
+    this.a = a;
+    this.db = Db.get(a);
+    this.x = null;
+    const d = this.d = new Dialog(a);
+    const root = Ui.v(a);
+    const bg = new GradientDrawable();
+    bg.setColor(0xFFF8F7FF);
+    bg.setCornerRadii([Ui.dp(a, 22), Ui.dp(a, 22), Ui.dp(a, 22), Ui.dp(a, 22), 0, 0, 0, 0]);
+    root.setBackground(bg);
+
+    const head = Ui.h(a);
+    head.setGravity(Gravity.CENTER_VERTICAL);
+    head.setPadding(Ui.dp(a, 18), Ui.dp(a, 14), Ui.dp(a, 8), Ui.dp(a, 6));
+    const ht = Ui.v(a);
+    ht.addView(Ui.tv(a, "✨ Copilot", 18, Copilot.COLOR, true));
+    ht.addView(Ui.tv(a, "Sees: " + a.getTitle() + (Copilot.privateScreen(a) ? " (not the chats)" : ""), 12, Ui.MUTED, false));
+    head.addView(ht, Ui.weight(1));
+    const fresh = Ui.tv(a, "New chat", 13, Copilot.COLOR, true);
+    fresh.setPadding(Ui.dp(a, 10), Ui.dp(a, 8), Ui.dp(a, 10), Ui.dp(a, 8));
+    fresh.setOnClickListener({
+      onClick: (v) => {
+        Copilot.turns.clear();
+        Copilot.replies.clear();
+        this.paint();
+      }
+    });
+    head.addView(fresh);
+    const off = Ui.tv(a, "Turn off", 13, Ui.MUTED, true);
+    off.setPadding(Ui.dp(a, 6), Ui.dp(a, 8), Ui.dp(a, 6), Ui.dp(a, 8));
+    off.setOnClickListener({ onClick: (v) => { d.dismiss(); Copilot.askHide(a); } });
+    head.addView(off);
+    const close = Ui.tv(a, "✕", 20, Ui.MUTED, true);
+    close.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), Ui.dp(a, 6));
+    close.setOnClickListener({ onClick: (v) => { d.dismiss(); } });
+    head.addView(close);
+    root.addView(head);
+
+    this.list = Ui.v(a);
+    this.list.setPadding(Ui.dp(a, 12), 0, Ui.dp(a, 12), Ui.dp(a, 8));
+    this.scroll = new ScrollView(a);
+    this.scroll.addView(this.list);
+    root.addView(this.scroll, new LinearLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+
+    this.pasteRow = Ui.h(a);
+    this.pasteRow.setPadding(Ui.dp(a, 12), 0, Ui.dp(a, 12), 0);
+    root.addView(this.pasteRow);
+
+    const bar = Ui.h(a);
+    bar.setGravity(Gravity.CENTER_VERTICAL);
+    bar.setPadding(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 10), Ui.dp(a, 12));
+    const mic = this.round("🎤", 0xFFEDE9FE, Copilot.COLOR);
+    mic.setOnClickListener({ onClick: (v) => { this.speak(); } });
+    bar.addView(mic);
+    this.input = new EditText(a);
+    this.input.setHint("Ask, or tell me what to do…");
+    this.input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+    this.input.setMaxLines(4);
+    this.input.setBackground(Ui.round(a, Color.WHITE, 20));
+    this.input.setPadding(Ui.dp(a, 14), Ui.dp(a, 10), Ui.dp(a, 14), Ui.dp(a, 10));
+    const ip = Ui.weight(1);
+    ip.leftMargin = Ui.dp(a, 8);
+    ip.rightMargin = Ui.dp(a, 8);
+    bar.addView(this.input, ip);
+    const send = this.round("➤", Copilot.COLOR, Color.WHITE);
+    send.setOnClickListener({ onClick: (v) => { this.ask(this.input.getText().toString()); } });
+    bar.addView(send);
+    root.addView(bar);
+
+    d.setContentView(root);
+    this.root = root;
+  }
+
+  round(s, fill, ink) {
+    const t = Ui.tv(this.a, s, 18, ink, true);
+    t.setGravity(Gravity.CENTER);
+    const g = new GradientDrawable();
+    g.setShape(GradientDrawable.OVAL);
+    g.setColor(fill);
+    t.setBackground(g);
+    t.setLayoutParams(new LinearLayoutParams(Ui.dp(this.a, 44), Ui.dp(this.a, 44)));
+    return t;
+  }
+
+  show() {
+    this.paint();
+    this.d.show();
+    // a sheet from the bottom, 82% of the screen high (Window.setGravity / setLayout on the phone)
+    const scrim = this.d.scrim, box = this.d.box;
+    if (scrim && box) {
+      scrim.style.alignItems = 'flex-end';
+      scrim.style.paddingBottom = '0';
+      box.style.width = '100%';
+      box.style.maxWidth = '720px';
+      box.style.height = '82vh';
+      box.style.maxHeight = '82vh';
+      box.style.borderRadius = '22px 22px 0 0';
+      box.style.background = 'transparent';
+      box.style.display = 'flex';
+      box.style.flexDirection = 'column';
+      box.style.overflow = 'hidden';
+      const r = this.root.el;
+      r.style.flex = '1 1 auto';
+      r.style.minHeight = '0';
+      r.style.height = '100%';
+    }
+  }
+
+  paint() {
+    const a = this.a, db = this.db, list = this.list;
+    list.removeAllViews();
+    if (Copilot.turns.isEmpty()) {
+      const hi = Ui.tv(a, "Hello! I can see this screen" + (Copilot.patientOf(a, db) != null ? " and this patient" : "") + ". Ask me anything, or tell me what to fill or write. "
+          + "Names, IP numbers and phone numbers never leave the phone. You check and save everything yourself. (Tap Turn off above, or use the switch at the top of Settings.)", 14, Ui.TEXT, false);
+      hi.setBackground(Ui.round(a, Color.WHITE, 16));
+      hi.setPadding(Ui.dp(a, 14), Ui.dp(a, 10), Ui.dp(a, 14), Ui.dp(a, 10));
+      list.addView(hi);
+      Ui.margins(hi, 0, 4, 0, 8);
+      list.addView(Ui.tv(a, "Try:", 12, Ui.MUTED, true));
+      for (const s of Copilot.suggestions(a, db)) {
+        const c = Ui.tv(a, s, 14, Copilot.COLOR, true);
+        c.setBackground(Ui.outline(a, Color.WHITE, 0xFFC4B5FD, 18));
+        c.setPadding(Ui.dp(a, 14), Ui.dp(a, 8), Ui.dp(a, 14), Ui.dp(a, 8));
+        c.setOnClickListener({
+          onClick: (v) => {
+            if (s.endsWith("…")) {
+              this.input.setText(s.substring(0, s.length - 1) + " ");
+              this.input.setSelection(this.input.getText().length());
+              this.input.requestFocus();
+            } else this.ask(s);
+          }
+        });
+        const lp = Ui.lp(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = Ui.dp(a, 6);
+        list.addView(c, lp);
+      }
+    }
+    for (let i = 0; i < Copilot.turns.size(); i++) {
+      const t = Copilot.turns.get(i);
+      const q = Ui.tv(a, t[0], 15, Color.WHITE, false);
+      q.setBackground(Ui.round(a, Copilot.COLOR, 16));
+      q.setPadding(Ui.dp(a, 14), Ui.dp(a, 9), Ui.dp(a, 14), Ui.dp(a, 9));
+      const qr = Ui.h(a);
+      qr.setGravity(Gravity.END);
+      qr.setPadding(Ui.dp(a, 40), Ui.dp(a, 8), 0, 0);
+      qr.addView(q);
+      list.addView(qr);
+      list.addView(this.answerCard(t, Copilot.replies.get(i)));
+    }
+    this.pasteRow.removeAllViews();
+    const app = AiRun.waiting(a, Copilot.WAIT);
+    if (!app.isEmpty()) {
+      const p = Ui.button(a, "Paste " + app + "'s answer", Copilot.COLOR, { onClick: (v) => { this.pasted(app); } });
+      this.pasteRow.addView(p, Ui.weight(1));
+    }
+    this.scroll.post({ run: () => { this.scroll.fullScroll(ScrollView.FOCUS_DOWN); } });
+  }
+
+  answerCard(t, r) {
+    const a = this.a;
+    const c = Ui.v(a);
+    c.setBackground(Ui.round(a, Color.WHITE, 16));
+    c.setPadding(Ui.dp(a, 14), Ui.dp(a, 10), Ui.dp(a, 14), Ui.dp(a, 10));
+    const ans = Ui.tv(a, t[1].isEmpty() && !r.actions.isEmpty() ? "Here is what I can do:" : t[1], 15, Ui.TEXT, false);
+    ans.setTextIsSelectable(true);
+    c.addView(ans);
+    for (const act of r.actions) {
+      const b = this.actionButton(act);
+      if (b == null) continue;
+      c.addView(b);
+      Ui.margins(b, 0, 8, 0, 0);
+    }
+    const foot = Ui.h(a);
+    foot.setGravity(Gravity.CENTER_VERTICAL);
+    foot.addView(Ui.tv(a, t[3] + " · decision support, check before use", 11, Ui.MUTED, false), Ui.weight(1));
+    const copy = Ui.tv(a, "Copy", 12, Copilot.COLOR, true);
+    copy.setPadding(Ui.dp(a, 8), Ui.dp(a, 4), Ui.dp(a, 8), Ui.dp(a, 4));
+    copy.setOnClickListener({
+      onClick: (v) => {
+        const cm = a.getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Copilot", t[1]));
+        Ui.toast(a, "Copied");
+      }
+    });
+    foot.addView(copy);
+    const wa = Ui.tv(a, "WhatsApp", 12, Copilot.COLOR, true);
+    wa.setPadding(Ui.dp(a, 8), Ui.dp(a, 4), Ui.dp(a, 8), Ui.dp(a, 4));
+    wa.setOnClickListener({ onClick: (v) => { ReportActivity.shareText(a, t[1]); } });
+    foot.addView(wa);
+    c.addView(foot);
+    Ui.margins(foot, 0, 6, 0, 0);
+    const lp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.topMargin = Ui.dp(a, 6);
+    lp.rightMargin = Ui.dp(a, 24);
+    c.setLayoutParams(lp);
+    return c;
+  }
+
+  /** A button that does one action, or null when the action cannot be done here. */
+  actionButton(act) {
+    const a = this.a, db = this.db, d = this.d;
+    const p = act.code.isEmpty() || Copilot.last == null ? null : Copilot.last.pack.byCode.get(act.code);
+    const who = p == null ? "" : Ui.nz(p.get("name"));
+    const pid = () => p.containsKey("patient_id") ? p.get("patient_id") : p.get("id");
+    switch (act.kind) {
+      case "FILL": {
+        const f = Copilot.formOf(a);
+        if (f == null || !f.has(act.a) || !f.shown(act.a)) return null;
+        const label = f.labelOf(act.a);
+        return Ui.outlineButton(a, "✎ " + (label.isEmpty() ? act.a : label) + ": " + this.decode(act.b), Copilot.COLOR, {
+          onClick: (v) => {
+            this.fill(f, act);
+            Ui.toast(a, "Filled. Check it, then tap Save.");
+          }
+        });
+      }
+      case "OPEN": {
+        const s = Copilot.screen(act.a);
+        if (s == null || (s[3] && p == null)) return null;
+        return Ui.button(a, "Open " + s[1] + (who.isEmpty() ? "" : " · " + who), Copilot.COLOR, {
+          onClick: (v) => {
+            const i = new Intent(a, s[2]);
+            if (p != null) i.putExtra("id", String(pid()));
+            if (s[2] === PresentationsActivity) i.putExtra("kind", PresentationsActivity.ALL);
+            d.dismiss();
+            a.startActivity(i);
+          }
+        });
+      }
+      case "TASK": {
+        if (p == null || "IN" !== p.get("status")) return null;
+        return Ui.outlineButton(a, "＋ Task for " + who + ": " + act.a + (act.b.isEmpty() ? "" : " (by " + act.b + ")"), Copilot.COLOR, {
+          onClick: (v) => {
+            const cv = new ContentValues();
+            cv.put("patient_id", p.get("id"));
+            cv.put("text", act.a);
+            cv.put("kind", Tasks.KINDS[Tasks.KINDS.length - 1]);
+            cv.put("due", Dates.parse(act.b) != null ? act.b : "");
+            cv.put("by_name", CallDutyActivity.myName(a));
+            cv.put("time", Dates.todayIso() + " " + Dates.now());
+            if (db.insert("tasks", cv) > 0) Ui.toast(a, "Task added for " + who);
+            v.setEnabled(false);
+            v.setAlpha(0.5);
+            a.render();
+          }
+        });
+      }
+      case "NOTE": {
+        if (p == null) return null;
+        return Ui.button(a, "📝 Draft progress note · " + who, Copilot.COLOR, {
+          onClick: (v) => {
+            const pre = TamilNote.parse(act.a);
+            d.dismiss();
+            a.startActivity(new Intent(a, CaseSheetActivity).putExtra("id", String(pid()))
+                .putExtra("note_prefill", pre.toString()));
+          }
+        });
+      }
+      default:
+        return null;
+    }
+  }
+
+  decode(s) {
+    return Copilot.last == null ? s : Copilot.last.pack.decode(s);
+  }
+
+  fill(f, act) {
+    let v = act.b;
+    // a patient code in a value becomes the patient's name only on this phone
+    if (Copilot.last != null) v = Copilot.last.pack.decode(v).replaceAllRx(" \\([^)]*bed[^)]*\\)", "");
+    f.set(act.a, v);
+  }
+
+  /**
+   * The browser's speech dialog (VoiceInput on the phone), in the case sheet's dictation language. The words come back to a stand-in
+   * for the screen, so the screen's own onActivityResult is not disturbed.
+   */
+  speak() {
+    const a = this.a;
+    let lang = Dictation.EN;
+    try { lang = a.getSharedPreferences("dictation", Context.MODE_PRIVATE).getString("lang", Dictation.EN); } catch (ignored) { /* English */ }
+    const i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang);
+    i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to Copilot");
+    i.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+    const from = Object.create(a);
+    from.onActivityResult = (req, res, data) => {
+      if (res !== RESULT_OK || data == null) return;
+      const r = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+      const text = r == null || r.isEmpty() ? "" : String(r.get(0)).trim();
+      if (text.isEmpty()) return;
+      this.ask(text);
+    };
+    try {
+      Speech.listen(from, i, Copilot.REQ_SPEAK);
+    } catch (e) {
+      Ui.toast(a, "Voice is not available in this browser: type instead");
+    }
+  }
+
+  ask(q) {
+    const a = this.a;
+    if (q.trim().isEmpty()) {
+      Ui.toast(a, "Type or say what you need");
+      return;
+    }
+    this.x = Copilot.capture(a, this.db);
+    Copilot.last = this.x;
+    Ai.prefs(a).edit().putString("copilot_q", q.trim()).apply();
+    AiRun.ask(a, "Copilot", Copilot.system(), Copilot.user(this.x, q, Copilot.turns), 4000, Copilot.WAIT, null, {
+      got: (text, who) => { this.answer(q.trim(), text, who); }
+    });
+    this.paint();
+  }
+
+  answer(q, text, who) {
+    if (text == null) return;
+    if (Copilot.last == null) Copilot.last = Copilot.capture(this.a, this.db);
+    const r = Copilot.parse(text);
+    const shown = Copilot.last.pack.decode(r.text);
+    Copilot.turns.add([q, shown, r.text, Ui.nz(who).isEmpty() ? "AI" : who]);
+    Copilot.replies.add(r);
+    this.input.setText("");
+    this.paint();
+  }
+
+  pasted(app) {
+    const t = AiRun.paste(this.a, Copilot.WAIT, Copilot.MARK);
+    if (t == null) return;
+    this.answer(Ai.prefs(this.a).getString("copilot_q", "Request"), t, app + " (AI)");
+  }
+};
 ;
 /* ---- app/Crashes.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -26688,6 +29107,455 @@ class CrashesActivity extends Base {
       page.addView(card);
     }
     this.setPage(page);
+  }
+}
+;
+/* ---- app/CultureActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * A patient's cultures (8.60): the organism and the S / I / R of each antibiotic, typed in or read from a photo of the report by AI
+ * (Gemini with the user's key, or a free AI app with copy and paste). Every saved culture counts in the department's antibiogram.
+ */
+class CultureActivity extends Base {
+  static REQ_CAMERA = 8601;
+  static REQ_PICK = 8602;
+
+  constructor() {
+    super();
+    this.id = 0;
+    this.invId = "";
+    this.pendingCamera = null;
+    /** The culture being written (null on the list), its antibiotics, and the saved row being changed (null for a new one). */
+    this.draft = null;
+    this.draftSens = null;
+    this.editId = null;
+    this.form = null;
+    this.extra = null;
+    this.flagsView = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.id = Long.parseLong(this.getIntent().getStringExtra("id"));
+    const inv = this.getIntent().getStringExtra("inv");
+    if (inv != null) this.invId = inv;
+    if (b != null) this.pendingCamera = b.getString("cam");
+    this.setTitle("Culture & sensitivity");
+    this.subtitle = "Counts in the department antibiogram";
+    this.headerColor(Antibiogram.COLOR);
+    if (b == null && !this.invId.isEmpty()) this.startNew(null, null);
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    if (this.pendingCamera != null) out.putString("cam", this.pendingCamera);
+  }
+
+  waitKey() {
+    return "culture_wait_" + this.id;
+  }
+
+  onBackPressed() {
+    if (this.draft != null) {
+      this.draft = null;
+      this.render();
+      return;
+    }
+    super.onBackPressed();
+  }
+
+  /** A new culture, prefilled from the test sent (inv) and from a report that was read. */
+  startNew(got, sens) {
+    this.draft = new JMap();
+    this.draftSens = sens == null ? new JSONObject() : sens;
+    this.editId = null;
+    this.draft.put("specimen", "");
+    this.draft.put("sent_date", Dates.todayIso());
+    this.draft.put("report_date", Dates.todayIso());
+    this.draft.put("growth", "Growth");
+    this.draft.put("organism", "");
+    this.draft.put("colony", "");
+    this.draft.put("note", "");
+    this.draft.put("inv_id", this.invId);
+    const inv = this.invId.isEmpty() ? null : this.db.row("SELECT * FROM " + Results.TABLE + " WHERE id=?", this.invId);
+    if (inv != null) {
+      this.draft.put("specimen", Antibiogram.specimenOf(inv.get("test")));
+      if (Ui.nz(inv.get("sent")).length >= 10) this.draft.put("sent_date", inv.get("sent").substring(0, 10));
+      if (Ui.nz(inv.get("back_at")).length >= 10) this.draft.put("report_date", inv.get("back_at").substring(0, 10));
+      const org = Antibiogram.matchOrganism(inv.get("result"));
+      if (!org.isEmpty()) this.draft.put("organism", org);
+    }
+    if (got != null) for (const e of got.entrySet()) if (!Ui.nz(e.getValue()).isEmpty()) this.draft.put(e.getKey(), e.getValue());
+    this.render();
+  }
+
+  startEdit(c) {
+    this.draft = new JMap();
+    for (const k of c.keySet()) this.draft.put(k, c.get(k));
+    this.draftSens = Antibiogram.sens(c);
+    this.editId = Long.parseLong(c.get("id"));
+    this.render();
+  }
+
+  /** Copies what is typed on the form into the draft before the page is drawn again. */
+  keep() {
+    if (this.form == null || this.draft == null) return;
+    for (const k of ["specimen", "sent_date", "report_date", "growth", "colony", "note"]) if (this.form.has(k)) this.draft.put(k, this.form.get(k));
+  }
+
+  render() {
+    this.keep();
+    const p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.id));
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Antibiogram.COLOR), 20));
+    hero.addView(Ui.tv(this, "🧫  " + (p == null ? "Patient" : Ui.nz(p.get("name")) + "  ·  " + Ui.nz(p.get("age")) + Ui.nz(p.get("sex"))), 19, Color.WHITE, true));
+    if (p != null) hero.addView(Ui.tv(this, Base.where(p) + "  ·  " + Ui.nz(p.get("diagnosis")), 13, 0xE6FFFFFF, false));
+    page.addView(hero);
+    if (this.draft != null) this.editor(page);
+    else this.list(page);
+    this.setPage(page);
+  }
+
+  list(page) {
+    this.form = null;
+    const card = Ui.card(this);
+    const app = AiRun.waiting(this, this.waitKey());
+    if (!app.isEmpty()) {
+      card.addView(Ui.tv(this, "↩  Waiting for " + app + "'s reading", 15, Antibiogram.COLOR, true));
+      card.addView(Ui.muted(this, "In " + app + ", tap Copy under its answer, come back here and tap Paste."));
+      card.addView(Ui.buttonRow(this, Ui.button(this, "📋  Paste the reading", Antibiogram.COLOR, {
+        onClick: (v) => {
+          const t = AiRun.paste(this, this.waitKey(), Antibiogram.MARK);
+          if (t != null) {
+            this.cleanFiles();
+            const s = new JSONObject();
+            this.startNew(Antibiogram.parse(t, s), s);
+          }
+        }
+      }), Ui.button(this, "Cancel", Ui.SLATE, {
+        onClick: (v) => {
+          AiRun.forget(this, this.waitKey());
+          this.cleanFiles();
+          this.render();
+        }
+      })));
+    } else {
+      card.addView(Ui.title(this, "Add a culture report"));
+      card.addView(Ui.muted(this, "Type the organism and sensitivity, or photograph the microbiology report and let AI read it. You check every antibiotic before saving."));
+      card.addView(Ui.buttonRow(this, Ui.button(this, "📷  Read the report photo", Antibiogram.COLOR, {
+        onClick: (v) => { this.photo(); }
+      }), Ui.outlineButton(this, "+ Type it", Antibiogram.COLOR, {
+        onClick: (v) => { this.startNew(null, null); }
+      })));
+    }
+    page.addView(card);
+
+    const all = Antibiogram.forPatient(this.db, this.id);
+    page.addView(Ui.heading(this, all.isEmpty() ? "No culture saved yet" : "Cultures  ·  " + all.size(), Antibiogram.COLOR));
+    for (const c of all) {
+      const s = Antibiogram.sens(c);
+      const sens = Antibiogram.susceptible(s), res = Antibiogram.resistant(s);
+      const sub = new StringBuilder();
+      if (!sens.isEmpty()) sub.append("Sensitive: ").append(CultureActivity.names(sens));
+      if (!res.isEmpty()) sub.append(sub.length() === 0 ? "" : "\n").append("Resistant: ").append(CultureActivity.names(res));
+      const bad = !Ui.nz(c.get("flags")).isEmpty();
+      page.addView(this.entryCard(bad ? c.get("flags") : Ui.nz(c.get("growth")), bad ? Ui.RED : Antibiogram.COLOR,
+          Antibiogram.line(c).split("  ·  " + Ui.nz(c.get("flags"))).join(""), sub.toString(), Ui.nz(c.get("by_name")), {
+            onClick: (v) => { this.startEdit(c); }
+          }, 6));
+    }
+    const go = Ui.outlineButton(this, "Open the department antibiogram", Antibiogram.COLOR, this.opener(AntibiogramActivity));
+    const gb = Ui.v(this);
+    gb.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    gb.addView(go);
+    page.addView(gb);
+  }
+
+  static names(codes) {
+    const b = new StringBuilder();
+    for (const c of codes) b.append(b.length() === 0 ? "" : ", ").append(Antibiogram.name(c));
+    return b.toString();
+  }
+
+  editor(page) {
+    const f = new Form(this);
+    this.form = f;
+    f.segment("specimen", "Specimen", Antibiogram.SPECIMENS, this.draft.get("specimen"));
+    f.beginRow();
+    f.date("sent_date", "Sent on", this.draft.get("sent_date"));
+    f.date("report_date", "Reported on", this.draft.get("report_date"));
+    f.endRow();
+    f.segment("growth", "Result", Antibiogram.GROWTH, this.draft.get("growth"), null, {
+      changed: (v) => {
+        if (this.draft != null && !Ui.nz(v).equals(Ui.nz(this.draft.get("growth")))) {
+          this.draft.put("growth", v);
+          f.view.post({
+            run: () => { this.render(); }
+          });
+        }
+      }
+    });
+    const card = Ui.card(this);
+    card.addView(Ui.title(this, this.editId == null ? "New culture" : "Change culture"));
+    card.addView(f.view);
+    const growth = "Growth".equals(this.draft.get("growth"));
+    if (growth) {
+      const org = Ui.nz(this.draft.get("organism"));
+      const pick = Ui.outlineButton(this, org.isEmpty() ? "Choose the organism ▾" : "Organism: " + org + "  ▾", org.isEmpty() ? Ui.RED : Antibiogram.COLOR, {
+        onClick: (v) => { this.pickOrganism(); }
+      });
+      card.addView(pick);
+      Ui.margins(pick, 0, 8, 0, 0);
+    }
+    const g = new Form(this);
+    if (growth) g.text("colony", "Colony count (optional)", this.draft.get("colony"), InputType.TYPE_CLASS_TEXT);
+    g.text("note", "Note (optional)", this.draft.get("note"), InputType.TYPE_CLASS_TEXT);
+    card.addView(g.view);
+    page.addView(card);
+    // the second form's fields are read on save
+    this.extra = g;
+
+    if (growth && !Ui.nz(this.draft.get("organism")).isEmpty()) {
+      const panel = Antibiogram.panel(this.draft.get("organism"));
+      page.addView(Ui.heading(this, "Sensitivity  ·  tap S, I or R", Antibiogram.COLOR));
+      const grid = Ui.card(this);
+      for (const a of panel) grid.addView(this.sirRow(a));
+      // antibiotics read from a report but outside the usual panel stay visible
+      for (const a of Antibiogram.ABX) {
+        let inPanel = false;
+        for (const q of panel) if (q[0].equals(a[0])) inPanel = true;
+        if (!inPanel && this.draftSens.has(a[0])) grid.addView(this.sirRow(a));
+      }
+      page.addView(grid);
+      const fl = Antibiogram.flags(this.draft.get("organism"), this.draftSens);
+      if (!fl.isEmpty()) {
+        const w = Ui.tv(this, "⚠  " + TextUtils.join("  ·  ", fl), 15, Ui.RED, true);
+        w.setPadding(Ui.dp(this, 16), Ui.dp(this, 8), Ui.dp(this, 16), 0);
+        page.addView(w);
+        this.flagsView = w;
+      } else this.flagsView = null;
+    }
+    const btns = Ui.buttonRow(this, Ui.button(this, "Save", Antibiogram.COLOR, {
+      onClick: (v) => { this.save(); }
+    }), Ui.outlineButton(this, "Cancel", Ui.SLATE, {
+      onClick: (v) => {
+        this.draft = null;
+        this.render();
+      }
+    }));
+    if (this.editId != null) btns.addView(Ui.outlineButton(this, "Delete", Ui.RED, {
+      onClick: (v) => {
+        new AlertDialog.Builder(this).setTitle("Delete this culture?").setMessage("It is taken out of the antibiogram too.")
+            .setPositiveButton("Delete", {
+              onClick: (d, w) => {
+                this.db.delete(Antibiogram.TABLE, this.editId);
+                this.draft = null;
+                this.render();
+              }
+            }).setNegativeButton("Keep", null).show();
+      }
+    }));
+    const bb = Ui.v(this);
+    bb.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    bb.addView(btns);
+    page.addView(bb);
+    const note = Ui.muted(this, "Check every antibiotic against the printed report. ESBL, CRE, MRSA and MDR are worked out from the pattern.");
+    note.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), 0);
+    page.addView(note);
+  }
+
+  /** Antibiotic name with three taps: S (green), I (amber), R (red); tap the chosen one again to clear it. */
+  sirRow(a) {
+    const r = Ui.h(this);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(0, Ui.dp(this, 3), 0, Ui.dp(this, 3));
+    r.addView(Ui.tv(this, a[1], 14, Ui.TEXT, false), Ui.weight(1));
+    const t = new Array(3).fill(null);
+    const v = ["S", "I", "R"];
+    const col = [Ui.GREEN, Ui.AMBER, Ui.RED];
+    for (let i = 0; i < 3; i++) {
+      const k = i;
+      t[i] = Ui.tv(this, v[i], 14, Ui.TEXT, true);
+      t[i].setGravity(Gravity.CENTER);
+      t[i].setOnClickListener({
+        onClick: (x) => {
+          try {
+            if (v[k].equals(this.draftSens.optString(a[0]))) this.draftSens.remove(a[0]);
+            else this.draftSens.put(a[0], v[k]);
+          } catch (ignored) {
+          }
+          this.paintSir(a[0], t, v, col);
+          this.refreshFlags();
+        }
+      });
+      const lp = new LinearLayout.LayoutParams(Ui.dp(this, 40), Ui.dp(this, 34));
+      lp.leftMargin = Ui.dp(this, 6);
+      r.addView(t[i], lp);
+    }
+    this.paintSir(a[0], t, v, col);
+    return r;
+  }
+
+  paintSir(code, t, v, col) {
+    const cur = this.draftSens.optString(code);
+    for (let i = 0; i < 3; i++) {
+      const on = v[i].equals(cur);
+      t[i].setTextColor(on ? Color.WHITE : col[i]);
+      t[i].setBackground(on ? Ui.round(this, col[i], 10) : Ui.outline(this, Ui.CARD, Ui.alpha(col[i], 0x66), 10));
+    }
+  }
+
+  refreshFlags() {
+    if (this.flagsView == null) {
+      if (!Antibiogram.flags(this.draft.get("organism"), this.draftSens).isEmpty()) this.render();
+      return;
+    }
+    const fl = Antibiogram.flags(this.draft.get("organism"), this.draftSens);
+    this.flagsView.setText(fl.isEmpty() ? "" : "⚠  " + TextUtils.join("  ·  ", fl));
+  }
+
+  pickOrganism() {
+    const names = Antibiogram.orgNames();
+    new AlertDialog.Builder(this).setTitle("Organism isolated")
+        .setItems(names, {
+          onClick: (d, w) => {
+            this.keep();
+            this.draft.put("organism", names[w]);
+            this.render();
+          }
+        }).setNegativeButton("Cancel", null).show();
+  }
+
+  save() {
+    this.keep();
+    if (this.extra != null) for (const k of ["colony", "note"]) if (this.extra.has(k)) this.draft.put(k, this.extra.get(k));
+    if (Ui.nz(this.draft.get("specimen")).isEmpty()) {
+      Ui.toast(this, "Choose the specimen");
+      return;
+    }
+    const growth = "Growth".equals(this.draft.get("growth"));
+    if (growth && Ui.nz(this.draft.get("organism")).isEmpty()) {
+      Ui.toast(this, "Choose the organism");
+      return;
+    }
+    if (growth && this.draftSens.length() === 0) {
+      Ui.toast(this, "Tap S, I or R for at least one antibiotic");
+      return;
+    }
+    Antibiogram.save(this.db, this.editId, this.id, this.draft, this.draftSens, CallDutyActivity.myName(this));
+    // the test sent is marked as back with this result
+    const inv = Ui.nz(this.draft.get("inv_id"));
+    if (!inv.isEmpty() && !"0".equals(inv)) {
+      const r = this.db.row("SELECT * FROM " + Results.TABLE + " WHERE id=?", inv);
+      if (r != null && !Results.BACK.equals(r.get("status"))) {
+        Results.back(this.db, r, growth ? this.draft.get("organism") : this.draft.get("growth"), growth, CallDutyActivity.myName(this), Protocols.now());
+        const fresh = this.db.row("SELECT * FROM " + Results.TABLE + " WHERE id=?", inv);
+        if (fresh != null) Results.seen(this.db, fresh, CallDutyActivity.myName(this));
+      }
+    }
+    Ui.toast(this, "Culture saved");
+    this.draft = null;
+    this.invId = "";
+    this.render();
+  }
+
+  // ---------------------------------------------------------------- photo of the report
+
+  photo() {
+    const how = AiRun.fake != null || !Ai.geminiKey(this).isEmpty() ? "The picture is read by Google Gemini with your own key."
+        : "No Gemini key is saved, so the picture goes to the free AI app you choose (ChatGPT, Claude or Gemini).";
+    new AlertDialog.Builder(this).setTitle("Read the report photo")
+        .setMessage("Only the picture is sent to the AI. Fold or cover the patient's name and IP number on the report first. " + how)
+        .setPositiveButton("Camera", {
+          onClick: (d, w) => {
+            this.pendingCamera = Imaging.DIR + "/cultscan_" + System.currentTimeMillis() + ".jpg";
+            if (!Store.capture(this, this.pendingCamera, CultureActivity.REQ_CAMERA)) this.pendingCamera = null;
+          }
+        })
+        .setNeutralButton("Gallery", {
+          onClick: (d, w) => { Store.pick(this, ["image/*"], CultureActivity.REQ_PICK); }
+        })
+        .setNegativeButton("Cancel", null).show();
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (res !== RESULT_OK || (req !== CultureActivity.REQ_CAMERA && req !== CultureActivity.REQ_PICK)) return;
+    try {
+      let rel = null;
+      if (req === CultureActivity.REQ_CAMERA && this.pendingCamera != null) {
+        rel = this.pendingCamera;
+        this.pendingCamera = null;
+      } else if (req === CultureActivity.REQ_PICK && data != null && data.getData() != null) rel = Store.importUri(this, data.getData(), Imaging.DIR, "cultscan");
+      if (rel == null) return;
+      const f = this.db.file(rel);
+      const jpg = f.exists() ? LabScan.jpeg(f) : null;
+      if (jpg == null) {
+        f.delete();
+        Ui.toast(this, "Pick or take a photo (JPG or PNG)");
+        return;
+      }
+      const out = new FileOutputStream(f);
+      try { out.write(jpg); } finally { out.close(); }
+      this.picture(rel, jpg);
+    } catch (e) {
+      Ui.toast(this, "Could not use the picture: " + e.getMessage());
+    }
+  }
+
+  /** The photo is ready: Gemini (or the test AI) reads it; otherwise it goes to a free AI app. */
+  picture(rel, jpg) {
+    const prompt = Antibiogram.prompt();
+    const read = AiRun.vision(this, "Reading the culture report", prompt, jpg, {
+      got: (text, who) => {
+        this.db.file(rel).delete();
+        const s = new JSONObject();
+        const v = Antibiogram.parse(text, s);
+        if (v.get("organism").isEmpty() && s.length() === 0 && !"No growth".equals(v.get("growth"))) {
+          Ui.toast(this, "The report could not be read: type it instead");
+          this.startNew(null, null);
+          return;
+        }
+        this.startNew(v, s);
+      }
+    });
+    if (read) return;
+    const apps = DischargeActivity.CHAT_APPS;
+    const items = new Array(apps.length + 1).fill(null);
+    for (let i = 0; i < apps.length; i++) items[i] = "Free: " + apps[i][0] + " app";
+    items[apps.length] = "Use Gemini inside the app: add a free key";
+    new AlertDialog.Builder(this).setTitle("Which AI app reads it?")
+        .setItems(items, {
+          onClick: (d, w) => {
+            if (w < apps.length) {
+              AiRun.imageToApp(this, apps[w], prompt, rel, this.waitKey());
+              this.render();
+            } else this.open(SettingsActivity);
+          }
+        }).setNegativeButton("Cancel", null).show();
+  }
+
+  cleanFiles() {
+    try {
+      const fs = this.db.file(Imaging.DIR).listFiles();
+      if (fs != null) for (const f of fs) if (f.getName().startsWith("cultscan_")) f.delete();
+    } catch (ignored) { }
+  }
+
+  /** The patient page's culture line: the last culture, or a button to add one. */
+  static patientCard(a, db, pid) {
+    const all = Antibiogram.forPatient(db, pid);
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), 0);
+    const c = all.isEmpty() ? null : all.get(0);
+    const bad = c != null && !Ui.nz(c.get("flags")).isEmpty();
+    const label = c == null ? "🧫  Add a culture & sensitivity" : "🧫  " + Antibiogram.line(c) + (all.size() > 1 ? "  (+" + (all.size() - 1) + ")" : "");
+    const b = bad ? Ui.button(a, label, Ui.RED, a.opener(CultureActivity, "id", String(pid)))
+        : Ui.outlineButton(a, label, Antibiogram.COLOR, a.opener(CultureActivity, "id", String(pid)));
+    box.addView(b);
+    return box;
   }
 }
 ;
@@ -29661,6 +32529,14 @@ class DissertationActivity extends Base {
     }
     page.addView(ms);
 
+    const tc = this.db.num("SELECT COUNT(*) FROM thesis_cases WHERE diss_id=?", String(this.id));
+    const tf = Thesis.fields(d).length();
+    const th = Ui.v(this);
+    th.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    th.addView(Ui.button(this, "📊  Thesis data: " + (tf === 0 ? "make the form" : tc + (tc === 1 ? " case" : " cases") + ", master chart, statistics"), Thesis.COLOR,
+        this.opener(ThesisActivity, "diss", String(this.id))));
+    page.addView(th);
+
     page.addView(Ui.heading(this, "Progress notes", COLOR));
     const notes = Ui.card(this);
     const log = Ui.nz(d.get("notes")).trim();
@@ -31737,6 +34613,432 @@ class Drugs {
     let t = Ui.nz(s).toLowerCase().trim();
     t = t.replaceAllRx("^(inj|tab|cap|syp|syr|neb|ivf|iv)\\.?\\s+", "");
     return t.replaceAllRx("\\s+", " ").trim();
+  }
+}
+;
+/* ---- app/Ecg.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * ECG photo reader (8.40): an AI reads a photo of a 12-lead ECG into rate, rhythm, axis, intervals, findings and an impression,
+ * compared with the patient's last saved reading. The doctor checks and corrects every field before saving. Rules (not AI) flag
+ * the dangerous patterns and the changes from the last ECG, so a missed word in the AI's answer still shows.
+ */
+class Ecg {
+  static COLOR = 0xFFDB2777;
+  static MARK = "Read this 12-lead ECG";
+  /** field key, label shown, AI label. */
+  static FIELDS = [
+    ["rate", "Heart rate (/min)", "RATE"], ["rhythm", "Rhythm", "RHYTHM"], ["axis", "Axis", "AXIS"],
+    ["pr", "PR interval (ms)", "PR"], ["qrs", "QRS duration (ms)", "QRS"], ["qtc", "QTc (ms)", "QTC"],
+    ["findings", "Findings (P, QRS, ST, T, blocks, chambers)", "FINDINGS"], ["impression", "Impression", "IMPRESSION"],
+    ["change", "Change from the last ECG", "CHANGE"]];
+
+  static prompt(prev) {
+    const b = new StringBuilder(Ecg.MARK).append(" photo like a cardiologist. The paper speed is usually 25 mm/s and 10 mm/mV unless "
+        + "printed otherwise. If the photo is unclear or a lead is missing, say so in FINDINGS instead of guessing. "
+        + "Reply only with these labelled lines, no markdown:\n"
+        + "RATE: number per minute\nRHYTHM: e.g. sinus rhythm, atrial fibrillation with fast ventricular rate\n"
+        + "AXIS: normal, left axis deviation, right axis deviation or extreme\nPR: ms (or 'not measurable')\nQRS: ms\nQTC: ms (Bazett)\n"
+        + "FINDINGS: P waves, QRS (Q waves, bundle branch block, voltage), ST segments and T waves with the leads, blocks, chamber enlargement\n"
+        + "IMPRESSION: one or two lines\nURGENT: yes or no (yes for STEMI or posterior MI, VT/VF, complete or Mobitz II block, "
+        + "hyperkalaemia pattern, QTc 500 or more, rate below 40 or above 150)\n");
+    if (prev != null) {
+      b.append("CHANGE: what is new or different compared with the previous ECG below\n\nPrevious ECG (").append(Dates.nice(prev.get("date"))).append("):\n")
+          .append(Ecg.summary(prev));
+    } else b.append("CHANGE: leave empty (no previous ECG)");
+    return b.toString();
+  }
+
+  static HEAD = Pattern.compile("^\\s*\\**\\s*(RATE|RHYTHM|AXIS|PR|QRS|QTC|FINDINGS|IMPRESSION|URGENT|CHANGE)\\s*\\**\\s*[:\\-]\\s*(.*)$", Pattern.CASE_INSENSITIVE);
+
+  /** The AI's answer as fields (rate, rhythm, …, urgent "yes"/""). Numbers keep only the number. */
+  static parse(reply) {
+    const out = new JMap();
+    let cur = null;
+    for (const line of Ui.nz(reply).split("\r").join("").jsplit("\n")) {
+      const m = Ecg.HEAD.matcher(line);
+      if (m.matches()) {
+        cur = m.group(1).toUpperCase();
+        out.put(cur, m.group(2).trim());
+      } else if (cur != null && !line.trim().isEmpty()) out.put(cur, (out.get(cur) + "\n" + line.trim()).trim());
+    }
+    const f = new JMap();
+    for (const k of Ecg.FIELDS) {
+      let v = Ui.nz(out.get(k[2])).trim();
+      if (v.matches("(?i)(none|nil|n/?a|-)")) v = "";
+      if (k[0].equals("rate") || k[0].equals("pr") || k[0].equals("qrs") || k[0].equals("qtc")) {
+        const n = Pattern.compile("(\\d{2,3})").matcher(v);
+        v = n.find() ? n.group(1) : "";
+      }
+      f.put(k[0], v);
+    }
+    f.put("urgent", Ui.nz(out.get("URGENT")).toLowerCase().startsWith("yes") ? "yes" : "");
+    return f;
+  }
+
+  static num(s) {
+    try {
+      return Integer.parseInt(Ui.nz(s).trim());
+    } catch (e) {
+      return -1;
+    }
+  }
+
+  static DANGER = [
+    ["st elevation|stemi|st-elevation|posterior mi|posterior infarct", "ST elevation: think STEMI, call cardiology / thrombolyse"],
+    ["ventricular tachycardia|\\bvt\\b|torsade", "Ventricular tachycardia"],
+    ["ventricular fibrillation|\\bvf\\b", "Ventricular fibrillation"],
+    ["complete heart block|third degree|3rd degree|complete av block|chb\\b", "Complete heart block"],
+    ["mobitz (type )?(ii|2)|second degree .*type (ii|2)", "Mobitz II block"],
+    ["hyperkal|peaked t|tall tented", "Hyperkalaemia pattern: check K now"],
+    ["wellens|de winter|new lbbb", "High-risk ischaemia pattern"],
+    ["brugada", "Brugada pattern"]];
+
+  /** Dangerous patterns by rule, from the fields (rate, QTc and words in rhythm/findings/impression). */
+  static danger(f) {
+    const out = [];
+    let words = (Ui.nz(f.get("rhythm")) + " " + Ui.nz(f.get("findings")) + " " + Ui.nz(f.get("impression"))).toLowerCase();
+    // "no ST elevation" must not count
+    words = words.replaceAllRx("\\bno (significant )?(st[ -]elevation|stemi|heart block|vt)\\b", " ");
+    for (const d of Ecg.DANGER) if (Pattern.compile(d[0]).matcher(words).find()) out.add(d[1]);
+    const rate = Ecg.num(f.get("rate")), qtc = Ecg.num(f.get("qtc"));
+    if (rate > 0 && rate < 40) out.add("Heart rate " + rate + "/min");
+    if (rate > 150) out.add("Heart rate " + rate + "/min");
+    if (qtc >= 500) out.add("QTc " + qtc + " ms: torsades risk, check K, Mg and QT drugs");
+    return out;
+  }
+
+  /** Changes from the previous reading by rule (rate, rhythm, QRS, QTc, new ST or block words). */
+  static changes(prev, cur) {
+    const out = [];
+    if (prev == null) return out;
+    const r0 = Ecg.num(prev.get("rate")), r1 = Ecg.num(cur.get("rate"));
+    if (r0 > 0 && r1 > 0 && Math.abs(r1 - r0) >= 20) out.add("Rate " + r0 + " → " + r1 + "/min");
+    const h0 = Ecg.rhythmWord(prev.get("rhythm")), h1 = Ecg.rhythmWord(cur.get("rhythm"));
+    if (!h0.isEmpty() && !h1.isEmpty() && !h0.equals(h1)) out.add("Rhythm changed: " + h0 + " → " + h1);
+    const q0 = Ecg.num(prev.get("qrs")), q1 = Ecg.num(cur.get("qrs"));
+    if (q0 > 0 && q1 > 0 && q1 - q0 >= 20) out.add("QRS wider: " + q0 + " → " + q1 + " ms");
+    const t0 = Ecg.num(prev.get("qtc")), t1 = Ecg.num(cur.get("qtc"));
+    if (t0 > 0 && t1 > 0 && t1 - t0 >= 60) out.add("QTc longer: " + t0 + " → " + t1 + " ms");
+    const d0 = Ecg.danger(prev);
+    for (const d of Ecg.danger(cur)) if (!d0.contains(d) && !d.startsWith("Heart rate") && !d.startsWith("QTc")) out.add("New: " + d);
+    return out;
+  }
+
+  static rhythmWord(r) {
+    const s = Ui.nz(r).toLowerCase();
+    if (s.isEmpty()) return "";
+    if (s.contains("fibrillation") && s.contains("atrial")) return "atrial fibrillation";
+    if (s.contains("flutter")) return "atrial flutter";
+    if (s.contains("ventricular tachy")) return "ventricular tachycardia";
+    if (s.contains("svt") || s.contains("supraventricular")) return "SVT";
+    if (s.contains("junction")) return "junctional rhythm";
+    if (s.contains("paced")) return "paced rhythm";
+    if (s.contains("sinus")) return "sinus";
+    return s.length > 30 ? s.substring(0, 30) : s;
+  }
+
+  /** One reading as text (for the next comparison, sharing, and the AI). No names. */
+  static summary(r) {
+    const b = new StringBuilder();
+    for (const k of Ecg.FIELDS) {
+      if (k[0].equals("change")) continue;
+      const v = Ui.nz(r.get(k[0])).trim();
+      if (v.isEmpty()) continue;
+      b.append(k[2]).append(": ").append(v).append(k[0].equals("rate") ? "/min" : k[0].equals("pr") || k[0].equals("qrs") || k[0].equals("qtc") ? " ms" : "").append("\n");
+    }
+    return b.toString().trim();
+  }
+
+  static last(db, pid) {
+    return db.row("SELECT * FROM ecg_reads WHERE patient_id=? ORDER BY date DESC, time DESC, id DESC LIMIT 1", String(pid));
+  }
+
+  static all(db, pid) {
+    return db.rows("SELECT * FROM ecg_reads WHERE patient_id=? ORDER BY date DESC, time DESC, id DESC", String(pid));
+  }
+
+  static save(db, pid, f, by) {
+    const cv = new ContentValues();
+    cv.put("patient_id", pid);
+    cv.put("date", Ui.nz(f.get("date")).isEmpty() ? Dates.todayIso() : f.get("date"));
+    cv.put("time", Ui.nz(f.get("time")).isEmpty() ? Dates.now() : f.get("time"));
+    for (const k of Ecg.FIELDS) cv.put(k[0], Ui.nz(f.get(k[0])).trim());
+    cv.put("urgent", Ecg.danger(f).isEmpty() && !"yes".equals(f.get("urgent")) ? "" : "yes");
+    cv.put("by_name", Ui.nz(by));
+    cv.put("created", Dates.todayIso() + " " + Dates.now());
+    return db.insert("ecg_reads", cv);
+  }
+
+  /** WhatsApp text, without the patient's name. */
+  static shareText(r) {
+    const b = new StringBuilder("*❤️ ECG reading* (").append(Dates.nice(r.get("date"))).append(" ").append(Ui.nz(r.get("time"))).append(")\n");
+    b.append(Ecg.summary(r));
+    if (!Ui.nz(r.get("change")).isEmpty()) b.append("\nCHANGE: ").append(r.get("change"));
+    b.append("\n_AI-assisted reading checked by the doctor. Decision support only._");
+    return b.toString();
+  }
+}
+;
+/* ---- app/EcgActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * ECG photo reader (8.40). With a patient ("id"): the readings saved for that patient, newest first, each compared with the one
+ * before. Without a patient: a quick read that is shown and shared but not saved. The photo is deleted once it is read.
+ */
+class EcgActivity extends Base {
+  static REQ_CAMERA = 8401;
+  static REQ_PICK = 8402;
+
+  constructor() { super(); this.id = -1; this.pendingCamera = null; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const s = this.getIntent().getStringExtra("id");
+    if (s != null) this.id = Long.parseLong(s);
+    if (b != null) this.pendingCamera = b.getString("cam");
+    this.setTitle("ECG reader");
+    this.subtitle = this.id >= 0 ? "Readings for this patient" : "Quick read, not saved to a patient";
+    this.headerColor(Ecg.COLOR);
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    if (this.pendingCamera != null) out.putString("cam", this.pendingCamera);
+  }
+
+  waitKey() {
+    return "ecg_wait_" + this.id;
+  }
+
+  render() {
+    const p = this.id >= 0 ? this.db.row("SELECT * FROM patients WHERE id=?", String(this.id)) : null;
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Ecg.COLOR), 20));
+    hero.addView(Ui.tv(this, "❤️  " + (p == null ? "Read an ECG photo" : Ui.nz(p.get("name")) + "  ·  " + Ui.nz(p.get("age")) + Ui.nz(p.get("sex"))), 19, Color.WHITE, true));
+    hero.addView(Ui.tv(this, p == null ? "AI reads rate, rhythm, axis, intervals and findings; you check every field."
+        : Base.where(p) + "  ·  " + Ui.nz(p.get("diagnosis")), 13, 0xE6FFFFFF, false));
+    page.addView(hero);
+
+    const card = Ui.card(this);
+    const app = AiRun.waiting(this, this.waitKey());
+    if (!app.isEmpty()) {
+      card.addView(Ui.tv(this, "↩  Waiting for " + app + "'s reading", 15, Ecg.COLOR, true));
+      card.addView(Ui.muted(this, "In " + app + ", tap Copy under its answer, come back here and tap Paste."));
+      card.addView(Ui.buttonRow(this, Ui.button(this, "📋  Paste the reading", Ecg.COLOR, {
+        onClick: (v) => {
+          const t = AiRun.paste(this, this.waitKey(), Ecg.MARK);
+          if (t != null) {
+            this.cleanFiles();
+            this.review(Ecg.parse(t), app + " (AI)");
+          }
+        }
+      }), Ui.button(this, "Cancel", Ui.SLATE, {
+        onClick: (v) => {
+          AiRun.forget(this, this.waitKey());
+          this.cleanFiles();
+          this.render();
+        }
+      })));
+    } else {
+      card.addView(Ui.title(this, "Read an ECG photo"));
+      card.addView(Ui.muted(this, "Lay the ECG flat in good light and photograph all 12 leads and the rhythm strip, straight from above. "
+          + (p == null ? "" : "It is compared with this patient's last saved ECG.")));
+      const row = Ui.buttonRow(this, Ui.button(this, "📷  Read an ECG photo", Ecg.COLOR, {
+        onClick: (v) => { this.start(); }
+      }));
+      if (this.id >= 0) row.addView(Ui.outlineButton(this, "+ Type a reading", Ecg.COLOR, {
+        onClick: (v) => { this.review(new JMap(), null); }
+      }));
+      card.addView(row);
+    }
+    page.addView(card);
+
+    if (this.id >= 0) {
+      const all = Ecg.all(this.db, this.id);
+      page.addView(Ui.heading(this, all.isEmpty() ? "No ECG saved yet" : "Saved readings  ·  " + all.size(), Ecg.COLOR));
+      for (const r of all) {
+        const urgent = "yes".equals(r.get("urgent"));
+        const sub = new StringBuilder();
+        if (!Ui.nz(r.get("rate")).isEmpty()) sub.append(r.get("rate")).append("/min  ·  ");
+        sub.append(Ui.nz(r.get("rhythm")));
+        if (!Ui.nz(r.get("impression")).isEmpty()) sub.append("\n").append(r.get("impression"));
+        if (!Ui.nz(r.get("change")).isEmpty()) sub.append("\nChange: ").append(r.get("change"));
+        page.addView(this.entryCard(urgent ? "URGENT" : "ECG", urgent ? Ui.RED : Ecg.COLOR, Dates.nice(r.get("date")) + "  " + Ui.nz(r.get("time")),
+            sub.toString(), Ui.nz(r.get("by_name")), {
+              onClick: (v) => { this.detail(r); }
+            }, 8));
+      }
+    }
+    const note = Ui.muted(this, "Decision support only: an AI reading of a photo can be wrong. The doctor reads the ECG and decides.");
+    note.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+
+  start() {
+    const how = AiRun.fake != null || !Ai.geminiKey(this).isEmpty() ? "The picture is read by Google Gemini with your own key."
+        : "No Gemini key is saved, so the picture goes to the free AI app you choose (ChatGPT, Claude or Gemini).";
+    new AlertDialog.Builder(this).setTitle("Read an ECG photo")
+        .setMessage("Only the picture is sent to the AI. Fold or cover the patient's name and IP number on the ECG first. " + how)
+        .setPositiveButton("Camera", {
+          onClick: (d, w) => {
+            this.pendingCamera = Imaging.DIR + "/ecgscan_" + System.currentTimeMillis() + ".jpg";
+            if (!Store.capture(this, this.pendingCamera, EcgActivity.REQ_CAMERA)) this.pendingCamera = null;
+          }
+        })
+        .setNeutralButton("Gallery", {
+          onClick: (d, w) => { Store.pick(this, ["image/*"], EcgActivity.REQ_PICK); }
+        })
+        .setNegativeButton("Cancel", null).show();
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (res !== RESULT_OK || (req !== EcgActivity.REQ_CAMERA && req !== EcgActivity.REQ_PICK)) return;
+    try {
+      let rel = null;
+      if (req === EcgActivity.REQ_CAMERA && this.pendingCamera != null) {
+        rel = this.pendingCamera;
+        this.pendingCamera = null;
+      } else if (req === EcgActivity.REQ_PICK && data != null && data.getData() != null) rel = Store.importUri(this, data.getData(), Imaging.DIR, "ecgscan");
+      if (rel == null) return;
+      const f = this.db.file(rel);
+      const jpg = f.exists() ? LabScan.jpeg(f) : null;
+      if (jpg == null) {
+        f.delete();
+        Ui.toast(this, "Pick or take a photo (JPG or PNG)");
+        return;
+      }
+      const out = new FileOutputStream(f);
+      try { out.write(jpg); } finally { out.close(); }
+      this.picture(rel, jpg);
+    } catch (e) {
+      Ui.toast(this, "Could not use the picture: " + e.getMessage());
+    }
+  }
+
+  /** The photo is ready: Gemini (or the test AI) reads it; otherwise it goes to a free AI app. */
+  picture(rel, jpg) {
+    const prev = this.id >= 0 ? Ecg.last(this.db, this.id) : null;
+    const prompt = Ecg.prompt(prev);
+    const read = AiRun.vision(this, "Reading the ECG", prompt, jpg, {
+      got: (text, who) => {
+        this.db.file(rel).delete();
+        this.review(Ecg.parse(text), who);
+      }
+    });
+    if (read) return;
+    const apps = DischargeActivity.CHAT_APPS;
+    const items = new Array(apps.length + 1).fill(null);
+    for (let i = 0; i < apps.length; i++) items[i] = "Free: " + apps[i][0] + " app";
+    items[apps.length] = "Use Gemini inside the app: add a free key";
+    new AlertDialog.Builder(this).setTitle("Which AI app reads it?")
+        .setItems(items, {
+          onClick: (d, w) => {
+            if (w < apps.length) {
+              AiRun.imageToApp(this, apps[w], prompt, rel, this.waitKey());
+              this.render();
+            } else this.open(SettingsActivity);
+          }
+        }).setNegativeButton("Cancel", null).show();
+  }
+
+  cleanFiles() {
+    try {
+      const fs = this.db.file(Imaging.DIR).listFiles();
+      if (fs != null) for (const f of fs) if (f.getName().startsWith("ecgscan_")) f.delete();
+    } catch (ignored) { }
+  }
+
+  /** The reading in a form to check and correct; the rule flags show above it. Save (patient) or Share. */
+  review(got, who) {
+    const prev = this.id >= 0 ? Ecg.last(this.db, this.id) : null;
+    const f = new Form(this);
+    const danger = Ecg.danger(got);
+    if ("yes".equals(got.get("urgent")) && danger.isEmpty()) danger.add("The AI marked this ECG as urgent");
+    if (!danger.isEmpty()) {
+      const t = Ui.tv(this, "⚠  " + TextUtils.join("\n⚠  ", danger), 14, Ui.RED, true);
+      f.view.addView(t);
+      Ui.margins(t, 0, 0, 0, 8);
+    }
+    const ch = Ecg.changes(prev, got);
+    if (!ch.isEmpty()) {
+      const t = Ui.tv(this, "Compared with " + Dates.nice(prev.get("date")) + ":\n• " + TextUtils.join("\n• ", ch), 13, Ecg.COLOR, true);
+      f.view.addView(t);
+      Ui.margins(t, 0, 0, 0, 8);
+    }
+    if (who != null) f.view.addView(Ui.muted(this, "Read by " + who + ". Check every field against the ECG."));
+    if (this.id >= 0) {
+      f.beginRow();
+      f.date("date", "Date", Dates.todayIso());
+      f.time("time", "Time", Dates.now());
+      f.endRow();
+    }
+    for (const k of Ecg.FIELDS) {
+      if (k[0].equals("change") && prev == null) continue;
+      let v = Ui.nz(got.get(k[0]));
+      if (k[0].equals("change") && v.isEmpty() && !ch.isEmpty()) v = TextUtils.join("; ", ch);
+      const n = k[0].equals("rate") || k[0].equals("pr") || k[0].equals("qrs") || k[0].equals("qtc");
+      if (k[0].equals("findings") || k[0].equals("impression") || k[0].equals("change")) f.multi(k[0], k[1], v);
+      else f.text(k[0], k[1], v, n ? Form.NUMBER : Form.PLAIN);
+    }
+    Ui.formDialog(this, "❤️ ECG reading", f, this.id >= 0 ? "Save" : "Share", {
+      run: () => {
+        const r = new JMap();
+        for (const k of Ecg.FIELDS) r.put(k[0], f.has(k[0]) ? f.get(k[0]).trim() : "");
+        r.put("urgent", got.get("urgent"));
+        if (this.id < 0) {
+          r.put("date", Dates.todayIso());
+          r.put("time", Dates.now());
+          ReportActivity.shareText(this, Ecg.shareText(r));
+          return true;
+        }
+        r.put("date", f.get("date"));
+        r.put("time", f.get("time"));
+        Ecg.save(this.db, this.id, r, ExamCases.myName(this, this.db));
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  detail(r) {
+    const b = new StringBuilder(Ecg.summary(r));
+    if (!Ui.nz(r.get("change")).isEmpty()) b.append("\nCHANGE: ").append(r.get("change"));
+    const d = Ecg.danger(r);
+    if (!d.isEmpty()) b.append("\n\n⚠ ").append(TextUtils.join("\n⚠ ", d));
+    if (!Ui.nz(r.get("by_name")).isEmpty()) b.append("\n\nSaved by ").append(r.get("by_name"));
+    new AlertDialog.Builder(this).setTitle("ECG  ·  " + Dates.nice(r.get("date")) + " " + Ui.nz(r.get("time"))).setMessage(b.toString())
+        .setPositiveButton("Share", {
+          onClick: (dd, w) => { ReportActivity.shareText(this, Ecg.shareText(r)); }
+        })
+        .setNeutralButton("Delete", {
+          onClick: (dd, w) => {
+            Ui.confirm(this, "Delete this ECG reading?", "It is removed from every phone.", "Delete", {
+              run: () => {
+                this.db.delete("ecg_reads", Long.parseLong(r.get("id")));
+                this.render();
+              }
+            });
+          }
+        }).setNegativeButton("Close", null).show();
+  }
+
+  /** The patient page's ECG line: the last reading, or a button to read one. */
+  static patientCard(a, db, pid) {
+    const r = Ecg.last(db, pid);
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), 0);
+    const label = r == null ? "❤️  Read an ECG photo" : "❤️  ECG " + Dates.nice(r.get("date")) + ": " + Ui.nz(r.get("rhythm"))
+        + (Ui.nz(r.get("rate")).isEmpty() ? "" : " " + r.get("rate") + "/min") + ("yes".equals(r.get("urgent")) ? "  ⚠" : "");
+    const b = r != null && "yes".equals(r.get("urgent")) ? Ui.button(a, label, Ui.RED, a.opener(EcgActivity, "id", String(pid)))
+        : Ui.outlineButton(a, label, Ecg.COLOR, a.opener(EcgActivity, "id", String(pid)));
+    box.addView(b);
+    return box;
   }
 }
 ;
@@ -34530,6 +37832,8 @@ class FormActivity extends Base {
     this.built = false;
     this.image = "";
     this.imageBox = null;
+    /** The clinical lines of the pasted WhatsApp message, for the case sheet once the patient is saved. */
+    this.waClinical = "";
     /** A new patient received from the TAEI ward (another department's ward) into CCB, triage or IMCU. */
     this.fromTaei = false;
     /** The admitting unit the form opened with; left alone, it follows the admission's date and time on saving. */
@@ -34704,6 +38008,11 @@ class FormActivity extends Base {
     this.parentDefault = parent;
     const bed = p != null ? p.get("bed") : Ui.nz(this.getIntent().getStringExtra("bed"));
 
+    if (p == null) {
+      const wa = Ui.button(this, "💬  Paste the WhatsApp admission message", Chat.GREEN, { onClick: (v) => { this.pasteWhatsApp(); } });
+      form.view.addView(wa);
+      Ui.margins(wa, 0, 4, 0, 4);
+    }
     form.heading("Patient");
     form.text("name", "Name *", v(p, "name", Ui.nz(this.getIntent().getStringExtra("name"))), Form.TEXT);
     form.text("ip_no", "IP number", v(p, "ip_no", Ui.nz(this.getIntent().getStringExtra("ip_no"))), Form.TEXT);
@@ -34753,6 +38062,50 @@ class FormActivity extends Base {
     form.text("bed", "Bed number", bed, Form.TEXT);
     form.check("cmchis", "Covered under CMCHIS", p != null && "1".equals(p.get("cmchis")));
     form.text("cmchis_no", "CMCHIS / insurance ID", v(p, "cmchis_no", ""), Form.TEXT);
+  }
+
+  // ---------- WhatsApp admission message (8.70) ----------
+
+  /** The copied message (shown so it can be corrected or pasted by hand), then the form fills itself. */
+  pasteWhatsApp() {
+    let clip = "";
+    try {
+      const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+      if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0)
+        clip = String(cm.getPrimaryClip().getItemAt(0).coerceToText(this));
+    } catch (ignored) {
+    }
+    const f = new Form(this);
+    f.view.addView(Ui.muted(this, "In WhatsApp, long-press the admission message and tap Copy, then paste it here. The name, age, sex, IP number, "
+        + "diagnosis and other details go into the form; complaints, history, examination and treatment go to the case sheet after saving."));
+    f.multi("msg", "WhatsApp message", clip.trim());
+    Ui.formDialog(this, "💬  From WhatsApp", f, "Fill the form", {
+      run: () => {
+        const text = f.get("msg");
+        if (text.trim().isEmpty()) {
+          Ui.toast(this, "Paste the message first");
+          return false;
+        }
+        this.useWhatsApp(text);
+        return true;
+      }
+    });
+  }
+
+  useWhatsApp(text) {
+    const r = WaAdmit.parse(text);
+    for (const e of r.fields.entrySet()) this.form.set(e.getKey(), e.getValue());
+    if (r.fields.containsKey("mlc")) this.form.show("ar_no", "MLC".equals(r.fields.get("mlc")));
+    this.waClinical = r.clinical;
+    const got = WaAdmit.summary(r);
+    const msg = new StringBuilder(got.isEmpty() ? "Nothing in the message matched the form. Type the details." : "Filled: " + got + ".");
+    if (!r.clinical.isEmpty()) msg.append("\n\nThe clinical notes (complaints, history, examination, treatment) open in the case sheet after you save, to check and add.");
+    if (!r.unplaced.isEmpty()) {
+      msg.append("\n\nNot placed:");
+      for (const l of r.unplaced) msg.append("\n• ").append(l);
+    }
+    msg.append("\n\nCheck every field before saving.");
+    new AlertDialog.Builder(this).setTitle("From WhatsApp").setMessage(msg.toString()).setPositiveButton("OK", null).show();
   }
 
   static SB_PARTS = ["Hand", "Leg", "Body"];
@@ -34870,6 +38223,7 @@ class FormActivity extends Base {
       }
       const nid = db.admit(cv, admitTo, parent, form.get("date"), form.get("time"));
       this.open(PatientActivity, "id", String(nid));
+      if (!this.waClinical.isEmpty()) this.open(CaseSheetActivity, "id", String(nid), "prefill", this.waClinical);
     } else {
       db.editPatient(this.id, cv, admitTo, parent, form.get("date"), form.get("time"));
     }
@@ -36399,9 +39753,20 @@ class HomeLayout {
     card.setBackground(Glass.hero(a, Ui.shades(0xFF0F766E), 22));
     card.setPadding(Ui.dp(a, 18), Ui.dp(a, 14), Ui.dp(a, 18), Ui.dp(a, 12));
     const name = HomeLayout.myName(a, db);
-    card.addView(Ui.tv(a, HomeLayout.greeting(Dates.time()) + (name.isEmpty() ? "" : ", " + name), 18, Color.WHITE, true));
+    // your own photo beside your name (9.00): tap it to add or change it
+    const hello = Ui.h(a);
+    hello.setGravity(Gravity.CENTER_VERTICAL);
+    const me = People.mine(a, 46, 0xFF0F766E);
+    if (me != null) {
+      hello.addView(me);
+      Ui.margins(me, 0, 0, 12, 0);
+    }
+    const ht = Ui.v(a);
+    ht.addView(Ui.tv(a, HomeLayout.greeting(Dates.time()) + (name.isEmpty() ? "" : ", " + name), 18, Color.WHITE, true));
     const role = Cloud.active(a) ? Cloud.myRoleLabel(a, db) : "My day";
-    card.addView(Ui.tv(a, role + "  ·  " + Dates.nice(Dates.today()), 12, 0xD9FFFFFF, false));
+    ht.addView(Ui.tv(a, role + "  ·  " + Dates.nice(Dates.today()), 12, 0xD9FFFFFF, false));
+    hello.addView(ht, Ui.weight(1));
+    card.addView(hello);
     const unit = Cloud.unitOf(db, Cloud.myStaff(a));
     let lines = 0;
     if (unit != null) {
@@ -38260,6 +41625,421 @@ Importer.Finding = class {
   }
 };
 ;
+/* ---- app/Infusion.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Infusion calculator (8.50): a dose (mcg/kg/min, units/hr, mg/hr …) to a pump rate in ml/hr and back, from the amount of drug,
+ * the volume it is made up to and the patient's weight. The common dilutions and usual ranges are starting points only; the
+ * unit's own protocol and the drug label decide.
+ */
+class Infusion {
+  static COLOR = 0xFF0891B2;
+  static DISCLAIMER = "Decision support only. Check the dilution, the dose and the pump against the drug label and your unit's protocol; a second person should check high-risk infusions.";
+
+  static $clinit() {
+    const D = Infusion.Drug;
+    Infusion.DRUGS = [
+      new D("Noradrenaline", "mcg/kg/min", "mg", 4, 50, 0.1, 0.05, 0.5, 1.0, "Central line preferred; a large peripheral vein for a short time. Target MAP 65."),
+      new D("Adrenaline", "mcg/kg/min", "mg", 4, 50, 0.05, 0.02, 0.3, 0.5, "Watch for arrhythmias and raised lactate."),
+      new D("Dopamine", "mcg/kg/min", "mg", 200, 50, 5, 2, 20, 20, "Above 10 mcg/kg/min it acts as a vasopressor; arrhythmias are common."),
+      new D("Dobutamine", "mcg/kg/min", "mg", 250, 50, 5, 2.5, 20, 20, "Inotrope for low output; may drop the BP."),
+      new D("Vasopressin", "units/min", "units", 20, 50, 0.03, 0.01, 0.04, 0.04, "Add-on to noradrenaline in septic shock; do not titrate above 0.04 units/min."),
+      new D("Nitroglycerin", "mcg/min", "mg", 50, 50, 10, 5, 200, 400, "Start 5-10 mcg/min, increase by 5-10 every 3-5 minutes; avoid with sildenafil, RV infarct."),
+      new D("Insulin (regular)", "units/kg/hr", "units", 50, 50, 0.1, 0.05, 0.14, 0.2, "DKA: fixed 0.1 units/kg/hr; add 5-10% dextrose when sugar is below 250 mg/dL; check potassium first."),
+      new D("Heparin (unfractionated)", "units/kg/hr", "units", 25000, 50, 18, 12, 25, 30, "After an 80 units/kg bolus; adjust by aPTT 6 hours after each change."),
+      new D("Potassium chloride", "mEq/hr", "mEq", 20, 100, 10, 5, 10, 20, "At most 10 mEq/hr by a peripheral line, 20 mEq/hr only by a central line with ECG monitoring."),
+      new D("Furosemide", "mg/hr", "mg", 100, 50, 10, 5, 20, 40, "After a bolus; watch urine output, potassium and creatinine."),
+      new D("Amiodarone", "mg/min", "mg", 900, 500, 1, 0.5, 1, 1, "1 mg/min for 6 hours, then 0.5 mg/min for 18 hours (after the 150-300 mg loading dose)."),
+      new D("Labetalol", "mg/min", "mg", 200, 200, 1, 0.5, 2, 2, "Hypertensive emergency; avoid in asthma, heart block and acute heart failure."),
+      new D("Midazolam", "mg/kg/hr", "mg", 50, 50, 0.05, 0.02, 0.2, 0.4, "Sedation or refractory status epilepticus (higher doses with airway support)."),
+      new D("Fentanyl", "mcg/kg/hr", "mcg", 500, 50, 1, 0.5, 2, 3, "Analgesia and sedation; respiratory depression."),
+      new D("Octreotide", "mcg/hr", "mcg", 500, 50, 50, 25, 50, 50, "Variceal bleed: 50 mcg bolus then 50 mcg/hr for 2-5 days."),
+      new D("Pantoprazole", "mg/hr", "mg", 80, 50, 8, 8, 8, 8, "High-risk ulcer bleed after endoscopy: 80 mg bolus then 8 mg/hr for 72 hours."),
+      new D("Atropine (OP poisoning)", "mg/hr", "mg", 24, 50, 2, 0.5, 6, 10, "Organophosphate: each hour give 10-20% of the total atropine that was needed to atropinise; stop if delirium, ileus or fever."),
+      new D("Pralidoxime (PAM)", "mg/kg/hr", "mg", 2000, 100, 8, 8, 10, 10, "WHO: 30 mg/kg bolus, then 8 mg/kg/hr until the atropine need falls."),
+    ];
+  }
+
+  static byName(n) {
+    for (const d of Infusion.DRUGS) if (d.name.equals(n)) return d;
+    return null;
+  }
+
+  /** The amount in the dose's unit (mg made up to mcg for mcg doses). */
+  static amountInDoseUnit(d, amount) {
+    const du = d.dose.substring(0, d.dose.indexOf('/'));
+    if (du.equals("mcg") && d.amountUnit.equals("mg")) return amount * 1000;
+    if (du.equals("mg") && d.amountUnit.equals("mcg")) return amount / 1000;
+    return amount;
+  }
+
+  /** Concentration per ml in the dose's unit; NaN when the volume is not positive. */
+  static concentration(d, amount, volume) {
+    if (!(volume > 0) || !(amount > 0)) return NaN;
+    return Infusion.amountInDoseUnit(d, amount) / volume;
+  }
+
+  static perHour(d) {
+    return d.dose.endsWith("/min") ? 60 : 1;
+  }
+
+  /** ml/hr for a dose; NaN when anything needed is missing. */
+  static rate(d, dose, weight, amount, volume) {
+    const c = Infusion.concentration(d, amount, volume);
+    if (Number.isNaN(c) || Number.isNaN(dose)) return NaN;
+    const w = d.perKg() ? weight : 1;
+    if (!(w > 0)) return NaN;
+    return dose * w * Infusion.perHour(d) / c;
+  }
+
+  /** The dose given by a pump rate (ml/hr). */
+  static dose(d, rate, weight, amount, volume) {
+    const c = Infusion.concentration(d, amount, volume);
+    if (Number.isNaN(c) || Number.isNaN(rate)) return NaN;
+    const w = d.perKg() ? weight : 1;
+    if (!(w > 0)) return NaN;
+    return rate * c / (w * Infusion.perHour(d));
+  }
+
+  /** A warning when the dose is below the usual range or above the maximum; "" when fine. */
+  static check(d, dose) {
+    if (Number.isNaN(dose)) return "";
+    const num = Infusion.num;
+    if (dose > d.max * 1.0001) return "Above the usual maximum (" + num(d.max) + " " + d.dose + ")";
+    if (dose > d.hi * 1.0001) return "Above the usual range (" + num(d.lo) + "-" + num(d.hi) + " " + d.dose + ")";
+    if (dose < d.lo * 0.9999) return "Below the usual range (" + num(d.lo) + "-" + num(d.hi) + " " + d.dose + ")";
+    return "";
+  }
+
+  /** Doses from low to high (about 6 steps) with their pump rates. */
+  static table(d, weight, amount, volume) {
+    const out = [];
+    const steps = Infusion.steps(d);
+    for (const s of steps) out.add([s, Infusion.rate(d, s, weight, amount, volume)]);
+    return out;
+  }
+
+  static steps(d) {
+    if (d.lo === d.hi) return [d.lo];
+    const s = new Array(6).fill(0);
+    for (let i = 0; i < 6; i++) s[i] = Infusion.round2(d.lo + (d.hi - d.lo) * i / 5.0);
+    return s;
+  }
+
+  static round2(v) {
+    const m = v < 1 ? 1000 : 10;
+    return Math.round(v * m) / m;
+  }
+
+  static num(v) {
+    if (Number.isNaN(v)) return "-";
+    if (v === Math.rint(v) && Math.abs(v) < 1e7) return String(Math.trunc(v));
+    if (Math.abs(v) >= 10) return jfmt("%.1f", v);
+    if (Math.abs(v) >= 1) return jfmt("%.2f", v).replaceAllRx("0+$", "").replaceAllRx("\\.$", "");
+    return jfmt("%.3f", v).replaceAllRx("0+$", "").replaceAllRx("\\.$", "");
+  }
+
+  /** "80 mcg/ml" */
+  static concText(d, amount, volume) {
+    const c = Infusion.concentration(d, amount, volume);
+    return Number.isNaN(c) ? "" : Infusion.num(c) + " " + d.dose.substring(0, d.dose.indexOf('/')) + "/ml";
+  }
+
+  /** The bedside label. */
+  static label(d, amount, volume, diluent, dose, rate, weight, patient) {
+    const num = Infusion.num;
+    const b = new StringBuilder("*💉 ").append(d.name).append(" infusion*\n");
+    if (!Ui.nz(patient).isEmpty()) b.append(patient).append("\n");
+    b.append(num(amount)).append(" ").append(d.amountUnit).append(" in ").append(num(volume)).append(" ml ").append(Ui.nz(diluent).trim())
+        .append("  (").append(Infusion.concText(d, amount, volume)).append(")\n");
+    b.append("Dose ").append(num(dose)).append(" ").append(d.dose).append(" = *").append(num(rate)).append(" ml/hr*");
+    if (d.perKg()) b.append("  (weight ").append(num(weight)).append(" kg)");
+    b.append("\nStarted ").append(Dates.nice(Dates.todayIso())).append(" ").append(Dates.now());
+    return b.toString();
+  }
+}
+
+/** One drug: name, dose unit, amount unit, usual amount, usual volume (ml), usual dose, low, high, maximum, note. */
+Infusion.Drug = class {
+  constructor(name, dose, amountUnit, amount, volume, usual, lo, hi, max, note) {
+    this.name = name; this.dose = dose; this.amountUnit = amountUnit; this.amount = amount; this.volume = volume;
+    this.usual = usual; this.lo = lo; this.hi = hi; this.max = max; this.note = note;
+  }
+
+  perKg() {
+    return this.dose.contains("/kg/");
+  }
+};
+;
+/* ---- app/InfusionActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Infusion calculator (8.50): pick a drug, check the dilution and weight, type the dose to get ml/hr or the pump rate to get the
+ * dose. With a patient ("id") the weight comes from the patient, and the infusion can be added to the case sheet's treatment list.
+ */
+class InfusionActivity extends Base {
+  constructor() {
+    super();
+    this.id = -1;
+    this.drug = Infusion.DRUGS[0];
+    this.weight = ""; this.amount = ""; this.volume = ""; this.diluent = "NS"; this.dose = ""; this.rate = "";
+    this.busy = false;
+    this.eDose = null; this.eRate = null;
+    this.big = null; this.warn = null; this.conc = null;
+    this.tableBox = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const s = this.getIntent().getStringExtra("id");
+    if (s != null) this.id = Long.parseLong(s);
+    let d = this.getIntent().getStringExtra("drug");
+    if (b != null) d = b.getString("drug", d);
+    if (d != null && Infusion.byName(d) != null) this.drug = Infusion.byName(d);
+    if (this.id >= 0) {
+      const p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.id));
+      if (p != null) {
+        const w = KidneyDose.weight(this.db, p);
+        if (!Number.isNaN(w)) this.weight = Infusion.num(w);
+      }
+    }
+    if (b != null) {
+      this.weight = b.getString("weight", this.weight);
+      this.amount = b.getString("amount", "");
+      this.volume = b.getString("volume", "");
+      this.diluent = b.getString("diluent", this.diluent);
+      this.dose = b.getString("dose", "");
+    }
+    if (this.amount.isEmpty()) this.setDefaults();
+    this.setTitle("Infusion calculator");
+    this.subtitle = "Dose to ml/hr and back";
+    this.headerColor(Infusion.COLOR);
+  }
+
+  setDefaults() {
+    this.amount = Infusion.num(this.drug.amount);
+    this.volume = Infusion.num(this.drug.volume);
+    this.dose = Infusion.num(this.drug.usual);
+    this.rate = "";
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("drug", this.drug.name);
+    out.putString("weight", this.weight);
+    out.putString("amount", this.amount);
+    out.putString("volume", this.volume);
+    out.putString("diluent", this.diluent);
+    out.putString("dose", this.dose);
+  }
+
+  static d(s) {
+    const v = Labs.num(s);
+    return v == null ? NaN : v;
+  }
+
+  render() {
+    const d = InfusionActivity.d;
+    const drug = this.drug;
+    const p = this.id >= 0 ? this.db.row("SELECT * FROM patients WHERE id=?", String(this.id)) : null;
+    const page = Ui.v(this);
+
+    const chips = new Bands.Flow(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), Ui.dp(this, 4));
+    for (const x of Infusion.DRUGS) {
+      const c = Ui.chip(this, x.name, x === drug, Infusion.COLOR);
+      c.setOnClickListener({
+        onClick: (v) => {
+          this.drug = x;
+          this.setDefaults();
+          this.render();
+        }
+      });
+      chips.addView(c);
+    }
+    page.addView(chips);
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Infusion.COLOR), 20));
+    hero.addView(Ui.tv(this, "💉  " + drug.name + (p == null ? "" : "  ·  " + Ui.nz(p.get("name"))), 17, Color.WHITE, true));
+    this.big = Ui.tv(this, "", 40, Color.WHITE, true);
+    hero.addView(this.big);
+    this.conc = Ui.tv(this, "", 13, 0xE6FFFFFF, false);
+    hero.addView(this.conc);
+    page.addView(hero);
+
+    const card = Ui.card(this);
+    card.addView(this.row(this.field("Weight (kg)", this.weight, true, {
+      changed: (s) => { this.weight = s; this.fromDose(); }
+    }), this.field("Diluent", this.diluent, false, {
+      changed: (s) => { this.diluent = s; }
+    })));
+    card.addView(this.row(this.field("Drug amount (" + drug.amountUnit + ")", this.amount, true, {
+      changed: (s) => { this.amount = s; this.fromDose(); }
+    }), this.field("Made up to (ml)", this.volume, true, {
+      changed: (s) => { this.volume = s; this.fromDose(); }
+    })));
+    const dr = this.row(this.field("Dose (" + drug.dose + ")", this.dose, true, {
+      changed: (s) => { this.dose = s; this.fromDose(); }
+    }), this.field("Pump rate (ml/hr)", this.rate, true, {
+      changed: (s) => { this.rate = s; this.fromRate(); }
+    }));
+    this.eDose = dr.getChildAt(0).getChildAt(1);
+    this.eRate = dr.getChildAt(2).getChildAt(1);
+    card.addView(dr);
+    this.warn = Ui.tv(this, "", 14, Ui.RED, true);
+    card.addView(this.warn);
+    if (drug.perKg() && this.weight.isEmpty()) card.addView(Ui.muted(this, "Enter the weight: this dose is per kg."));
+    page.addView(card);
+
+    page.addView(Ui.heading(this, "Titration table", Infusion.COLOR));
+    this.tableBox = Ui.card(this);
+    page.addView(this.tableBox);
+
+    const nb = Ui.card(this);
+    nb.addView(Ui.tv(this, "Usual dose " + Infusion.num(drug.lo) + (drug.lo === drug.hi ? "" : " to " + Infusion.num(drug.hi)) + " " + drug.dose
+        + "  ·  maximum " + Infusion.num(drug.max), 14, Ui.TEXT, true));
+    nb.addView(Ui.muted(this, drug.note));
+    page.addView(nb);
+
+    const bt = Ui.v(this);
+    bt.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    const sh = Ui.button(this, "Share the label", Ui.GREEN, {
+      onClick: (v) => { this.share(); }
+    });
+    bt.addView(this.id < 0 ? Ui.buttonRow(this, sh) : Ui.buttonRow(this, sh, Ui.outlineButton(this, "Add to treatment list", Infusion.COLOR, {
+      onClick: (v) => { this.addToSheet(); }
+    })));
+    page.addView(bt);
+    const n = Ui.muted(this, Infusion.DISCLAIMER);
+    n.setTextSize(12);
+    n.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), 0);
+    page.addView(n);
+    this.setPage(page);
+    this.fromDose();
+  }
+
+  // interface Change { void changed(String s); }
+
+  row(a, b) {
+    const r = Ui.h(this);
+    r.addView(a, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    const sp = new View(this);
+    r.addView(sp, new LinearLayout.LayoutParams(Ui.dp(this, 10), 1));
+    r.addView(b, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    return r;
+  }
+
+  field(label, value, number, ch) {
+    const box = Ui.v(this);
+    box.addView(Ui.tv(this, label, 12, Ui.MUTED, true));
+    const e = new EditText(this);
+    e.setText(value);
+    e.setTextSize(18);
+    e.setSingleLine(true);
+    e.setInputType(number ? InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL : InputType.TYPE_CLASS_TEXT);
+    e.addTextChangedListener({
+      beforeTextChanged: (s, a, b, c) => {},
+      onTextChanged: (s, a, b, c) => {},
+      afterTextChanged: (s) => {
+        if (!this.busy) ch.changed(s.toString().trim());
+      }
+    });
+    box.addView(e);
+    return box;
+  }
+
+  /** The dose (or the dilution, or the weight) changed: work out the rate. */
+  fromDose() {
+    const d = InfusionActivity.d;
+    const r = Infusion.rate(this.drug, d(this.dose), d(this.weight), d(this.amount), d(this.volume));
+    this.rate = Number.isNaN(r) ? "" : Infusion.num(r);
+    this.busy = true;
+    if (this.eRate != null && !this.eRate.hasFocus()) this.eRate.setText(this.rate);
+    this.busy = false;
+    this.show();
+  }
+
+  /** The pump rate changed: work out the dose. */
+  fromRate() {
+    const d = InfusionActivity.d;
+    const x = Infusion.dose(this.drug, d(this.rate), d(this.weight), d(this.amount), d(this.volume));
+    this.dose = Number.isNaN(x) ? "" : Infusion.num(x);
+    this.busy = true;
+    if (this.eDose != null && !this.eDose.hasFocus()) this.eDose.setText(this.dose);
+    this.busy = false;
+    this.show();
+  }
+
+  show() {
+    const d = InfusionActivity.d;
+    const drug = this.drug;
+    if (this.big == null) return;
+    this.big.setText(this.rate.isEmpty() ? "— ml/hr" : this.rate + " ml/hr");
+    this.conc.setText((this.dose.isEmpty() ? "" : this.dose + " " + drug.dose + "  ·  ") + Infusion.concText(drug, d(this.amount), d(this.volume)));
+    const w = Infusion.check(drug, d(this.dose));
+    this.warn.setText(w.isEmpty() ? "" : "⚠  " + w);
+    this.warn.setVisibility(w.isEmpty() ? View.GONE : View.VISIBLE);
+    this.tableBox.removeAllViews();
+    for (const t of Infusion.table(drug, d(this.weight), d(this.amount), d(this.volume))) {
+      const r = Ui.h(this);
+      const a = Ui.tv(this, Infusion.num(t[0]) + " " + drug.dose, 14, Ui.TEXT, false);
+      r.addView(a, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+      r.addView(Ui.tv(this, Number.isNaN(t[1]) ? "—" : Infusion.num(t[1]) + " ml/hr", 14, Infusion.COLOR, true));
+      r.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
+      this.tableBox.addView(r);
+    }
+  }
+
+  patientLine() {
+    if (this.id < 0) return "";
+    const p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.id));
+    return p == null ? "" : Ui.nz(p.get("name")) + "  ·  " + Base.where(p) + (Ui.nz(p.get("bed")).isEmpty() ? "" : " bed " + p.get("bed"));
+  }
+
+  ready() {
+    if (this.rate.isEmpty() || this.dose.isEmpty()) {
+      Ui.toast(this, this.drug.perKg() && this.weight.isEmpty() ? "Enter the weight" : "Enter the dose and the dilution");
+      return false;
+    }
+    return true;
+  }
+
+  share() {
+    const d = InfusionActivity.d;
+    if (!this.ready()) return;
+    ReportActivity.shareText(this, Infusion.label(this.drug, d(this.amount), d(this.volume), this.diluent, d(this.dose), d(this.rate), d(this.weight), this.patientLine()));
+  }
+
+  addToSheet() {
+    if (!this.ready()) return;
+    const drug = this.drug;
+    try {
+      let sheet = CaseSheet.load(this.db, this.id);
+      if (sheet == null) sheet = new JSONObject();
+      const rx = CaseSheet.drugs(sheet, CaseSheet.TREATMENT);
+      rx.put(new JSONObject().put("name", "Inj. " + drug.name + " infusion")
+          .put("dose", this.amount + " " + drug.amountUnit + " in " + this.volume + " ml " + this.diluent)
+          .put("freq", this.rate + " ml/hr (" + this.dose + " " + drug.dose + ")").put("route", "IV").put("type", "Infusion"));
+      sheet.put(CaseSheet.TREATMENT, rx);
+      CaseSheet.save(this.db, this.id, sheet);
+      if (drug.perKg() && !this.weight.isEmpty()) {
+        const p = this.db.row("SELECT weight_kg FROM patients WHERE id=?", String(this.id));
+        if (p != null && Ui.nz(p.get("weight_kg")).isEmpty()) {
+          const cv = new ContentValues();
+          cv.put("weight_kg", this.weight);
+          this.db.update("patients", cv, this.id);
+        }
+      }
+      Ui.toast(this, "Added to the case sheet's treatment list");
+    } catch (e) {
+      Ui.toast(this, "Could not add it: " + e.getMessage());
+    }
+  }
+}
+;
 /* ---- app/Intercom.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -38494,7 +42274,7 @@ class IntercomService {
 /* ---- app/Intro.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
-/** "What's new" after an update and a three-step tour the first time the app opens (8.10). */
+/** "What's new" (from Settings) and a three-step tour the first time the app opens (8.10). */
 class Intro {
   static prefs(a) {
     return a.getSharedPreferences("intro", Context.MODE_PRIVATE);
@@ -38507,8 +42287,8 @@ class Intro {
     if (now === seen) return;
     p.edit().putString("seen_ver", now).apply();
     const existing = Cloud.signedIn(a) || db.num("SELECT COUNT(*) FROM patients") > 0;
+    // after an update nothing pops up (the user asked, 9.00): "What's new" stays in Settings
     if (seen.isEmpty() && !existing) Intro.tour(a, 0);
-    else Intro.whatsNew(a, seen.isEmpty() ? Intro.previous(now) : seen);
   }
 
   /** -1, 0 or 1 comparing "8.10" with "8.9" part by part (8.10 is newer). */
@@ -38577,6 +42357,535 @@ class Intro {
   }
 }
 Intro.enabled = true;
+;
+/* ---- app/Journals.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Latest journals (8.80): members share journal articles with the department, as a link (or DOI / PubMed number) and the key points,
+ * or as a PDF. From a DOI or PubMed link the title, journal, year, authors and abstract are filled from Crossref or PubMed (free, no
+ * key; only the article's number is sent). Faculty mark the ones everyone must read.
+ */
+class Journals {
+  static TABLE = "journals";
+  static COLOR = 0xFF0F766E;
+  static MUST = "MUST";
+
+  static DOI = Pattern.compile("(10\\.\\d{4,9}/[^\\s\"<>?#]+)");
+  static PMID = Pattern.compile("(?i)(?:pubmed\\.ncbi\\.nlm\\.nih\\.gov/|ncbi\\.nlm\\.nih\\.gov/pubmed/|PMID\\s*:?\\s*)(\\d{5,9})");
+  static URL_IN = Pattern.compile("(?i)\\bhttps?://\\S+");
+
+  /** The subjects to file an article under (the Daily MCQ subjects). */
+  static subjects() {
+    const s = new Array(McqScan.SUBJECT_WORDS.length + 1).fill(null);
+    s[0] = "General medicine";
+    for (let i = 0; i < McqScan.SUBJECT_WORDS.length; i++) s[i + 1] = McqScan.SUBJECT_WORDS[i][0];
+    return s;
+  }
+
+  static doiOf(s) {
+    const t = Ui.nz(s).split("%2F").join("/").split("%2f").join("/");
+    const m = Journals.DOI.matcher(t);
+    if (!m.find()) return "";
+    let d = m.group(1);
+    while (!d.isEmpty() && ".,;:)]}'".indexOf(d.charAt(d.length - 1)) >= 0) d = d.substring(0, d.length - 1);
+    if (d.toLowerCase().endsWith("/full") || d.toLowerCase().endsWith("/pdf") || d.toLowerCase().endsWith("/abstract"))
+      d = d.substring(0, d.lastIndexOf('/'));
+    return d;
+  }
+
+  static pmidOf(s) {
+    const m = Journals.PMID.matcher(Ui.nz(s));
+    return m.find() ? m.group(1) : "";
+  }
+
+  /** The first web link in a text (a WhatsApp forward often has words around it). */
+  static urlOf(s) {
+    const m = Journals.URL_IN.matcher(Ui.nz(s));
+    if (m.find()) return m.group().replaceAllRx("[.,;)]+$", "");
+    const d = Journals.doiOf(s);
+    if (!d.isEmpty()) return "https://doi.org/" + d;
+    const p = Journals.pmidOf(s);
+    return p.isEmpty() ? "" : "https://pubmed.ncbi.nlm.nih.gov/" + p + "/";
+  }
+
+  // interface Fetch { String get(String url); }  Fetches a web page as text; tests put in their own.
+
+  /** Title, journal, year, authors, link, doi and summary (the abstract) for a link, DOI or PubMed number; throws when not found. */
+  static lookup(linkOrId) {
+    const doi = Journals.doiOf(linkOrId), pmid = Journals.pmidOf(linkOrId);
+    if (!doi.isEmpty()) {
+      const f = Journals.fromCrossref(new JSONObject(Journals.fetch.get("https://api.crossref.org/works/" + doi.split("/").map(x => encodeURIComponent(x)).join("/"))));
+      const u = Journals.urlOf(linkOrId);
+      f.put("link", u.isEmpty() ? "https://doi.org/" + doi : u);
+      return f;
+    }
+    if (!pmid.isEmpty()) {
+      const f = Journals.fromPubmed(new JSONObject(Journals.fetch.get("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&retmode=json&id=" + pmid)), pmid);
+      f.put("link", "https://pubmed.ncbi.nlm.nih.gov/" + pmid + "/");
+      return f;
+    }
+    throw new Error("No DOI or PubMed number in that link");
+  }
+
+  static fromCrossref(o) {
+    const m = o.getJSONObject("message");
+    const f = new JMap();
+    f.put("title", Journals.clean(Journals.first(m.optJSONArray("title"))));
+    let j = Journals.first(m.optJSONArray("container-title"));
+    if (j.isEmpty()) j = Journals.first(m.optJSONArray("short-container-title"));
+    f.put("journal", Journals.clean(j));
+    let year = "";
+    for (const k of ["published-print", "published-online", "issued", "created"]) {
+      const d = m.optJSONObject(k);
+      const parts = d == null ? null : d.optJSONArray("date-parts");
+      if (parts != null && parts.optJSONArray(0) != null && !parts.optJSONArray(0).isNull(0)) {
+        year = String(parts.optJSONArray(0).optInt(0));
+        break;
+      }
+    }
+    f.put("year", year);
+    const names = [];
+    const au = m.optJSONArray("author");
+    if (au != null) for (let i = 0; i < au.length(); i++) {
+      const a = au.optJSONObject(i);
+      if (a == null) continue;
+      let fam = a.optString("family");
+      const giv = a.optString("given");
+      if (fam.isEmpty()) fam = a.optString("name");
+      if (!fam.isEmpty()) names.add(fam + Journals.initials(giv));
+    }
+    f.put("authors", Journals.authors(names));
+    f.put("doi", m.optString("DOI"));
+    f.put("summary", Journals.clean(m.optString("abstract").replaceAllRx("<[^>]+>", " ")));
+    if (f.get("title").isEmpty()) throw new Error("No title found for that DOI");
+    return f;
+  }
+
+  static fromPubmed(o, pmid) {
+    const r = o.getJSONObject("result").getJSONObject(pmid);
+    const f = new JMap();
+    f.put("title", Journals.clean(r.optString("title")).replaceAllRx("\\.$", ""));
+    f.put("journal", Journals.clean(r.optString("fulljournalname", r.optString("source"))));
+    const pd = r.optString("pubdate");
+    f.put("year", pd.length >= 4 ? pd.substring(0, 4) : pd);
+    const names = [];
+    const au = r.optJSONArray("authors");
+    if (au != null) for (let i = 0; i < au.length(); i++) names.add(au.optJSONObject(i).optString("name"));
+    f.put("authors", Journals.authors(names));
+    let doi = "";
+    const ids = r.optJSONArray("articleids");
+    if (ids != null) for (let i = 0; i < ids.length(); i++)
+      if ("doi".equals(ids.optJSONObject(i).optString("idtype"))) doi = ids.optJSONObject(i).optString("value");
+    f.put("doi", doi);
+    f.put("summary", "");
+    if (f.get("title").isEmpty()) throw new Error("No article with that PubMed number");
+    return f;
+  }
+
+  static first(a) {
+    return a == null || a.length() === 0 ? "" : a.optString(0);
+  }
+
+  static initials(given) {
+    const b = new StringBuilder();
+    for (const p of Ui.nz(given).jsplit("[\\s.\\-]+")) if (!p.isEmpty()) b.append(p.charAt(0).toUpperCase());
+    return b.length() === 0 ? "" : " " + b.toString();
+  }
+
+  /** "Sharma A, Kumar R, Devi S, et al." */
+  static authors(names) {
+    const b = new StringBuilder();
+    for (let i = 0; i < names.size() && i < 3; i++) b.append(i === 0 ? "" : ", ").append(names.get(i).trim());
+    if (names.size() > 3) b.append(", et al.");
+    return b.toString();
+  }
+
+  static clean(s) {
+    let t = Ui.nz(s).split("&amp;").join("&").split("&lt;").join("<").split("&gt;").join(">").split("&quot;").join("\"").split("&#39;").join("'");
+    t = t.replaceAllRx("\\s+", " ").trim();
+    if (t.toLowerCase().startsWith("abstract ")) t = t.substring(9).trim();
+    return t.length > 2500 ? t.substring(0, 2500) + "…" : t;
+  }
+
+  static guessSubject(title, journal, summary) {
+    const s = McqScan.subjectOf(Ui.nz(title) + " " + Ui.nz(journal) + " " + Ui.nz(summary));
+    return s;
+  }
+
+  /** The text for WhatsApp. */
+  static shareText(j) {
+    const b = new StringBuilder("📰 *").append(Ui.nz(j.get("title"))).append("*");
+    const src = Ui.nz(j.get("journal")) + (Ui.nz(j.get("year")).isEmpty() ? "" : " (" + j.get("year") + ")");
+    if (!src.trim().isEmpty()) b.append("\n").append(src.trim());
+    if (!Ui.nz(j.get("authors")).isEmpty()) b.append("\n").append(j.get("authors"));
+    if (!Ui.nz(j.get("link")).isEmpty()) b.append("\n").append(j.get("link"));
+    if (!Ui.nz(j.get("summary")).isEmpty()) b.append("\n\n*Key points:* ").append(j.get("summary"));
+    if (!Ui.nz(j.get("by_name")).isEmpty()) b.append("\n\n— shared on TVMCHMED by ").append(j.get("by_name"));
+    return b.toString();
+  }
+
+  /** Faculty (and the HOD, registrar and admin) mark the articles everyone must read. */
+  static canPin(c) {
+    if (!Cloud.active(c)) return true;
+    const r = Cloud.role(c);
+    return Cloud.isManager(r) || "professor".equals(r) || "faculty".equals(r);
+  }
+
+  static canDelete(c, j) {
+    if (!Cloud.active(c) || Cloud.isAdmin(c)) return true;
+    return String(Cloud.myStaff(c)).equals(j.get("staff_id"));
+  }
+
+  /** Articles for a filter (All, MUST or a subject) and words, the must-reads first, then the newest. */
+  static find(db, filter, query) {
+    const out = [];
+    const q = Ui.nz(query).trim().toLowerCase();
+    for (const j of db.rows("SELECT * FROM " + Journals.TABLE + " ORDER BY CASE WHEN pinned='1' THEN 0 ELSE 1 END, added_on DESC, id DESC")) {
+      if (Journals.MUST.equals(filter) && !"1".equals(j.get("pinned"))) continue;
+      if (!"ALL".equals(filter) && !Journals.MUST.equals(filter) && !filter.equals(j.get("subject"))) continue;
+      const hay = (Ui.nz(j.get("title")) + " " + Ui.nz(j.get("journal")) + " " + Ui.nz(j.get("authors")) + " " + Ui.nz(j.get("summary"))
+        + " " + Ui.nz(j.get("by_name"))).toLowerCase();
+      let all = true;
+      for (const w of q.jsplit("\\s+")) if (!w.isEmpty() && !hay.contains(w)) all = false;
+      if (all) out.add(j);
+    }
+    return out;
+  }
+
+  static newThisWeek(db) {
+    return db.num("SELECT COUNT(*) FROM " + Journals.TABLE + " WHERE added_on>=?", Dates.today().minusDays(7).toString());
+  }
+}
+
+/** Web: the browser fetches the page (Crossref and PubMed allow it); synchronous like the phone's thread. */
+Journals.fetch = {
+  get: (url) => {
+    const h = new URL_(url).openConnection();
+    h.setConnectTimeout(15000);
+    h.setReadTimeout(20000);
+    h.setRequestProperty("Accept", "application/json");
+    if (h.getResponseCode() === 404) throw new Error("not found");
+    if (h.getResponseCode() >= 300) throw new Error("the server said " + h.getResponseCode());
+    const in_ = h.getInputStream();
+    const out = new ByteArrayOutputStream();
+    const buf = new Uint8Array(8192);
+    let n;
+    while ((n = in_.read(buf)) > 0) out.write(buf, 0, n);
+    return jstr(out.toByteArray());
+  }
+};
+;
+/* ---- app/JournalsActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Latest journals (8.80): articles members share with the department, newest first with the must-reads on top. Share one by link,
+ * DOI or PubMed number (the details fill in by themselves) or as a PDF, with the key points; open, send on WhatsApp, mark as must
+ * read (faculty), delete your own, or report one to the admin.
+ */
+class JournalsActivity extends Base {
+  static REQ_PDF = 8801;
+
+  constructor() { super(); this.filter = "ALL"; this.query = ""; this.pendingLink = ""; this.list = null; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Latest journals");
+    this.subtitle = "Articles shared in the department";
+    this.headerColor(Journals.COLOR);
+    this.headerAction("+ Share", { onClick: (v) => { this.add(); } });
+    if (b != null) {
+      this.filter = Ui.nz(b.getString("filter", "ALL"));
+      this.query = Ui.nz(b.getString("query", ""));
+      this.pendingLink = Ui.nz(b.getString("link", ""));
+    }
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("filter", this.filter);
+    out.putString("query", this.query);
+    out.putString("link", this.pendingLink);
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Journals.COLOR), 20));
+    const n = db.num("SELECT COUNT(*) FROM " + Journals.TABLE), week = Journals.newThisWeek(db);
+    hero.addView(Ui.tv(this, n + (n === 1 ? " article" : " articles") + (week > 0 ? "  ·  " + week + " this week" : ""), 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Share the latest journal articles: paste the link, DOI or PubMed number and the title, journal, year and authors "
+      + "fill in by themselves; add the key points. Or attach the PDF.", 13, 0xE6FFFFFF, false));
+    const add = Ui.button(this, "Share an article", Journals.COLOR, { onClick: (v) => { this.add(); } });
+    hero.addView(add);
+    Ui.margins(add, 0, 12, 0, 0);
+    page.addView(hero);
+
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 2));
+    const keys = [];
+    keys.add(["ALL", "All"]);
+    keys.add([Journals.MUST, "📌 Must read"]);
+    for (const s of Journals.subjects())
+      if (s.equals(this.filter) || db.num("SELECT COUNT(*) FROM " + Journals.TABLE + " WHERE subject=?", s) > 0) keys.add([s, s]);
+    for (const k of keys) {
+      const c = Ui.chip(this, k[1], k[0].equals(this.filter), Journals.COLOR);
+      c.setOnClickListener({ onClick: (v) => { this.filter = k[0]; this.render(); } });
+      chips.addView(c);
+    }
+    page.addView(Ui.hscroll(this, chips));
+
+    const search = new EditText(this);
+    search.setHint("Search title, journal, author or points");
+    search.setSingleLine(true);
+    search.setText(this.query);
+    search.setBackground(Glass.panel(this, 14));
+    search.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
+    search.addTextChangedListener({
+      beforeTextChanged: (s, a, b, c) => {},
+      onTextChanged: (s, a, b, c) => {},
+      afterTextChanged: (e) => { this.query = e.toString().trim(); this.fillList(); }
+    });
+    page.addView(search);
+    Ui.margins(search, 12, 6, 12, 2);
+    const rule = Ui.muted(this, Conduct.ruleLine());
+    page.addView(rule);
+    Ui.margins(rule, 16, 4, 16, 0);
+    this.list = Ui.v(this);
+    page.addView(this.list);
+    this.fillList();
+    this.setPage(page);
+  }
+
+  fillList() {
+    const db = this.db;
+    if (this.list == null) return;
+    this.list.removeAllViews();
+    const js = Journals.find(db, this.filter, this.query);
+    if (js.isEmpty()) {
+      this.list.addView(this.emptyNote(db.num("SELECT COUNT(*) FROM " + Journals.TABLE) === 0 ? "No articles shared yet. Tap Share an article." : "No article matches."));
+      return;
+    }
+    for (const j of js) this.list.addView(this.card(j));
+  }
+
+  card(j) {
+    const db = this.db;
+    const card = Ui.card(this);
+    const pills = Ui.h(this);
+    if ("1".equals(j.get("pinned"))) {
+      pills.addView(Ui.softPill(this, "📌 Must read", Ui.RED));
+      const gap = new View(this);
+      pills.addView(gap, new LinearLayout.LayoutParams(Ui.dp(this, 6), 1));
+    }
+    if (!Ui.nz(j.get("subject")).isEmpty()) pills.addView(Ui.softPill(this, j.get("subject"), Journals.COLOR));
+    if (!Ui.nz(j.get("file")).isEmpty()) {
+      const gap = new View(this);
+      pills.addView(gap, new LinearLayout.LayoutParams(Ui.dp(this, 6), 1));
+      pills.addView(Ui.softPill(this, "PDF", Ui.ORANGE));
+    }
+    card.addView(pills);
+    const title = Ui.tv(this, Ui.nz(j.get("title")), 16, Ui.TEXT, true);
+    card.addView(title);
+    Ui.margins(title, 0, 6, 0, 0);
+    const src = (Ui.nz(j.get("journal")) + (Ui.nz(j.get("year")).isEmpty() ? "" : " · " + j.get("year"))).trim();
+    if (!src.isEmpty()) card.addView(Ui.tv(this, src, 13, Journals.COLOR, true));
+    if (!Ui.nz(j.get("authors")).isEmpty()) card.addView(Ui.muted(this, j.get("authors")));
+    if (!Ui.nz(j.get("summary")).isEmpty()) {
+      const s = Ui.body(this, j.get("summary"));
+      s.setMaxLines(6);
+      s.setEllipsize(TextUtils.TruncateAt.END);
+      card.addView(s);
+      Ui.margins(s, 0, 6, 0, 0);
+    }
+    const added = Ui.nz(j.get("added_on"));
+    card.addView(Ui.muted(this, "Shared by " + Ui.nz(j.get("by_name")) + (added.length >= 10 ? " · " + Dates.nice(added.substring(0, 10)) : "")));
+
+    const bs = [];
+    if (!Ui.nz(j.get("link")).isEmpty() || !Ui.nz(j.get("file")).isEmpty()) bs.add(Ui.button(this, "Open", Journals.COLOR, { onClick: (v) => { this.open(j); } }));
+    bs.add(Ui.outlineButton(this, "WhatsApp", Journals.COLOR, { onClick: (v) => { ReportActivity.shareText(this, Journals.shareText(j)); } }));
+    const row = Ui.buttonRow(this, bs);
+    card.addView(row);
+    Ui.margins(row, 0, 8, 0, 0);
+    const more = [];
+    if (Journals.canPin(this)) more.add(Ui.outlineButton(this, "1".equals(j.get("pinned")) ? "Unmark must read" : "📌 Must read", Ui.RED, { onClick: (v) => {
+      const cv = new ContentValues();
+      cv.put("pinned", "1".equals(j.get("pinned")) ? "" : "1");
+      db.update(Journals.TABLE, cv, Long.parseLong(j.get("id")));
+      this.render();
+    } }));
+    if (Journals.canDelete(this, j)) more.add(Ui.outlineButton(this, "Delete", Ui.RED, { onClick: (v) => {
+      Ui.confirm(this, "Delete this article?", Ui.nz(j.get("title")) + " will be removed for everyone.", "Delete", { run: () => {
+        if (!Ui.nz(j.get("file")).isEmpty()) db.forgetFile(j.get("file"));
+        db.delete(Journals.TABLE, Long.parseLong(j.get("id")));
+        this.render();
+      } });
+    } }));
+    else if (Conduct.canReport(this, j.get("staff_id"))) more.add(Ui.outlineButton(this, "🚩 Report", Ui.SLATE, { onClick: (v) => {
+      Conduct.report(this, Journals.TABLE, j.get("id"), j.get("staff_id"), j.get("by_name"),
+        Ui.nz(j.get("title")) + "\n" + Ui.nz(j.get("summary")) + "\n" + Ui.nz(j.get("link")), j.get("file"));
+    } }));
+    if (!more.isEmpty()) {
+      const r2 = Ui.buttonRow(this, more);
+      card.addView(r2);
+      Ui.margins(r2, 0, 6, 0, 0);
+    }
+    return card;
+  }
+
+  open(j) {
+    const file = Ui.nz(j.get("file"));
+    if (!file.isEmpty()) {
+      PresentationsActivity.openFileIn(this, this.db, file, false, null);
+      return;
+    }
+    try {
+      this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(j.get("link"))));
+    } catch (e) {
+      Ui.toast(this, "No browser to open the link");
+    }
+  }
+
+  // ---------- sharing an article ----------
+
+  /** Step one: the link (from the clipboard when it holds one), then look it up, or attach a PDF, or type the details. */
+  add() {
+    let clip = "";
+    try {
+      const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+      const cd = cm == null ? null : cm.getPrimaryClip();
+      if (cd != null && cd.getItemCount() > 0 && cd.getItemAt(0).getText() != null) {
+        const t = cd.getItemAt(0).getText().toString();
+        if (!Journals.urlOf(t).isEmpty()) clip = t.trim();
+      }
+    } catch (ignored) {
+      // no clipboard text
+    }
+    const in_ = new EditText(this);
+    in_.setHint("Link, DOI or PubMed number");
+    in_.setText(clip.length > 600 ? clip.substring(0, 600) : clip);
+    in_.setMinLines(2);
+    const box = Ui.v(this);
+    box.setPadding(Ui.dp(this, 20), Ui.dp(this, 8), Ui.dp(this, 20), 0);
+    box.addView(Ui.muted(this, "Paste the article's link (or its DOI such as 10.1056/NEJMoa…, or a PubMed number). The title, journal, year and authors fill in by themselves."));
+    box.addView(in_);
+    new AlertDialog.Builder(this).setTitle("Share an article").setView(box)
+      .setPositiveButton("Fill from the link", { onClick: (d, w) => { this.lookUp(in_.getText().toString()); } })
+      .setNeutralButton("Attach a PDF", { onClick: (d, w) => {
+        this.pendingLink = in_.getText().toString().trim();
+        Store.pick(this, ["application/pdf"], JournalsActivity.REQ_PDF);
+      } })
+      .setNegativeButton("Type it in", { onClick: (d, w) => {
+        const f = new JMap();
+        f.put("link", Journals.urlOf(in_.getText().toString()));
+        this.form(f, null);
+      } }).show();
+  }
+
+  lookUp(text) {
+    const link = Journals.urlOf(text);
+    if (Journals.doiOf(text).isEmpty() && Journals.pmidOf(text).isEmpty()) {
+      Ui.toast(this, link.isEmpty() ? "Paste a link, DOI or PubMed number" : "That link has no DOI; fill in the details");
+      const f = new JMap();
+      f.put("link", link);
+      this.form(f, null);
+      return;
+    }
+    const pd = new ProgressDialog(this);
+    pd.setMessage("Finding the article…");
+    pd.setCancelable(false);
+    pd.show();
+    new Thread({ run: () => {
+      let got = null;
+      let err = null;
+      try {
+        got = Journals.lookup(text);
+      } catch (e) {
+        err = e.getMessage() == null ? String(e) : e.getMessage();
+      }
+      const g = got;
+      const e2 = err;
+      this.runOnUiThread({ run: () => {
+        try { pd.dismiss(); } catch (ignored) {}
+        if (this.isFinishing()) return;
+        if (g == null) {
+          Ui.toast(this, "Could not find it (" + e2 + "). Fill in the details.");
+          const f = new JMap();
+          f.put("link", link);
+          this.form(f, null);
+        } else this.form(g, null);
+      } });
+    } }).start();
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req !== JournalsActivity.REQ_PDF || res !== RESULT_OK || data == null || data.getData() == null) return;
+    const uri = data.getData();
+    const name = Store.displayName(this, uri);
+    try {
+      const rel = Store.importUri(this, uri, "journals", "jr");
+      const f = this.db.file(rel);
+      if (f.length() > PresentationsActivity.MAX_BYTES) {
+        f.delete();
+        Ui.toast(this, "The PDF is larger than 45 MB. Share the link instead.");
+        return;
+      }
+      const m = new JMap();
+      m.put("title", PresentationsActivity.titleOf(name));
+      m.put("link", Journals.urlOf(this.pendingLink));
+      this.pendingLink = "";
+      this.form(m, rel);
+    } catch (e) {
+      Ui.toast(this, "Could not attach: " + e.getMessage());
+    }
+  }
+
+  /** Step two: check the details and add the key points. */
+  form(v, fileRel) {
+    const db = this.db;
+    const f = new Form(this);
+    if (fileRel != null) f.view.addView(Ui.body(this, "📎 PDF attached · " + Store.sizeLabel(db.file(fileRel).length())));
+    f.text("title", "Title *", Ui.nz(v.get("title")), Form.PLAIN);
+    f.text("journal", "Journal", Ui.nz(v.get("journal")), Form.TEXT);
+    f.text("year", "Year", Ui.nz(v.get("year")), Form.NUMBER);
+    f.text("authors", "Authors", Ui.nz(v.get("authors")), Form.PLAIN);
+    f.text("link", "Link", Ui.nz(v.get("link")), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+    const subs = Journals.subjects();
+    f.choice("subject", "Subject", subs, subs, Journals.guessSubject(v.get("title"), v.get("journal"), v.get("summary")), null);
+    f.multi("summary", "Key points / why read it", Ui.nz(v.get("summary")));
+    if (Journals.canPin(this)) f.check("pinned", "📌 Must read for everyone", false);
+    const doi = Ui.nz(v.get("doi"));
+    Ui.formDialog(this, "Share an article", f, "Share", { run: () => {
+      if (!f.require("title", "Enter the title")) return false;
+      const cv = new ContentValues();
+      cv.put("title", f.get("title"));
+      cv.put("journal", f.get("journal"));
+      cv.put("year", f.get("year"));
+      cv.put("authors", f.get("authors"));
+      cv.put("link", f.get("link"));
+      cv.put("doi", doi.isEmpty() ? Journals.doiOf(f.get("link")) : doi);
+      cv.put("subject", f.get("subject"));
+      cv.put("summary", f.get("summary"));
+      cv.put("pinned", f.has("pinned") && "1".equals(f.get("pinned")) ? "1" : "");
+      cv.put("file", fileRel == null ? "" : fileRel);
+      cv.put("size", fileRel == null ? 0 : db.file(fileRel).length());
+      cv.put("by_name", Chat.myName(this, db));
+      cv.put("staff_id", Cloud.active(this) ? String(Cloud.myStaff(this)) : "");
+      cv.put("added_on", Dates.todayIso() + " " + Dates.now());
+      if (db.insert(Journals.TABLE, cv) < 0) {
+        if (fileRel != null) db.file(fileRel).delete();
+        return true;
+      }
+      Ui.toast(this, Cloud.active(this) ? "Shared with the department" : "Saved");
+      this.filter = "ALL";
+      this.render();
+      return true;
+    } });
+  }
+}
 ;
 /* ---- app/KdpActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -38733,6 +43042,488 @@ class KdpActivity extends Base {
     t.setGravity(Gravity.CENTER);
     l.addView(t);
     return l;
+  }
+}
+;
+/* ---- app/KidneyDose.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Kidney dose check (8.40): the patient's kidney function (creatinine clearance by Cockcroft-Gault when the weight is known, eGFR
+ * by CKD-EPI 2021 always, AKI when the creatinine is rising, dialysis) and, for each drug on the treatment list, the usual adult
+ * dose for that band from the table below, compared with the dose written. Offline rules, decision support only.
+ */
+class KidneyDose {
+  static COLOR = 0xFF0E7490;
+  static DISCLAIMER = "Decision support only. Adult doses from standard references (BNF, Sanford, drug labels) for the usual indication; "
+      + "severe infections, obesity and specialist regimens differ. Check a drug reference and the pharmacist before changing a dose.";
+  static HIGH = "Too high";
+  static AVOID = "Avoid";
+  static CHECK = "Check";
+  static OK = "OK";
+
+  /**
+   * generic | C (creatinine clearance) or E (eGFR) | bands. Band: condition=dose advice=maximum mg a day=maximum doses a day
+   * (blank = not compared). Condition: "50+" at least 50, "26-49", "<10", "HD" on dialysis.
+   */
+  static TABLE = [
+            "meropenem|C|50+=1 g every 8 h=3000=;26-49=1 g every 12 h=2000=;10-25=500 mg every 12 h=1000=;<10=500 mg every 24 h=500=;HD=500 mg every 24 h, after dialysis on dialysis days=500=",
+            "piperacillin-tazobactam|C|40+=4.5 g every 6-8 h=18000=;20-39=2.25 g every 6 h (3.375 g every 6 h for pneumonia)=13500=;<20=2.25 g every 8 h (every 6 h for pneumonia)=9000=;HD=2.25 g every 12 h (every 8 h for pneumonia), extra 0.75 g after dialysis=6750=",
+            "cefepime|C|60+=2 g every 8-12 h=6000=;30-59=2 g every 12-24 h=4000=;11-29=2 g every 24 h=2000=;<11=1 g every 24 h=1000=;HD=1 g every 24 h, after dialysis=1000=",
+            "ceftazidime|C|50+=2 g every 8 h=6000=;31-49=2 g every 12 h=4000=;16-30=2 g every 24 h=2000=;<16=1 g every 24 h=1000=;HD=1 g after each dialysis=1000=",
+            "amoxicillin-clavulanate|C|30+=usual dose (1.2 g IV or 625 mg oral every 8 h)==;10-29=1.2 g IV once, then 600 mg IV or 625 mg oral every 12 h=1250=2;<10=1.2 g IV once, then 600 mg IV or 625 mg oral every 24 h=625=1;HD=as below 10, with a dose after dialysis=625=1",
+            "ciprofloxacin|C|50+=usual dose (500-750 mg oral or 400 mg IV every 12 h)==;30-49=250-500 mg oral every 12 h, 400 mg IV every 12-24 h=1000=;<30=250-500 mg oral or 200-400 mg IV every 24 h=500=1;HD=250-500 mg every 24 h, after dialysis=500=1",
+            "levofloxacin|C|50+=usual dose (500-750 mg every 24 h)==;20-49=500 mg once, then 250 mg every 24 h (or 750 mg every 48 h)=375=1;<20=500 mg once, then 250 mg every 48 h=250=1;HD=as below 20=250=1",
+            "cotrimoxazole|C|30+=usual dose==;15-29=half the usual dose, check potassium==;<15=avoid unless on dialysis, check potassium==;HD=half dose after dialysis, check potassium==",
+            "nitrofurantoin|E|45+=usual dose==;<45=avoid: poor urine levels and nerve toxicity=0=",
+            "fluconazole|C|50+=usual dose==;<50=usual loading dose, then half the usual dose==;HD=full dose after each dialysis==",
+            "acyclovir|C|50+=usual dose (IV 5-10 mg/kg every 8 h)==;25-49=IV usual dose every 12 h==;10-24=IV usual dose every 24 h==;<10=IV half the dose every 24 h==;HD=IV half the dose every 24 h, after dialysis==",
+            "oseltamivir|C|60+=75 mg twice daily=150=;31-59=30 mg twice daily=60=;11-30=30 mg once daily=30=;<11=not recommended unless on dialysis=0=;HD=30 mg after each dialysis=30=",
+            "vancomycin|C|50+=15-20 mg/kg every 8-12 h, by trough or AUC levels==;20-49=15-20 mg/kg every 24 h, by levels==1;<20=loading 25 mg/kg, then by levels (often every 48-72 h)==1;HD=loading 25 mg/kg, then 500-1000 mg after each dialysis by levels==",
+            "amikacin|C|60+=15 mg/kg every 24 h==1;40-59=15 mg/kg every 36 h==1;20-39=15 mg/kg every 48 h==1;<20=one dose, then by levels, avoid if possible==1;HD=7.5 mg/kg after each dialysis, by levels==",
+            "gentamicin|C|60+=5-7 mg/kg every 24 h==1;40-59=every 36 h, by levels==1;20-39=every 48 h, by levels==1;<20=avoid, if essential by levels==1",
+            "colistin|C|60+=usual dose==;<60=loading dose unchanged, maintenance reduced by creatinine clearance: take ID or pharmacy advice==",
+            "metformin|E|45+=usual dose (up to 2 g a day)=2550=;30-44=maximum 1 g a day, do not start now=1000=;<30=stop: lactic acidosis=0=",
+            "sitagliptin|E|45+=100 mg once daily=100=;30-44=50 mg once daily=50=;<30=25 mg once daily=25=",
+            "vildagliptin|C|50+=50 mg twice daily=100=;<50=50 mg once daily=50=",
+            "glimepiride|E|30+=usual dose==;<30=avoid, or start 1 mg: long hypoglycaemia=1=",
+            "glibenclamide|E|60+=usual dose==;<60=avoid: long hypoglycaemia=0=",
+            "gliclazide|E|30+=usual dose==;<30=start low and watch sugars: hypoglycaemia==",
+            "insulin|E|50+=usual dose==;<50=insulin needs often fall: watch sugars and reduce if they run low==",
+            "gabapentin|C|60+=up to 3600 mg a day=3600=;30-59=400-1400 mg a day in 2 doses=1400=;15-29=200-700 mg a day=700=;<15=100-300 mg a day=300=;HD=100-300 mg a day, extra dose after dialysis=300=",
+            "pregabalin|C|60+=up to 600 mg a day=600=;30-59=75-300 mg a day=300=;15-29=25-150 mg a day=150=;<15=25-75 mg a day=75=;HD=25-75 mg a day, extra dose after dialysis=75=",
+            "levetiracetam|C|80+=500-1500 mg twice daily=3000=;50-79=500-1000 mg twice daily=2000=;30-49=250-750 mg twice daily=1500=;<30=250-500 mg twice daily=1000=;HD=500-1000 mg once daily, extra 250-500 mg after dialysis=1000=",
+            "enoxaparin|C|30+=usual dose (40 mg once daily to prevent clots, 1 mg/kg twice daily to treat)==;<30=once daily only: 20-30 mg to prevent clots, 1 mg/kg once daily to treat (or use heparin)==1;HD=use unfractionated heparin==1",
+            "dabigatran|C|50+=150 mg twice daily (110 mg if 80+ or bleeding risk)=300=;30-49=110 mg twice daily=220=;<30=avoid=0=",
+            "rivaroxaban|C|50+=20 mg once daily (AF)=20=;15-49=15 mg once daily (AF)=15=;<15=avoid=0=",
+            "apixaban|C|30+=5 mg twice daily (2.5 mg if two of: age 80+, weight 60 kg or less, creatinine 1.5+)=10=;15-29=2.5 mg twice daily (AF)=5=;<15=avoid unless a specialist advises=0=",
+            "spironolactone|E|50+=usual dose==;30-49=25 mg once daily or on alternate days, check potassium=25=;<30=avoid: hyperkalaemia=0=",
+            "digoxin|C|50+=125-250 mcg a day by level=0.25=;10-49=62.5-125 mcg a day, check level=0.125=;<10=62.5 mcg a day or on alternate days, check level=0.0625=",
+            "allopurinol|C|60+=usual dose==;30-59=start 50-100 mg a day and increase slowly by urate==;<30=start 50 mg a day or less, increase slowly by urate==",
+            "colchicine|C|60+=0.5 mg once or twice daily=1=;30-59=0.5 mg once daily, no repeat course within 2 weeks=0.5=;<30=0.5 mg twice a week, or avoid=0.5=",
+            "tramadol|C|30+=usual dose (up to 400 mg a day)=400=;<30=every 12 h, at most 200 mg a day=200=2;HD=at most 200 mg a day=200=2",
+            "morphine|C|60+=usual dose==;30-59=lower the dose, watch for drowsiness==;<30=25-50% of the usual dose, or use fentanyl==",
+            "famotidine|C|50+=20-40 mg twice daily=80=;<50=20 mg once daily (half dose)=20=",
+            "metoclopramide|C|60+=10 mg three times daily=30=;15-59=5 mg three times daily (half dose)=15=;<15=2.5-5 mg, at most 10 mg a day=10=",
+            "atenolol|C|35+=usual dose (up to 100 mg a day)=100=;15-34=at most 50 mg a day=50=;<15=at most 25 mg a day=25=",
+            "baclofen|C|50+=usual dose==;30-49=reduce the dose by a third, watch drowsiness==;<30=avoid: baclofen encephalopathy=0=",
+            "lithium|C|60+=usual dose==;30-59=lower dose, check levels often==;<30=avoid=0=",
+            "@nsaid|E|60+=usual dose, avoid with an ACE inhibitor/ARB and a diuretic==;30-59=avoid if possible, shortest course, check creatinine==;<30=avoid: AKI and hyperkalaemia=0=",
+            "pyrazinamide|C|30+=usual daily dose==;<30=25-35 mg/kg three times a week, not daily==;HD=three times a week, after dialysis==",
+            "ethambutol|C|30+=usual daily dose==;<30=15-25 mg/kg three times a week, not daily==;HD=three times a week, after dialysis==",
+            "magnesium sulphate|C|30+=usual dose==;<30=lower doses, check magnesium and reflexes before each dose==",
+    ];
+
+  /** Drugs that need no kidney dose change (shown green so the list reads complete). */
+  static NO_CHANGE = ["ceftriaxone", "azithromycin", "doxycycline", "linezolid", "metronidazole", "clindamycin", "pantoprazole", "omeprazole",
+            "ondansetron", "amlodipine", "atorvastatin", "rifampicin", "isoniazid", "teneligliptin", "linagliptin", "furosemide", "ivermectin", "paracetamol",
+            "hydrocortisone", "methylprednisolone", "prednisolone", "dexamethasone", "labetalol", "nifedipine", "carvedilol", "metoprolol", "clopidogrel",
+            "heparin", "ceftriaxone-sulbactam", "cefoperazone-sulbactam", "artesunate", "thiamine", "noradrenaline", "dopamine", "dobutamine"];
+
+  /** words in a written name → generic (brands and short forms used on Indian wards). */
+  static ALIASES = [
+            ["pip taz|piptaz|pip-taz|tazact|zosyn|piperacillin|pipzo", "piperacillin-tazobactam"], ["augmentin|amoxyclav|co-amoxiclav|clavam|moxikind cv|amoxicillin clavulanate", "amoxicillin-clavulanate"],
+            ["septran|bactrim|co-trimoxazole|cotrimoxazole|trimethoprim sulfamethoxazole", "cotrimoxazole"], ["tamiflu|antiflu|fluvir", "oseltamivir"],
+            ["keppra|levipil|levera|levetiracetam", "levetiracetam"], ["clexane|lmwh|lonopin", "enoxaparin"], ["xarelto", "rivaroxaban"], ["eliquis", "apixaban"],
+            ["pradaxa", "dabigatran"], ["lyrica|pregaba", "pregabalin"], ["gabapin|neurontin", "gabapentin"], ["glycomet|gluconorm|obimet", "metformin"],
+            ["januvia|istavel", "sitagliptin"], ["galvus|jalra", "vildagliptin"], ["amaryl|glimy", "glimepiride"], ["daonil", "glibenclamide"], ["diamicron", "gliclazide"],
+            ["actrapid|mixtard|lantus|glargine|human insulin|regular insulin|nph|novorapid|humalog", "insulin"], ["aldactone", "spironolactone"], ["lanoxin", "digoxin"],
+            ["zyloric", "allopurinol"], ["ultracet|contramal|tramazac", "tramadol"], ["famocid|pepcid", "famotidine"], ["perinorm|reglan", "metoclopramide"],
+            ["tenormin|aten", "atenolol"], ["lioresal|liofen", "baclofen"], ["licab|lithosun", "lithium"], ["diflucan|forcan", "fluconazole"],
+            ["zovirax|acivir|aciclovir", "acyclovir"], ["ciplox|cipro", "ciprofloxacin"], ["levoflox|tavanic|levomac", "levofloxacin"], ["vanco|vancomycin", "vancomycin"],
+            ["mikacin", "amikacin"], ["genticyn|garamycin", "gentamicin"], ["polymyxin e|colistimethate", "colistin"], ["mgso4|magnesium sulfate|mag sulph", "magnesium sulphate"],
+            ["maxipime", "cefepime"], ["fortum", "ceftazidime"], ["meronem|merotrol|meropenam", "meropenem"], ["monocef|ceftriaxone", "ceftriaxone"], ["pza", "pyrazinamide"],
+            ["emb", "ethambutol"], ["pan 40|pantop|pan-d", "pantoprazole"], ["emeset|zofran", "ondansetron"], ["lasix", "furosemide"], ["dolo|crocin|pcm|calpol", "paracetamol"],
+            ["flagyl|metrogyl", "metronidazole"], ["azee|azithral", "azithromycin"], ["doxy|doxt", "doxycycline"], ["linid|lizolid", "linezolid"]];
+
+  /** Cockcroft-Gault creatinine clearance in ml/min (actual body weight); NaN when an input is missing. */
+  static crcl(age, female, weightKg, creat) {
+    if (age < 18 || Number.isNaN(weightKg) || weightKg <= 0 || Number.isNaN(creat) || creat <= 0) return NaN;
+    const v = (140 - age) * weightKg / (72 * creat);
+    return female ? v * 0.85 : v;
+  }
+
+  static weight(db, p) {
+    const w = Labs.num(p.get("weight_kg"));
+    if (w != null && w > 20 && w < 250) return w;
+    const io = db.rows("SELECT * FROM charts WHERE patient_id=? AND kind=? ORDER BY date, time, id", Ui.nz(p.get("id")), Charts.IO);
+    const cw = Charts.weight(io);
+    return !Number.isNaN(cw) && cw > 20 && cw < 250 ? cw : NaN;
+  }
+
+  static kidney(db, p, now) {
+    const k = new KidneyDose.Kidney();
+    k.dialysis = "yes".equals(p.get("dialysis"));
+    const labs = [];
+    for (const r of db.rows("SELECT * FROM labs WHERE patient_id=? AND creat<>'' ORDER BY date DESC, time DESC, id DESC LIMIT 12", Ui.nz(p.get("id")))) {
+      const t = Watch.at(r.get("date"), r.get("time"));
+      if (t == null || t.isBefore(now.minusDays(30))) continue;
+      labs.splice(0, 0, r);
+    }
+    const all = Watch.series(labs, "creat");
+    if (all != null) {
+      for (let i = 0; i < all.length; i++) if (all[i] > 25) all[i] = all[i] / 88.4;   // micromol/L
+      k.creat = all[all.length - 1];
+      k.creatDate = Ui.nz(labs.get(labs.size() - 1).get("date"));
+      let low = all[0];
+      for (const v of all) low = Math.min(low, v);
+      const r48 = Watch.timed(labs, "creat", now.minusHours(48));
+      let low48 = NaN;
+      if (r48 != null) {
+        low48 = r48[0];
+        for (const v of r48) low48 = Math.min(low48, v > 25 ? v / 88.4 : v);
+      }
+      if ((!Number.isNaN(low48) && k.creat - low48 >= 0.3) || (k.creat >= 1.5 * low && k.creat - low >= 0.3)) {
+        k.aki = true;
+        k.akiText = "Creatinine rising " + Labs.fmt(Number.isNaN(low48) ? low : Math.min(low, low48)) + " → " + Labs.fmt(k.creat) + " mg/dL: "
+            + "the kidney function is changing (AKI), so these estimates read too high. Dose for the lower band and recheck daily.";
+      }
+    }
+    let age = -1;
+    try {
+      age = Double.parseDouble(Ui.nz(p.get("age")).trim());
+    } catch (ignored) {
+    }
+    const female = "F".equals(p.get("sex"));
+    k.egfr = DrugCheck.egfr(k.creat, age, female);
+    k.weight = KidneyDose.weight(db, p);
+    k.crcl = KidneyDose.crcl(age, female, k.weight, k.creat);
+    return k;
+  }
+
+  /** The generic a written name stands for in the table, "=" + generic for a no-change drug, or "". */
+  static generic(name) {
+    const padded = " " + DrugCheck.clean(name) + " ";
+    const t = DrugCheck.tokens(name);
+    for (const row of KidneyDose.TABLE) {
+      const g = row.substring(0, row.indexOf('|'));
+      if (t.contains(g) || (!g.startsWith("@") && padded.contains(" " + DrugCheck.clean(g) + " "))) return g;
+    }
+    for (const a of KidneyDose.ALIASES) for (const w of a[0].jsplit("\\|")) {
+      if (padded.contains(" " + DrugCheck.clean(w) + " ")) {
+        for (const row of KidneyDose.TABLE) if (row.startsWith(a[1] + "|")) return a[1];
+        return "=" + a[1];
+      }
+    }
+    for (const g of KidneyDose.NO_CHANGE) if (t.contains(g) || padded.contains(" " + DrugCheck.clean(g) + " ")) return "=" + g;
+    return "";
+  }
+
+  static inBand(cond, v, dialysis) {
+    if (cond.equals("HD")) return dialysis;
+    if (Number.isNaN(v)) return false;
+    if (cond.endsWith("+")) return v >= Double.parseDouble(cond.substring(0, cond.length - 1));
+    if (cond.startsWith("<")) return v < Double.parseDouble(cond.substring(1));
+    const ab = cond.jsplit("-");
+    return v >= Double.parseDouble(ab[0]) && v < Double.parseDouble(ab[1]) + 1;
+  }
+
+  /** The band for a table row: [condition, advice, max mg/day, max doses/day], dialysis first; null when nothing fits. */
+  static band(row, k) {
+    const parts = row.jsplit("\\|");
+    const bands = parts[2].jsplit(";");
+    if (k.dialysis) {
+      for (const b of bands) if (b.startsWith("HD=")) return b.jsplit("=", -1);
+      // no dialysis line: the lowest band
+      return (bands[bands.length - 1].startsWith("HD=") ? bands[bands.length - 2] : bands[bands.length - 1]).jsplit("=", -1);
+    }
+    const v = k.by(parts[1]);
+    for (const b of bands) {
+      const x = b.jsplit("=", -1);
+      if (!x[0].equals("HD") && KidneyDose.inBand(x[0], v, false)) return x;
+    }
+    return null;
+  }
+
+  static row(e, k) {
+    const r = new KidneyDose.Row();
+    r.drug = e.label();
+    r.written = (e.dose + " " + e.freq).trim();
+    const g = KidneyDose.generic(e.name);
+    if (g.isEmpty()) return null;
+    if (g.startsWith("=")) {
+      r.generic = g.substring(1);
+      r.status = KidneyDose.OK;
+      r.advice = "No kidney dose change needed";
+      r.band = "";
+      return r;
+    }
+    r.generic = g;
+    let tableRow = null;
+    for (const t of KidneyDose.TABLE) if (t.startsWith(g + "|")) tableRow = t;
+    const b = KidneyDose.band(tableRow, k);
+    if (b == null) return null;
+    r.advice = b[1].trim();
+    const kind = tableRow.jsplit("\\|")[1];
+    r.band = k.dialysis ? "on dialysis" : ("E".equals(kind) || Number.isNaN(k.crcl) ? "eGFR " : "CrCl ") + KidneyDose.bandLabel(b[0]);
+    const maxMg = b.length > 2 && !b[2].trim().isEmpty() ? Double.parseDouble(b[2].trim()) : NaN;
+    const maxTimes = b.length > 3 && !b[3].trim().isEmpty() ? Double.parseDouble(b[3].trim()) : NaN;
+    const usual = r.advice.startsWith("usual");
+    if (maxMg === 0) {
+      r.status = KidneyDose.AVOID;
+      return r;
+    }
+    const dose = DrugCheck.parseDoseMg(e.dose), per = DrugCheck.timesPerDay(e.freq);
+    let high = false;
+    if (!Number.isNaN(maxMg) && !Number.isNaN(dose) && !Number.isNaN(per) && dose * per > maxMg * 1.1) high = true;
+    if (!Number.isNaN(maxTimes) && !Number.isNaN(per) && per > maxTimes) high = true;
+    if (high) r.status = KidneyDose.HIGH;
+    else if (usual) r.status = KidneyDose.OK;
+    else if (!Number.isNaN(maxMg) && !Number.isNaN(dose) && !Number.isNaN(per)) r.status = KidneyDose.OK;   // written dose is within the band
+    else r.status = KidneyDose.CHECK;
+    return r;
+  }
+
+  static bandLabel(cond) {
+    if (cond.endsWith("+")) return cond.substring(0, cond.length - 1) + " or more";
+    if (cond.startsWith("<")) return "below " + cond.substring(1);
+    return cond.split("-").join(" to ");
+  }
+
+  /** The treatment list of the patient's case sheet, checked: changes first, then checks, then fine. */
+  static check(db, pid, k) {
+    const out = [];
+    const sheet = CaseSheet.load(db, pid);
+    if (sheet == null) return out;
+    const list = CaseSheet.drugs(sheet, CaseSheet.TREATMENT);
+    for (const e of DrugCheckUi.entries(list)) {
+      const r = KidneyDose.row(e, k);
+      if (r != null) out.add(r);
+    }
+    Collections.sort(out, {
+      compare: (a, b) => KidneyDose.rank(a) - KidneyDose.rank(b)
+    });
+    return out;
+  }
+
+  static rank(r) {
+    return KidneyDose.AVOID.equals(r.status) ? 0 : KidneyDose.HIGH.equals(r.status) ? 1 : KidneyDose.CHECK.equals(r.status) ? 2 : 3;
+  }
+
+  static changes(rows) {
+    let n = 0;
+    for (const r of rows) if (r.change()) n++;
+    return n;
+  }
+
+  /** The kidney numbers in one line: "Creatinine 2.1 (18 Oct) · eGFR 31 · CrCl 28 (62 kg)". */
+  static line(k) {
+    if (Number.isNaN(k.creat)) return k.dialysis ? "On dialysis · no creatinine in the last 30 days" : "No creatinine in the last 30 days";
+    const b = new StringBuilder("Creatinine ").append(Labs.fmt(k.creat)).append(k.creatDate.isEmpty() ? "" : " (" + Dates.nice(k.creatDate) + ")");
+    if (!Number.isNaN(k.egfr)) b.append("  ·  eGFR ").append(Math.round(k.egfr));
+    if (!Number.isNaN(k.crcl)) b.append("  ·  CrCl ").append(Math.round(k.crcl)).append(" (").append(Labs.fmt(k.weight)).append(" kg)");
+    if (k.dialysis) b.append("  ·  on dialysis");
+    return b.toString();
+  }
+
+  /** In-patients whose kidneys are impaired and whose drug list has something to change, most changes first. */
+  static ward(db, now) {
+    const out = [];
+    for (const p of db.rows("SELECT * FROM patients WHERE status='IN' ORDER BY home_unit, location, bed")) {
+      const k = KidneyDose.kidney(db, p, now);
+      if (!k.impaired()) continue;
+      const rows = KidneyDose.check(db, Long.parseLong(p.get("id")), k);
+      out.add([p, k, rows]);
+    }
+    Collections.sort(out, {
+      compare: (a, b) => KidneyDose.changes(b[2]) - KidneyDose.changes(a[2])
+    });
+    return out;
+  }
+
+  static text(p, k, rows) {
+    const b = new StringBuilder("*💧 Kidney dose check*\n").append(Ui.nz(p.get("age"))).append(Ui.nz(p.get("sex"))).append("  ·  ")
+        .append(Ui.nz(p.get("diagnosis"))).append("\n").append(KidneyDose.line(k)).append("\n");
+    if (k.aki) b.append("⚠ AKI: ").append(k.akiText).append("\n");
+    for (const r of rows) {
+      if (KidneyDose.OK.equals(r.status)) continue;
+      b.append("\n• ").append(r.drug).append(r.written.isEmpty() ? "" : " (" + r.written + ")").append(": ").append(r.status.toUpperCase())
+          .append(" → ").append(r.advice);
+    }
+    b.append("\n\n_Decision support only; check a drug reference._");
+    return b.toString();
+  }
+}
+
+/** What is known of the kidneys. crcl/egfr NaN when not known. */
+KidneyDose.Kidney = class {
+  constructor() {
+    this.creat = NaN; this.egfr = NaN; this.crcl = NaN; this.weight = NaN;
+    this.creatDate = "";
+    this.aki = false; this.dialysis = false; this.weightGuessed = false;
+    this.akiText = "";
+  }
+
+  /** The value a band is chosen by: creatinine clearance (or eGFR without a weight); NaN when unknown. */
+  by(kind) {
+    if ("E".equals(kind)) return this.egfr;
+    return Number.isNaN(this.crcl) ? this.egfr : this.crcl;
+  }
+
+  impaired() {
+    return this.dialysis || this.aki || (!Number.isNaN(this.egfr) && this.egfr < 60) || (!Number.isNaN(this.crcl) && this.crcl < 60);
+  }
+};
+
+/** One drug on the list and what the table says for it. */
+KidneyDose.Row = class {
+  constructor() { this.drug = null; this.written = null; this.generic = null; this.advice = null; this.band = null; this.status = null; }
+
+  color() {
+    return KidneyDose.HIGH.equals(this.status) || KidneyDose.AVOID.equals(this.status) ? Ui.RED : KidneyDose.CHECK.equals(this.status) ? Ui.AMBER : Ui.GREEN;
+  }
+
+  change() {
+    return KidneyDose.HIGH.equals(this.status) || KidneyDose.AVOID.equals(this.status);
+  }
+};
+;
+/* ---- app/KidneyDoseActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Kidney dose check (8.40): one patient's drugs against their kidney function, or (no "id") every in-patient with weak kidneys. */
+class KidneyDoseActivity extends Base {
+  constructor() { super(); this.id = -1; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const s = this.getIntent().getStringExtra("id");
+    if (s != null) this.id = Long.parseLong(s);
+    this.setTitle("Kidney dose check");
+    this.subtitle = this.id >= 0 ? "Doses for this patient's kidney function" : "In-patients with weak kidney function";
+    this.headerColor(KidneyDose.COLOR);
+  }
+
+  now() {
+    return LocalDateTime.of(Dates.today(), Dates.time());
+  }
+
+  render() {
+    if (this.id < 0) {
+      this.renderWard();
+      return;
+    }
+    const p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.id));
+    if (p == null) {
+      this.finish();
+      return;
+    }
+    const k = KidneyDose.kidney(this.db, p, this.now());
+    const rows = KidneyDose.check(this.db, this.id, k);
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(KidneyDose.COLOR), 20));
+    hero.addView(Ui.tv(this, "💧  " + Ui.nz(p.get("name")) + "  ·  " + Ui.nz(p.get("age")) + Ui.nz(p.get("sex")), 19, Color.WHITE, true));
+    hero.addView(Ui.tv(this, KidneyDose.line(k), 14, 0xF0FFFFFF, true));
+    const ch = KidneyDose.changes(rows);
+    hero.addView(Ui.tv(this, rows.isEmpty() ? "No drugs on the case sheet's treatment list" : ch > 0 ? ch + (ch === 1 ? " drug to change" : " drugs to change") : "No dose to change", 13, 0xE6FFFFFF, false));
+    page.addView(hero);
+
+    if (k.aki) {
+      const a = Ui.card(this);
+      a.addView(Ui.tv(this, "⚠  " + k.akiText, 14, Ui.RED, true));
+      page.addView(a);
+    }
+
+    const set = Ui.card(this);
+    set.addView(Ui.kv(this, "Weight", Number.isNaN(k.weight) ? "Not known: eGFR is used in place of creatinine clearance" : Labs.fmt(k.weight) + " kg"));
+    const row = Ui.buttonRow(this, Ui.outlineButton(this, Number.isNaN(k.weight) ? "+ Weight" : "Change weight", KidneyDose.COLOR, {
+      onClick: (v) => { this.weightDialog(p); }
+    }), Ui.outlineButton(this, k.dialysis ? "✓ On dialysis" : "On dialysis?", k.dialysis ? Ui.RED : Ui.SLATE, {
+      onClick: (v) => {
+        const cv = new ContentValues();
+        cv.put("dialysis", k.dialysis ? "" : "yes");
+        this.db.update("patients", cv, this.id);
+        this.render();
+      }
+    }));
+    set.addView(row);
+    Ui.margins(row, 0, 6, 0, 0);
+    page.addView(set);
+
+    if (Number.isNaN(k.creat) && !k.dialysis) page.addView(this.emptyNote("Add a creatinine in Lab trends to check doses."));
+    else if (!k.impaired()) page.addView(this.emptyNote("Kidney function is normal for dosing (eGFR 60 or more, creatinine not rising). Usual doses apply."));
+    if (!rows.isEmpty() && (k.impaired() || Number.isNaN(k.creat))) {
+      page.addView(Ui.heading(this, "Treatment list", KidneyDose.COLOR));
+      for (const r of rows) {
+        page.addView(this.entryCard(r.status, r.color(), r.drug + (r.written.isEmpty() ? "" : "  ·  " + r.written),
+            (r.band.isEmpty() ? "" : k.dialysis ? "On dialysis: " : "For " + r.band + ": ") + r.advice, null, null, 8));
+      }
+    }
+    const bt = Ui.v(this);
+    bt.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    bt.addView(Ui.buttonRow(this, Ui.button(this, "Open the case sheet", KidneyDose.COLOR, this.opener(CaseSheetActivity, "id", String(this.id))),
+        Ui.outlineButton(this, "Share", Ui.GREEN, {
+          onClick: (v) => { ReportActivity.shareText(this, KidneyDose.text(p, k, rows)); }
+        })));
+    page.addView(bt);
+    page.addView(this.note());
+    this.setPage(page);
+  }
+
+  note() {
+    const n = Ui.muted(this, KidneyDose.DISCLAIMER);
+    n.setTextSize(12);
+    n.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), 0);
+    return n;
+  }
+
+  weightDialog(p) {
+    const f = new Form(this);
+    f.text("w", "Weight (kg)", Ui.nz(p.get("weight_kg")), Form.DECIMAL);
+    Ui.formDialog(this, "Weight", f, "Save", {
+      run: () => {
+        const w = Labs.num(f.get("w"));
+        if (w != null && (w < 20 || w > 250)) {
+          Ui.toast(this, "Enter the weight in kg (20 to 250)");
+          return false;
+        }
+        const cv = new ContentValues();
+        cv.put("weight_kg", w == null ? "" : Labs.fmt(w));
+        this.db.update("patients", cv, this.id);
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  renderWard() {
+    const all = KidneyDose.ward(this.db, this.now());
+    const page = Ui.v(this);
+    let need = 0;
+    for (const o of all) if (KidneyDose.changes(o[2]) > 0) need++;
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(KidneyDose.COLOR), 20));
+    hero.addView(Ui.tv(this, "💧  " + all.size() + (all.size() === 1 ? " patient" : " patients") + " with weak kidney function", 19, Color.WHITE, true));
+    hero.addView(Ui.tv(this, need + " with a drug dose to change", 14, 0xE6FFFFFF, false));
+    page.addView(hero);
+    for (const o of all) {
+      const p = o[0];
+      const k = o[1];
+      const rows = o[2];
+      const n = KidneyDose.changes(rows);
+      const sub = new StringBuilder(Base.where(p)).append("  ·  ").append(KidneyDose.line(k));
+      if (k.aki) sub.append("\n⚠ Creatinine rising (AKI)");
+      for (const r of rows) if (r.change()) sub.append("\n• ").append(r.drug).append(": ").append(r.advice);
+      page.addView(this.entryCard(n > 0 ? n + " to change" : "Doses OK", n > 0 ? Ui.RED : Ui.GREEN, Ui.nz(p.get("name")) + "  ·  " + Ui.nz(p.get("age")) + Ui.nz(p.get("sex")),
+          sub.toString(), Ui.nz(p.get("home_unit")), this.opener(KidneyDoseActivity, "id", p.get("id")), 12));
+    }
+    if (all.isEmpty()) page.addView(this.emptyNote("No in-patient has an eGFR below 60, a rising creatinine or dialysis marked."));
+    page.addView(this.note());
+    this.setPage(page);
+  }
+
+  /** The patient page's line: shown only when the kidneys are weak. */
+  static patientCard(a, db, pid, p) {
+    const k = KidneyDose.kidney(db, p, LocalDateTime.of(Dates.today(), Dates.time()));
+    if (!k.impaired()) return null;
+    const n = KidneyDose.changes(KidneyDose.check(db, pid, k));
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), 0);
+    const label = "💧  Kidney dose check" + (Number.isNaN(k.egfr) ? "" : "  ·  eGFR " + Math.round(k.egfr)) + (n > 0 ? "  ·  " + n + " to change" : "");
+    box.addView(n > 0 ? Ui.button(a, label, Ui.RED, a.opener(KidneyDoseActivity, "id", String(pid)))
+        : Ui.outlineButton(a, label, KidneyDose.COLOR, a.opener(KidneyDoseActivity, "id", String(pid))));
+    return box;
   }
 }
 ;
@@ -40578,6 +45369,14 @@ class LeaveForm {
     s.row(30, lbl('Signature'), c(''), c(''), LeaveForm.sig(r, 'ap'), LeaveForm.sig(r, 'prof'));
     s.row(18, lbl('Date'), c(nice(r.get('applied'))), c(''), c(nice(r.get('ap_date'))), c(nice(r.get('prof_date'))));
 
+    const ns = Ui.nz(r.get('nodal_status'));
+    if (!ns.isEmpty()) {
+      const nb = f.block('LEAVE NODAL OFFICER', HEAD, 1);
+      nb.keep = true;
+      nb.row(20, c('Dr. S. Rajkumar, Assistant Professor:   ' + (ns.equals('Approved') || ns.equals('Not approved')
+        ? ns.toLowerCase() + ' in the app by ' + Ui.nz(r.get('nodal_by')) + ' on ' + or(nice(r.get('nodal_date')), '')
+        : '______________________   Date: ______________')));
+    }
     const hs = Ui.nz(r.get('hod_status'));
     const yes = hs.equals('Approved'), no = hs.equals('Not approved');
     const o = f.block('FOR OFFICE USE — HEAD OF THE DEPARTMENT', HEAD, 1);
@@ -40770,6 +45569,10 @@ class LiveCensusActivity extends Base {
     const hp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     hp.setMargins(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 4));
     page.addView(hero, hp);
+    const tv = Ui.v(this);
+    tv.setPadding(Ui.dp(this, 12), Ui.dp(this, 2), Ui.dp(this, 12), 0);
+    tv.addView(Ui.outlineButton(this, "📺  Show on the duty room TV (wall screen)", LiveCensusActivity.COLOR, this.opener(WallActivity)));
+    page.addView(tv);
 
     // ---- the census table: every ward, every number ----
     page.addView(Ui.heading(this, "Census table  ·  all wards now", LiveCensusActivity.COLOR));
@@ -41288,6 +46091,445 @@ class LiveQuizActivity extends Base {
     return id;
   }
 }
+;
+/* ---- app/LiveScanActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Live scan (8.70): the camera stays open over the paper and takes each page by itself when the phone is still and the page is
+ * in focus (PageJudge), with a beep; turn the page and it takes the next. The shutter button takes one at once. Done returns the
+ * pages (files under the app's folder) in the "pages" extra. Extras: prefix (file name start), max (pages), title.
+ * Web: the browser's camera (getUserMedia) in a video element; frames are read from a small canvas.
+ */
+class LiveScanActivity extends Activity {
+  static PAGES = "pages";
+  static MAX_PX = 2000;
+  static EVERY_MS = 250;
+
+  constructor() {
+    super();
+    this.db = null;
+    this.prefix = "livescan";
+    this.max = 6;
+    this.pages = [];
+    this.judge = new PageJudge();
+    this.auto = true; this.torch = false; this.shooting = false;
+    this.stage = null; this.cam = null; this.overlay = null; this.status = null; this.doneBtn = null; this.autoBtn = null; this.torchBtn = null;
+    this.thumbs = null; this.flash = null;
+    this.stream = null;
+    this.ui = new Handler(Looper.getMainLooper());
+    this.lastFrame = null;
+    this.small = null;
+    this.analyzer = { run: () => { this.analyse(); this.ui.postDelayed(this.analyzer, LiveScanActivity.EVERY_MS); } };
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.db = Db.get(this);
+    const inn = this.getIntent();
+    if (inn.getStringExtra("prefix") != null) this.prefix = inn.getStringExtra("prefix");
+    this.max = Math.max(1, inn.getIntExtra("max", 6));
+    if (b != null) {
+      const kept = b.getStringArrayList(LiveScanActivity.PAGES);
+      if (kept != null) this.pages.addAll(kept);
+    }
+    this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    this.build(inn.getStringExtra("title"));
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putStringArrayList(LiveScanActivity.PAGES, this.pages);
+  }
+
+  // ---------------------------------------------------------------- screen
+
+  build(title) {
+    const root = new FrameLayout(this);
+    root.setBackgroundColor(Color.BLACK);
+    this.stage = new FrameLayout(this);
+    root.addView(this.stage, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT, Gravity.CENTER));
+    this.cam = new LiveScanActivity.CameraView(this);
+    this.overlay = new LiveScanActivity.Overlay(this, this.cam);
+    this.stage.addView(this.cam, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    this.stage.addView(this.overlay, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    this.flash = new View(this);
+    this.flash.setBackgroundColor(Color.WHITE);
+    this.flash.setAlpha(0);
+    root.addView(this.flash, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+
+    const top = new LinearLayout(this);
+    top.setOrientation(LinearLayout.VERTICAL);
+    top.setBackgroundColor(0x99000000);
+    top.setPadding(Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 10));
+    top.addView(Ui.tv(this, "📹  " + (title == null ? "Live scan" : title), 15, 0xCCFFFFFF, true));
+    this.status = Ui.tv(this, "Opening the camera…", 20, Color.WHITE, true);
+    top.addView(this.status);
+    const tip = Ui.tv(this, "Hold the phone flat over one page in good light. Each page is taken by itself with a beep.", 12, 0xB3FFFFFF, false);
+    top.addView(tip);
+    root.addView(top, new FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.TOP));
+
+    const bottom = new LinearLayout(this);
+    bottom.setOrientation(LinearLayout.VERTICAL);
+    bottom.setBackgroundColor(0x99000000);
+    bottom.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 16));
+    this.thumbs = new LinearLayout(this);
+    const hs = new HorizontalScrollView(this);
+    hs.addView(this.thumbs);
+    bottom.addView(hs);
+    const row = new LinearLayout(this);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    this.autoBtn = this.pill("", {
+      onClick: (v) => {
+        this.auto = !this.auto;
+        this.paintButtons();
+      }
+    });
+    this.torchBtn = this.pill("", {
+      onClick: (v) => {
+        this.torch = !this.torch;
+        this.paintButtons();
+        this.repeat();
+      }
+    });
+    const left = new LinearLayout(this);
+    left.setOrientation(LinearLayout.VERTICAL);
+    left.addView(this.autoBtn, new LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
+    left.addView(this.torchBtn, new LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT));
+    Ui.margins(this.torchBtn, 0, 6, 0, 0);
+    row.addView(left, new LinearLayout.LayoutParams(0, WRAP_CONTENT, 1));
+    const shutter = new View(this);
+    const ring = new GradientDrawable();
+    ring.setShape(GradientDrawable.OVAL);
+    ring.setColor(Color.WHITE);
+    ring.setStroke(Ui.dp(this, 5), 0xFF94A3B8);
+    shutter.setBackground(ring);
+    shutter.setContentDescription("Take this page now");
+    shutter.setOnClickListener({ onClick: (v) => { this.shoot(); } });
+    row.addView(shutter, new LinearLayout.LayoutParams(Ui.dp(this, 70), Ui.dp(this, 70)));
+    this.doneBtn = Ui.tv(this, "", 16, Color.WHITE, true);
+    this.doneBtn.setGravity(Gravity.CENTER);
+    this.doneBtn.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+    this.doneBtn.setOnClickListener({ onClick: (v) => { this.finishWithPages(); } });
+    const right = new LinearLayout(this);
+    right.setGravity(Gravity.END);
+    right.addView(this.doneBtn);
+    row.addView(right, new LinearLayout.LayoutParams(0, WRAP_CONTENT, 1));
+    bottom.addView(row);
+    Ui.margins(row, 0, 8, 0, 0);
+    root.addView(bottom, new FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT, Gravity.BOTTOM));
+    this.setContentView(root);
+    for (const rel of this.pages) this.addThumb(rel);
+    this.paintButtons();
+  }
+
+  pill(s, l) {
+    const t = Ui.tv(this, s, 13, Color.WHITE, true);
+    t.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+    t.setOnClickListener(l);
+    return t;
+  }
+
+  paintButtons() {
+    this.autoBtn.setText(this.auto ? "✓ Auto" : "Auto off");
+    this.autoBtn.setBackground(Ui.round(this, this.auto ? 0xFF16A34A : 0x55FFFFFF, 16));
+    this.torchBtn.setText(this.torch ? "🔦 Light on" : "🔦 Light");
+    this.torchBtn.setBackground(Ui.round(this, this.torch ? 0xFFF59E0B : 0x55FFFFFF, 16));
+    this.doneBtn.setText(this.pages.isEmpty() ? "Cancel" : "Done (" + this.pages.length + ")  ›");
+    this.doneBtn.setBackground(Ui.round(this, this.pages.isEmpty() ? 0x55FFFFFF : 0xFF2563EB, 20));
+  }
+
+  say(s) {
+    this.status.setText(s);
+  }
+
+  said() {
+    return this.status.getText().toString();
+  }
+
+  // ---------------------------------------------------------------- camera
+
+  onResume() {
+    super.onResume();
+    this.start();
+  }
+
+  onPause() {
+    this.stop();
+    super.onPause();
+  }
+
+  start() {
+    const v = this.cam.video;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.noCamera("This browser cannot open the camera here. Use the Camera button (one photo at a time) or the Android app.");
+      return;
+    }
+    if (this.stream == null) {
+      navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1440 } } })
+        .then((s) => {
+          if (this.isFinishing()) { s.getTracks().forEach(t => t.stop()); return; }
+          this.stream = s;
+          v.srcObject = s;
+          const p = v.play();
+          if (p && p.catch) p.catch(() => {});
+          this.say(PageJudge.say(PageJudge.NO_PAGE, this.pages.length));
+          this.repeat();
+        })
+        .catch((e) => {
+          this.noCamera(e && e.name === "NotAllowedError"
+            ? "The camera was not allowed. Allow it for this site in the browser's settings, or use the Camera button (one photo at a time)."
+            : "The camera could not be opened (it may be in use by another app). Use the Camera button instead.");
+        });
+    }
+    this.ui.removeCallbacks(this.analyzer);
+    this.ui.postDelayed(this.analyzer, 600);
+  }
+
+  stop() {
+    this.ui.removeCallbacks(this.analyzer);
+    if (this.stream != null) {
+      try { this.stream.getTracks().forEach(t => t.stop()); } catch (ignored) { }
+      this.stream = null;
+      this.cam.video.srcObject = null;
+    }
+    this.shooting = false;
+  }
+
+  noCamera(why) {
+    this.say("Camera not available");
+    new AlertDialog.Builder(this).setTitle("Live scan").setMessage(why).setCancelable(false)
+      .setPositiveButton("OK", { onClick: (d, w) => { this.finishWithPages(); } }).show();
+  }
+
+  /** The light, where the browser and phone allow it. */
+  repeat() {
+    if (this.stream == null) return;
+    try {
+      const t = this.stream.getVideoTracks()[0];
+      const caps = t && t.getCapabilities ? t.getCapabilities() : {};
+      if (caps && caps.torch) t.applyConstraints({ advanced: [{ torch: this.torch }] }).catch(() => {});
+      else if (this.torch) Ui.toast(this, "The light cannot be switched on from the browser on this phone");
+    } catch (ignored) {
+    }
+  }
+
+  // ---------------------------------------------------------------- pages
+
+  /** Four times a second: a small grey copy of the view goes to the judge. */
+  analyse() {
+    const v = this.cam.video;
+    if (this.stream == null || this.shooting || this.pages.length >= this.max || !v.videoWidth) return;
+    const portrait = v.videoHeight >= v.videoWidth;
+    const w = portrait ? 90 : 120, h = portrait ? 120 : 90;
+    if (this.small == null || this.small.width !== w) {
+      this.small = document.createElement("canvas");
+      this.small.width = w;
+      this.small.height = h;
+    }
+    const ctx = this.small.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(v, 0, 0, w, h);
+    const d = ctx.getImageData(0, 0, w, h).data;
+    const g = new Array(w * h).fill(0);
+    for (let i = 0; i < w * h; i++) g[i] = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8;
+    this.frame(g, w, h);
+  }
+
+  /** A frame for the judge (tests call this directly). */
+  frame(g, w, h) {
+    this.lastFrame = g;
+    const f = this.judge.feed(g, w, h);
+    this.overlay.box = f.box;
+    this.overlay.progress = this.auto ? f.progress : 0;
+    this.overlay.invalidate();
+    if (!this.auto) {
+      this.say(f.box == null ? "Point the camera at the page" : "Auto is off: tap the white button to take the page");
+      return;
+    }
+    this.say(PageJudge.say(f.state, this.pages.length));
+    if (f.state === PageJudge.SHOOT) this.shoot();
+  }
+
+  /** Takes the page now: the camera's full picture. */
+  shoot() {
+    if (this.shooting || this.pages.length >= this.max) {
+      if (this.pages.length >= this.max) this.say("That is the most pages at once: tap Done");
+      return;
+    }
+    const v = this.cam.video;
+    if (this.stream == null || !v.videoWidth) {
+      this.say("Could not take the page. Try again.");
+      return;
+    }
+    this.shooting = true;
+    this.judge.taken(this.lastFrame);
+    this.flash.setAlpha(0.8);
+    this.flash.animate().alpha(0).setDuration(350).start();
+    const k = Math.min(1, LiveScanActivity.MAX_PX / Math.max(v.videoWidth, v.videoHeight));
+    const bm = Bitmap.createBitmap(Math.round(v.videoWidth * k), Math.round(v.videoHeight * k));
+    bm.canvas.getContext("2d").drawImage(v, 0, 0, bm.w, bm.h);
+    const rel = this.save(bm);
+    if (rel != null) this.added(rel);
+    else {
+      this.shooting = false;
+      this.say("Could not take the page. Try again.");
+    }
+  }
+
+  /** JPEG under the app's folder; kept decoded so the pages can be read at once. */
+  save(bm) {
+    try {
+      const rel = Imaging.DIR + "/" + this.prefix + "_" + System.currentTimeMillis() + "_" + this.pages.length + ".jpg";
+      const url = bm.canvas.toDataURL("image/jpeg", 0.88);
+      const bytes = Base64.decode(url.substring(url.indexOf(",") + 1));
+      this.db.file(rel).getParentFile().mkdirs();
+      VFS.write(rel, bytes, { w: bm.w, h: bm.h });
+      Bitmaps.decoded.set(VFS.norm(rel), bm);
+      return rel;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  added(rel) {
+    this.shooting = false;
+    this.pages.push(rel);
+    this.addThumb(rel);
+    this.paintButtons();
+    LiveScanActivity.beep();
+    if (this.pages.length >= this.max) {
+      this.say("Page " + this.pages.length + " taken ✓  That is the most at once");
+      this.ui.postDelayed({ run: () => { if (!this.isFinishing()) this.finishWithPages(); } }, 900);
+    } else this.say(PageJudge.say(PageJudge.SAME_PAGE, this.pages.length));
+  }
+
+  static beep() {
+    try {
+      const A = window.AudioContext || window.webkitAudioContext;
+      if (!A) return;
+      if (!LiveScanActivity.audio) LiveScanActivity.audio = new A();
+      const ac = LiveScanActivity.audio, o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = 1200;
+      g.gain.value = 0.15;
+      o.connect(g);
+      g.connect(ac.destination);
+      o.start();
+      o.stop(ac.currentTime + 0.15);
+    } catch (ignored) {
+    }
+  }
+
+  addThumb(rel) {
+    const iv = new ImageView(this);
+    const bm = Ui.loadScaled(this.db.file(rel), 200);
+    if (bm != null) iv.setImageBitmap(bm);
+    else iv.setBackgroundColor(0xFF334155);
+    iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    iv.setContentDescription("Page " + (this.pages.indexOf(rel) + 1) + ": tap to remove");
+    iv.setOnClickListener({
+      onClick: (v) => {
+        const n = this.pages.indexOf(rel);
+        new AlertDialog.Builder(this).setTitle("Page " + (n + 1))
+          .setMessage("Remove this page and take it again?")
+          .setPositiveButton("Remove", {
+            onClick: (d, w) => {
+              this.pages.removeObj(rel);
+              this.db.file(rel).delete();
+              this.thumbs.removeView(v);
+              this.judge.unlock();
+              this.paintButtons();
+            }
+          }).setNegativeButton("Keep", null).show();
+      }
+    });
+    const lp = new LinearLayout.LayoutParams(Ui.dp(this, 46), Ui.dp(this, 60));
+    lp.setMargins(0, 0, Ui.dp(this, 6), 0);
+    this.thumbs.addView(iv, lp);
+  }
+
+  finishWithPages() {
+    if (this.pages.isEmpty()) this.setResult(RESULT_CANCELED);
+    else this.setResult(RESULT_OK, new Intent().putStringArrayListExtra(LiveScanActivity.PAGES, this.pages));
+    this.stop();
+    this.finish();
+  }
+
+  onBackPressed() {
+    if (this.pages.isEmpty()) {
+      this.finishWithPages();
+      return;
+    }
+    new AlertDialog.Builder(this).setTitle(this.pages.length + (this.pages.length === 1 ? " page" : " pages") + " taken")
+      .setPositiveButton("Use them", { onClick: (d, w) => { this.finishWithPages(); } })
+      .setNegativeButton("Throw away", {
+        onClick: (d, w) => {
+          for (const rel of this.pages) this.db.file(rel).delete();
+          this.pages.clear();
+          this.finishWithPages();
+        }
+      }).setNeutralButton("Keep scanning", null).show();
+  }
+
+  /** Opens the live scanner for a result (pages come back in the "pages" extra). */
+  static start(a, prefix, max, title, req) {
+    a.startActivityForResult(new Intent(a, LiveScanActivity).putExtra("prefix", prefix).putExtra("max", max).putExtra("title", title), req);
+  }
+
+  static pagesOf(data) {
+    const p = data == null ? null : data.getStringArrayListExtra(LiveScanActivity.PAGES);
+    return p == null ? [] : p;
+  }
+}
+
+/** The camera picture, kept whole (contain) so the paper's box can be drawn over it. */
+LiveScanActivity.CameraView = class extends View {
+  constructor(ctx) {
+    super(ctx);
+    this.video = document.createElement("video");
+    this.video.setAttribute("playsinline", "");
+    this.video.setAttribute("autoplay", "");
+    this.video.muted = true;
+    this.video.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;background:#000";
+    this.el.style.position = "relative";
+    this.el.appendChild(this.video);
+  }
+
+  /** Where the picture sits inside the view: [left, top, width, height]. */
+  shown() {
+    const w = this.el.clientWidth, h = this.el.clientHeight, vw = this.video.videoWidth, vh = this.video.videoHeight;
+    if (!vw || !vh) return [w * 0.04, h * 0.04, w * 0.92, h * 0.92];
+    const k = Math.min(w / vw, h / vh);
+    return [(w - vw * k) / 2, (h - vh * k) / 2, vw * k, vh * k];
+  }
+};
+
+/** The paper's outline over the camera view: white while looking, green filling up while held still. */
+LiveScanActivity.Overlay = class extends View {
+  constructor(c, cam) {
+    super(c);
+    this.cam = cam;
+    this.box = null;
+    this.progress = 0;
+    this.line = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.fill = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.line.setStyle(Paint.Style.STROKE);
+    this.line.setStrokeWidth(Ui.dp(c, 3));
+    this.fill.setStyle(Paint.Style.FILL);
+  }
+
+  onDraw(cv) {
+    const s = this.cam.shown();
+    const r = this.box == null ? new RectF(s[0] + s[2] * 0.08, s[1] + s[3] * 0.08, s[0] + s[2] * 0.92, s[1] + s[3] * 0.92)
+      : new RectF(s[0] + this.box[0] * s[2], s[1] + this.box[1] * s[3], s[0] + this.box[2] * s[2], s[1] + this.box[3] * s[3]);
+    this.line.setColor(this.box == null ? 0x88FFFFFF : this.progress > 0 ? 0xFF22C55E : 0xFFFFFFFF);
+    this.line.setPathEffect(this.box == null ? new DashPathEffect([24, 16], 0) : null);
+    cv.drawRoundRect(r, 18, 18, this.line);
+    if (this.progress > 0) {
+      this.fill.setColor(0x3322C55E);
+      cv.drawRoundRect(new RectF(r.left, r.bottom - (r.height() * this.progress), r.right, r.bottom), 18, 18, this.fill);
+    }
+  }
+};
 ;
 /* ---- app/LockActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -42662,6 +47904,7 @@ class MainActivity extends Base {
 
     for (const a of Alerts.active(db)) page.addView(Alerts.banner(this, a));
     Alerts.popupNew(this);
+    Conduct.showRuleOnce(this);
 
     const hero = Ui.card(this);
     hero.setBackground(Glass.hero(this, Ui.HERO, 24));
@@ -42709,8 +47952,12 @@ class MainActivity extends Base {
     if (mb != null) page.addView(mb);
     const ew = Ews.homeCard(this, db);
     if (ew != null) page.addView(ew);
+    const pr = ProtocolActivity.homeCard(this, db);
+    if (pr != null) page.addView(pr);
     const wt = Watch.homeCard(this, db);
     if (wt != null) page.addView(wt);
+    const rs = Results.homeCard(this, db);
+    if (rs != null) page.addView(rs);
     const sw = Swaps.homeCard(this, db);
     if (sw != null) page.addView(sw);
     const lb = Logbook.homeCard(this, db);
@@ -43116,6 +48363,29 @@ class MainActivity extends Base {
     m.add(new Module("Morning brief", "Who to see first", R.drawable.ic_notice, MorningBrief.COLOR, this.opener(MorningBriefActivity)));
     m.add(new Module("Deterioration watch", "Worsening trends", R.drawable.ic_warn, Watch.COLOR, this.opener(WatchActivity)));
     m.add(new Module("Viva coach", "AI examiner", R.drawable.ic_mic, VivaActivity.COLOR, this.opener(VivaActivity)));
+    m.add(new Module("ECG reader", "AI reads an ECG photo", R.drawable.ic_heart, Ecg.COLOR, this.opener(EcgActivity)));
+    m.add(new Module("Kidney doses", "Doses for weak kidneys", R.drawable.ic_drop, KidneyDose.COLOR, this.opener(KidneyDoseActivity)));
+    m.add(new Module("Infusion calculator", "Dose to ml/hr", R.drawable.ic_drop, Infusion.COLOR, this.opener(InfusionActivity)));
+    const running = Protocols.active(db).size();
+    m.add(new Module("Protocol timers", running > 0 ? running + " running now" : "Snake bite, OP, DKA, K, fits", R.drawable.ic_warn, Protocols.COLOR, this.opener(ProtocolActivity)));
+    m.add(new Module("Death certificate", "MCCD Form 4 helper", R.drawable.ic_doc, Mccd.COLOR, {
+      onClick: (v) => { MccdActivity.pick(this); }
+    }));
+    m.add(new Module("Wrapped", "Your year in stories", R.drawable.ic_star, 0xFF7C3AED, this.opener(WrappedActivity)));
+    const pres = PresentationsActivity.countAll(db);
+    m.add(new Module("Presentations", pres === 0 ? "Department PPTs" : pres + " PPTs", R.drawable.ic_school, PresentationsActivity.COLOR, this.opener(PresentationsActivity, "kind", PresentationsActivity.ALL)));
+    const jn = db.num("SELECT COUNT(*) FROM " + Journals.TABLE), jw = Journals.newThisWeek(db);
+    m.add(new Module("Latest journals", jw > 0 ? jw + " new this week" : jn === 0 ? "Share articles" : jn + " articles", R.drawable.ic_book, Journals.COLOR, this.opener(JournalsActivity)));
+    if (Cloud.isOwner(this)) {
+      const cu = Conduct.unseen(this);
+      m.add(new Module("Conduct reports", cu > 0 ? cu + " new" : "Porn / vulgar posts", R.drawable.ic_shield, Conduct.COLOR, this.opener(ConductActivity)));
+    }
+    if (Memo.on(this.db)) {
+      const mw = Memo.waitingForMe(this, this.db), md = Memo.toDecide(this, this.db);
+      const any = Memo.canIssue(this) || !Memo.list(this, this.db, "For me").isEmpty();
+      if (any) m.add(new Module("Memo", mw > 0 ? mw + " waiting for your explanation" : md > 0 ? md + " explained, to close" : "Explanation called for",
+        R.drawable.ic_mail, Memo.COLOR, this.opener(MemoActivity)));
+    }
     m.add(new Module("Verify a document", "Check a QR code", R.drawable.ic_verified, DocVerify.COLOR, this.opener(VerifyActivity)));
     if (Crashes.canSee(this)) {
       const cr = Crashes.unseen(db);
@@ -43152,6 +48422,11 @@ class MainActivity extends Base {
     m.add(new Module("Handover", hoUnseen > 0 ? hoUnseen + " unread from last night" : db.num("SELECT COUNT(*) FROM handovers WHERE day=?", hoDay) + " for 7:30 AM",
       R.drawable.ic_swap, HandoverActivity.COLOR, this.opener(HandoverActivity)));
     m.add(new Module("Tasks", Tasks.inWard(db, null) + " pending", R.drawable.ic_task, Tasks.COLOR, this.opener(TasksActivity)));
+    const resLate = Results.overdue(db, Protocols.now()).size(), resUnseen = Results.unseen(db).size();
+    m.add(new Module("Pending results", resLate > 0 ? resLate + " overdue" : resUnseen > 0 ? resUnseen + " back, not seen" : Results.waiting(db).size() + " awaited",
+        R.drawable.ic_clipboard, Results.COLOR, this.opener(ResultsActivity)));
+    m.add(new Module("Antibiogram", db.num("SELECT COUNT(*) FROM cultures WHERE growth='Growth'") + " isolates", R.drawable.ic_shield, Antibiogram.COLOR, this.opener(AntibiogramActivity)));
+    m.add(new Module("Wall screen", "For the duty room TV", R.drawable.ic_building, 0xFF0F172A, this.opener(WallActivity)));
     m.add(new Module("Live census", db.totalInpatients() + " inpatients now", R.drawable.ic_trend, LiveCensusActivity.COLOR, this.opener(LiveCensusActivity)));
     m.add(new Module("Bed board", db.totalInpatients() + " in beds", R.drawable.ic_bed, BedBoardActivity.COLOR, this.opener(BedBoardActivity)));
     const toSign = Logbook.waitingToSign(this, db);
@@ -43167,19 +48442,19 @@ class MainActivity extends Base {
 
   /** Home sections, grouped like an iPhone home screen: four glass icons to a row inside frosted panels. */
   static GROUPS = [
-    ["AI assistant", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach"],
-    ["Wards & critical care", "Search", "Live census", "Census", "Bed board", "Tasks", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
+    ["AI assistant", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped"],
+    ["Wards & critical care", "Search", "Protocol timers", "Infusion calculator", "Death certificate", "Live census", "Wall screen", "Census", "Bed board", "Tasks", "Pending results", "Antibiogram", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
     ["Duty & coordination", "PG Connect", "PG questions", "Intercom", "Handover", "Faculty chat", "DAP register", "Call duty", "Call over", "VIP cases"],
     ["Approvals & leave", "Approvals", "CMCHIS", "Attendance", "PG leave", "Duty swaps", "Faculty leave"],
-    ["Academics, people & tools", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
+    ["Academics, people & tools", "Presentations", "Latest journals", "Verify a document", "Conduct reports", "Memo", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
 
   /** Bright, distinct colours for the home icons, so neighbours in a row never share a colour. */
   static TILE_COLORS = (() => {
     const m = new JMap();
     const k = ["Fever ward", "Critical care", "IMCU", "Kandiyaperi", "DAP register", "Call duty", "Call over", "VIP cases",
-      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Faculty leave", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach"];
+      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Faculty leave", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports"];
     const c = [0xFFF97316, 0xFFEC4899, 0xFFEF4444, 0xFF10B981, 0xFF6366F1, 0xFF8B5CF6, 0xFF14B8A6, 0xFFF59E0B,
-      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E];
+      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C];
     for (let i = 0; i < k.length; i++) m.put(k[i], c[i]);
     return m;
   })();
@@ -43676,7 +48951,15 @@ class MainActivity extends Base {
     this.menuItem(page, R.drawable.ic_verified, "Copyright & ownership", Copyright.SHORT, Ui.PRIMARY_DARK, {
       onClick: (v) => { Copyright.show(this); }
     });
-    this.menuItem(page, R.drawable.ic_tune, "Settings", "Department, admission days, in-charges, ward sizes", Ui.SLATE, this.opener(SettingsActivity));
+    this.menuItem(page, R.drawable.ic_tune, "Settings", "AI Copilot and notifications on/off, department, admission days, in-charges", Ui.SLATE, this.opener(SettingsActivity));
+    const cop = Copilot.enabled(this);
+    this.menuItem(page, R.drawable.ic_star, "AI Copilot: " + (cop ? "on" : "off"), cop ? "Tap to turn off the ✨ button on every screen" : "Tap to turn on the ✨ button on every screen", Copilot.COLOR, {
+      onClick: (v) => {
+        Copilot.setEnabled(this, !cop);
+        Ui.toast(this, cop ? "AI Copilot is off" : "AI Copilot is on");
+        this.recreate();
+      }
+    });
     this.menuItem(page, R.drawable.ic_cloud, "Back up data", "Save all records, photos and documents to one file (keep a copy off the phone)", Ui.ORANGE, {
       onClick: (v) => {
         const i = new Intent(Intent.ACTION_CREATE_DOCUMENT);
@@ -43776,7 +49059,7 @@ class MainActivity extends Base {
 
   pgLeaveWaiting() {
     let n = 0;
-    for (const r of this.db.rows("SELECT ap_status, prof_status, hod_status FROM pg_leaves"))
+    for (const r of this.db.rows("SELECT ap_status, prof_status, nodal_status, hod_status FROM pg_leaves"))
       if (PgLeaveActivity.overall(r) === "Awaiting approval") n++;
     return n;
   }
@@ -44308,6 +49591,564 @@ class MbbsMarksActivity extends Base {
   }
 }
 ;
+/* ---- app/Mccd.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Death certificate helper (8.50): the Medical Certificate of Cause of Death (MCCD, Form 4, WHO format) for a patient who died in
+ * hospital. Fills from the case sheet, checks the chain of causes by rule (a mode of dying is not a cause, one condition per line,
+ * no abbreviations, intervals that lengthen down the chain, external causes and the MLC), can ask an AI for a suggested chain, and
+ * makes the form as PDF or Word. Kept in the case sheet as "mccd". The certifying doctor checks and signs it.
+ */
+class Mccd {
+  static COLOR = 0xFF475569;
+  static KEY = "mccd";
+  static MARK = "You help a physician fill the Medical Certificate of Cause of Death";
+  static MANNERS = ["Natural", "Accident", "Suicide", "Homicide", "Pending investigation"];
+  static PREGNANCY = ["Not pregnant", "Pregnant at death", "Within 42 days of delivery", "Not known"];
+  /** Part I lines: key, label. */
+  static PART1 = [
+    ["ia", "I (a) Immediate cause: the disease or condition directly leading to death"],
+    ["ib", "I (b) Antecedent cause: due to (or as a consequence of)"],
+    ["ic", "I (c) Underlying cause: the disease that started the chain"]];
+  static ALL = ["ia", "ia_int", "ib", "ib_int", "ic", "ic_int", "ii", "manner", "preg", "mlc_no", "death_date", "death_time", "certifier"];
+
+  // ---------------------------------------------------------------- store
+
+  static load(db, pid) {
+    const s = CaseSheet.load(db, pid);
+    const m = s == null ? null : s.optJSONObject(Mccd.KEY);
+    const out = new JMap();
+    if (m == null) return out;
+    for (const k of Mccd.ALL) out.put(k, m.optString(k));
+    return out;
+  }
+
+  static save(db, pid, f) {
+    let s = CaseSheet.load(db, pid);
+    if (s == null) s = new JSONObject();
+    const m = new JSONObject();
+    for (const k of Mccd.ALL) m.put(k, Ui.nz(f.get(k)).trim());
+    m.put("saved", Dates.todayIso() + " " + Dates.now());
+    s.put(Mccd.KEY, m);
+    CaseSheet.save(db, pid, s);
+  }
+
+  /** A first draft from the patient and the case sheet: final diagnosis as the underlying cause, comorbidities in Part II. */
+  static prefill(db, p) {
+    const f = new JMap();
+    const pid = Long.parseLong(p.get("id"));
+    const s = CaseSheet.load(db, pid);
+    let dx = s == null ? "" : s.optString("final_dx").trim();
+    if (dx.isEmpty()) dx = Ui.nz(p.get("diagnosis")).trim();
+    const lines = dx.jsplit("\\s*(\\n|;)\\s*");
+    f.put("ic", lines.length > 0 ? lines[0] : "");
+    const co = [];
+    if (s != null) for (const c of CaseSheet.comorbidities(s)) co.add(c[1]);
+    for (let i = 1; i < lines.length; i++) if (!lines[i].isEmpty()) co.add(lines[i]);
+    f.put("ii", Mccd.join(co));
+    f.put("manner", Mccd.external(dx) ? "" : "Natural");
+    f.put("death_date", Ui.nz(p.get("outcome_date")));
+    const ev = db.row("SELECT date, time FROM events WHERE patient_id=? AND type=? ORDER BY id DESC LIMIT 1", p.get("id"), Db.DEATH);
+    if (ev != null) {
+      if (f.get("death_date").isEmpty()) f.put("death_date", Ui.nz(ev.get("date")));
+      f.put("death_time", Ui.nz(ev.get("time")));
+    }
+    return f;
+  }
+
+  static join(l) {
+    const b = new StringBuilder();
+    for (const x of l) b.append(b.length() === 0 ? "" : ", ").append(x);
+    return b.toString();
+  }
+
+  // ---------------------------------------------------------------- rule checks
+
+  static $clinit() {
+    /** Modes of dying: never a cause on any line. */
+    Mccd.MODE = Pattern.compile("^(sudden )?(cardiac arrest|cardio ?respiratory arrest|cardio ?pulmonary arrest|respiratory arrest|"
+        + "heart (stopped|arrest)|asystole|ventricular fibrillation|pulseless electrical activity|brain ?death|brain stem death|old age|senility|"
+        + "natural causes?|death|expired)$", Pattern.CASE_INSENSITIVE);
+    /** Vague when written as the underlying (lowest) cause: need the disease behind them. */
+    Mccd.VAGUE = Pattern.compile("^(acute |chronic |severe |refractory )?(heart failure|cardiac failure|congestive cardiac failure|"
+        + "respiratory failure|renal failure|kidney failure|acute kidney injury|liver failure|hepatic failure|multi ?organ (dysfunction|failure)( syndrome)?|"
+        + "multiple organ (dysfunction|failure)|mods|shock|sepsis|septicaemia|septicemia|coma|hypotension|cachexia|anaemia|anemia|"
+        + "cardiogenic shock|hypoxia|hypoxaemia|metabolic acidosis|bleeding|haemorrhage|hemorrhage|pneumonia|aspiration)$", Pattern.CASE_INSENSITIVE);
+    Mccd.EXTERNAL = Pattern.compile("poison|snake|envenom|bite|sting|organophos|\\bop\\b|carbamate|paraquat|pesticide|insecticide|"
+        + "rodenticide|yellow phosphorus|oleander|kerosene|overdose|burn|scald|hanging|drown|electrocut|lightning|trauma|injur|accident|"
+        + "\\bfall\\b|road traffic|\\brta\\b|assault|homicid|suicid|fracture|head injury|asphyxia", Pattern.CASE_INSENSITIVE);
+    /** Upper-case words that are fine in a certificate. */
+    Mccd.ALLOWED = new JSet(["HIV", "AIDS", "COVID", "ICD", "II", "III", "IV", "SARS", "MERS", "H1N1", "IGA", "ST"]);
+    Mccd.ABBR = Pattern.compile("\\b([A-Z][A-Z0-9]{1,6})\\b");
+    Mccd.HEAD = Pattern.compile("^\\s*\\**\\s*(IA_INTERVAL|IB_INTERVAL|IC_INTERVAL|IA|IB|IC|II|MANNER|REASON)\\s*\\**\\s*[:\\-]\\s*(.*)$", Pattern.CASE_INSENSITIVE);
+  }
+
+  static external(s) {
+    return Mccd.EXTERNAL.matcher(Ui.nz(s)).find();
+  }
+
+  /** "Pneumonia (ICD-11 CA40)" to "pneumonia" for the word checks. */
+  static bare(s) {
+    return Ui.nz(s).replaceAllRx("\\(\\s*ICD-11[^)]*\\)", "").replaceAllRx("\\s+", " ").trim();
+  }
+
+  /** "3 days", "2 hrs", "10 yrs", "6 months", "30 min" to minutes; -1 when it cannot be read. */
+  static minutes(s) {
+    const t = Ui.nz(s).toLowerCase().trim();
+    const m = Pattern.compile("(\\d+(?:\\.\\d+)?)\\s*([a-z]+)?").matcher(t);
+    if (!m.find()) return -1;
+    const n = Double.parseDouble(m.group(1));
+    const u = m.group(2) == null ? "" : m.group(2);
+    if (u.startsWith("min")) return Math.round(n);
+    if (u.startsWith("h")) return Math.round(n * 60);
+    if (u.startsWith("d")) return Math.round(n * 1440);
+    if (u.startsWith("w")) return Math.round(n * 7 * 1440);
+    if (u.startsWith("mo") || u.equals("m")) return Math.round(n * 30 * 1440);
+    if (u.startsWith("y")) return Math.round(n * 365 * 1440);
+    return -1;
+  }
+
+  /** Problems with the certificate, most important first; empty when it reads well. */
+  static checks(f, p) {
+    const out = [];
+    const bare = Mccd.bare;
+    const ia = bare(f.get("ia")), ib = bare(f.get("ib")), ic = bare(f.get("ic")), ii = bare(f.get("ii"));
+    if (ia.isEmpty()) out.add("Write the immediate cause in I (a). If only one condition caused death, write it in I (a) alone.");
+    if (ia.isEmpty() && (!ib.isEmpty() || !ic.isEmpty()) || ib.isEmpty() && !ic.isEmpty())
+      out.add("Leave no blank line inside Part I: move the causes up so the chain starts at I (a).");
+    const lines = [["I (a)", ia], ["I (b)", ib], ["I (c)", ic]];
+    let lowest = "", lowestLabel = "";
+    for (const l of lines) {
+      if (l[1].isEmpty()) continue;
+      lowest = l[1];
+      lowestLabel = l[0];
+      const plain = l[1].replaceAllRx("[.]+$", "").trim();
+      if (Mccd.MODE.matcher(plain).matches())
+        out.add(l[0] + ": '" + plain + "' is a mode of dying, not a cause. Write the disease that led to death instead.");
+      if (Pattern.compile("(\\band\\b|&|\\+|,|;|/)").matcher(plain).find())
+        out.add(l[0] + ": one condition per line. Put the other condition on the next line (if it caused this one) or in Part II.");
+    }
+    const low = lowest.replaceAllRx("[.]+$", "").trim();
+    if (!low.isEmpty() && Mccd.VAGUE.matcher(low).matches() && !Mccd.MODE.matcher(low).matches())
+      out.add(lowestLabel + ": '" + low + "' cannot be the underlying cause on its own. Write what caused it on the line below (for example the infection, the heart disease or the poison).");
+    const abbr = new JSet();
+    for (const s of [ia, ib, ic, ii]) {
+      const m = Mccd.ABBR.matcher(s);
+      while (m.find()) if (!Mccd.ALLOWED.contains(m.group(1)) && !m.group(1).matches("\\d+[A-Z]?|[A-Z]\\d+[A-Z0-9]*")) abbr.add(m.group(1));
+    }
+    if (!abbr.isEmpty()) out.add("Write abbreviations in full: " + Mccd.join(ArrayList(abbr)) + ".");
+    // intervals lengthen down the chain
+    const iv = [["I (a)", ia, Ui.nz(f.get("ia_int"))], ["I (b)", ib, Ui.nz(f.get("ib_int"))], ["I (c)", ic, Ui.nz(f.get("ic_int"))]];
+    let missing = false;
+    let prev = -1;
+    let prevLabel = "";
+    for (const x of iv) {
+      if (x[1].isEmpty()) continue;
+      const m = Mccd.minutes(x[2]);
+      if (x[2].trim().isEmpty() || m < 0) { missing = true; continue; }
+      if (prev >= 0 && m < prev) out.add("The interval for " + x[0] + " (" + x[2].trim() + ") is shorter than for " + prevLabel + ": the cause below should have started earlier.");
+      prev = m;
+      prevLabel = x[0];
+    }
+    if (missing) out.add("Write the approximate interval from onset to death for each line of Part I (for example 3 days, 10 years).");
+    // Part II should not repeat Part I
+    if (!ii.isEmpty()) {
+      for (const part of ii.jsplit("\\s*[,;\\n]\\s*")) {
+        const w = part.toLowerCase().trim();
+        if (w.length < 4) continue;
+        for (const l of lines)
+          if (!l[1].isEmpty() && l[1].toLowerCase().contains(w)) {
+            out.add("Part II repeats '" + part.trim() + "' from Part I. Part II is only for conditions that contributed but were not in the chain.");
+            break;
+          }
+      }
+    }
+    // external causes
+    const chain = ia + " " + ib + " " + ic;
+    const manner = Ui.nz(f.get("manner"));
+    if (Mccd.external(chain)) {
+      if (manner.isEmpty() || manner.equals("Natural"))
+        out.add("An external cause (poisoning, bite, injury) is in Part I: the manner of death is not natural. Choose accident, suicide, homicide or pending investigation.");
+      if (Ui.nz(f.get("mlc_no")).trim().isEmpty()) out.add("Death from an external cause is a medico-legal case: enter the MLC / accident register number and inform the police.");
+      if (!Mccd.external(lowest)) out.add("For an external cause, the poisoning, bite or injury itself goes on the lowest line of Part I as the underlying cause.");
+    } else if (!manner.isEmpty() && !manner.equals("Natural") && !chain.trim().isEmpty())
+      out.add("Manner '" + manner + "' but no external cause in Part I: write the poisoning, bite or injury as the underlying cause.");
+    if (manner.isEmpty()) out.add("Choose the manner of death.");
+    // pregnancy question for women 15-49
+    if (p != null && Ui.nz(p.get("sex")).trim().toUpperCase().startsWith("F")) {
+      const age = Ecg.num(p.get("age"));
+      if (age >= 15 && age <= 49 && Ui.nz(f.get("preg")).isEmpty()) out.add("Answer the pregnancy question (a woman aged 15-49).");
+    }
+    if (Ui.nz(f.get("death_date")).isEmpty() || Ui.nz(f.get("death_time")).isEmpty()) out.add("Enter the date and time of death.");
+    return out;
+  }
+
+  // ---------------------------------------------------------------- AI suggestion
+
+  static system() {
+    return Mccd.MARK + " (MCCD, Form 4, India; WHO international form). Write the causal sequence in Part I from the immediate cause in (a) "
+        + "down to the underlying cause on the lowest line, one condition per line, no abbreviations, no modes of dying (cardiac arrest, "
+        + "cardiorespiratory arrest, asystole). The underlying cause is the disease or injury that started the chain. Part II is for other "
+        + "significant conditions that contributed but were not in the chain. Give an approximate interval from onset to death for each line. "
+        + "For poisoning, bites and injuries, the external cause is the underlying cause and the manner is not natural. "
+        + "Reply only with these labelled lines, no markdown:\nIA:\nIA_INTERVAL:\nIB:\nIB_INTERVAL:\nIC:\nIC_INTERVAL:\nII:\nMANNER: Natural, Accident, "
+        + "Suicide, Homicide or Pending investigation\nREASON: one or two lines on why this chain";
+  }
+
+  /** The patient's story without the name, IP number or address. */
+  static user(db, p) {
+    const pid = Long.parseLong(p.get("id"));
+    const s = CaseSheet.load(db, pid);
+    const b = new StringBuilder();
+    b.append("Age ").append(Ui.nz(p.get("age"))).append(", ").append(Base.sexLabel(Ui.nz(p.get("sex")))).append("\n");
+    b.append("Admitted ").append(Ui.nz(p.get("admit_date"))).append(", died ").append(Ui.nz(p.get("outcome_date"))).append("\n");
+    b.append("Admission diagnosis: ").append(Ui.nz(p.get("diagnosis"))).append("\n");
+    if (s != null) {
+      if (!s.optString("final_dx").isEmpty()) b.append("Final diagnosis: ").append(s.optString("final_dx")).append("\n");
+      const co = [];
+      for (const c of CaseSheet.comorbidities(s)) co.add(c[1]);
+      if (!co.isEmpty()) b.append("Known comorbidities: ").append(Mccd.join(co)).append("\n");
+      let prog = CaseSheet.progressText(s, Ui.nz(p.get("admit_date")), false);
+      if (prog.length > 3500) prog = prog.substring(prog.length - 3500);
+      if (!prog.isEmpty()) b.append("\nProgress notes (latest last):\n").append(prog).append("\n");
+    }
+    if (!Ui.nz(p.get("outcome_note")).isEmpty()) b.append("\nCause / notes at death: ").append(p.get("outcome_note")).append("\n");
+    const name = Ui.nz(p.get("name")).trim();
+    let out = b.toString();
+    if (name.length > 2) out = out.split(name).join("the patient");
+    return out;
+  }
+
+  /** The AI's answer as fields (ia, ia_int, …, manner) plus "reason". */
+  static parse(reply) {
+    const raw = new JMap();
+    let cur = null;
+    for (const line of Ui.nz(reply).split("\r").join("").split("\n")) {
+      const m = Mccd.HEAD.matcher(line);
+      if (m.matches()) {
+        cur = m.group(1).toUpperCase();
+        raw.put(cur, m.group(2).trim());
+      } else if (cur != null && !line.trim().isEmpty()) raw.put(cur, (raw.get(cur) + " " + line.trim()).trim());
+    }
+    const f = new JMap();
+    const map = [["IA", "ia"], ["IA_INTERVAL", "ia_int"], ["IB", "ib"], ["IB_INTERVAL", "ib_int"], ["IC", "ic"], ["IC_INTERVAL", "ic_int"],
+      ["II", "ii"], ["MANNER", "manner"], ["REASON", "reason"]];
+    for (const k of map) {
+      let v = Ui.nz(raw.get(k[0])).trim();
+      if (v.matches("(?i)(none|nil|n/?a|-|blank|empty|not applicable)")) v = "";
+      f.put(k[1], v);
+    }
+    const m = f.get("manner");
+    f.put("manner", "");
+    for (const x of Mccd.MANNERS) if (m.toLowerCase().startsWith(x.toLowerCase().substring(0, 6))) f.put("manner", x);
+    return f;
+  }
+
+  // ---------------------------------------------------------------- the form
+
+  static HEADC = 0xFF334155;
+  static LABEL = 0xFFF1F5F9;
+
+  static c(t) { return new FormDoc.Cell(Ui.nz(t)).size(9); }
+
+  static lbl(t) { return new FormDoc.Cell(t).b().size(8.5).fill(Mccd.LABEL); }
+
+  static doc(db, p, f) {
+    const c = Mccd.c, lbl = Mccd.lbl, HEADC = Mccd.HEADC, MANNERS = Mccd.MANNERS, PREGNANCY = Mccd.PREGNANCY;
+    const d = new FormDoc();
+    d.college = db.setting("college", "Tirunelveli Medical College Hospital");
+    d.address = "Tirunelveli";
+    d.dept = db.setting("dept", "Department of General Medicine");
+    d.title = "MEDICAL CERTIFICATE OF CAUSE OF DEATH (FORM 4)";
+    d.footer = "MCCD (Form 4, hospital in-patient deaths)  •  prepared in TVMCHMED; valid only when signed by the certifying doctor";
+    d.fileBase = "MCCD_" + Ui.nz(p.get("ip_no")).replaceAllRx("[^A-Za-z0-9]+", "_") + "_" + Ui.nz(f.get("death_date"));
+    d.plain(1).row(12, new FormDoc.Cell("[See Rule 7 of the Registration of Births and Deaths Rules]  •  For use in hospitals for in-patient deaths").size(7.5).color(0xFF64748B).center());
+
+    const a = d.block("PARTICULARS OF THE DECEASED", HEADC, 0.2, 0.3, 0.2, 0.3);
+    a.row(18, lbl("Name"), c(p.get("name")), lbl("IP number"), c(p.get("ip_no")));
+    a.row(18, lbl("Age"), c(Ui.nz(p.get("age")) + " years"), lbl("Sex"), c(Base.sexLabel(Ui.nz(p.get("sex")))));
+    a.row(18, lbl("Ward / unit"), c(Base.where(p)), lbl("Date of admission"), c(Dates.nice(p.get("admit_date"))));
+    a.row(18, lbl("Date of death"), c(Ui.nz(f.get("death_date")).isEmpty() ? "" : Dates.nice(f.get("death_date"))), lbl("Time of death"), c(f.get("death_time")));
+
+    const b = d.block("CAUSE OF DEATH", HEADC, 0.42, 0.38, 0.2);
+    b.row(16, lbl("Cause"), lbl("Disease or condition"), lbl("Interval between onset and death"));
+    b.row(22, c("I. Immediate cause\n(a) Disease or condition directly leading to death"), c(f.get("ia")).b(), c(f.get("ia_int")).center());
+    b.row(22, c("Antecedent cause\n(b) Due to (or as a consequence of)"), c(f.get("ib")).b(), c(f.get("ib_int")).center());
+    b.row(22, c("(c) Due to (or as a consequence of): the underlying cause, stated last"), c(f.get("ic")).b(), c(f.get("ic_int")).center());
+    b.row(26, c("II. Other significant conditions contributing to the death but not related to the disease or condition causing it"), c(f.get("ii")), c(""));
+
+    const m = d.block("MANNER OF DEATH", HEADC, 1);
+    const on = new Array(MANNERS.length).fill(false);
+    for (let i = 0; i < MANNERS.length; i++) on[i] = MANNERS[i].equals(f.get("manner"));
+    m.row(18, c(FormDoc.boxes(MANNERS, on)));
+    if (!Ui.nz(f.get("mlc_no")).isEmpty()) m.row(16, c("MLC / accident register number: " + f.get("mlc_no")));
+    const sex = Ui.nz(p.get("sex")).trim();
+    if (sex.toUpperCase().startsWith("F")) {
+      const pg = new Array(PREGNANCY.length).fill(false);
+      for (let i = 0; i < PREGNANCY.length; i++) pg[i] = PREGNANCY[i].equals(f.get("preg"));
+      m.row(18, c("If a woman: was the deceased pregnant, or did she deliver within 42 days of death?   " + FormDoc.boxes(PREGNANCY, pg)));
+    }
+
+    const s = d.block("CERTIFYING MEDICAL OFFICER", HEADC, 0.5, 0.5);
+    s.keep = true;
+    s.row(18, c("Name: " + Ui.nz(f.get("certifier"))), c("Date: " + Dates.nice(Dates.todayIso())));
+    s.row(34, c("Signature with seal:").bottom(), c("Designation and registration number:").bottom());
+    d.plain(1).row(14, new FormDoc.Cell("Instructions (WHO): one condition per line; the lowest line of Part I is the underlying cause; never write a mode of dying "
+        + "(cardiac arrest, respiratory arrest, asystole); no abbreviations.").size(7.5).color(0xFF64748B));
+    return d;
+  }
+}
+;
+/* ---- app/MccdActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Death certificate helper (8.50): the MCCD (Form 4) for one patient ("id") who died. Starts from the saved certificate or a draft
+ * from the case sheet, checks the chain of causes as you go, offers an AI-suggested chain, and makes the form as PDF or Word.
+ */
+class MccdActivity extends Base {
+  static WAIT = "mccd_wait";
+
+  constructor() {
+    super();
+    this.id = -1;
+    this.p = null;
+    this.form = null;
+    this.checkBox = null;
+    this.draft = null;
+    this.reason = "";
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.id = Long.parseLong(this.getIntent().getStringExtra("id"));
+    this.p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.id));
+    if (this.p == null) { this.finish(); return; }
+    this.draft = Mccd.load(this.db, this.id);
+    if (this.draft.isEmpty()) this.draft = Mccd.prefill(this.db, this.p);
+    if (Ui.nz(this.draft.get("certifier")).isEmpty()) this.draft.put("certifier", ExamCases.myName(this, this.db));
+    this.setTitle("Death certificate");
+    this.subtitle = "MCCD Form 4 helper";
+    this.headerColor(Mccd.COLOR);
+  }
+
+  /** No redraw while the doctor is typing. */
+  liveRefresh() {
+    return false;
+  }
+
+  render() {
+    if (this.p == null) return;
+    const p = this.p;
+    if (this.form != null) this.draft = this.values();
+    const draft = this.draft;
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Mccd.COLOR), 20));
+    hero.addView(Ui.tv(this, "🕯  " + Ui.nz(p.get("name")), 18, Color.WHITE, true));
+    hero.addView(Ui.tv(this, Ui.nz(p.get("age")) + " years, " + Base.sexLabel(Ui.nz(p.get("sex"))) + "  ·  " + Base.where(p)
+        + "  ·  died " + Dates.nice(p.get("outcome_date")), 13, 0xE6FFFFFF, false));
+    hero.addView(Ui.tv(this, "Write the chain from the immediate cause in I (a) down to the disease that started it on the lowest line. One condition per line, no abbreviations, never 'cardiac arrest'.", 13, Color.WHITE, false));
+    page.addView(hero);
+
+    const form = new Form(this);
+    this.form = form;
+    form.heading("Part I: the chain of events");
+    for (const l of Mccd.PART1) {
+      form.text(l[0], l[1], Ui.nz(draft.get(l[0])), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+      form.text(l[0] + "_int", "Interval from onset to death (e.g. 2 days, 10 years)", Ui.nz(draft.get(l[0] + "_int")), InputType.TYPE_CLASS_TEXT);
+      Icd11.attach(this, form, l[0]);
+    }
+    form.heading("Part II");
+    form.multi("ii", "Other significant conditions that contributed but were not in the chain", Ui.nz(draft.get("ii")));
+    form.heading("Manner and details");
+    form.segment("manner", "Manner of death", Mccd.MANNERS, Ui.nz(draft.get("manner")));
+    form.text("mlc_no", "MLC / accident register number (external causes)", Ui.nz(draft.get("mlc_no")), InputType.TYPE_CLASS_TEXT);
+    if (Ui.nz(p.get("sex")).trim().toUpperCase().startsWith("F"))
+      form.segment("preg", "Pregnant, or delivered within 42 days?", Mccd.PREGNANCY, Ui.nz(draft.get("preg")));
+    form.date("death_date", "Date of death", Ui.nz(draft.get("death_date")).isEmpty() ? Ui.nz(p.get("outcome_date")) : draft.get("death_date"));
+    form.time("death_time", "Time of death", Ui.nz(draft.get("death_time")));
+    form.text("certifier", "Certifying doctor", Ui.nz(draft.get("certifier")), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_WORDS);
+    const fc = Ui.card(this);
+    fc.addView(form.view);
+    page.addView(fc);
+
+    page.addView(Ui.heading(this, "Checks", Mccd.COLOR));
+    this.checkBox = Ui.card(this);
+    page.addView(this.checkBox);
+
+    const bt = Ui.v(this);
+    bt.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    bt.addView(Ui.buttonRow(this, Ui.button(this, "Check again", Mccd.COLOR, {
+      onClick: (v) => { this.showChecks(); }
+    }), Ui.outlineButton(this, "✨ AI suggestion", Mccd.COLOR, {
+      onClick: (v) => { this.askAi(); }
+    })));
+    const app = AiRun.waiting(this, MccdActivity.WAIT);
+    if (!app.isEmpty()) {
+      const paste = Ui.outlineButton(this, "Paste " + app + "'s answer", Mccd.COLOR, {
+        onClick: (v) => {
+          const t = AiRun.paste(this, MccdActivity.WAIT, Mccd.MARK);
+          if (t != null) this.offer(t);
+        }
+      });
+      bt.addView(paste);
+      Ui.margins(paste, 0, 8, 0, 0);
+    }
+    const row2 = Ui.buttonRow(this, Ui.button(this, "Save", Ui.GREEN, {
+      onClick: (v) => { this.save(true); }
+    }), Ui.outlineButton(this, "PDF", Ui.RED, {
+      onClick: (v) => { this.make(true); }
+    }), Ui.outlineButton(this, "Word", Ui.PRIMARY, {
+      onClick: (v) => { this.make(false); }
+    }));
+    bt.addView(row2);
+    Ui.margins(row2, 0, 8, 0, 0);
+    page.addView(bt);
+    const n = Ui.muted(this, "Decision support only. The certifying doctor decides the causes and signs the form. Rule checks follow the WHO instructions for the international death certificate.");
+    n.setTextSize(12);
+    n.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), 0);
+    page.addView(n);
+    this.setPage(page);
+    this.showChecks();
+  }
+
+  values() {
+    const f = new JMap();
+    for (const k of Mccd.ALL) f.put(k, this.form.has(k) ? Ui.nz(this.form.get(k)).trim() : Ui.nz(this.draft.get(k)));
+    return f;
+  }
+
+  showChecks() {
+    const c = Mccd.checks(this.values(), this.p);
+    this.checkBox.removeAllViews();
+    if (!this.reason.isEmpty()) this.checkBox.addView(Ui.muted(this, "✨ AI: " + this.reason));
+    if (c.isEmpty()) this.checkBox.addView(Ui.tv(this, "✓  The certificate reads well by the WHO rules.", 15, Ui.GREEN, true));
+    for (const s of c) this.checkBox.addView(Ui.tv(this, "⚠  " + s, 14, Ui.TEXT, false));
+  }
+
+  save(toast) {
+    try {
+      Mccd.save(this.db, this.id, this.values());
+      if (toast) Ui.toast(this, "Saved in the case sheet");
+      return true;
+    } catch (e) {
+      Ui.toast(this, "Could not save: " + e.getMessage());
+      return false;
+    }
+  }
+
+  make(pdf) {
+    const f = this.values();
+    const c = Mccd.checks(f, this.p);
+    if (!c.isEmpty()) {
+      new AlertDialog.Builder(this).setTitle(c.size() + " check" + (c.size() === 1 ? "" : "s") + " still open")
+          .setMessage("• " + TextUtils.join("\n• ", c))
+          .setPositiveButton("Make it anyway", {
+            onClick: (d, w) => { this.doMake(f, pdf); }
+          }).setNegativeButton("Fix first", null).show();
+      return;
+    }
+    this.doMake(f, pdf);
+  }
+
+  doMake(f, pdf) {
+    if (!this.save(false)) return;
+    let rel;
+    try {
+      const d = Mccd.doc(this.db, this.p, f);
+      rel = pdf ? d.pdf(this) : d.docx(this);
+    } catch (e) {
+      Ui.toast(this, "Could not make the form: " + e.getMessage());
+      return;
+    }
+    new AlertDialog.Builder(this).setTitle((pdf ? "PDF" : "Word") + " certificate ready")
+        .setItems(["Share", "Open"], {
+          onClick: (d, w) => {
+            if (w === 0) Store.share(this, rel, "Medical certificate of cause of death");
+            else Store.openWith(this, rel);
+          }
+        }).setNegativeButton("Close", null).show();
+  }
+
+  askAi() {
+    this.draft = this.values();
+    AiRun.ask(this, "Death certificate", Mccd.system(), Mccd.user(this.db, this.p), 1500, MccdActivity.WAIT, null, {
+      got: (text, who) => {
+        if (text != null) this.offer(text);
+      }
+    });
+  }
+
+  /** Shows the AI's chain and fills the form when the doctor agrees. */
+  offer(text) {
+    const s = Mccd.parse(text);
+    if (Ui.nz(s.get("ia")).isEmpty()) {
+      Ui.toast(this, "The AI's answer could not be read");
+      return;
+    }
+    const line = MccdActivity.line;
+    const b = new StringBuilder();
+    b.append("I (a) ").append(s.get("ia")).append(line(s.get("ia_int")));
+    if (!s.get("ib").isEmpty()) b.append("\nI (b) ").append(s.get("ib")).append(line(s.get("ib_int")));
+    if (!s.get("ic").isEmpty()) b.append("\nI (c) ").append(s.get("ic")).append(line(s.get("ic_int")));
+    if (!s.get("ii").isEmpty()) b.append("\nII ").append(s.get("ii"));
+    if (!s.get("manner").isEmpty()) b.append("\nManner: ").append(s.get("manner"));
+    if (!s.get("reason").isEmpty()) b.append("\n\n").append(s.get("reason"));
+    new AlertDialog.Builder(this).setTitle("✨ AI suggestion").setMessage(b.toString())
+        .setPositiveButton("Use this", {
+          onClick: (d, w) => { this.use(s); }
+        }).setNegativeButton("Keep mine", null).show();
+  }
+
+  static line(iv) {
+    return Ui.nz(iv).isEmpty() ? "" : "  (" + iv + ")";
+  }
+
+  use(s) {
+    this.draft = this.values();
+    for (const k of ["ia", "ia_int", "ib", "ib_int", "ic", "ic_int", "ii"]) this.draft.put(k, Ui.nz(s.get(k)));
+    if (!Ui.nz(s.get("manner")).isEmpty()) this.draft.put("manner", s.get("manner"));
+    this.reason = Ui.nz(s.get("reason"));
+    this.form = null;
+    this.render();
+  }
+
+  /** The patient page button for a patient who died. */
+  static patientCard(a, db, pid) {
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), 0);
+    const m = Mccd.load(db, pid);
+    box.addView(m.isEmpty() ? Ui.button(a, "🕯  Death certificate (MCCD) helper", Mccd.COLOR, a.opener(MccdActivity, "id", String(pid)))
+        : Ui.outlineButton(a, "🕯  Death certificate: " + Ui.nz(m.get("ia")) + (Ui.nz(m.get("ic")).isEmpty() ? "" : " … " + m.get("ic")), Mccd.COLOR,
+            a.opener(MccdActivity, "id", String(pid))));
+    return box;
+  }
+
+  /** From the home icon: the patients who died in the last 60 days, newest first. */
+  static pick(a) {
+    const rows = a.db.rows("SELECT * FROM patients WHERE status=? AND outcome_date>=? ORDER BY outcome_date DESC, id DESC LIMIT 60",
+        Db.DIED, Dates.today().minusDays(60).toString());
+    if (rows.isEmpty()) {
+      Ui.toast(a, "No deaths in the last 60 days");
+      return;
+    }
+    const items = new Array(rows.size()).fill(null);
+    for (let i = 0; i < rows.size(); i++) {
+      const r = rows.get(i);
+      items[i] = (Mccd.load(a.db, Long.parseLong(r.get("id"))).isEmpty() ? "" : "✓ ") + Ui.nz(r.get("name")) + "  ·  " + Dates.nice(r.get("outcome_date"))
+          + "  ·  " + Db.shortName(Ui.nz(r.get("location")));
+    }
+    new AlertDialog.Builder(a).setTitle("Death certificate for")
+        .setItems(items, {
+          onClick: (d, w) => {
+            a.startActivity(new Intent(a, MccdActivity).putExtra("id", rows.get(w).get("id")));
+          }
+        }).setNegativeButton("Cancel", null).show();
+  }
+}
+;
 /* ---- app/Mcq.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -44758,7 +50599,11 @@ class McqEditActivity extends Base {
     super();
     this.form = null;
     this.id = -1;
+    this.scan = null;
+    this.pasteBtn = null; this.waitNote = null;
   }
+
+  static REQ_SCAN = 8701;   // 8701 live, 8702 camera, 8703 gallery / file
 
   onCreate(b) {
     super.onCreate(b);
@@ -44767,6 +50612,25 @@ class McqEditActivity extends Base {
     this.setTitle(this.id >= 0 ? "Edit MCQ" : "Post a daily MCQ");
     this.headerColor(0xFF6D28D9);
     this.headerAction("Save", { onClick: (v) => { this.save(); } });
+    this.scan = new PageScan(this, "mcqscan", "Daily MCQ from a book", McqScan.prompt(), McqScan.MARK, QuizScan.MAX_PAGES, McqEditActivity.REQ_SCAN, {
+      read: (text) => { this.useText(text); }
+    });
+    this.scan.restore(b);
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    this.scan.save(out);
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    this.scan.result(req, res, data);
+  }
+
+  onResume() {
+    super.onResume();
+    this.paintWait();
   }
 
   liveRefresh() {
@@ -44799,6 +50663,7 @@ class McqEditActivity extends Base {
     form.text("refs", "Reference (book, guideline, page)", v(q, "refs", ""), Form.PLAIN);
 
     const page = Ui.v(this);
+    page.addView(this.scanCard());
     const card = Ui.card(this);
     card.addView(form.view);
     page.addView(card);
@@ -44823,6 +50688,103 @@ class McqEditActivity extends Base {
     }
     page.addView(btns);
     this.setPage(page);
+  }
+
+  // ---------- from a photo or PDF of a book (8.70) ----------
+
+  scanCard() {
+    const card = Ui.card(this);
+    card.addView(Ui.title(this, "📷  Fill from a book or question paper"));
+    const hint = Ui.muted(this, "Point the camera at the MCQ, snap it, or pick a photo or PDF. The case, question, options, answer and "
+        + "explanation fill in by themselves; check them before posting.");
+    card.addView(hint);
+    Ui.margins(hint, 0, 4, 0, 6);
+    card.addView(Ui.buttonRow(this, Ui.button(this, "📹  Live scan", 0xFF6D28D9, { onClick: (v) => { this.scan.live(); } }),
+        Ui.button(this, "📷  Camera", 0xFF6D28D9, { onClick: (v) => { this.scan.camera(true); } })));
+    const gal = Ui.outlineButton(this, "🖼  Gallery or file (photo / PDF)", 0xFF6D28D9, { onClick: (v) => { this.scan.pick(true); } });
+    card.addView(gal);
+    Ui.margins(gal, 0, 8, 0, 0);
+    this.pasteBtn = Ui.outlineButton(this, "", 0xFF6D28D9, { onClick: (v) => { this.scan.paste(); } });
+    card.addView(this.pasteBtn);
+    Ui.margins(this.pasteBtn, 0, 8, 0, 0);
+    this.waitNote = Ui.tv(this, "", 13, 0xFF6D28D9, true);
+    card.addView(this.waitNote);
+    Ui.margins(this.waitNote, 0, 6, 0, 0);
+    this.paintWait();
+    return card;
+  }
+
+  paintWait() {
+    if (this.pasteBtn == null) return;
+    const app = this.scan.waiting();
+    this.pasteBtn.setText(app.isEmpty() ? "Paste copied MCQ text" : "Paste " + app + "'s answer");
+    this.waitNote.setText(app.isEmpty() ? "" : "Waiting for " + app + ": copy its answer there, come back and tap Paste.");
+    this.waitNote.setVisibility(app.isEmpty() ? View.GONE : View.VISIBLE);
+  }
+
+  /** The questions read: one fills the form; with several, choose one, and the rest can wait for the next days. */
+  useText(text) {
+    this.paintWait();
+    const items = QuizScan.parse(text);
+    if (items.isEmpty()) {
+      new AlertDialog.Builder(this).setTitle("No MCQ found")
+        .setMessage("Try a clearer picture, straight from above in good light, with the whole question and its options.").setPositiveButton("OK", null).show();
+      return;
+    }
+    if (items.length === 1) {
+      this.fill(items[0]);
+      return;
+    }
+    const labels = new Array(items.length).fill(null);
+    for (let k = 0; k < items.length; k++) labels[k] = McqScan.label(k, items[k]);
+    new AlertDialog.Builder(this).setTitle(items.length + " questions found: which one for this MCQ?")
+      .setItems(labels, {
+        onClick: (d, w) => {
+          this.fill(items[w]);
+          const rest = ArrayList(items);
+          rest.removeAt(w);
+          if (this.id >= 0) return;
+          new AlertDialog.Builder(this).setTitle("The other " + rest.length + (rest.length === 1 ? " question" : " questions"))
+            .setMessage("Save them as the daily MCQs for the next days (one a day, on days without an MCQ)? You can edit or delete them later.")
+            .setPositiveButton("Save for the next days", {
+              onClick: (d2, k) => {
+                const n = this.scheduleRest(rest);
+                Ui.toast(this, n + (n === 1 ? " MCQ" : " MCQs") + " saved for the coming days");
+              }
+            }).setNegativeButton("No", null).show();
+        }
+      }).show();
+  }
+
+  fill(i) {
+    const f = McqScan.fields(i);
+    for (const e of f.entrySet()) if (!e.getKey().equals("answer") || i.answer >= 0) this.form.set(e.getKey(), e.getValue());
+    const msg = i.answer < 0 ? "Filled in. No answer was found: choose the correct answer." : i.aiAnswer
+      ? "Filled in. The answer was given by the AI, not the book: check it." : "Filled in from the page. Check it, then Post.";
+    new AlertDialog.Builder(this).setTitle("MCQ read").setMessage(msg).setPositiveButton("OK", null).show();
+  }
+
+  /** The other questions, one a day after this MCQ's date, on days with no MCQ yet. Only questions with an answer are kept. */
+  scheduleRest(rest) {
+    let day = Dates.parse(this.form.get("date"));
+    if (day == null) day = Dates.today();
+    const by = Approvals.me(this).isEmpty() ? Reminders.myName(this, this.db) : Approvals.me(this);
+    let n = 0;
+    for (const i of rest) {
+      if (i.answer < 0 || i.options.length < 2) continue;
+      do day = day.plusDays(1); while (this.db.num("SELECT COUNT(*) FROM mcqs WHERE date=?", day.toString()) > 0);
+      const f = McqScan.fields(i);
+      const cv = new ContentValues();
+      for (const e of f.entrySet()) cv.put(e.getKey(), e.getValue());
+      cv.put("date", day.toString());
+      cv.put("level", this.form.get("level"));
+      cv.put("refs", this.form.get("refs"));
+      cv.put("posted_by", by);
+      cv.put("posted_on", Dates.todayIso() + " " + Dates.now());
+      this.db.insert("mcqs", cv);
+      n++;
+    }
+    return n;
   }
 
   static v(r, k, def) {
@@ -45168,6 +51130,103 @@ class McqQuestionActivity extends Base {
     i.setType("text/plain");
     i.putExtra(Intent.EXTRA_TEXT, sb.toString());
     a.startActivity(Intent.createChooser(i, "Share MCQ"));
+  }
+}
+;
+/* ---- app/McqScan.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Daily MCQ from a photo or PDF of a book page (8.70). The AI copies the questions out in QuizScan's shape with a short reason
+ * for the answer; this class turns one question into the Daily MCQ form's fields: case scenario, question, options A to E, the
+ * answer, the explanation and a guessed subject. Plain Java so it can be tested and ported.
+ */
+class McqScan {
+  constructor() {}
+
+  static MARK = "Copy out every multiple-choice question";
+
+  static prompt() {
+    return McqScan.MARK + " in these photos or pages of a medical book or question paper, exactly as printed, in English. Use this shape "
+        + "for each question, with a blank line between questions:\n"
+        + "Q: the case scenario, if any, then the question\n"
+        + "A) first option\nB) second option\nC) third option\nD) fourth option\nE) fifth option (only if printed)\n"
+        + "Answer: the letter of the right option\n"
+        + "Why: one or two lines on why that answer is right (from the book's explanation if printed, else from standard textbooks)\n"
+        + "Rules: keep the options in the printed order. If the answer key is printed, use it and write 'Answer: B'. If it is not "
+        + "printed, give the right answer from standard medical textbooks and write it as 'Answer (AI): B'. If a word cannot be read, "
+        + "write [?]. No introduction, no markdown.";
+  }
+
+  /** [scenario, question]: the last line (or, for one long paragraph, the last sentence) is the question; the rest is the case. */
+  static split(q) {
+    const t = Ui.nz(q).trim();
+    const lines = t.jsplit("\\n+");
+    if (lines.length > 1) {
+      const sc = new StringBuilder();
+      for (let i = 0; i < lines.length - 1; i++) sc.append(sc.length() === 0 ? "" : " ").append(lines[i].trim());
+      return [sc.toString().trim(), lines[lines.length - 1].trim()];
+    }
+    const sent = t.jsplit("(?<=[.?!])\\s+(?=[A-Z])");
+    if (sent.length >= 2 && t.length > 100) {
+      const sc = new StringBuilder();
+      for (let i = 0; i < sent.length - 1; i++) sc.append(sc.length() === 0 ? "" : " ").append(sent[i].trim());
+      return [sc.toString().trim(), sent[sent.length - 1].trim()];
+    }
+    return ["", t];
+  }
+
+  static SUBJECT_WORDS = [
+    ["Cardiology", "heart|cardiac|murmur|myocard|angina|coronary|ecg|atrial|ventric|valve|stenosis|regurgit|pericard|endocard|hypertens"],
+    ["Neurology", "stroke|seizure|epilep|neuropath|paraly|cerebr|mening|parkinson|myasth|guillain|cranial nerve|plantar|reflex|headache|coma"],
+    ["Nephrology", "kidney|renal|nephr|glomerul|dialysis|creatinine|proteinuria|urine"],
+    ["Pulmonology", "lung|pulmon|asthma|copd|pneumon|pleura|bronch|tuberculosis|sputum|spirometr"],
+    ["Gastroenterology & hepatology", "liver|hepat|cirrho|ascites|jaundice|pancrea|bowel|colitis|crohn|gastr|oesophag|esophag|bilirubin"],
+    ["Endocrinology & metabolism", "diabet|insulin|thyroid|adrenal|cushing|addison|pituitar|calcium|ketoacid|hypoglyc"],
+    ["Infectious diseases", "fever|dengue|malaria|typhoid|scrub|typhus|eschar|rickett|leptospir|hiv|sepsis|infection|antibiotic|culture|doxycyclin|ceftriaxone|amoxicillin|gentamicin|antimicrob"],
+    ["Haematology", "anaemia|anemia|platelet|leukaem|leukem|lymphoma|haemoglobin|hemoglobin|bleeding|coagul|sickle|thalass"],
+    ["Rheumatology", "arthritis|lupus|sle\\b|vasculitis|gout|rheumat|spondyl|scleroderma"],
+    ["Toxicology", "poison|organophosph|paraquat|snake|overdose|toxic|antidote|venom"],
+    ["Critical care", "shock|ventilat|icu\\b|resuscit|cardiac arrest|intubat|vasopressor"],
+    ["Pharmacology", "drug of choice|side effect|adverse effect|mechanism of action|dose of"]];
+
+  /** The subject with the most matching words, or "General medicine". */
+  static subjectOf(text) {
+    const t = Ui.nz(text).toLowerCase();
+    let best = "General medicine";
+    let bestN = 0;
+    for (const s of McqScan.SUBJECT_WORDS) {
+      const m = Pattern.compile(s[1]).matcher(t);
+      let n = 0;
+      while (m.find()) n++;
+      if (n > bestN) {
+        bestN = n;
+        best = s[0];
+      }
+    }
+    return best;
+  }
+
+  /** The Daily MCQ form's fields for one question (up to five options; a sixth and later are dropped). */
+  static fields(i) {
+    const f = new JMap();
+    const sq = McqScan.split(i.q);
+    f.put("scenario", sq[0]);
+    f.put("question", sq[1]);
+    for (let k = 0; k < Mcq.LETTERS.length; k++)
+      f.put("opt_" + Mcq.LETTERS[k].toLowerCase(), k < i.options.length ? i.options[k].trim() : "");
+    if (i.answer >= 0 && i.answer < Mcq.LETTERS.length) f.put("answer", Mcq.LETTERS[i.answer]);
+    f.put("explanation", Ui.nz(i.why).trim() + (i.aiAnswer ? (Ui.nz(i.why).trim().isEmpty() ? "" : " ") + "(Answer given by AI, not printed in the book.)" : ""));
+    const all = new StringBuilder(i.q);
+    for (const o of i.options) all.append(' ').append(o);
+    f.put("subject", McqScan.subjectOf(all.toString()));
+    return f;
+  }
+
+  /** "1. A 45-year-old man with chest pain…" for a list to choose from. */
+  static label(n, i) {
+    const q = Ui.nz(i.q).replaceAllRx("\\s+", " ").trim();
+    return (n + 1) + ". " + (q.length > 90 ? q.substring(0, 88) + "…" : q);
   }
 }
 ;
@@ -45536,6 +51595,457 @@ class MedSpeech {
     let n = 0;
     for (const w of a) { const k = b.indexOf(w); if (k < 0) n++; else b.splice(k, 1); }
     return n + b.length;
+  }
+}
+;
+/* ---- app/Memo.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Memos (9.00): a faculty member issues a memo calling for an explanation from a PG, CRMI or MBBS student (indiscipline,
+ * mismanagement of a patient…). The student writes the explanation in the app; the faculty member (or the HOD, Medical
+ * Registrar or admin) closes it with a decision. Only the two of them and the admin, HOD and Registrar see a memo (the server
+ * keeps it from everyone else). The admin switches the whole section on or off in Settings → Admin control.
+ */
+class Memo {
+  static TABLE = "memos";
+  static COLOR = 0xFFBE123C;
+  /** Admin control: "on" (default) or "off". */
+  static KEY = "admin_memo";
+
+  static CATEGORIES = ["Indiscipline", "Mismanagement of a patient", "Absent from duty", "Late to duty",
+    "Misbehaviour", "Negligence in records", "Other"];
+  static DECISIONS = ["Explanation accepted", "Warned", "Warned in writing", "Referred to the HOD", "Other"];
+  static ISSUED = "Issued";
+  static EXPLAINED = "Explained";
+  static CLOSED = "Closed";
+  static WITHDRAWN = "Withdrawn";
+  /** Who a memo can be addressed to. */
+  static RECIPIENT_SQL = "(role IN ('Postgraduate','CRMI') OR role LIKE 'MBBS%')";
+
+  static on(db) {
+    return !"off".equals(db.setting(Memo.KEY, "on"));
+  }
+
+  static set(db, on) {
+    db.setSetting(Memo.KEY, on ? "on" : "off");
+  }
+
+  /** Faculty issue memos (Assistant Professor and above, HOD, Registrar, admin); everyone, on a phone not sharing records. */
+  static canIssue(c) {
+    if (!Cloud.active(c)) return true;
+    const r = Cloud.role(c);
+    return r.equals("admin") || r.equals("hod") || r.equals("registrar") || r.equals("professor") || r.equals("faculty");
+  }
+
+  /** The admin, HOD and Medical Registrar see and close every memo. */
+  static manager(c) {
+    return !Cloud.active(c) || Cloud.isAdmin(c);
+  }
+
+  static me(c) {
+    const s = Cloud.myStaff(c);
+    return s > 0 ? String(s) : "";
+  }
+
+  static isTo(c, m) {
+    const me = Memo.me(c);
+    return !me.isEmpty() && me.equals(Ui.nz(m.get("to_staff")));
+  }
+
+  static isFrom(c, m) {
+    const me = Memo.me(c);
+    return !me.isEmpty() && me.equals(Ui.nz(m.get("from_staff"))) || !Cloud.active(c);
+  }
+
+  /** Close or withdraw: the faculty member who issued it, or the admin, HOD or Registrar. */
+  static canDecide(c, m) {
+    return Memo.isFrom(c, m) || Memo.manager(c);
+  }
+
+  static visible(c, m) {
+    return Memo.manager(c) || Memo.isTo(c, m) || Memo.isFrom(c, m);
+  }
+
+  /** "For me", "Issued by me" or "All", newest first. */
+  static list(c, db, which) {
+    const out = [];
+    for (const m of db.rows("SELECT * FROM memos ORDER BY date DESC, id DESC")) {
+      if (!Memo.visible(c, m)) continue;
+      if (which.equals("For me") && !Memo.isTo(c, m)) continue;
+      if (which.equals("Issued by me") && !(Memo.me(c).equals(Ui.nz(m.get("from_staff"))) || !Cloud.active(c))) continue;
+      out.add(m);
+    }
+    return out;
+  }
+
+  /** Memos waiting for this person's explanation. */
+  static waitingForMe(c, db) {
+    const me = Memo.me(c);
+    if (me.isEmpty()) return 0;
+    return db.num("SELECT COUNT(*) FROM memos WHERE to_staff=? AND status=?", me, Memo.ISSUED);
+  }
+
+  /** Explanations received on memos this person issued, not yet closed. */
+  static toDecide(c, db) {
+    const me = Memo.me(c);
+    if (me.isEmpty()) return 0;
+    return db.num("SELECT COUNT(*) FROM memos WHERE from_staff=? AND status=?", me, Memo.EXPLAINED);
+  }
+
+  /** MEMO/2026/7: the year's next number on this phone's list. */
+  static nextNo(db) {
+    const y = String(Dates.today().getYear());
+    return "MEMO/" + y + "/" + (db.num("SELECT COUNT(*) FROM memos WHERE date LIKE ?", y + "%") + 1);
+  }
+
+  static statusColor(s) {
+    if (Memo.ISSUED === s) return Ui.ORANGE;
+    if (Memo.EXPLAINED === s) return Ui.SKY;
+    if (Memo.CLOSED === s) return Ui.GREEN;
+    return Ui.MUTED;
+  }
+
+  /** The memo as a letter (on screen and in the PDF). */
+  static letter(db, m) {
+    const b = new StringBuilder();
+    b.append("To\n").append(Ui.nz(m.get("to_name"))).append(", ").append(Ui.nz(m.get("to_role")))
+      .append(Ui.nz(m.get("unit")).isEmpty() ? "" : ", Unit " + Db.shortName(m.get("unit"))).append("\n\n");
+    b.append("Sub: ").append(Ui.nz(m.get("category"))).append(Ui.nz(m.get("subject")).isEmpty() ? "" : " — " + m.get("subject")).append(": explanation called for.\n\n");
+    const when = Ui.nz(m.get("incident_date"));
+    b.append("It has come to my notice that").append(when.isEmpty() ? "" : " on " + Dates.nice(when)).append(":\n").append(Ui.nz(m.get("details"))).append("\n\n");
+    const by = Ui.nz(m.get("reply_by"));
+    b.append("You are hereby directed to submit your explanation in writing").append(by.isEmpty() ? "" : " on or before " + Dates.nice(by))
+      .append(", failing which it will be presumed that you have no explanation to offer and further action will be taken.\n\n");
+    b.append(Ui.nz(m.get("from_name"))).append(Ui.nz(m.get("from_role")).isEmpty() ? "" : "\n" + m.get("from_role"))
+      .append("\n").append(db.setting("dept", "Department of General Medicine"));
+    return b.toString();
+  }
+
+  static build(db, m) {
+    const f = new FormDoc();
+    f.upper = "";
+    f.college = db.setting("college", "Tirunelveli Medical College");
+    f.address = "Tirunelveli";
+    f.dept = db.setting("dept", "Department of General Medicine");
+    f.title = "MEMO";
+    f.footer = "Memo " + Ui.nz(m.get("no")) + "  •  " + f.dept + ", " + f.college;
+    f.fileBase = "Memo_" + Ui.nz(m.get("no")).replaceAllRx("[^A-Za-z0-9]+", "_");
+    f.plain(0.5, 0.5).row(14, new FormDoc.Cell("No. " + Ui.nz(m.get("no"))).size(9).b(),
+      new FormDoc.Cell("Date: " + Dates.nice(Ui.nz(m.get("date")))).size(9).b());
+    f.plain(1).row(20, new FormDoc.Cell(Memo.letter(db, m)).size(9.5));
+    const ex = Ui.nz(m.get("explanation"));
+    if (!ex.isEmpty()) {
+      const e = f.block("EXPLANATION (" + Dates.nice(Ui.nz(m.get("explained_on"))) + ")", 0xFF1E3A5F, 1);
+      e.row(20, new FormDoc.Cell(ex).size(9));
+    }
+    const dec = Ui.nz(m.get("decision"));
+    if (!dec.isEmpty()) {
+      const d = f.block("DECISION", 0xFF1E3A5F, 1);
+      d.keep = true;
+      d.row(20, new FormDoc.Cell(dec + (Ui.nz(m.get("remarks")).isEmpty() ? "" : "\n" + m.get("remarks"))
+        + "\n" + Ui.nz(m.get("closed_by")) + "  ·  " + Dates.nice(Ui.nz(m.get("closed_on")))).size(9));
+    }
+    return f;
+  }
+}
+;
+/* ---- app/MemoActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Memos (9.00): issue a memo calling for an explanation, write the explanation, close it with a decision. See Memo. */
+class MemoActivity extends Base {
+  constructor() { super(); this.tab = null; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Memo");
+    this.subtitle = "Explanation called for: indiscipline, patient care";
+    this.headerColor(Memo.COLOR);
+    if (Memo.canIssue(this)) this.headerAction("+ Memo", { onClick: (v) => { this.issue(); } });
+  }
+
+  tabs() {
+    const t = [];
+    if (!Memo.me(this).isEmpty() || !Cloud.active(this)) t.add("For me");
+    if (Memo.canIssue(this)) t.add("Issued by me");
+    if (Memo.manager(this)) t.add("All");
+    if (t.isEmpty()) t.add("For me");
+    return t;
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    if (!Memo.on(db)) {
+      page.addView(this.emptyNote("Memos are switched off by the admin."));
+      this.setPage(page);
+      return;
+    }
+    const id = this.getIntent().getStringExtra("id");
+    if (id != null) {
+      const m = db.row("SELECT * FROM memos WHERE id=?", id);
+      if (m != null && Memo.visible(this, m)) {
+        this.detail(page, m);
+        this.setPage(page);
+        return;
+      }
+    }
+    const tabs = this.tabs();
+    if (this.tab == null || !tabs.contains(this.tab)) {
+      this.tab = tabs.get(0);
+      if (this.tab.equals("For me") && Memo.list(this, db, "For me").isEmpty() && tabs.size() > 1) this.tab = tabs.get(1);
+    }
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Memo.COLOR), 20));
+    let open = 0, explained = 0, closed = 0;
+    const all = Memo.list(this, db, tabs.contains("All") ? "All" : this.tab);
+    for (const m of all) {
+      const s = m.get("status");
+      if (Memo.ISSUED === s) open++;
+      else if (Memo.EXPLAINED === s) explained++;
+      else if (Memo.CLOSED === s) closed++;
+    }
+    hero.addView(Ui.statRow(this, this.white(String(open), "Waiting for explanation"), this.white(String(explained), "Explained"),
+      this.white(String(closed), "Closed")));
+    const note = Ui.tv(this, "Only the faculty member who issued a memo, the PG or student it is for, the admin, HOD and Medical Registrar can see it.",
+      12, 0xE6FFFFFF, false);
+    note.setGravity(Gravity.CENTER);
+    hero.addView(note);
+    Ui.margins(note, 0, 10, 0, 0);
+    if (Memo.canIssue(this)) {
+      const add = Ui.tv(this, "+  Issue a memo", 15, Memo.COLOR, true);
+      add.setGravity(Gravity.CENTER);
+      add.setBackground(Ui.round(this, Color.WHITE, 12));
+      add.setPadding(0, Ui.dp(this, 11), 0, Ui.dp(this, 11));
+      add.setOnClickListener({ onClick: (v) => { this.issue(); } });
+      hero.addView(add);
+      Ui.margins(add, 0, 12, 0, 0);
+    }
+    page.addView(hero);
+
+    if (tabs.size() > 1) {
+      const chips = Ui.h(this);
+      chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
+      for (const t of tabs) {
+        const c = Ui.chip(this, t, t.equals(this.tab), Memo.COLOR);
+        c.setOnClickListener({ onClick: (v) => { this.tab = t; this.render(); } });
+        chips.addView(c);
+      }
+      page.addView(Ui.hscroll(this, chips));
+    }
+    const shown = Memo.list(this, db, this.tab);
+    for (const m of shown) {
+      const reply = Ui.nz(m.get("reply_by"));
+      const sub = (this.tab.equals("For me") ? "From " + Ui.nz(m.get("from_name")) : "To " + Ui.nz(m.get("to_name")) + " (" + Ui.nz(m.get("to_role"))
+        + (Ui.nz(m.get("unit")).isEmpty() ? "" : ", " + Db.shortName(m.get("unit"))) + ")")
+        + (Memo.ISSUED === m.get("status") && !reply.isEmpty() ? "\nExplanation by " + Dates.nice(reply) : "")
+        + (Ui.nz(m.get("decision")).isEmpty() ? "" : "\nDecision: " + m.get("decision"));
+      page.addView(this.entryCard(m.get("status"), Memo.statusColor(m.get("status")), Ui.nz(m.get("category")) + (Ui.nz(m.get("subject")).isEmpty() ? "" : " · " + m.get("subject")),
+        sub, Ui.nz(m.get("no")) + "\n" + Dates.nice(Ui.nz(m.get("date"))), this.opener(MemoActivity, "id", m.get("id"))));
+    }
+    if (shown.isEmpty()) page.addView(this.emptyNote(this.tab.equals("For me") ? "No memos for you." : "No memos here."));
+    this.setPage(page);
+  }
+
+  detail(page, m) {
+    const db = this.db;
+    this.setTitle("Memo " + Ui.nz(m.get("no")));
+    // the PG or student has opened it: the faculty member can see it was read
+    if (Memo.isTo(this, m) && Ui.nz(m.get("seen")).isEmpty()) {
+      const cv = new ContentValues();
+      cv.put("seen", Dates.todayIso() + " " + Dates.now());
+      db.update(Memo.TABLE, cv, Long.parseLong(m.get("id")));
+    }
+    const card = Ui.card(this);
+    const top = Ui.h(this);
+    top.addView(Ui.softPill(this, m.get("status"), Memo.statusColor(m.get("status"))));
+    const sp = new View(this);
+    top.addView(sp, new LinearLayoutParams(0, 1, 1));
+    top.addView(Ui.muted(this, Ui.nz(m.get("no")) + "  ·  " + Dates.nice(Ui.nz(m.get("date")))));
+    card.addView(top);
+    const letter = Ui.tv(this, Memo.letter(db, m), 15, Ui.TEXT, false);
+    letter.setLineSpacing(0, 1.15);
+    card.addView(letter);
+    Ui.margins(letter, 0, 12, 0, 0);
+    const seen = Ui.nz(m.get("seen"));
+    if (!Memo.isTo(this, m)) card.addView(Ui.tv(this, seen.isEmpty() ? "Not yet opened by " + Ui.nz(m.get("to_name")) : "Opened " + Dates.nice(seen.split(" ")[0]), 12, Ui.MUTED, false));
+    page.addView(card);
+
+    const ex = Ui.nz(m.get("explanation"));
+    const exp = Ui.card(this);
+    exp.addView(Ui.tv(this, "Explanation", 16, Ui.TEXT, true));
+    exp.addView(Ui.tv(this, ex.isEmpty() ? "Not yet given." : ex, 15, ex.isEmpty() ? Ui.MUTED : Ui.TEXT, false));
+    if (!ex.isEmpty()) exp.addView(Ui.muted(this, "By " + Ui.nz(m.get("to_name")) + "  ·  " + Dates.nice(Ui.nz(m.get("explained_on")))));
+    const openMemo = Memo.ISSUED === m.get("status") || Memo.EXPLAINED === m.get("status");
+    if (Memo.isTo(this, m) && openMemo) {
+      const w = Ui.button(this, ex.isEmpty() ? "Write my explanation" : "Change my explanation", Memo.COLOR, { onClick: (v) => { this.explain(m); } });
+      exp.addView(w);
+      Ui.margins(w, 0, 12, 0, 0);
+    }
+    page.addView(exp);
+
+    if (!Ui.nz(m.get("decision")).isEmpty()) {
+      const d = Ui.card(this);
+      d.addView(Ui.tv(this, "Decision", 16, Ui.TEXT, true));
+      d.addView(Ui.tv(this, m.get("decision") + (Ui.nz(m.get("remarks")).isEmpty() ? "" : "\n" + m.get("remarks")), 15, Ui.TEXT, false));
+      d.addView(Ui.muted(this, Ui.nz(m.get("closed_by")) + "  ·  " + Dates.nice(Ui.nz(m.get("closed_on")))));
+      page.addView(d);
+    }
+
+    const acts = Ui.v(this);
+    acts.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    if (Memo.canDecide(this, m) && openMemo) {
+      acts.addView(Ui.button(this, "Close with a decision", Ui.GREEN, { onClick: (v) => { this.decide(m); } }));
+      if (Memo.ISSUED === m.get("status")) {
+        const wd = Ui.outlineButton(this, "Withdraw the memo", Ui.MUTED, {
+          onClick: (v) => {
+            Ui.confirm(this, "Withdraw this memo?", "It stays on record as withdrawn.", "Withdraw", {
+              run: () => { this.setStatus(m, Memo.WITHDRAWN, "Withdrawn", ""); }
+            });
+          }
+        });
+        acts.addView(wd);
+        Ui.margins(wd, 0, 8, 0, 0);
+      }
+    }
+    const pdf = Ui.outlineButton(this, "📄  Memo as PDF / Word", Memo.COLOR, { onClick: (v) => { this.download(m); } });
+    acts.addView(pdf);
+    Ui.margins(pdf, 0, 8, 0, 0);
+    page.addView(acts);
+  }
+
+  issue() {
+    const db = this.db;
+    const people = db.rows("SELECT id, name, role, unit FROM staff WHERE " + Memo.RECIPIENT_SQL + " AND "
+      + Approvals.APPROVED_SQL + " ORDER BY CASE WHEN role='Postgraduate' THEN 0 WHEN role='CRMI' THEN 1 ELSE 2 END, unit, name");
+    if (people.isEmpty()) {
+      Ui.toast(this, "No PGs, CRMIs or students in the Students list yet");
+      return;
+    }
+    const labels = new Array(people.size() + 1), ids = new Array(people.size() + 1);
+    labels[0] = "Choose the PG or student";
+    ids[0] = "";
+    for (let i = 0; i < people.size(); i++) {
+      const p = people.get(i);
+      labels[i + 1] = p.get("name") + "  ·  " + p.get("role") + (Ui.nz(p.get("unit")).isEmpty() ? "" : "  ·  " + Db.shortName(p.get("unit")));
+      ids[i + 1] = p.get("id");
+    }
+    const f = new Form(this);
+    f.choice("to", "To", labels, ids, "", null);
+    f.choice("category", "Reason", Memo.CATEGORIES, Memo.CATEGORIES, Memo.CATEGORIES[0], null);
+    f.text("subject", "Subject (a few words)", "", Form.PLAIN);
+    f.date("incident_date", "Date of the incident", Dates.todayIso());
+    f.multi("details", "What happened (the facts)", "");
+    f.date("reply_by", "Explanation to be given by", Dates.today().plusDays(3).toString());
+    Ui.formDialog(this, "Issue a memo", f, "Issue", {
+      run: () => {
+        if (f.get("to").isEmpty()) {
+          Ui.toast(this, "Choose who the memo is for");
+          return false;
+        }
+        if (!f.require("details", "Write what happened")) return false;
+        const to = db.row("SELECT * FROM staff WHERE id=?", f.get("to"));
+        if (to == null) return false;
+        const cv = new ContentValues();
+        cv.put("no", Memo.nextNo(db));
+        cv.put("date", Dates.todayIso());
+        cv.put("from_staff", Memo.me(this));
+        let me = Chat.myName(this, db);
+        if (me.isEmpty() || me.equals("Me")) me = CallDutyActivity.myName(this);
+        cv.put("from_name", me);
+        const mine = Memo.me(this).isEmpty() ? null : db.row("SELECT role FROM staff WHERE id=?", Memo.me(this));
+        cv.put("from_role", mine == null ? Cloud.roleLabel(Cloud.role(this)) : mine.get("role"));
+        cv.put("to_staff", to.get("id"));
+        cv.put("to_name", to.get("name"));
+        cv.put("to_role", to.get("role"));
+        cv.put("unit", Ui.nz(to.get("unit")));
+        cv.put("category", f.get("category"));
+        cv.put("subject", f.get("subject"));
+        cv.put("incident_date", f.get("incident_date"));
+        cv.put("details", f.get("details"));
+        cv.put("reply_by", f.get("reply_by"));
+        cv.put("status", Memo.ISSUED);
+        const nid = db.insert(Memo.TABLE, cv);
+        if (nid <= 0) return false;
+        Ui.toast(this, "Memo issued to " + to.get("name"));
+        this.tab = "Issued by me";
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  explain(m) {
+    const f = new Form(this);
+    f.multi("explanation", "Your explanation", Ui.nz(m.get("explanation")));
+    Ui.formDialog(this, "Explanation", f, "Send", {
+      run: () => {
+        if (!f.require("explanation", "Write your explanation")) return false;
+        const cv = new ContentValues();
+        cv.put("explanation", f.get("explanation"));
+        cv.put("explained_on", Dates.todayIso());
+        cv.put("status", Memo.EXPLAINED);
+        this.db.update(Memo.TABLE, cv, Long.parseLong(m.get("id")));
+        Ui.toast(this, "Explanation sent");
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  decide(m) {
+    const f = new Form(this);
+    f.choice("decision", "Decision", Memo.DECISIONS, Memo.DECISIONS, Memo.DECISIONS[0], null);
+    f.multi("remarks", "Remarks", "");
+    Ui.formDialog(this, "Close the memo", f, "Close memo", {
+      run: () => {
+        this.setStatus(m, Memo.CLOSED, f.get("decision"), f.get("remarks"));
+        return true;
+      }
+    });
+  }
+
+  setStatus(m, status, decision, remarks) {
+    const cv = new ContentValues();
+    cv.put("status", status);
+    cv.put("decision", decision);
+    cv.put("remarks", remarks);
+    let me = Chat.myName(this, this.db);
+    if (me.isEmpty() || me.equals("Me")) me = CallDutyActivity.myName(this);
+    cv.put("closed_by", me);
+    cv.put("closed_on", Dates.todayIso());
+    this.db.update(Memo.TABLE, cv, Long.parseLong(m.get("id")));
+    Ui.toast(this, status.equals(Memo.CLOSED) ? "Memo closed" : "Memo withdrawn");
+    this.render();
+  }
+
+  download(m) {
+    new AlertDialog.Builder(this).setTitle("Download memo")
+      .setItems(["PDF", "Word"], {
+        onClick: (d, w) => {
+          try {
+            const f = Memo.build(this.db, m);
+            const rel = w === 0 ? f.pdf(this) : f.docx(this);
+            Store.share(this, rel, "Memo " + Ui.nz(m.get("no")));
+          } catch (e) {
+            Ui.toast(this, "Could not make the memo: " + e.getMessage());
+          }
+        }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  white(v, label) {
+    const l = Ui.v(this);
+    l.setGravity(Gravity.CENTER_HORIZONTAL);
+    const n = Ui.tv(this, v, 22, Color.WHITE, true);
+    n.setGravity(Gravity.CENTER);
+    l.addView(n);
+    const t = Ui.tv(this, label, 11, 0xD9FFFFFF, false);
+    t.setGravity(Gravity.CENTER);
+    l.addView(t);
+    return l;
   }
 }
 ;
@@ -46056,6 +52566,29 @@ class NightlyBackup {
   }
 }
 ;
+/* ---- app/Notify.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** One switch for every notification this phone shows (9.00): chats, HOD alerts, approvals, reminders, calls and updates. */
+class Notify {
+  static prefs(c) {
+    return c.getApplicationContext().getSharedPreferences("notify", Context.MODE_PRIVATE);
+  }
+
+  /** True unless the person turned all notifications off in Settings. */
+  static on(c) {
+    return !Notify.prefs(c).getBoolean("off", false);
+  }
+
+  static set(c, on) {
+    Notify.prefs(c).edit().putBoolean("off", !on).apply();
+    if (!on) {
+      const nm = c.getSystemService(Context.NOTIFICATION_SERVICE);
+      if (nm != null) nm.cancelAll();
+    }
+  }
+}
+;
 /* ---- app/ObstetricActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -46356,6 +52889,444 @@ class Opinions {
   }
 }
 ;
+/* ---- app/PageJudge.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Live scan (8.70): decides from small grey camera frames (about 90 x 120, four a second) when the phone is held still over a
+ * page that is in focus, so the page can be taken without pressing the shutter. After a page is taken it waits until the view
+ * changes (the page is turned), so the same page is not taken twice. Plain Java so it can be tested and ported.
+ */
+class PageJudge {
+  static NO_PAGE = 0; static MOVING = 1; static BLURRY = 2; static HOLD = 3; static SHOOT = 4; static SAME_PAGE = 5;
+
+  /** Frames in a row that must be still and sharp (about one second). */
+  static NEED = 4;
+  /** Mean grey change between frames above which the phone is moving. */
+  static MOVE = 7.0;
+  /** Mean grey difference from the last page taken above which this is a new page. */
+  static NEW_PAGE = 14.0;
+  /** Lowest edge strength for a readable page. */
+  static MIN_SHARP = 3.0;
+
+  constructor() { this.prev = null; this.lastShot = null; this.steady = 0; this.armed = true; this.peak = 0; }
+
+  /** Brightness edges: the mean of |4p - the four neighbours|, every second pixel (inside a box when one is given). */
+  static sharpness(g, w, h, x0, y0, x1, y1) {
+    if (x0 === undefined) { x0 = 1; y0 = 1; x1 = w - 1; y1 = h - 1; }
+    let sum = 0;
+    let n = 0;
+    x0 = Math.max(1, x0);
+    y0 = Math.max(1, y0);
+    x1 = Math.min(w - 1, x1);
+    y1 = Math.min(h - 1, y1);
+    for (let y = y0; y < y1; y += 2)
+      for (let x = x0; x < x1; x += 2) {
+        const i = y * w + x;
+        sum += Math.abs(4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w]);
+        n++;
+      }
+    return n === 0 ? 0 : sum / n;
+  }
+
+  static diff(a, b) {
+    if (a == null || b == null || a.length !== b.length) return 255;
+    let sum = 0;
+    for (let i = 0; i < a.length; i++) sum += Math.abs(a[i] - b[i]);
+    return sum / a.length;
+  }
+
+  /** The bright paper: its box when it covers a quarter of the view or more and has some contrast (writing), else null. */
+  static paper(g, w, h) {
+    const hist = new Array(256).fill(0);
+    for (const v of g) hist[Math.max(0, Math.min(255, v))]++;
+    const p10 = PageJudge.pct(hist, g.length, 0.10), p90 = PageJudge.pct(hist, g.length, 0.90);
+    if (p90 < 110 || p90 - p10 < 40) return null;
+    const t = idiv(p10 + p90, 2);
+    const rows = new Array(h).fill(0), cols = new Array(w).fill(0);
+    let bright = 0;
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++)
+        if (g[y * w + x] >= t) {
+          rows[y]++;
+          cols[x]++;
+          bright++;
+        }
+    if (bright < idiv(g.length, 4)) return null;
+    const top = PageJudge.first(rows, idiv(w * 3, 10), true), bottom = PageJudge.first(rows, idiv(w * 3, 10), false);
+    const left = PageJudge.first(cols, idiv(h * 3, 10), true), right = PageJudge.first(cols, idiv(h * 3, 10), false);
+    if (top < 0 || left < 0 || bottom <= top || right <= left) return null;
+    const area = (right - left + 1) * (bottom - top + 1) / (w * h);
+    if (area < 0.25) return null;
+    return [left / w, top / h, (right + 1) / w, (bottom + 1) / h];
+  }
+
+  static pct(hist, n, p) {
+    const want = toInt(n * p);
+    let got = 0;
+    for (let v = 0; v < 256; v++) {
+      got += hist[v];
+      if (got > want) return v;
+    }
+    return 255;
+  }
+
+  static first(counts, min, fromStart) {
+    if (fromStart) {
+      for (let i = 0; i < counts.length; i++) if (counts[i] >= min) return i;
+    } else {
+      for (let i = counts.length - 1; i >= 0; i--) if (counts[i] >= min) return i;
+    }
+    return -1;
+  }
+
+  /** One frame (grey 0..255, row by row). */
+  feed(g, w, h) {
+    const f = new PageJudge.Frame();
+    f.motion = this.prev == null ? 255 : PageJudge.diff(g, this.prev);
+    this.prev = g.slice();
+    f.box = PageJudge.paper(g, w, h);
+    if (f.box == null) f.sharp = PageJudge.sharpness(g, w, h);
+    else {
+      // inside the paper, a tenth in from each side
+      const bw = f.box[2] - f.box[0], bh = f.box[3] - f.box[1];
+      f.sharp = PageJudge.sharpness(g, w, h, Math.round((f.box[0] + bw * 0.1) * w), Math.round((f.box[1] + bh * 0.1) * h),
+          Math.round((f.box[2] - bw * 0.1) * w), Math.round((f.box[3] - bh * 0.1) * h));
+    }
+    if (this.lastShot != null) {
+      f.change = PageJudge.diff(g, this.lastShot);
+      if (f.change > PageJudge.NEW_PAGE) this.armed = true;
+    }
+    this.peak = Math.max(this.peak * 0.97, f.sharp);
+    if (f.box == null) {
+      this.steady = 0;
+      f.state = PageJudge.NO_PAGE;
+    } else if (!this.armed) {
+      this.steady = 0;
+      f.state = PageJudge.SAME_PAGE;
+    } else if (f.motion > PageJudge.MOVE) {
+      this.steady = 0;
+      f.state = PageJudge.MOVING;
+    } else if (f.sharp < PageJudge.MIN_SHARP || f.sharp < this.peak * 0.55) {
+      this.steady = 0;
+      f.state = PageJudge.BLURRY;
+    } else if (++this.steady >= PageJudge.NEED) {
+      this.steady = 0;
+      f.state = PageJudge.SHOOT;
+    } else f.state = PageJudge.HOLD;
+    f.progress = f.state === PageJudge.HOLD ? this.steady / PageJudge.NEED : f.state === PageJudge.SHOOT ? 1 : 0;
+    return f;
+  }
+
+  /** A page was taken from this view (by itself or with the shutter): wait for the next page. */
+  taken(g) {
+    this.lastShot = g == null ? this.prev : g.slice();
+    this.armed = false;
+    this.steady = 0;
+  }
+
+  /** A page was removed: the view in front may be taken again. */
+  unlock() {
+    this.lastShot = null;
+    this.armed = true;
+    this.steady = 0;
+  }
+
+  static say(state, pages) {
+    switch (state) {
+      case PageJudge.NO_PAGE: return pages === 0 ? "Point the camera at the page" : "Turn to the next page";
+      case PageJudge.MOVING: return "Hold still…";
+      case PageJudge.BLURRY: return "Focusing… hold a little higher";
+      case PageJudge.HOLD: return "Hold still…";
+      case PageJudge.SHOOT: return "Taking the page";
+      case PageJudge.SAME_PAGE: return "Page " + pages + " taken ✓  Turn to the next page";
+      default: return "";
+    }
+  }
+
+  /** ARGB pixels to grey (the green-heavy luma). */
+  static grey(argb) {
+    const g = new Array(argb.length).fill(0);
+    for (let i = 0; i < argb.length; i++) {
+      const p = argb[i];
+      g[i] = (((p >> 16) & 0xFF) * 77 + ((p >> 8) & 0xFF) * 150 + (p & 0xFF) * 29) >> 8;
+    }
+    return g;
+  }
+}
+
+PageJudge.Frame = class {
+  constructor() {
+    this.state = 0;
+    /** 0..1 while holding still. */
+    this.progress = 0;
+    this.sharp = 0; this.motion = 0; this.change = 0;
+    /** The paper's box in the frame, as fractions (left, top, right, bottom); null when no page is seen. */
+    this.box = null;
+  }
+};
+;
+/* ---- app/PageScan.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Pages to text with an AI (8.70), for any screen: live scan, camera, gallery or a PDF file, then Gemini with the user's key or a
+ * free AI chat app (copy its answer, come back, Paste). The screen passes the prompt and gets the text back in Done. Request codes
+ * are reqBase (live), reqBase + 1 (camera) and reqBase + 2 (gallery / file); the screen hands them to result().
+ */
+class PageScan {
+  // interface Done { void read(String text); }
+
+  constructor(a, prefix, title, prompt, mark, max, reqBase, done) {
+    this.a = a;
+    this.db = Db.get(a);
+    this.prefix = prefix;
+    this.title = title;
+    this.prompt = prompt;
+    this.mark = mark;
+    this.max = max;
+    this.reqBase = reqBase;
+    this.done = done;
+    this.waitKey = prefix + "_wait";
+    this.pages = [];
+    this.cameraRel = null;
+  }
+
+  save(out) {
+    out.putString(this.prefix + "_camera", this.cameraRel);
+    out.putStringArrayList(this.prefix + "_pages", this.pages);
+  }
+
+  restore(b) {
+    if (b == null) return;
+    this.cameraRel = b.getString(this.prefix + "_camera");
+    const p = b.getStringArrayList(this.prefix + "_pages");
+    if (p != null) {
+      this.pages.clear();
+      this.pages.addAll(p);
+    }
+  }
+
+  // ---------- getting the pages ----------
+
+  live() {
+    this.clean();
+    LiveScanActivity.start(this.a, this.prefix, this.max, this.title, this.reqBase);
+  }
+
+  camera(fresh) {
+    if (fresh) this.clean();
+    this.cameraRel = Imaging.DIR + "/" + this.prefix + "_" + System.currentTimeMillis() + ".jpg";
+    if (!Store.capture(this.a, this.cameraRel, this.reqBase + 1)) this.cameraRel = null;
+  }
+
+  pick(fresh) {
+    if (fresh) this.clean();
+    Store.pick(this.a, ["image/*", "application/pdf"], this.reqBase + 2);
+  }
+
+  /** True when the result was one of ours. */
+  result(req, res, data) {
+    if (req < this.reqBase || req > this.reqBase + 2) return false;
+    if (req === this.reqBase) {
+      if (res === RESULT_OK) {
+        this.pages.addAll(LiveScanActivity.pagesOf(data));
+        if (!this.pages.isEmpty()) this.read();
+      }
+      return true;
+    }
+    if (res !== RESULT_OK) {
+      if (!this.pages.isEmpty()) this.more();
+      return true;
+    }
+    try {
+      let rel = null;
+      if (req === this.reqBase + 1 && this.cameraRel != null) {
+        rel = this.cameraRel;
+        this.cameraRel = null;
+      } else if (req === this.reqBase + 2 && data != null && data.getData() != null) rel = Store.importUri(this.a, data.getData(), Imaging.DIR, this.prefix);
+      if (rel == null) return true;
+      const f = this.db.file(rel);
+      if (PageScan.isPdf(f)) {
+        if (f.length() > 15 * 1024 * 1024) {
+          f.delete();
+          Ui.toast(this.a, "That PDF is too big (over 15 MB). Pick the pages as photos instead.");
+          return true;
+        }
+      } else {
+        const jpg = f.exists() ? LabScan.jpeg(f) : null;
+        if (jpg == null) {
+          f.delete();
+          Ui.toast(this.a, "Pick a photo (JPG or PNG) or a PDF");
+          return true;
+        }
+        const out = new FileOutputStream(f);
+        try { out.write(jpg); } finally { out.close(); }
+      }
+      this.pages.push(rel);
+      this.more();
+    } catch (e) {
+      Ui.toast(this.a, "Could not use the file: " + (e && e.getMessage ? e.getMessage() : e));
+    }
+    return true;
+  }
+
+  static isPdf(f) {
+    const b = VFS.readSync(f.rel());
+    return b != null && b.length >= 4 && b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46;
+  }
+
+  static bytes(f) {
+    return VFS.readSync(f.rel());
+  }
+
+  /** After each page: another one, or read what there is. */
+  more() {
+    const n = this.pages.length;
+    const b = new AlertDialog.Builder(this.a).setTitle(n + (n === 1 ? " page" : " pages") + " ready")
+      .setMessage(n < this.max ? "Add another page, or read now." : "That is the most read at once. Read now.")
+      .setPositiveButton("Read now", { onClick: (d, w) => { this.read(); } })
+      .setNegativeButton("Cancel", { onClick: (d, w) => { this.clean(); } });
+    if (n < this.max) b.setNeutralButton("Another page", {
+      onClick: (d, w) => {
+        new AlertDialog.Builder(this.a).setTitle("Another page")
+          .setItems(["📷  Camera", "🖼  Gallery or PDF file"], {
+            onClick: (d2, k) => {
+              if (k === 0) this.camera(false);
+              else this.pick(false);
+            }
+          }).setNegativeButton("Cancel", { onClick: (d2, k) => { this.more(); } }).show();
+      }
+    });
+    b.setCancelable(false).show();
+  }
+
+  // ---------- reading them ----------
+
+  /** Gemini reads the pages with the user's key (the test fake first); without one they go to a free AI chat app. */
+  read() {
+    if (this.pages.isEmpty()) return;
+    if (AiRun.fake != null) {
+      const text = AiRun.fake.answer(this.prompt, "[pages]");
+      this.clean();
+      this.done.read(text);
+      return;
+    }
+    if (Ai.geminiKey(this.a).isEmpty()) {
+      this.chooseApp();
+      return;
+    }
+    const files = [];
+    for (const rel of this.pages) {
+      const f = this.db.file(rel);
+      const b = PageScan.isPdf(f) ? PageScan.bytes(f) : LabScan.jpeg(f);
+      if (b != null) files.push(b);
+    }
+    if (files.isEmpty()) {
+      Ui.toast(this.a, "Could not open the pages");
+      return;
+    }
+    const wait = new AlertDialog.Builder(this.a).setTitle("Gemini is reading…").setMessage("Only the pages are sent. Keep the app open.")
+      .setCancelable(false).show();
+    new Thread({
+      run: () => {
+        let got = null, err = null;
+        try {
+          got = Ai.visionPages(this.a, files, this.prompt, null, false);
+        } catch (e) {
+          if (e instanceof Ai.Failure) err = e.getMessage();
+          else err = "Could not read it: " + (e && e.getMessage ? e.getMessage() : e);
+        }
+        const res = got, error = err;
+        this.a.runOnUiThread({
+          run: () => {
+            if (this.a.isFinishing()) return;
+            try { wait.dismiss(); } catch (ignored) { }
+            this.clean();
+            if (error != null || res == null || res.trim().isEmpty()) {
+              new AlertDialog.Builder(this.a).setTitle("Not read").setMessage(error == null ? "The AI sent nothing back. Try clearer pages." : error)
+                .setPositiveButton("OK", null).show();
+              return;
+            }
+            this.done.read(res);
+          }
+        });
+      }
+    }).start();
+  }
+
+  chooseApp() {
+    const apps = DischargeActivity.CHAT_APPS;
+    const items = [];
+    for (const x of apps) items.push("Free: " + x[0] + " app");
+    items.push("Read inside the app: add a free Gemini key");
+    new AlertDialog.Builder(this.a).setTitle("Which AI app reads it?")
+      .setItems(items, {
+        onClick: (d, w) => {
+          if (w < apps.length) this.toApp(apps[w]);
+          else {
+            this.clean();
+            this.a.startActivity(new Intent(this.a, SettingsActivity));
+          }
+        }
+      }).setNegativeButton("Cancel", { onClick: (d, w) => { this.clean(); } }).show();
+  }
+
+  toApp(app) {
+    const cm = this.a.getSystemService(Context.CLIPBOARD_SERVICE);
+    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Request for AI", this.prompt));
+    const uris = [];
+    let pdf = false, img = false;
+    for (const rel of this.pages) {
+      uris.push(DocProvider.uri(rel));
+      if (PageScan.isPdf(this.db.file(rel))) pdf = true;
+      else img = true;
+    }
+    const i = new Intent(uris.length === 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
+    i.setType(pdf && img ? "*/*" : pdf ? "application/pdf" : "image/jpeg");
+    if (uris.length === 1) i.putExtra(Intent.EXTRA_STREAM, uris[0]);
+    else i.putExtra(Intent.EXTRA_STREAM, uris);
+    i.putExtra(Intent.EXTRA_TEXT, this.prompt);
+    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+    Ai.prefs(this.a).edit().putString(this.waitKey, app[0]).apply();
+    i.setPackage(app[1]);
+    try {
+      this.a.startActivity(i);
+      Ui.toast(this.a, "In " + app[0] + " send the pages with the request (it is copied too), copy the answer, then come back and tap Paste");
+    } catch (noApp) {
+      try {
+        i.setPackage(null);
+        this.a.startActivity(Intent.createChooser(i, "Send the pages to " + app[0]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+      } catch (e) {
+        Ai.prefs(this.a).edit().remove(this.waitKey).apply();
+        Ui.toast(this.a, app[0] + " is not installed on this phone");
+      }
+    }
+    if (this.a instanceof Base) this.a.render();
+  }
+
+  /** The free app being waited on, or "". */
+  waiting() {
+    return AiRun.waiting(this.a, this.waitKey);
+  }
+
+  /** The answer copied from the free app (or any copied text). */
+  paste() {
+    const text = AiRun.paste(this.a, this.waitKey, this.mark);
+    if (text != null) this.done.read(text);
+  }
+
+  /** The page files are deleted once read (they may show a patient's details). */
+  clean() {
+    this.pages.clear();
+    try {
+      const fs = this.db.file(Imaging.DIR).listFiles();
+      if (fs != null) for (const f of fs) if (f.getName().startsWith(this.prefix + "_")) f.delete();
+    } catch (ignored) {
+    }
+  }
+}
+;
 /* ---- app/PatientActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -46490,10 +53461,18 @@ class PatientActivity extends Base {
     if (inn) {
       const watch = Watch.patientCard(this, db, id);
       if (watch != null) page.addView(watch);
+      const kd = KidneyDoseActivity.patientCard(this, db, id, p);
+      if (kd != null) page.addView(kd);
+      page.addView(EcgActivity.patientCard(this, db, id));
+      page.addView(ProtocolActivity.patientCard(this, db, id));
     }
+
+    if (Db.DIED.equals(p.get("status"))) page.addView(MccdActivity.patientCard(this, db, id));
 
     // pending tasks, lab trends and the 7:30 AM handover
     if (inn || Tasks.pending(db, id) > 0) page.addView(Tasks.section(this, db, id));
+    if (inn || Results.waitingFor(db, id) > 0) page.addView(Results.section(this, db, id));
+    if (inn || !Antibiogram.forPatient(db, id).isEmpty()) page.addView(CultureActivity.patientCard(this, db, id));
     page.addView(Labs.section(this, db, id));
     page.addView(Imaging.section(this, db, id));
     if (inn) {
@@ -47022,6 +54001,229 @@ PatientTimeline.Item = class {
   key() { return this.date + " " + (this.time.length > 5 ? this.time.substring(0, 5) : this.time); }
 };
 ;
+/* ---- app/People.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * People (9.00): everyone's own photo beside their name, so faces are easy to put to names, and each unit's or special
+ * ward's team board at the top of its census page. Photos live under people/, which every approved member can download.
+ */
+class People {
+  static REQ_PICK = 9301;
+  static REQ_CAMERA = 9302;
+  static pendingStaff = 0;
+  static pendingCapture = null;
+
+  /** Team board order, with the heading each group gets. */
+  static GROUPS = [
+    ["HOD", "Head of the Department"],
+    ["Professor", "Unit chief / Professor"],
+    ["Associate Professor", "Associate Professor"],
+    ["Assistant Professor", "Assistant Professors"],
+    ["Postgraduate", "Postgraduates"],
+    ["CRMI", "CRMIs"],
+    ["MBBS", "MBBS students"]];
+  static GROUP_COLORS = [0xFFB91C1C, 0xFF1D4ED8, 0xFF7C3AED, 0xFF0F766E, 0xFFDB2777, 0xFFEA580C, 0xFF16A34A];
+
+  /** This phone's own photo can be changed; the admin, HOD and Registrar can set anyone's; everyone when not sharing records. */
+  static canSet(c, staffId) {
+    if (staffId <= 0) return false;
+    return !Cloud.active(c) || Number(Cloud.myStaff(c)) === Number(staffId) || Cloud.isAdmin(c);
+  }
+
+  /** Gallery, camera, view or remove. */
+  static choose(a, staffId) {
+    const s = a.db.row("SELECT * FROM staff WHERE id=?", String(staffId));
+    if (s == null) {
+      Ui.toast(a, "Your account is not linked to the Students / Faculty list yet. The admin links it in Members.");
+      return;
+    }
+    const has = !Ui.nz(s.get("photo")).isEmpty();
+    const items = [];
+    items.add("Choose from gallery");
+    items.add("Take a photo");
+    if (has) { items.add("View photo"); items.add("Remove photo"); }
+    new AlertDialog.Builder(a).setTitle(Number(Cloud.myStaff(a)) === Number(staffId) ? "Your photo" : "Photo · " + s.get("name"))
+      .setItems(items, {
+        onClick: (d, w) => {
+          const it = items.get(w);
+          People.pendingStaff = staffId;
+          if (it.startsWith("Choose")) Store.pick(a, ["image/*"], People.REQ_PICK);
+          else if (it.startsWith("Take")) {
+            People.pendingCapture = "people/capture_" + System.currentTimeMillis() + ".jpg";
+            Store.capture(a, People.pendingCapture, People.REQ_CAMERA);
+          } else if (it.startsWith("View")) Ui.showImage(a, a.db.file(s.get("photo")));
+          else People.set(a, staffId, null);
+        }
+      }).show();
+  }
+
+  /** Base passes every activity result here first; true when it was a photo for People. */
+  static onResult(a, req, res, data) {
+    if (req !== People.REQ_PICK && req !== People.REQ_CAMERA) return false;
+    try {
+      if (req === People.REQ_CAMERA) {
+        const f = People.pendingCapture == null ? null : a.db.file(People.pendingCapture);
+        if (res === RESULT_OK && f != null && f.exists() && f.length() > 0) People.set(a, People.pendingStaff, Store.savePhoto(a, null, f, People.pendingStaff));
+        if (f != null) f.delete();
+        People.pendingCapture = null;
+      } else if (res === RESULT_OK && data != null && data.getData() != null) {
+        People.set(a, People.pendingStaff, Store.savePhoto(a, data.getData(), null, People.pendingStaff));
+      }
+    } catch (e) {
+      Ui.toast(a, "Could not use that photo: " + e.getMessage());
+    }
+    return true;
+  }
+
+  static set(a, staffId, rel) {
+    const cur = a.db.row("SELECT photo FROM staff WHERE id=?", String(staffId));
+    if (cur == null) return;
+    a.db.forgetFile(cur.get("photo"));
+    const cv = new ContentValues();
+    cv.put("photo", rel == null ? "" : rel);
+    a.db.update("staff", cv, staffId);
+    Ui.toast(a, rel == null ? "Photo removed" : "Photo saved. Everyone in the department will see it beside your name.");
+    a.render();
+  }
+
+  /** A round photo (or initials) that opens the photo choices when it is this person's own (or the admin's to set). */
+  static avatar(a, s, sizeDp, color) {
+    const av = Store.avatar(a, s, sizeDp, color);
+    const id = Ui.toLong(Ui.nz(s.get("id")), 0);
+    const has = !Ui.nz(s.get("photo")).isEmpty() && a.db.file(s.get("photo")).exists();
+    if (People.canSet(a, id)) {
+      av.setOnClickListener({
+        onClick: (v) => { People.choose(a, id); }
+      });
+      av.setContentDescription("Photo of " + Ui.nz(s.get("name")) + ": tap to change");
+    } else if (has) {
+      av.setOnClickListener({
+        onClick: (v) => { Ui.showImage(a, a.db.file(s.get("photo"))); }
+      });
+    }
+    return av;
+  }
+
+  /** The signed-in person's own photo with a small "+" when there is none yet; null when not linked to a staff entry. */
+  static mine(a, sizeDp, color) {
+    const sid = Cloud.myStaff(a);
+    const s = sid > 0 ? a.db.row("SELECT * FROM staff WHERE id=?", String(sid)) : null;
+    if (s == null) return null;
+    const fl = new FrameLayout(a);
+    fl.addView(People.avatar(a, s, sizeDp, color));
+    if (Ui.nz(s.get("photo")).isEmpty()) {
+      const plus = Ui.tv(a, "+", 13, Color.WHITE, true);
+      plus.setGravity(Gravity.CENTER);
+      plus.setBackground(Ui.round(a, Ui.GREEN, 9));
+      const lp = new FrameLayoutParams(Ui.dp(a, 18), Ui.dp(a, 18), Gravity.BOTTOM | Gravity.END);
+      fl.addView(plus, lp);
+    }
+    return fl;
+  }
+
+  // ---------- team board ----------
+
+  static group(role) {
+    const r = Ui.nz(role);
+    if (r.startsWith("MBBS")) return 6;
+    for (let i = 0; i < People.GROUPS.length; i++) if (People.GROUPS[i][0] === r) return i;
+    return -1;
+  }
+
+  /** The members of a unit or special ward, in board order (PGs final year first). */
+  static team(db, code) {
+    const all = db.rows("SELECT * FROM staff WHERE unit=? AND " + Approvals.APPROVED_SQL + " ORDER BY name", code);
+    const out = [];
+    for (let g = 0; g < People.GROUPS.length; g++) {
+      const inG = [];
+      for (const s of all) if (People.group(s.get("role")) === g) inG.add(s);
+      if (g === 4) inG.sort((x, y) => CaseSheet.pgYear(y.get("batch"), Dates.today()) - CaseSheet.pgYear(x.get("batch"), Dates.today()));
+      out.addAll(inG);
+    }
+    return out;
+  }
+
+  /** The colourful team board shown first on a unit's or special ward's page. */
+  static board(a, db, code) {
+    let teamOf = code;
+    let note = null;
+    // the ID ward is run each month by one unit in turn
+    if (Db.IDW.equals(code)) {
+      teamOf = db.rotationUnit();
+      note = "In charge this month: " + Db.unitName(teamOf);
+    }
+    const people = People.team(db, teamOf);
+    const color = Ui.unitColor(code);
+    const card = Ui.card(a);
+    card.setBackground(Ui.gradient(a, [Ui.mix(color, Color.WHITE, 0.86), Ui.mix(0xFFFDF2F8, Color.WHITE, 0.3), Ui.mix(0xFFEEF2FF, Color.WHITE, 0.2)], 20));
+    card.setPadding(Ui.dp(a, 16), Ui.dp(a, 14), Ui.dp(a, 16), Ui.dp(a, 14));
+    const head = Ui.h(a);
+    head.setGravity(Gravity.CENTER_VERTICAL);
+    const badge = Ui.tv(a, Db.shortName(code), 13, Color.WHITE, true);
+    badge.setBackground(Ui.gradient(a, [color, Ui.mix(color, 0xFFDB2777, 0.35)], 12));
+    badge.setPadding(Ui.dp(a, 10), Ui.dp(a, 4), Ui.dp(a, 10), Ui.dp(a, 4));
+    head.addView(badge);
+    const t = Ui.tv(a, "  Team board", 18, Ui.mix(color, Color.BLACK, 0.35), true);
+    head.addView(t, Ui.weight(1));
+    head.addView(Ui.tv(a, people.size() + (people.size() === 1 ? " member" : " members"), 12, Ui.MUTED, true));
+    card.addView(head);
+    if (note != null) card.addView(Ui.tv(a, note, 13, Ui.mix(color, Color.BLACK, 0.3), true));
+    const chief = db.unitHead(teamOf);
+    let chiefListed = false;
+    for (const s of people) if (s.get("name").equalsIgnoreCase(chief)) chiefListed = true;
+    if (!chief.isEmpty() && !chiefListed) {
+      const ch = Ui.tv(a, (Db.isWardUnit(teamOf) ? "Unit chief: " : "In charge: ") + chief, 14, Ui.TEXT, true);
+      card.addView(ch);
+      Ui.margins(ch, 0, 8, 0, 0);
+    }
+    if (people.isEmpty()) {
+      const e = Ui.muted(a, "No team members listed for " + Db.unitName(teamOf) + " yet. Add them in Faculty or Students with the unit set to "
+        + Db.shortName(teamOf) + ", and they appear here with their photos.");
+      card.addView(e);
+      Ui.margins(e, 0, 8, 0, 0);
+      return card;
+    }
+    let last = -1;
+    let flow = null;
+    for (const s of people) {
+      const g = People.group(s.get("role"));
+      if (g !== last) {
+        last = g;
+        const gl = Ui.tv(a, People.GROUPS[g][1], 12, People.GROUP_COLORS[g], true);
+        gl.setAllCaps(true);
+        gl.setLetterSpacing(0.06);
+        card.addView(gl);
+        Ui.margins(gl, 0, 12, 0, 2);
+        flow = new Bands.Flow(a);
+        card.addView(flow, Ui.lp(MATCH_PARENT, WRAP_CONTENT));
+      }
+      flow.addView(People.chip(a, s, People.GROUP_COLORS[g]));
+    }
+    const hint = Ui.muted(a, "Tap your own picture to add your photo.");
+    card.addView(hint);
+    Ui.margins(hint, 0, 10, 0, 0);
+    return card;
+  }
+
+  /** One person on the board: photo, name, and their year or role. */
+  static chip(a, s, color) {
+    const c = Ui.h(a);
+    c.setGravity(Gravity.CENTER_VERTICAL);
+    c.setBackground(Ui.outline(a, Color.WHITE, Ui.mix(color, Color.WHITE, 0.55), 24));
+    c.setPadding(Ui.dp(a, 4), Ui.dp(a, 4), Ui.dp(a, 12), Ui.dp(a, 4));
+    c.addView(People.avatar(a, s, 38, color));
+    const t = Ui.v(a);
+    t.setPadding(Ui.dp(a, 8), 0, 0, 0);
+    t.addView(Ui.tv(a, s.get("name"), 14, Ui.TEXT, true));
+    const y = "Postgraduate" === s.get("role") ? CaseSheet.pgYear(s.get("batch"), Dates.today()) : 0;
+    const sub = y > 0 ? (y === 3 ? "Final year" : y === 2 ? "2nd year" : "1st year") : Ui.nz(s.get("role")).startsWith("MBBS") ? s.get("role").split("MBBS ").join("") : "";
+    if (!sub.isEmpty()) t.addView(Ui.tv(a, sub, 11, color, true));
+    c.addView(t);
+    return c;
+  }
+}
+;
 /* ---- app/PgChatActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -47144,7 +54346,7 @@ class PgChatActivity extends Base {
     const box = Ui.v(this);
     box.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
     const note = Ui.tv(this, "🔒 Messages and patient details are end-to-end encrypted. Only the PGs and the admin can open them; "
-        + "the server never sees them.\n🚫 Screenshots, copying and forwarding are blocked.", 12, 0xFF54656F, false);
+        + "the server never sees them.\n🚫 Screenshots, copying and forwarding are blocked.\n🗑 Messages are deleted automatically after one month.\n" + Conduct.ruleLine(), 12, 0xFF54656F, false);
     note.setGravity(Gravity.CENTER);
     note.setBackground(Ui.round(this, 0xFFFFF5C4, 10));
     note.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
@@ -47254,6 +54456,14 @@ class PgChatActivity extends Base {
       Ui.margins(tick, 4, 0, 0, 0);
     }
     b.addView(foot, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    if (!own && !deleted && Conduct.canReport(this, m.get("sender_id"))) {
+      b.setOnLongClickListener({
+        onLongClick: (v) => {
+          Conduct.report(this, PgConnect.TABLE, m.get("id"), m.get("sender_id"), m.get("by_name"), m.get("text"), null);
+          return true;
+        }
+      });
+    }
     if (own && !deleted) {
       b.setOnLongClickListener({
         onLongClick: (v) => {
@@ -47370,6 +54580,33 @@ class PgConnect {
   constructor() {}
 
   static TABLE = "pgc_msgs";
+  /** Messages are deleted one month after they were sent (9.00), on every phone and on the server. */
+  static KEEP_DAYS = 30;
+
+  static cutoff() {
+    return Chat.stamp(LocalDateTime.now().minusDays(PgConnect.KEEP_DAYS));
+  }
+
+  /** Removes this phone's PG Connect messages older than a month (without telling the server: it deletes its own). */
+  static purgeOld(c) {
+    const db = Db.get(c);
+    const old = db.rows("SELECT id FROM " + PgConnect.TABLE + " WHERE time<?", PgConnect.cutoff());
+    if (old.isEmpty()) return 0;
+    const w = db.getWritableDatabase();
+    w.beginTransaction();
+    try {
+      w.execSQL("INSERT INTO sync_mute VALUES (1)");
+      for (const m of old) {
+        w.delete(PgConnect.TABLE, "id=?", [m.get("id")]);
+        w.delete("outbox", "tbl=? AND pk=?", [PgConnect.TABLE, m.get("id")]);
+      }
+      w.execSQL("DELETE FROM sync_mute");
+      w.setTransactionSuccessful();
+    } finally {
+      w.endTransaction();
+    }
+    return old.size();
+  }
   static ALL = "ALL";
   static KINDS = ["Message", "Opinion request", "Transfer / bed", "Result / update", "Urgent"];
   static EMOJI = ["💬", "🩺", "🛏", "🧪", "🚨"];
@@ -47593,7 +54830,7 @@ class PgConnectActivity extends Base {
     mp.setMargins(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 4));
     page.addView(me, mp);
     const lock = Ui.tv(this, "🔒 Messages and patient details are locked on the sender's phone and opened only on the PGs' and the admin's phones. "
-        + "The server never sees them. 🚫 Screenshots are blocked.", 12, 0xFF54656F, false);
+        + "The server never sees them. 🚫 Screenshots are blocked. 🗑 Messages are deleted automatically after one month.", 12, 0xFF54656F, false);
     lock.setBackground(Ui.round(this, 0xFFFFF5C4, 10));
     lock.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
     const lp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -47747,12 +54984,14 @@ class PgConnectActivity extends Base {
 /* ---- app/PgLeaveActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
-/** PG leave: applications with the leave letter, approved in turn by the unit Assistant Professor, the unit Professor and the HOD. */
+/** PG leave: applications with the leave letter, approved in turn by the unit Assistant Professor, the unit Professor, the leave nodal officer (the admin, 9.00) and the HOD. */
 class PgLeaveActivity extends Base {
   constructor() { super(); this.filter = 0; }
 
-  static LEVELS = ["ap", "prof", "hod"];
-  static LEVEL_NAMES = ["Unit Assistant Professor", "Unit Professor", "HOD"];
+  static LEVELS = ["ap", "prof", "nodal", "hod"];
+  static LEVEL_NAMES = ["Unit Assistant Professor", "Unit Professor", "Leave nodal officer (Dr. S. Rajkumar)", "HOD"];
+  static NODAL = 2;
+  static HOD = 3;
   static FILTERS = ["Awaiting approval", "Approved", "Not approved", "All"];
 
   onCreate(b) {
@@ -47763,11 +55002,21 @@ class PgLeaveActivity extends Base {
     this.headerAction("+ Apply", this.opener(PgLeaveFormActivity));
   }
 
+  /**
+   * One level's state. Leave applied before the nodal officer step (9.00) never had it: an empty nodal status there
+   * counts as approved, so old applications are not stopped.
+   */
+  static status(r, level) {
+    const s = Ui.nz(r.get(PgLeaveActivity.LEVELS[level] + "_status"));
+    if (level === PgLeaveActivity.NODAL && s.isEmpty()) return "Approved";
+    return s;
+  }
+
   /** Overall state: Approved once all three approve, Not approved if anyone declines, else Awaiting. */
   static overall(r) {
     let all = true;
-    for (const l of PgLeaveActivity.LEVELS) {
-      const s = Ui.nz(r.get(l + "_status"));
+    for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) {
+      const s = PgLeaveActivity.status(r, i);
       if (s.equals("Not approved")) return "Not approved";
       if (!s.equals("Approved")) all = false;
     }
@@ -47777,6 +55026,8 @@ class PgLeaveActivity extends Base {
   /** Who may sign at each level: in the shared database by role, otherwise anyone using this phone. */
   static canApprove(a, level) {
     if (!Cloud.active(a)) return true;
+    // the leave nodal officer is the admin alone; the HOD and Registrar sign their own step
+    if (level === PgLeaveActivity.NODAL) return Cloud.isOwner(a);
     const r = Cloud.role(a);
     if (Cloud.isManager(r)) return true;
     if (level === 0) return r.equals("faculty") || r.equals("professor");
@@ -47789,12 +55040,12 @@ class PgLeaveActivity extends Base {
     const iso = Dates.todayIso();
     const all = this.db.rows("SELECT l.*, s.name, s.unit FROM pg_leaves l LEFT JOIN staff s ON s.id=l.staff_id ORDER BY l.from_date DESC, l.id DESC");
     let waiting = 0, today = 0;
-    const atLevel = new Array(3).fill(0);
+    const atLevel = new Array(PgLeaveActivity.LEVELS.length).fill(0);
     for (const r of all) {
       const o = PgLeaveActivity.overall(r);
       if (o.equals("Awaiting approval")) {
         waiting++;
-        for (let i = 0; i < 3; i++) if (!("Approved" === r.get(PgLeaveActivity.LEVELS[i] + "_status"))) { atLevel[i]++; break; }
+        for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) if (!("Approved" === PgLeaveActivity.status(r, i))) { atLevel[i]++; break; }
       }
       if (o.equals("Approved") && iso.compareTo(r.get("from_date")) >= 0 && iso.compareTo(r.get("to_date")) <= 0) today++;
     }
@@ -47802,7 +55053,7 @@ class PgLeaveActivity extends Base {
     hero.setBackground(Glass.hero(this, Ui.shades(Ui.PURPLE), 20));
     hero.addView(Ui.statRow(this, this.white(String(today), "PGs on leave today"), this.white(String(waiting), "Awaiting approval"),
       this.white(String(all.size()), "Applications")));
-    const lv = Ui.tv(this, "Waiting with: Asst. Prof " + atLevel[0] + "  ·  Professor " + atLevel[1] + "  ·  HOD " + atLevel[2], 12, 0xE6FFFFFF, false);
+    const lv = Ui.tv(this, "Waiting with: Asst. Prof " + atLevel[0] + "  ·  Professor " + atLevel[1] + "  ·  Nodal officer " + atLevel[PgLeaveActivity.NODAL] + "  ·  HOD " + atLevel[PgLeaveActivity.HOD], 12, 0xE6FFFFFF, false);
     lv.setGravity(Gravity.CENTER);
     hero.addView(lv);
     Ui.margins(lv, 0, 10, 0, 0);
@@ -47845,7 +55096,7 @@ class PgLeaveActivity extends Base {
     const card = this.entryCard(o, col, Ui.nz(r.get("name")).isEmpty() ? "(PG removed)" : r.get("name"),
       range + "  ·  " + days + (days.equals("1") ? " day" : " days") + "\nReason: " + r.get("reason"),
       Db.shortName(Ui.nz(r.get("unit"))), this.opener(PgLeaveFormActivity, "id", r.get("id")));
-    for (let i = 0; i < 3; i++) card.addView(PgLeaveActivity.approvalRow(this, r, i, {
+    for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) card.addView(PgLeaveActivity.approvalRow(this, r, i, {
       run: () => { this.render(); }
     }));
     const form = Ui.tv(this, "📄  Leave form (PDF / Word)", 13, Ui.PURPLE, true);
@@ -47877,8 +55128,10 @@ class PgLeaveActivity extends Base {
   /** One approval step with Approve / Not approve when it is this person's turn; used on the list and on the leave entry. */
   static approvalRow(a, r, level, after) {
     const k = PgLeaveActivity.LEVELS[level];
-    let st = Ui.nz(r.get(k + "_status"));
+    let st = PgLeaveActivity.status(r, level);
     if (st.isEmpty()) st = "Pending";
+    // an application from before the nodal officer step: no row for it
+    if (level === PgLeaveActivity.NODAL && Ui.nz(r.get("nodal_status")).isEmpty()) return new View(a);
     const row = Ui.h(a);
     row.setGravity(Gravity.CENTER_VERTICAL);
     row.setPadding(0, Ui.dp(a, 8), 0, 0);
@@ -47892,7 +55145,7 @@ class PgLeaveActivity extends Base {
     t.addView(Ui.tv(a, PgLeaveActivity.LEVEL_NAMES[level], 13, Ui.TEXT, true));
     const by = Ui.nz(r.get(k + "_by"));
     let turn = st.equals("Pending");
-    for (let i = 0; i < level; i++) if (!("Approved" === r.get(PgLeaveActivity.LEVELS[i] + "_status"))) turn = false;
+    for (let i = 0; i < level; i++) if (!("Approved" === PgLeaveActivity.status(r, i))) turn = false;
     const mine = turn && PgLeaveActivity.canApprove(a, level);
     t.addView(Ui.tv(a, st.equals("Pending") ? (mine ? "Waiting for your approval" : "Pending") : st + (by.isEmpty() ? "" : " by " + by) + "  ·  " + Dates.nice(Ui.nz(r.get(k + "_date"))), 12, (col | 0) === (0xFF94A3B8 | 0) ? Ui.MUTED : col, false));
     row.addView(t, Ui.weight(1));
@@ -47922,9 +55175,10 @@ class PgLeaveActivity extends Base {
     let me = Cloud.active(a) && Cloud.myStaff(a) > 0 ? Chat.myName(a, db) : "";
     if (me.equals("Me")) me = "";
     if (me.isEmpty() && Cloud.active(a)) me = Cloud.prefs(a).getString("name", "");
-    if (me.isEmpty() && level === 2) me = db.setting("hod", "");
+    if (me.isEmpty() && level === PgLeaveActivity.HOD) me = db.setting("hod", "");
+    if (me.isEmpty() && level === PgLeaveActivity.NODAL) me = "Dr. S. Rajkumar";
     if (me.isEmpty()) {
-      const u = level < 2 ? db.row("SELECT name FROM staff WHERE unit=? AND " + Approvals.APPROVED_SQL + " " + role + " ORDER BY name LIMIT 1", unit) : null;
+      const u = level < PgLeaveActivity.NODAL ? db.row("SELECT name FROM staff WHERE unit=? AND " + Approvals.APPROVED_SQL + " " + role + " ORDER BY name LIMIT 1", unit) : null;
       if (u != null) me = u.get("name");
     }
     f.suggest("by", PgLeaveActivity.LEVEL_NAMES[level] + " (name)", me, db.staffNames(role));
@@ -47991,20 +55245,20 @@ class PgLeaveFormActivity extends Base {
       this.pendingScan = b.getString("pendingScan");
     }
     this.setTitle(this.r == null ? "Apply for PG leave" : "PG leave");
-    this.subtitle = "Approval: unit Asst. Professor → Professor → HOD";
+    this.subtitle = "Approval: unit Asst. Professor → Professor → Nodal officer → HOD";
     this.headerColor(Ui.PURPLE);
     this.headerAction("Save", {
       onClick: (v) => { this.save(); }
     });
   }
 
-  /** The three approval steps, with Approve / Not approve for whoever's turn it is. */
+  /** The approval steps, with Approve / Not approve for whoever's turn it is. */
   drawApprovals(ap) {
     ap.removeAllViews();
-    for (let i = 0; i < 3; i++) ap.addView(PgLeaveActivity.approvalRow(this, this.r, i, {
+    for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) ap.addView(PgLeaveActivity.approvalRow(this, this.r, i, {
       run: () => { this.drawApprovals(ap); }
     }));
-    const note = Ui.muted(this, "Each step approves in turn: unit Assistant Professor, then Professor, then HOD. Changing the dates resets all approvals.");
+    const note = Ui.muted(this, "Each step approves in turn: unit Assistant Professor, then Professor, then the leave nodal officer (Dr. S. Rajkumar), then HOD. Changing the dates resets all approvals.");
     note.setPadding(0, Ui.dp(this, 10), 0, 0);
     ap.addView(note);
   }
@@ -48546,14 +55800,26 @@ PhoneDirectoryActivity.Entry = class {
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
 /**
- * Presentations (PPT / Word / PDF) for the physician conference (Physicon) and journal club. Files are shared through the
- * department's storage; other phones download one only when it is opened, to save mobile data.
+ * Presentations (PPT / Word / PDF). Opened with kind ALL (8.80) it is the department's own section for every PowerPoint
+ * presentation (seminars, case presentations, CMEs, lectures, Physicon, journal club, classes), with categories and a search;
+ * opened from Academic it shows only Physicon or journal club. Files are shared through the department's storage; other phones
+ * download one only when it is opened, to save mobile data.
  */
 class PresentationsActivity extends Base {
   constructor() {
     super();
     this.kind = null;
+    this.filter = PresentationsActivity.ALL;
+    this.query = "";
+    this.list = null;
   }
+
+  static ALL = "ALL";
+  static COLOR = 0xFFC2410C;
+  /** The categories a presentation can be filed under (the first five are new in 8.80; the rest are the academic sessions). */
+  static KINDS = ["SEM", "CASE", "CME", "LECT", "DEPT", "CONF", "JC", "SYMP", "TOPIC", "PG", "MBBS"];
+  static KIND_LABELS = ["Seminar", "Case presentation", "CME / guest lecture", "Lecture / teaching", "Other", "Physicon",
+    "Journal club", "Symposium", "Topic discussion", "PG class", "MBBS class"];
 
   static REQ_FILE = 41;
   static MAX_BYTES = 45 * 1024 * 1024;   // the free storage plan takes files up to 50 MB
@@ -48564,15 +55830,44 @@ class PresentationsActivity extends Base {
   onCreate(b) {
     super.onCreate(b);
     this.kind = this.getIntent().getStringExtra("kind");
-    if (!"JC".equals(this.kind)) this.kind = "CONF";
-    this.setTitle(PresentationsActivity.label(this.kind));
-    this.subtitle = "Presentations (PPT / Word / PDF)";
-    this.headerColor(Ui.PURPLE);
+    if (!"JC".equals(this.kind) && !"CONF".equals(this.kind)) this.kind = PresentationsActivity.ALL;
+    if (b != null) {
+      this.filter = Ui.nz(b.getString("filter", PresentationsActivity.ALL));
+      this.query = Ui.nz(b.getString("query", ""));
+    }
+    this.setTitle(PresentationsActivity.ALL.equals(this.kind) ? "Presentations" : PresentationsActivity.label(this.kind));
+    this.subtitle = PresentationsActivity.ALL.equals(this.kind) ? "Department PowerPoint presentations" : "Presentations (PPT / Word / PDF)";
+    this.headerColor(PresentationsActivity.ALL.equals(this.kind) ? PresentationsActivity.COLOR : Ui.PURPLE);
     this.headerAction("+ Upload", { onClick: (v) => { this.upload(); } });
   }
 
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("filter", this.filter);
+    out.putString("query", this.query);
+  }
+
   static label(kind) {
+    for (let i = 0; i < PresentationsActivity.KINDS.length; i++) if (PresentationsActivity.KINDS[i].equals(kind)) return PresentationsActivity.KIND_LABELS[i];
     return "JC".equals(kind) ? "Journal club" : "Physicon";
+  }
+
+  static countAll(db) {
+    return db.num("SELECT COUNT(*) FROM acad_files");
+  }
+
+  /** Presentations matching the category and words (title, presenter or category), newest first. */
+  static find(db, kind, query) {
+    const out = [];
+    const q = Ui.nz(query).trim().toLowerCase();
+    for (const f of db.rows("SELECT * FROM acad_files ORDER BY date DESC, id DESC")) {
+      if (!PresentationsActivity.ALL.equals(kind) && !kind.equals(f.get("kind"))) continue;
+      const hay = (Ui.nz(f.get("title")) + " " + Ui.nz(f.get("presenter")) + " " + PresentationsActivity.label(f.get("kind"))).toLowerCase();
+      let all = true;
+      for (const w of q.jsplit("\\s+")) if (!w.isEmpty() && !hay.contains(w)) all = false;
+      if (all) out.add(f);
+    }
+    return out;
   }
 
   static count(db, kind) {
@@ -48584,6 +55879,10 @@ class PresentationsActivity extends Base {
   }
 
   render() {
+    if (PresentationsActivity.ALL.equals(this.kind)) {
+      this.renderAll();
+      return;
+    }
     const page = Ui.v(this);
     const hero = Ui.card(this);
     hero.setBackground(Glass.hero(this, Ui.shades(Ui.PURPLE), 20));
@@ -48609,6 +55908,75 @@ class PresentationsActivity extends Base {
     this.setPage(page);
   }
 
+  /** The department's section: every presentation, by category, with a search. */
+  renderAll() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(PresentationsActivity.COLOR), 20));
+    const n = PresentationsActivity.countAll(db);
+    hero.addView(Ui.tv(this, n + " " + (n === 1 ? "presentation" : "presentations"), 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Post the department's PowerPoint presentations (seminars, case presentations, CMEs, lectures, Physicon, "
+      + "journal club) so everyone can open them later. PPT, PPTX, PDF or Word, up to 45 MB.", 13, 0xE6FFFFFF, false));
+    const up = Ui.button(this, "Post a presentation", PresentationsActivity.COLOR, { onClick: (v) => { this.upload(); } });
+    hero.addView(up);
+    Ui.margins(up, 0, 12, 0, 0);
+    page.addView(hero);
+
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 2));
+    const keys = [];
+    keys.add(PresentationsActivity.ALL);
+    for (const k of PresentationsActivity.KINDS) if (k.equals(this.filter) || db.num("SELECT COUNT(*) FROM acad_files WHERE kind=?", k) > 0) keys.add(k);
+    for (const k of keys) {
+      const c = Ui.chip(this, PresentationsActivity.ALL.equals(k) ? "All" : PresentationsActivity.label(k), k.equals(this.filter), PresentationsActivity.COLOR);
+      c.setOnClickListener({ onClick: (v) => { this.filter = k; this.render(); } });
+      chips.addView(c);
+    }
+    page.addView(Ui.hscroll(this, chips));
+
+    const search = new EditText(this);
+    search.setHint("Search title or presenter");
+    search.setSingleLine(true);
+    search.setText(this.query);
+    search.setBackground(Glass.panel(this, 14));
+    search.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
+    search.addTextChangedListener({
+      beforeTextChanged: (s, a, b, c) => {},
+      onTextChanged: (s, a, b, c) => {},
+      afterTextChanged: (e) => { this.query = e.toString().trim(); this.fillList(); }
+    });
+    page.addView(search);
+    Ui.margins(search, 12, 6, 12, 2);
+    const rule = Ui.muted(this, Conduct.ruleLine());
+    page.addView(rule);
+    Ui.margins(rule, 16, 4, 16, 0);
+    this.list = Ui.v(this);
+    page.addView(this.list);
+    this.fillList();
+    this.setPage(page);
+  }
+
+  fillList() {
+    const db = this.db;
+    if (this.list == null) return;
+    this.list.removeAllViews();
+    const files = PresentationsActivity.find(db, this.filter, this.query);
+    if (files.isEmpty()) {
+      this.list.addView(this.emptyNote(PresentationsActivity.countAll(db) === 0 ? "No presentations posted yet. Tap Post a presentation." : "No presentation matches."));
+      return;
+    }
+    let month = null;
+    for (const f of files) {
+      const m = Dates.parse(f.get("date")) != null ? Dates.month(Dates.parse(f.get("date"))) : "";
+      if (!m.equals(month)) {
+        this.list.addView(Ui.heading(this, m.isEmpty() ? "Undated" : m, PresentationsActivity.COLOR));
+        month = m;
+      }
+      this.list.addView(this.fileCard(f));
+    }
+  }
+
   fileCard(f) {
     const db = this.db;
     const rel = f.get("file");
@@ -48617,6 +55985,7 @@ class PresentationsActivity extends Base {
     if (!Ui.nz(f.get("presenter")).isEmpty()) bits.add(f.get("presenter"));
     bits.add(Store.kindLabel(rel) + (Ui.toInt(f.get("size"), 0) > 0 ? " · " + Store.sizeLabel(Ui.toInt(f.get("size"), 0)) : ""));
     if (!here) bits.add("tap to download");
+    if (PresentationsActivity.ALL.equals(this.kind)) bits.add(0, PresentationsActivity.label(f.get("kind")));
     let session = "";
     if (!Ui.nz(f.get("academic_id")).isEmpty()) {
       const a = db.row("SELECT topic FROM academics WHERE id=?", f.get("academic_id"));
@@ -48627,7 +55996,7 @@ class PresentationsActivity extends Base {
         Dates.nice(f.get("date")), { onClick: (v) => { this.openFile(rel, false); } });
     const row = Ui.h(this);
     row.setGravity(Gravity.END);
-    const share = Ui.outlineButton(this, "Share", Ui.PURPLE, { onClick: (v) => { this.openFile(rel, true); } });
+    const share = Ui.outlineButton(this, "Share", PresentationsActivity.ALL.equals(this.kind) ? PresentationsActivity.COLOR : Ui.PURPLE, { onClick: (v) => { this.openFile(rel, true); } });
     row.addView(share);
     if (this.canDelete(f)) {
       const del = Ui.outlineButton(this, "Delete", Ui.RED, {
@@ -48643,6 +56012,13 @@ class PresentationsActivity extends Base {
       });
       row.addView(del);
       Ui.margins(del, 8, 0, 0, 0);
+    } else if (Conduct.canReport(this, f.get("added_by"))) {
+      const rep = Ui.outlineButton(this, "🚩 Report", Ui.SLATE, { onClick: (v) => {
+        Conduct.report(this, "acad_files", f.get("id"), f.get("added_by"), f.get("presenter"),
+          f.get("title"), f.get("file"));
+      } });
+      row.addView(rep);
+      Ui.margins(rep, 8, 0, 0, 0);
     }
     card.addView(row);
     Ui.margins(row, 0, 8, 0, 0);
@@ -48713,7 +56089,7 @@ class PresentationsActivity extends Base {
     }
     const title = PresentationsActivity.titleOf(name);
     try {
-      const rel = PresentationsActivity.save(this, this.db, uri, this.kind, ext);
+      const rel = PresentationsActivity.save(this, this.db, uri, PresentationsActivity.ALL.equals(this.kind) ? "dept" : this.kind, ext);
       this.details(rel, title);
     } catch (e) {
       Ui.toast(this, e.getMessage());
@@ -48758,6 +56134,10 @@ class PresentationsActivity extends Base {
 
   /** Asks for the title, date, presenter and session, then adds the presentation. */
   details(rel, title) {
+    if (PresentationsActivity.ALL.equals(this.kind)) {
+      this.detailsAll(rel, title);
+      return;
+    }
     const db = this.db;
     const sessions = db.rows("SELECT id, date, topic FROM academics WHERE kind=? ORDER BY date DESC, id DESC LIMIT 20", this.kind);
     const labels = new Array(sessions.size() + 1).fill(null);
@@ -48794,7 +56174,820 @@ class PresentationsActivity extends Base {
       }
     });
   }
+
+  /** The department's section: title, category, presenter and date. */
+  detailsAll(rel, title) {
+    const db = this.db;
+    const f = new Form(this);
+    f.text("title", "Title *", title, Form.PLAIN);
+    f.choice("kind", "Category", PresentationsActivity.KIND_LABELS, PresentationsActivity.KINDS, PresentationsActivity.ALL.equals(this.filter) ? "SEM" : this.filter, null);
+    f.suggest("presenter", "Presented by", Reminders.myName(this, db), db.staffNames(""));
+    f.date("date", "Date presented", Dates.todayIso());
+    Ui.formDialog(this, "Post a presentation", f, "Post", { run: () => {
+      if (!f.require("title", "Enter a title")) return false;
+      const cv = new ContentValues();
+      cv.put("kind", f.get("kind"));
+      cv.put("title", f.get("title"));
+      cv.put("presenter", f.get("presenter"));
+      cv.put("date", f.get("date"));
+      cv.put("academic_id", "");
+      cv.put("file", rel);
+      cv.put("size", db.file(rel).length());
+      cv.put("added_by", Approvals.me(this));
+      cv.put("added_on", Dates.todayIso() + " " + Dates.now());
+      if (db.insert("acad_files", cv) < 0) {
+        db.file(rel).delete();
+        return true;
+      }
+      Ui.toast(this, Cloud.active(this) ? "Posted. It is shared with the department in the background." : "Posted");
+      this.render();
+      return true;
+    } });
+  }
 }
+;
+/* ---- app/ProtocolActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Emergency protocol timers (8.50). With a patient ("id"): start a protocol, record each step, see the countdown to the next one
+ * and the worked-out advice. Without: every running protocol on every ward. Redraws every 30 seconds and beeps when a step falls due.
+ */
+class ProtocolActivity extends Base {
+  constructor() {
+    super();
+    this.id = -1;
+    this.handler = new Handler(Looper.getMainLooper());
+    this.beeped = new JSet();
+    this.refresher = {
+      run: () => {
+        if (this.dueNow()) this.beep();
+        this.render();
+        this.handler.postDelayed(this.refresher, 30000);
+      }
+    };
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const s = this.getIntent().getStringExtra("id");
+    if (s != null) this.id = Long.parseLong(s);
+    this.setTitle("Protocol timers");
+    this.subtitle = this.id >= 0 ? "Emergency protocol for this patient" : "Running on every ward";
+    this.headerColor(Protocols.COLOR);
+  }
+
+  onResume() {
+    super.onResume();
+    this.handler.removeCallbacks(this.refresher);
+    this.handler.postDelayed(this.refresher, 30000);
+  }
+
+  onPause() {
+    super.onPause();
+    this.handler.removeCallbacks(this.refresher);
+  }
+
+  /** Whether any step became due since the last look (each step beeps once). */
+  dueNow() {
+    let fresh = false;
+    const now = Protocols.now();
+    for (const r of this.runs()) {
+      if (!Ui.nz(r.get("ended")).isEmpty()) continue;
+      const p = Protocols.byId(r.get("protocol"));
+      if (p == null) continue;
+      for (const t of p.tracks) {
+        const d = Protocols.due(r, p, t);
+        if (d == null || d.isAfter(now)) continue;
+        if (this.beeped.add(r.get("id") + "/" + t.id + "/" + Protocols.stamp(d))) fresh = true;
+      }
+    }
+    return fresh;
+  }
+
+  /** Web: a short WebAudio beep in place of the ToneGenerator. */
+  beep() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "square";
+      o.frequency.value = 880;
+      g.gain.value = 0.2;
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime + 0.6);
+      this.handler.postDelayed({
+        run: () => { try { ctx.close(); } catch (ignored) { } }
+      }, 1000);
+    } catch (ignored) {
+      // no sound in this browser; the screen still shows DUE NOW
+    }
+  }
+
+  runs() {
+    return this.id >= 0 ? Protocols.forPatient(this.db, this.id) : Protocols.active(this.db);
+  }
+
+  patient(pid) {
+    return this.db.row("SELECT * FROM patients WHERE id=?", Ui.nz(pid));
+  }
+
+  render() {
+    const page = Ui.v(this);
+    if (this.id < 0) this.renderAll(page);
+    else this.renderPatient(page);
+    const n = Ui.muted(this, "Decision support only. The timers follow the published protocols named on each card; the treating team decides every dose.");
+    n.setTextSize(12);
+    n.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), 0);
+    page.addView(n);
+    this.setPage(page);
+    this.dueNow();
+  }
+
+  // ---------------------------------------------------------------- every ward
+
+  renderAll(page) {
+    const act = Protocols.active(this.db);
+    page.addView(Ui.heading(this, act.isEmpty() ? "No protocol running now" : "Running now (" + act.size() + ")", Protocols.COLOR));
+    const now = Protocols.now();
+    for (const r of act) {
+      const p = Protocols.byId(r.get("protocol"));
+      const pt = this.patient(r.get("patient_id"));
+      if (p == null || pt == null) continue;
+      const nx = Protocols.next(r);
+      const next = nx == null ? "No timed step" : nx[0].label + ": " + Protocols.dueText(nx[1], now);
+      const late = nx != null && !nx[1].isAfter(now);
+      page.addView(this.entryCard(p.emoji, Protocols.COLOR, Ui.nz(pt.get("name")) + "  ·  " + p.name,
+          Base.where(pt) + (Ui.nz(pt.get("bed")).isEmpty() ? "" : " bed " + pt.get("bed")) + "\n" + next,
+          late ? "DUE" : ProtocolActivity.elapsed(r), {
+            onClick: (v) => {
+              this.startActivity(new Intent(this, ProtocolActivity).putExtra("id", r.get("patient_id")));
+            }
+          }));
+    }
+    if (act.isEmpty()) page.addView(Ui.muted(this, "  Open a patient and tap ⏱ Emergency protocol to start one."));
+    page.addView(Ui.heading(this, "The protocols", Protocols.COLOR));
+    for (const p of Protocols.ALL) {
+      page.addView(this.entryCard(p.emoji, Protocols.COLOR, p.name, p.source, "", {
+        onClick: (v) => { this.about(p); }
+      }, 2));
+    }
+  }
+
+  about(p) {
+    const b = new StringBuilder(p.intro).append("\n");
+    for (const t of p.tracks)
+      b.append("\n• ").append(t.label).append(t.every > 0 ? " (every " + ProtocolActivity.mins(t.every) + ")" : "").append(": ").append(t.hint);
+    b.append("\n\nSource: ").append(p.source);
+    new AlertDialog.Builder(this).setTitle(p.emoji + " " + p.name).setMessage(b.toString()).setPositiveButton("OK", null).show();
+  }
+
+  static mins(m) {
+    return m % 60 === 0 ? idiv(m, 60) + " h" : m + " min";
+  }
+
+  static elapsed(r) {
+    const st = Protocols.parse(r.get("started"));
+    if (st == null) return "";
+    const end = Ui.nz(r.get("ended")).isEmpty() ? Protocols.now() : Protocols.parse(r.get("ended"));
+    const m = end == null ? 0 : Math.max(0, Duration.between(st, end).toMinutes());
+    return m >= 60 ? idiv(m, 60) + " h " + (m % 60) + " m" : m + " min";
+  }
+
+  // ---------------------------------------------------------------- one patient
+
+  renderPatient(page) {
+    const pt = this.patient(String(this.id));
+    if (pt == null) {
+      page.addView(Ui.muted(this, "Patient not found."));
+      return;
+    }
+    const all = Protocols.forPatient(this.db, this.id);
+    const running = new JSet();
+    for (const r of all) {
+      if (!Ui.nz(r.get("ended")).isEmpty()) continue;
+      running.add(r.get("protocol"));
+      this.runCard(page, r, pt);
+    }
+    page.addView(Ui.heading(this, running.isEmpty() ? "Start a protocol for " + Ui.nz(pt.get("name")) : "Start another protocol", Protocols.COLOR));
+    for (const p of Protocols.ALL) {
+      if (running.contains(p.id)) continue;
+      page.addView(this.entryCard(p.emoji, Protocols.COLOR, p.name, p.intro, "Start", {
+        onClick: (v) => { this.confirmStart(p); }
+      }, 3));
+    }
+    let head = false;
+    for (const r of all) {
+      if (Ui.nz(r.get("ended")).isEmpty()) continue;
+      const p = Protocols.byId(r.get("protocol"));
+      if (p == null) continue;
+      if (!head) page.addView(Ui.heading(this, "Finished", Ui.MUTED));
+      head = true;
+      page.addView(this.entryCard(p.emoji, Ui.MUTED, p.name, r.get("started") + " to " + r.get("ended") + "  ·  " + Protocols.events(r).length() + " steps",
+          ProtocolActivity.elapsed(r), {
+            onClick: (v) => {
+              ReportActivity.shareText(this, Protocols.text(r, pt));
+            }
+          }));
+    }
+  }
+
+  confirmStart(p) {
+    new AlertDialog.Builder(this).setTitle(p.emoji + " Start " + p.name + "?").setMessage(p.intro + "\n\nThe clock starts now; every phone sees the steps.")
+        .setPositiveButton("Start", {
+          onClick: (d, w) => {
+            Protocols.start(this.db, this.id, p.id, ExamCases.myName(this, this.db));
+            Protocols.schedule(this);
+            Sync.kick(this);
+            this.render();
+          }
+        }).setNegativeButton("Cancel", null).show();
+  }
+
+  runCard(page, r, pt) {
+    const p = Protocols.byId(r.get("protocol"));
+    if (p == null) return;
+    const now = Protocols.now();
+    const ev = Protocols.events(r);
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Protocols.COLOR), 20));
+    hero.addView(Ui.tv(this, p.emoji + "  " + p.name, 19, Color.WHITE, true));
+    hero.addView(Ui.tv(this, Ui.nz(pt.get("name")) + "  ·  " + Protocols.where(pt) + "  ·  running " + ProtocolActivity.elapsed(r), 13, 0xE6FFFFFF, false));
+    for (const a of Protocols.advice(r, pt)) hero.addView(Ui.tv(this, "• " + a, 15, Color.WHITE, true));
+    hero.setOnClickListener({
+      onClick: (v) => { this.about(p); }
+    });
+    page.addView(hero);
+
+    for (const t of p.tracks) {
+      const c = Ui.card(this);
+      const top = Ui.h(this);
+      const name = Ui.tv(this, t.label, 15, Ui.TEXT, true);
+      top.addView(name, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+      const d = Protocols.due(r, p, t);
+      const dt = Protocols.dueText(d, now);
+      if (!dt.isEmpty()) {
+        const late = !d.isAfter(now);
+        top.addView(Ui.softPill(this, (late ? "⏰ " : "⏱ ") + dt, late ? Ui.RED : Protocols.COLOR));
+      }
+      c.addView(top);
+      const done = Protocols.all(ev, t.id);
+      const last = done.isEmpty() ? null : done.get(done.size() - 1);
+      c.addView(Ui.muted(this, last == null ? "Not done yet" + (Protocols.every(p, t, ev) > 0 ? "  ·  every " + ProtocolActivity.mins(Protocols.every(p, t, ev)) : "")
+          : "Last " + Protocols.time(last) + (last.optString("v").isEmpty() ? "" : ": " + last.optString("v") + (t.unit.isEmpty() ? "" : " " + t.unit))
+          + (done.size() > 1 ? "  ·  " + done.size() + " times" : "") + (last.optString("by").isEmpty() ? "" : "  ·  " + last.optString("by"))));
+      const rec = Ui.button(this, "Record", Protocols.COLOR, {
+        onClick: (v) => { this.recordDialog(r, p, t); }
+      });
+      const help = Ui.outlineButton(this, "How", Ui.MUTED, {
+        onClick: (v) => {
+          new AlertDialog.Builder(this).setTitle(t.label).setMessage(t.hint).setPositiveButton("OK", null).show();
+        }
+      });
+      const drug = ProtocolActivity.infusionFor(p, t);
+      c.addView(drug == null ? Ui.buttonRow(this, rec, help) : Ui.buttonRow(this, rec, Ui.outlineButton(this, "💉 Infusion", Infusion.COLOR, {
+        onClick: (v) => {
+          this.startActivity(new Intent(this, InfusionActivity).putExtra("id", String(this.id)).putExtra("drug", drug));
+        }
+      }), help));
+      page.addView(c);
+    }
+
+    if (ev.length() > 0) {
+      page.addView(Ui.heading(this, "Steps recorded", Protocols.COLOR));
+      const tl = Ui.card(this);
+      for (let i = ev.length() - 1; i >= 0; i--) {
+        const e = ev.optJSONObject(i);
+        const t = p.track(e.optString("t"));
+        tl.addView(Ui.kv(this, Protocols.time(e), (t == null ? e.optString("t") : t.label)
+            + (e.optString("v").isEmpty() ? "" : ": " + e.optString("v") + (t != null && !t.unit.isEmpty() ? " " + t.unit : ""))
+            + (e.optString("by").isEmpty() ? "" : "  (" + e.optString("by") + ")")));
+      }
+      page.addView(tl);
+    }
+
+    const bt = Ui.v(this);
+    bt.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    bt.addView(Ui.buttonRow(this, Ui.button(this, "Share", Ui.GREEN, {
+      onClick: (v) => { ReportActivity.shareText(this, Protocols.text(this.db.row("SELECT * FROM " + Protocols.TABLE + " WHERE id=?", r.get("id")), pt)); }
+    }), Ui.outlineButton(this, "End protocol", Ui.RED, {
+      onClick: (v) => {
+        new AlertDialog.Builder(this).setMessage("End " + p.name + "? The timers stop on every phone.")
+            .setPositiveButton("End", {
+              onClick: (d, w) => {
+                Protocols.end(this.db, Long.parseLong(r.get("id")));
+                Protocols.schedule(this);
+                Sync.kick(this);
+                this.render();
+              }
+            }).setNegativeButton("Cancel", null).show();
+      }
+    })));
+    page.addView(bt);
+  }
+
+  /** The infusion calculator drug that goes with a step, or null. */
+  static infusionFor(p, t) {
+    if (p.id.equals("op") && t.id.equals("infusion")) return "Atropine (OP poisoning)";
+    if (p.id.equals("op") && t.id.equals("pam")) return "Pralidoxime (PAM)";
+    if (p.id.equals("dka") && t.id.equals("grbs")) return "Insulin (regular)";
+    return null;
+  }
+
+  recordDialog(r, p, t) {
+    const f = new Form(this);
+    if (Protocols.CHOICE.equals(t.kind)) f.segment("v", t.label, t.options, "");
+    else if (Protocols.NUMBER.equals(t.kind)) {
+      let sug = "";
+      if (p.id.equals("op") && t.id.equals("atropine")) {
+        const l = Protocols.last(Protocols.events(r), "atropine");
+        const v = l == null ? null : Labs.num(l.optString("v"));
+        sug = v == null ? "" : Infusion.num(v * 2);
+      }
+      if (p.id.equals("snake") && t.id.equals("asv")) sug = "10";
+      f.text("v", t.label + (t.unit.isEmpty() ? "" : " (" + t.unit + ")"), sug, InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+    } else if (Protocols.TEXT.equals(t.kind)) f.text("v", t.label, "", InputType.TYPE_CLASS_TEXT);
+    f.time("at", "Time", Dates.now());
+    Ui.formDialog(this, t.label, f, "Save", {
+      run: () => {
+        const v = f.has("v") ? f.get("v").trim() : "";
+        if (f.has("v") && v.isEmpty()) {
+          Ui.toast(this, "Enter the value");
+          return false;
+        }
+        let at = Protocols.now();
+        try {
+          const hm = f.get("at");
+          if (!Ui.nz(hm).isEmpty()) {
+            let x = LocalDateTime.of(LocalDate.now(), LocalTime.parse(hm.length === 4 ? "0" + hm : hm));
+            x = LocalDateTime.of(Dates.today(), x.toLocalTime());
+            if (x.isAfter(at.plusMinutes(1))) x = x.minusDays(1);   // a time after now is last evening's
+            at = x;
+          }
+        } catch (ignored) {
+        }
+        Protocols.record(this.db, r, t.id, v, ExamCases.myName(this, this.db), at);
+        Protocols.schedule(this);
+        Sync.kick(this);
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  /** The patient page row: the running protocol's next step (red when due), or buttons to start one and open the infusion calculator. */
+  static patientCard(a, db, pid) {
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), 0);
+    const now = Protocols.now();
+    let any = false;
+    for (const r of Protocols.forPatient(db, pid)) {
+      if (!Ui.nz(r.get("ended")).isEmpty()) continue;
+      const p = Protocols.byId(r.get("protocol"));
+      if (p == null) continue;
+      any = true;
+      const nx = Protocols.next(r);
+      const late = nx != null && !nx[1].isAfter(now);
+      const label = p.emoji + "  " + p.name + (nx == null ? "" : ": " + nx[0].label + " " + Protocols.dueText(nx[1], now));
+      box.addView(late ? Ui.button(a, label, Ui.RED, a.opener(ProtocolActivity, "id", String(pid)))
+          : Ui.outlineButton(a, label, Protocols.COLOR, a.opener(ProtocolActivity, "id", String(pid))));
+    }
+    const inf = Ui.outlineButton(a, "💉 Infusion calculator", Infusion.COLOR, a.opener(InfusionActivity, "id", String(pid)));
+    box.addView(any ? Ui.buttonRow(a, inf)
+        : Ui.buttonRow(a, Ui.outlineButton(a, "⏱ Emergency protocol", Protocols.COLOR, a.opener(ProtocolActivity, "id", String(pid))), inf));
+    return box;
+  }
+
+  /** Home card: every running protocol with its next step; null when none. */
+  static homeCard(a, db) {
+    const act = Protocols.active(db);
+    if (act.isEmpty()) return null;
+    const card = Ui.card(a);
+    card.addView(Ui.softPill(a, "PROTOCOL TIMERS", Protocols.COLOR));
+    const now = Protocols.now();
+    for (const r of act) {
+      const p = Protocols.byId(r.get("protocol"));
+      const pt = db.row("SELECT * FROM patients WHERE id=?", Ui.nz(r.get("patient_id")));
+      if (p == null || pt == null) continue;
+      const nx = Protocols.next(r);
+      const late = nx != null && !nx[1].isAfter(now);
+      const t = Ui.tv(a, p.emoji + " " + Ui.nz(pt.get("name")) + "  ·  " + Protocols.where(pt) + "\n" + p.name
+          + (nx == null ? "" : ": " + nx[0].label + " " + Protocols.dueText(nx[1], now)), 13, late ? Ui.RED : Ui.TEXT, late);
+      t.setPadding(0, Ui.dp(a, 6), 0, 0);
+      t.setOnClickListener(a.opener(ProtocolActivity, "id", r.get("patient_id")));
+      card.addView(t);
+    }
+    return card;
+  }
+}
+;
+/* ---- app/Protocols.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Emergency protocol timers (8.50): snake bite (20WBCT and ASV), organophosphate poisoning (atropine doubling), DKA, hyperkalaemia
+ * and status epilepticus. Each run belongs to a patient and keeps the steps recorded (who, when, what) as a JSON list, shared with
+ * every phone. Each repeating step has a timer; an alarm and a notification say when the next one is due. Decision support only.
+ * Web: a closed page cannot be woken, so the alarm is a timer that fires while the page is open.
+ */
+class Protocols {
+  static COLOR = 0xFFDC2626;
+  static N_DUE = 7208;
+  static TABLE = "protocol_runs";
+  static TS = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+  static DONE = "done";
+  static CHOICE = "choice";
+  static NUMBER = "number";
+  static TEXT = "text";
+  /** Web: the pending alarm (setTimeout id). */
+  static timer = null;
+
+  static $clinit() {
+    const T = Protocols.Track, P = Protocols.Protocol;
+    const CHOICE = Protocols.CHOICE, NUMBER = Protocols.NUMBER, TEXT = Protocols.TEXT, DONE = Protocols.DONE;
+    Protocols.ALL = [
+      new P("snake", "Snake bite (ASV)", "🐍", "National Snakebite Management Protocol, India",
+          "Immobilise the limb, no tourniquet or cutting. Do 20WBCT at arrival and every 6 hours until the blood clots. Give ASV for "
+              + "signs of envenomation (unclotted 20WBCT, bleeding, ptosis, breathing difficulty). Watch for anaphylaxis to ASV: keep adrenaline ready.",
+          new T("wbct", "20-minute whole blood clotting test", 360, CHOICE, "", ["Clotted", "Not clotted"],
+              "Not clotted means venom-induced coagulopathy: give ASV, repeat 20WBCT 6 hours after each dose until clotted."),
+          new T("asv", "ASV given", 0, NUMBER, "vials", null,
+              "10 vials over 1 hour for haemotoxic or neurotoxic envenomation. Repeat 10 vials if 20WBCT is still unclotted at 6 hours, or if neurotoxicity is no better 1-2 hours after the first dose. Rarely more than 25-30 vials."),
+          new T("neuro", "Ptosis, neck and breathing check", 60, CHOICE, "", ["Better", "Same", "Worse"],
+              "Single breath count and neck flexion; worse breathing needs intubation and ventilation."),
+          new T("neostigmine", "Neostigmine 0.5 mg IV (with atropine)", 30, DONE, "", null,
+              "Neurotoxic bites: trial of 1.5 mg with atropine 0.6 mg, then 0.5 mg every 30 minutes for 5 doses if there is a response."),
+          new T("urine", "Urine output and colour", 240, TEXT, "", null, "Low output or dark urine: think AKI or haemolysis; check creatinine.")),
+      new P("op", "OP poisoning (atropine)", "☠️", "Eddleston et al., Lancet 2008; WHO",
+          "Decontaminate, airway and oxygen first. Atropine 1.8-3 mg IV bolus; check in 5 minutes and double the dose until atropinised "
+              + "(clear chest, heart rate above 80, systolic BP above 80, no pinpoint pupils, dry axillae). Then infuse 10-20% of the total atropine per hour.",
+          new T("atropine", "Atropine bolus", 5, NUMBER, "mg", null, "If not atropinised 5 minutes after a dose, give double the last dose."),
+          new T("check", "Atropinisation check", 5, CHOICE, "", ["Atropinised", "Not yet"],
+              "Targets: clear chest, heart rate above 80, systolic BP above 80 mmHg, pupils no longer pinpoint, dry axillae. Check every 15 minutes once atropinised."),
+          new T("infusion", "Atropine infusion started", 0, DONE, "", null, "Each hour 10-20% of the total atropine needed to atropinise (use the infusion calculator)."),
+          new T("toxicity", "Atropine toxicity check", 60, CHOICE, "", ["None", "Confused / fever / no bowel sounds"],
+              "Toxicity: stop the infusion, recheck in 30 minutes, restart at 70-80% of the rate."),
+          new T("pam", "Pralidoxime given", 0, DONE, "", null, "WHO: 30 mg/kg bolus, then 8 mg/kg/hr (use the infusion calculator).")),
+      new P("dka", "Diabetic ketoacidosis", "🩸", "ADA consensus 2024; JBDS-IP",
+          "Check potassium before insulin. Fluids: 1 litre normal saline in the first hour, then by status. Fixed-rate insulin 0.1 units/kg/hr. "
+              + "Add 5-10% dextrose when sugar is below 250 mg/dL. Resolved when pH above 7.3, bicarbonate 18 or more and ketones below 0.6.",
+          new T("grbs", "Capillary blood sugar", 60, NUMBER, "mg/dL", null, "Aim for a fall of 50-75 mg/dL per hour."),
+          new T("k", "Potassium", 120, NUMBER, "mEq/L", null, "Below 3.5: hold insulin and give potassium. 3.5-5: add 20-30 mEq per litre. Above 5: no potassium, recheck in 2 hours."),
+          new T("vbg", "pH, bicarbonate and ketones", 120, TEXT, "", null, "Venous gas is enough. Resolution: pH above 7.3, bicarbonate 18 or more."),
+          new T("fluids", "IV fluids given", 60, NUMBER, "ml", null, "Watch for overload in heart and kidney disease."),
+          new T("urine", "Urine output", 60, NUMBER, "ml", null, "Aim for at least 0.5 ml/kg/hr.")),
+      new P("hyperk", "Hyperkalaemia", "⚡", "UK Kidney Association 2023",
+          "ECG now. If ECG changes or K 6.5 or more: calcium gluconate 10% 30 ml IV over 10 minutes (repeat if changes stay), then insulin 10 units "
+              + "with 25 g dextrose; salbutamol nebulisation; treat the cause and stop drugs that raise K.",
+          new T("ecg", "ECG", 0, CHOICE, "", ["Changes", "No changes"], "Peaked T, wide QRS, loss of P waves, sine wave or bradycardia."),
+          new T("calcium", "Calcium gluconate 10% 30 ml", 0, DONE, "", null, "Protects the heart for 30-60 minutes; repeat if ECG changes stay after 5-10 minutes."),
+          new T("insulin", "Insulin 10 units with 25 g dextrose", 0, DONE, "", null, "Starts the hourly sugar checks for 6 hours (hypoglycaemia)."),
+          new T("grbs", "Blood sugar after insulin", 60, NUMBER, "mg/dL", null, "Below 70: give dextrose. Check hourly for 6 hours."),
+          new T("k", "Potassium recheck", 60, NUMBER, "mEq/L", null, "At 1, 2, 4 and 6 hours after treatment.")),
+      new P("se", "Status epilepticus", "🧠", "Neurocritical Care Society; ILAE 2023",
+          "0-5 minutes: airway, oxygen, sugar, IV access. 5-20 minutes: lorazepam 4 mg IV (or diazepam 10 mg IV, or midazolam 10 mg IM), repeat once. "
+              + "20-40 minutes: levetiracetam 60 mg/kg (max 4.5 g) or valproate 40 mg/kg or phenytoin 20 mg/kg. After 40 minutes: refractory, ICU, anaesthetic infusion.",
+          new T("seizure", "Is the seizure still going on?", 5, CHOICE, "", ["Stopped", "Continuing"], "Check every 5 minutes."),
+          new T("grbs", "Blood sugar", 0, NUMBER, "mg/dL", null, "Below 70: 50 ml of 25% dextrose (with thiamine 100 mg first in alcohol use)."),
+          new T("benzo", "Benzodiazepine dose", 0, DONE, "", null, "Lorazepam 4 mg IV or diazepam 10 mg IV or midazolam 10 mg IM; repeat once after 5 minutes."),
+          new T("second", "Second-line drug", 0, DONE, "", null, "Levetiracetam 60 mg/kg or valproate 40 mg/kg or phenytoin 20 mg/kg (cardiac monitor)."),
+          new T("third", "Refractory: anaesthetic infusion, ICU", 0, DONE, "", null, "Midazolam or propofol infusion with airway support; EEG if available.")),
+    ];
+  }
+
+  static byId(id) {
+    for (const p of Protocols.ALL) if (p.id.equals(id)) return p;
+    return null;
+  }
+
+  static parse(s) {
+    try {
+      const t = Ui.nz(s).trim();
+      if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(t)) return null;
+      return LocalDateTime.parse(t);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static stamp(t) {
+    return t.format(Protocols.TS);
+  }
+
+  static now() {
+    const t = Dates.time();
+    return LocalDateTime.of(Dates.today(), LocalTime.of(t.getHour(), t.getMinute()));
+  }
+
+  // ---------------------------------------------------------------- runs
+
+  static start(db, pid, protocol, by) {
+    const cv = new ContentValues();
+    cv.put("patient_id", pid);
+    cv.put("protocol", protocol);
+    cv.put("started", Protocols.stamp(Protocols.now()));
+    cv.put("events", "[]");
+    cv.put("by_name", Ui.nz(by));
+    return db.insert(Protocols.TABLE, cv);
+  }
+
+  static end(db, runId) {
+    const cv = new ContentValues();
+    cv.put("ended", Protocols.stamp(Protocols.now()));
+    db.update(Protocols.TABLE, cv, runId);
+  }
+
+  static active(db) {
+    return db.rows("SELECT * FROM " + Protocols.TABLE + " WHERE ended='' ORDER BY started");
+  }
+
+  static forPatient(db, pid) {
+    return db.rows("SELECT * FROM " + Protocols.TABLE + " WHERE patient_id=? ORDER BY ended<>'', started DESC", String(pid));
+  }
+
+  static events(run) {
+    try {
+      return new JSONArray(Ui.nz(run.get("events")).isEmpty() ? "[]" : run.get("events"));
+    } catch (e) {
+      return new JSONArray();
+    }
+  }
+
+  /** Adds a recorded step (newest last) and saves. */
+  static record(db, run, track, value, by, at) {
+    const ev = Protocols.events(db.row("SELECT * FROM " + Protocols.TABLE + " WHERE id=?", run.get("id")));
+    try {
+      ev.put(new JSONObject().put("t", track).put("v", Ui.nz(value)).put("at", Protocols.stamp(at)).put("by", Ui.nz(by)));
+    } catch (ignored) {
+    }
+    const cv = new ContentValues();
+    cv.put("events", ev.toString());
+    db.update(Protocols.TABLE, cv, Long.parseLong(run.get("id")));
+  }
+
+  static last(ev, track) {
+    for (let i = ev.length() - 1; i >= 0; i--) if (track.equals(ev.optJSONObject(i).optString("t"))) return ev.optJSONObject(i);
+    return null;
+  }
+
+  static all(ev, track) {
+    const out = [];
+    for (let i = 0; i < ev.length(); i++) if (track.equals(ev.optJSONObject(i).optString("t"))) out.add(ev.optJSONObject(i));
+    return out;
+  }
+
+  /** Minutes between repeats of a step for this run now (OP poisoning slows to 15 minutes once atropinised); 0: no timer. */
+  static every(p, t, ev) {
+    const last = Protocols.last, all = Protocols.all;
+    if (p.id.equals("op")) {
+      const done = Protocols.atropinised(ev);
+      if (t.id.equals("atropine")) return done ? 0 : 5;
+      if (t.id.equals("check")) return done ? 15 : 5;
+      if (t.id.equals("toxicity")) return done ? 60 : 0;
+    }
+    if (p.id.equals("snake") && t.id.equals("neostigmine")) return last(ev, "neostigmine") == null || all(ev, "neostigmine").size() >= 5 ? 0 : 30;
+    if (p.id.equals("snake") && t.id.equals("wbct")) {
+      const w = last(ev, "wbct");
+      if (w != null && "Clotted".equals(w.optString("v")) && last(ev, "asv") != null) return 0;   // clotted after ASV: done
+    }
+    if (p.id.equals("hyperk") && t.id.equals("grbs")) {
+      const ins = last(ev, "insulin");
+      if (ins == null) return 0;
+      const at = Protocols.parse(ins.optString("at"));
+      if (at != null && Duration.between(at, Protocols.now()).toMinutes() > 6 * 60) return 0;
+    }
+    if (p.id.equals("se") && t.id.equals("seizure")) {
+      const s = last(ev, "seizure");
+      if (s != null && "Stopped".equals(s.optString("v"))) return 0;
+    }
+    return t.every;
+  }
+
+  static atropinised(ev) {
+    const c = Protocols.last(ev, "check");
+    return c != null && "Atropinised".equals(c.optString("v"));
+  }
+
+  /** When a step is next due: the last record + the interval, or the start for a step never done; null when no timer. */
+  static due(run, p, t) {
+    const ev = Protocols.events(run);
+    const every = Protocols.every(p, t, ev);
+    if (every <= 0) return null;
+    const l = Protocols.last(ev, t.id);
+    const base = l == null ? Protocols.parse(run.get("started")) : Protocols.parse(l.optString("at"));
+    if (base == null) return null;
+    return l == null ? base : base.plusMinutes(every);
+  }
+
+  /** "due in 12 min", "DUE NOW", "overdue 8 min". */
+  static dueText(due, now) {
+    if (due == null) return "";
+    const m = Duration.between(now, due).toMinutes();
+    if (m > 90) return "due in " + idiv(m, 60) + " h " + (m % 60) + " min";
+    if (m > 0) return "due in " + m + " min";
+    if (m === 0) return "DUE NOW";
+    return "OVERDUE " + (-m) + " min";
+  }
+
+  /** The soonest due step of a run: [track, due] or null. */
+  static next(run) {
+    const p = Protocols.byId(run.get("protocol"));
+    if (p == null) return null;
+    let best = null;
+    for (const t of p.tracks) {
+      const d = Protocols.due(run, p, t);
+      if (d != null && (best == null || d.isBefore(best[1]))) best = [t, d];
+    }
+    return best;
+  }
+
+  // ---------------------------------------------------------------- advice from the values
+
+  /** Lines worked out from what was recorded: totals, the next dose, rate of fall, K advice. */
+  static advice(run, patient) {
+    const out = [];
+    const p = Protocols.byId(run.get("protocol"));
+    const ev = Protocols.events(run);
+    const last = Protocols.last, all = Protocols.all, time = Protocols.time;
+    if (p == null) return out;
+    if (p.id.equals("snake")) {
+      let vials = 0;
+      for (const e of all(ev, "asv")) { const v = Labs.num(e.optString("v")); if (v != null) vials += v; }
+      const w = last(ev, "wbct");
+      out.add("ASV so far: " + Infusion.num(vials) + " vials");
+      if (w != null) out.add("Last 20WBCT: " + w.optString("v") + " at " + time(w));
+      if (w != null && "Not clotted".equals(w.optString("v"))) out.add(vials === 0 ? "Unclotted: give 10 vials of ASV now." : "Still unclotted: if 6 hours since the last ASV, repeat 10 vials.");
+      if (vials >= 30) out.add("30 vials or more given: review the diagnosis and look for another cause of bleeding.");
+    } else if (p.id.equals("op")) {
+      let total = 0, lastDose = 0;
+      for (const e of all(ev, "atropine")) { const v = Labs.num(e.optString("v")); if (v != null) { total += v; lastDose = v; } }
+      out.add("Atropine so far: " + Infusion.num(total) + " mg");
+      if (!Protocols.atropinised(ev)) out.add(lastDose > 0 ? "Not atropinised yet: next bolus " + Infusion.num(lastDose * 2) + " mg (double the last)" : "First bolus: 1.8-3 mg IV");
+      else out.add("Atropinised. Infusion " + Infusion.num(total * 0.1) + " to " + Infusion.num(total * 0.2) + " mg/hr (10-20% of " + Infusion.num(total) + " mg)");
+    } else if (p.id.equals("dka")) {
+      const g = all(ev, "grbs");
+      if (g.size() >= 2) {
+        const a = g.get(g.size() - 2), b = g.get(g.size() - 1);
+        const va = Labs.num(a.optString("v")), vb = Labs.num(b.optString("v"));
+        const ta = Protocols.parse(a.optString("at")), tb = Protocols.parse(b.optString("at"));
+        if (va != null && vb != null && ta != null && tb != null && tb.isAfter(ta)) {
+          const hrs = Duration.between(ta, tb).toMinutes() / 60.0, fall = (va - vb) / hrs;
+          out.add("Sugar falling " + Math.round(fall) + " mg/dL per hour");
+          if (fall < 50 && vb >= 250) out.add("Falling less than 50 per hour: check the line and increase insulin by 1 unit/hr.");
+          if (fall > 100) out.add("Falling fast: watch for cerebral oedema; add dextrose earlier.");
+        }
+      }
+      const lastG = g.isEmpty() ? null : g.get(g.size() - 1);
+      const sugar = lastG == null ? null : Labs.num(lastG.optString("v"));
+      if (sugar != null && sugar < 250) out.add("Sugar below 250: add 5-10% dextrose and keep the insulin going.");
+      if (sugar != null && sugar < 70) out.add("Hypoglycaemia: give 25% dextrose now.");
+      const k = last(ev, "k");
+      const kv = k == null ? null : Labs.num(k.optString("v"));
+      if (kv != null) out.add(kv < 3.5 ? "K " + Labs.fmt(kv) + ": hold insulin and give potassium." : kv <= 5 ? "K " + Labs.fmt(kv) + ": add 20-30 mEq per litre of fluid."
+          : "K " + Labs.fmt(kv) + ": no potassium in fluids; recheck in 2 hours.");
+    } else if (p.id.equals("hyperk")) {
+      const k = last(ev, "k");
+      const kv = k == null ? null : Labs.num(k.optString("v"));
+      if (kv != null) out.add("Latest K " + Labs.fmt(kv) + (kv >= 6.5 ? ": still severe, repeat insulin-dextrose and plan dialysis if no response." : kv >= 6 ? ": still high." : ": improving."));
+      const g = last(ev, "grbs");
+      const gv = g == null ? null : Labs.num(g.optString("v"));
+      if (gv != null && gv < 70) out.add("Sugar " + Infusion.num(gv) + ": give dextrose now.");
+    } else if (p.id.equals("se")) {
+      const st = Protocols.parse(run.get("started"));
+      const min = st == null ? 0 : Duration.between(st, Protocols.now()).toMinutes();
+      const s = last(ev, "seizure");
+      const stopped = s != null && "Stopped".equals(s.optString("v"));
+      if (!stopped) {
+        if (min < 5) out.add(min + " min: airway, oxygen, sugar, IV access.");
+        else if (min < 20) out.add(min + " min: benzodiazepine now (" + all(ev, "benzo").size() + " given so far; at most 2).");
+        else if (min < 40) out.add(min + " min: second-line drug now" + (last(ev, "second") == null ? "" : " (given)") + ".");
+        else out.add(min + " min: refractory status: ICU and anaesthetic infusion.");
+      } else out.add("Seizure stopped at " + time(s) + ". Look for the cause; keep the second-line drug going.");
+    }
+    return out;
+  }
+
+  static time(e) {
+    const at = e.optString("at");
+    return at.length >= 16 ? at.substring(11, 16) : at;
+  }
+
+  static where(p) {
+    if (p == null) return "";
+    return Db.shortName(Ui.nz(p.get("location"))) + (Ui.nz(p.get("bed")).isEmpty() ? "" : " bed " + p.get("bed"));
+  }
+
+  /** The run as WhatsApp text (bed, not name). */
+  static text(run, patient) {
+    const p = Protocols.byId(run.get("protocol"));
+    const b = new StringBuilder("*⏱ ").append(p == null ? run.get("protocol") : p.name).append("*  ").append(Protocols.where(patient)).append("\n")
+        .append("Started ").append(run.get("started")).append(Ui.nz(run.get("ended")).isEmpty() ? "" : ", ended " + run.get("ended")).append("\n");
+    for (const a of Protocols.advice(run, patient)) b.append("• ").append(a).append("\n");
+    const ev = Protocols.events(run);
+    for (let i = 0; i < ev.length(); i++) {
+      const e = ev.optJSONObject(i);
+      const t = p == null ? null : p.track(e.optString("t"));
+      b.append("\n").append(Protocols.time(e)).append("  ").append(t == null ? e.optString("t") : t.label)
+          .append(e.optString("v").isEmpty() ? "" : ": " + e.optString("v") + (t != null && !t.unit.isEmpty() ? " " + t.unit : ""));
+    }
+    return b.toString().trim();
+  }
+
+  // ---------------------------------------------------------------- alarms
+
+  /** Sets one alarm for the soonest due step of all running protocols (shared runs from other phones too). */
+  static schedule(c) {
+    const app = c.getApplicationContext();
+    const db = Db.get(app);
+    let soon = null;
+    for (const r of Protocols.active(db)) {
+      const n = Protocols.next(r);
+      if (n == null) continue;
+      const d = n[1];
+      if (soon == null || d.isBefore(soon)) soon = d;
+    }
+    // Web: in place of AlarmManager, a timer while the page is open
+    if (Protocols.timer != null) {
+      clearTimeout(Protocols.timer);
+      Protocols.timer = null;
+    }
+    if (soon == null) return;
+    const now = Protocols.now();
+    if (soon.isBefore(now)) soon = now.plusMinutes(3);   // already due: remind again in 3 minutes while it stays undone
+    const when = Protocols.millis(soon);
+    const delay = Math.min(Math.max(1000, when - System.currentTimeMillis()), 2147483000);
+    Protocols.timer = setTimeout(() => {
+      Protocols.timer = null;
+      try {
+        new Protocols.Receiver().onReceive(app, new Intent(app, Protocols.Receiver).setAction("com.tvmchmed.app.PROTOCOL"));
+      } catch (ignored) {
+        // the screen still shows DUE NOW
+      }
+    }, delay);
+  }
+
+  /** Local date-time to epoch milliseconds (the browser's time zone). */
+  static millis(t) {
+    const d = t.toLocalDate(), tm = t.toLocalTime();
+    return new Date(d.getYear(), d.getMonthValue() - 1, d.getDayOfMonth(), tm.getHour(), tm.getMinute(), 0).getTime();
+  }
+
+  /** The notification for steps due now (bed and step, no name). */
+  static notifyDue(c) {
+    const db = Db.get(c);
+    const now = Protocols.now();
+    const s = new StringBuilder();
+    let firstPid = -1;
+    for (const r of Protocols.active(db)) {
+      const p = Protocols.byId(r.get("protocol"));
+      if (p == null) continue;
+      const pt = db.row("SELECT location, bed FROM patients WHERE id=?", Ui.nz(r.get("patient_id")));
+      for (const t of p.tracks) {
+        const d = Protocols.due(r, p, t);
+        if (d == null || d.isAfter(now)) continue;
+        s.append(s.length() === 0 ? "" : "\n").append(p.name).append(" · ").append(Protocols.where(pt)).append(": ").append(t.label);
+        if (firstPid < 0) firstPid = Long.parseLong(r.get("patient_id"));
+      }
+    }
+    if (s.length() === 0) return;
+    const open = new Intent(c, ProtocolActivity);
+    if (firstPid >= 0) open.putExtra("id", String(firstPid));
+    Background.show(c, Protocols.N_DUE, "⏱ Due now", s.toString(), Protocols.COLOR, open);
+  }
+}
+
+/** One step of a protocol. every: minutes between repeats (0: as needed, no timer). */
+Protocols.Track = class {
+  constructor(id, label, every, kind, unit, options, hint) {
+    this.id = id; this.label = label; this.every = every; this.kind = kind; this.unit = unit; this.options = options; this.hint = hint;
+  }
+};
+
+Protocols.Protocol = class {
+  constructor(id, name, emoji, source, intro, ...tracks) {
+    if (tracks.length === 1 && Array.isArray(tracks[0])) tracks = tracks[0];
+    this.id = id; this.name = name; this.emoji = emoji; this.source = source; this.intro = intro; this.tracks = tracks;
+  }
+
+  track(tid) {
+    for (const t of this.tracks) if (t.id.equals(tid)) return t;
+    return null;
+  }
+};
+
+Protocols.Receiver = class extends BroadcastReceiver {
+  onReceive(context, intent) {
+    try {
+      Protocols.notifyDue(context);
+    } finally {
+      Protocols.schedule(context);
+    }
+  }
+};
 ;
 /* ---- app/Qr.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -49450,6 +57643,7 @@ class QuizEditActivity extends Base {
 
   static REQ_CAMERA = 71;
   static REQ_PICK = 72;
+  static REQ_LIVE = 73;
 
   scanCard() {
     const card = Ui.card(this);
@@ -49457,6 +57651,15 @@ class QuizEditActivity extends Base {
     const hint = Ui.muted(this, "Snap the page (or pick a photo). The question and options go into their slots by themselves; you check each one before it is added.");
     card.addView(hint);
     Ui.margins(hint, 0, 4, 0, 6);
+    const live = Ui.button(this, "📹  Live scan (hold the phone over the page)", Quiz.PURPLE, {
+      onClick: (v) => {
+        this.quizTitle = this.form.get("title");
+        this.scanClean();
+        LiveScanActivity.start(this, "quizscan", QuizScan.MAX_PAGES, "Questions from a book", QuizEditActivity.REQ_LIVE);
+      }
+    });
+    card.addView(live);
+    Ui.margins(live, 0, 0, 0, 8);
     card.addView(Ui.buttonRow(this, Ui.button(this, "📷  Camera", Quiz.PURPLE, {
       onClick: (v) => { this.scanStart(true); }
     }), Ui.button(this, "🖼  Gallery", Quiz.PURPLE, {
@@ -49495,6 +57698,13 @@ class QuizEditActivity extends Base {
 
   onActivityResult(req, res, data) {
     super.onActivityResult(req, res, data);
+    if (req === QuizEditActivity.REQ_LIVE) {
+      if (res === RESULT_OK) {
+        this.scanPages.addAll(LiveScanActivity.pagesOf(data));
+        if (!this.scanPages.isEmpty()) this.scanRead();
+      }
+      return;
+    }
     if (req !== QuizEditActivity.REQ_CAMERA && req !== QuizEditActivity.REQ_PICK) return;
     if (res !== RESULT_OK) {
       if (this.scanPages.length > 0) this.scanMore();
@@ -50905,6 +59115,515 @@ class ReportActivity extends Base {
   }
 }
 ;
+/* ---- app/Results.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Pending results tracker (8.60): every investigation sent is noted with the time it went and when it should be back (the usual
+ * turnaround of that test). It stays on the list until the result is entered; a result that has come back stays marked until a
+ * doctor taps Seen, so no report lies unread in the lab or in a file. Overdue tests and unseen results show on the home page.
+ */
+class Results {
+  constructor() {}
+
+  static COLOR = 0xFF1D4ED8;
+  static TABLE = "inv_sent";
+  static BACK = "BACK";
+  static CANCEL = "CANCEL";
+  static KINDS = ["Blood test", "Culture", "Serology", "Imaging", "Biopsy / cytology", "Other"];
+  static LABS = ["Central lab", "Microbiology", "Pathology", "Biochemistry", "Radiology", "Outside lab", "Other"];
+
+  /** Common tests: name, kind, usual hours until the report. */
+  static TESTS = [
+    ["CBC", "Blood test", "4"], ["RFT (urea, creatinine)", "Blood test", "6"], ["Electrolytes", "Blood test", "4"], ["LFT", "Blood test", "6"],
+    ["RBS", "Blood test", "2"], ["HbA1c", "Blood test", "24"], ["Lipid profile", "Blood test", "24"], ["Thyroid profile", "Blood test", "48"],
+    ["Troponin", "Blood test", "2"], ["CK-MB", "Blood test", "4"], ["D-dimer", "Blood test", "6"], ["PT / INR", "Blood test", "4"],
+    ["ABG", "Blood test", "1"], ["Serum lactate", "Blood test", "2"], ["Procalcitonin", "Blood test", "12"], ["CRP", "Blood test", "6"],
+    ["Peripheral smear", "Blood test", "12"], ["MP smear / QBC", "Blood test", "6"], ["Serum amylase / lipase", "Blood test", "6"],
+    ["Urine routine", "Blood test", "4"], ["CSF analysis", "Blood test", "6"], ["Pleural fluid analysis", "Blood test", "12"], ["Ascitic fluid analysis", "Blood test", "12"],
+    ["Blood culture", "Culture", "72"], ["Urine culture", "Culture", "48"], ["Sputum culture", "Culture", "48"], ["Pus culture", "Culture", "48"],
+    ["CSF culture", "Culture", "72"], ["ET aspirate culture", "Culture", "48"], ["Pleural fluid culture", "Culture", "72"], ["Ascitic fluid culture", "Culture", "72"],
+    ["Fungal culture", "Culture", "168"], ["CBNAAT (GeneXpert)", "Culture", "24"], ["Sputum AFB", "Culture", "24"],
+    ["Dengue NS1 / IgM", "Serology", "24"], ["Scrub typhus IgM", "Serology", "24"], ["Leptospira IgM", "Serology", "48"], ["Widal", "Serology", "24"],
+    ["HIV", "Serology", "24"], ["HBsAg", "Serology", "24"], ["Anti-HCV", "Serology", "24"], ["ANA / ENA", "Serology", "72"], ["Brucella", "Serology", "72"],
+    ["Chest X-ray report", "Imaging", "24"], ["USG abdomen", "Imaging", "24"], ["CT brain", "Imaging", "12"], ["CT chest / abdomen", "Imaging", "24"],
+    ["MRI brain", "Imaging", "48"], ["ECHO", "Imaging", "24"], ["Doppler", "Imaging", "24"], ["Endoscopy report", "Imaging", "24"],
+    ["Biopsy (HPE)", "Biopsy / cytology", "168"], ["FNAC", "Biopsy / cytology", "72"], ["Bone marrow", "Biopsy / cytology", "120"], ["Fluid cytology", "Biopsy / cytology", "72"]];
+
+  /** One-tap sets for the send form. */
+  static SETS = [
+    ["Admission bloods", "CBC", "RFT (urea, creatinine)", "Electrolytes", "LFT", "RBS", "Urine routine"],
+    ["Fever panel", "Dengue NS1 / IgM", "Scrub typhus IgM", "Leptospira IgM", "MP smear / QBC", "Widal", "Blood culture"],
+    ["Sepsis", "Blood culture", "Urine culture", "Procalcitonin", "Serum lactate", "CRP"],
+    ["Chest pain", "Troponin", "CK-MB", "ECHO"],
+    ["Viral markers", "HIV", "HBsAg", "Anti-HCV"]];
+
+  static names() {
+    const n = new Array(Results.TESTS.length).fill(null);
+    for (let i = 0; i < Results.TESTS.length; i++) n[i] = Results.TESTS[i][0];
+    return n;
+  }
+
+  static find(test) {
+    const t = Ui.nz(test).trim().toLowerCase();
+    if (t.isEmpty()) return null;
+    for (const r of Results.TESTS) if (r[0].toLowerCase().equals(t)) return r;
+    const tw = t.jsplit("[ (/,]+");
+    for (const r of Results.TESTS) {
+      const n = r[0].toLowerCase();
+      const nw = n.jsplit("[ (/,]+");
+      if (n.startsWith(t) && t.length >= 3) return r;
+      // same first word, and the second word too when both have one ("CT brain" is not "CT chest")
+      if (tw[0].length >= 2 && tw[0].equals(nw[0]) && (tw.length === 1 || nw.length === 1 || tw[1].equals(nw[1]))) return r;
+    }
+    return null;
+  }
+
+  /** The kind of a test: from the list, or guessed from words such as culture, CT or biopsy. */
+  static kindOf(test) {
+    const r = Results.find(test);
+    if (r != null) return r[1];
+    const t = Ui.nz(test).toLowerCase();
+    if (t.contains("culture") || t.contains("c/s") || t.contains("afb") || t.contains("cbnaat")) return "Culture";
+    if (t.contains("biopsy") || t.contains("hpe") || t.contains("fnac") || t.contains("cytology") || t.contains("marrow")) return "Biopsy / cytology";
+    if (t.matches(".*\\b(ct|mri|usg|x-ray|xray|echo|doppler|scan|endoscopy)\\b.*")) return "Imaging";
+    if (t.contains("igm") || t.contains("igg") || t.contains("serology") || t.contains("antibody") || t.contains("elisa")) return "Serology";
+    return "Blood test";
+  }
+
+  /** The usual hours until the report comes back. */
+  static hoursOf(test, kind) {
+    const r = Results.find(test);
+    if (r != null) return Integer.parseInt(r[2]);
+    const k = Ui.nz(kind);
+    if (k.equals("Culture")) return 72;
+    if (k.equals("Biopsy / cytology")) return 168;
+    if (k.equals("Imaging") || k.equals("Serology") || k.equals("Other")) return 24;
+    return 6;
+  }
+
+  static labOf(kind) {
+    if ("Culture".equals(kind) || "Serology".equals(kind)) return "Microbiology";
+    if ("Biopsy / cytology".equals(kind)) return "Pathology";
+    if ("Imaging".equals(kind)) return "Radiology";
+    return "Central lab";
+  }
+
+  // ---------------------------------------------------------------- records
+
+  static send(db, pid, test, at, lab, by) {
+    const kind = Results.kindOf(test);
+    const cv = new ContentValues();
+    cv.put("patient_id", pid);
+    cv.put("test", test.trim());
+    cv.put("kind", kind);
+    cv.put("sent", Protocols.stamp(at));
+    cv.put("due", Protocols.stamp(at.plusHours(Results.hoursOf(test, kind))));
+    cv.put("lab", Ui.nz(lab).isEmpty() ? Results.labOf(kind) : lab);
+    cv.put("by_name", Ui.nz(by));
+    return db.insert(Results.TABLE, cv);
+  }
+
+  static back(db, r, result, abnormal, by, at) {
+    const cv = new ContentValues();
+    cv.put("status", Results.BACK);
+    cv.put("result", Ui.nz(result).trim());
+    cv.put("abnormal", abnormal ? "1" : "");
+    cv.put("back_at", Protocols.stamp(at));
+    cv.put("back_by", Ui.nz(by));
+    db.update(Results.TABLE, cv, Long.parseLong(r.get("id")));
+  }
+
+  static seen(db, r, by) {
+    const cv = new ContentValues();
+    cv.put("seen_by", Ui.nz(by).isEmpty() ? "Doctor" : by);
+    cv.put("seen_at", Protocols.stamp(Protocols.now()));
+    db.update(Results.TABLE, cv, Long.parseLong(r.get("id")));
+  }
+
+  static cancel(db, r) {
+    const cv = new ContentValues();
+    cv.put("status", Results.CANCEL);
+    db.update(Results.TABLE, cv, Long.parseLong(r.get("id")));
+  }
+
+  static JOIN = "SELECT r.*, p.name AS pname, p.location AS loc, p.bed AS pbed, p.age AS page, p.sex AS psex, p.ip_no AS pip FROM "
+      + "inv_sent r JOIN patients p ON p.id = r.patient_id WHERE p.status='IN' ";
+  static ORDER = " ORDER BY p.location, p.bed, p.name, r.due";
+
+  /** Still waiting (in-patients only). */
+  static waiting(db) {
+    return db.rows(Results.JOIN + "AND r.status=''" + Results.ORDER);
+  }
+
+  static overdue(db, now) {
+    return db.rows(Results.JOIN + "AND r.status='' AND r.due<?" + Results.ORDER, Protocols.stamp(now));
+  }
+
+  /** Back but not yet seen by a doctor. */
+  static unseen(db) {
+    return db.rows(Results.JOIN + "AND r.status='BACK' AND r.seen_by=''" + Results.ORDER);
+  }
+
+  static forPatient(db, pid) {
+    return db.rows("SELECT * FROM " + Results.TABLE + " WHERE patient_id=? AND (status='' OR (status='BACK' AND (seen_by='' OR back_at>=?))) "
+        + "ORDER BY CASE WHEN status='BACK' AND seen_by='' THEN 0 WHEN status='' THEN 1 ELSE 2 END, due", String(pid),
+        Protocols.stamp(Protocols.now().minusDays(3)));
+  }
+
+  static waitingFor(db, pid) {
+    return db.num("SELECT COUNT(*) FROM " + Results.TABLE + " WHERE patient_id=? AND (status='' OR (status='BACK' AND seen_by=''))", String(pid));
+  }
+
+  static isLate(r, now) {
+    const d = Protocols.parse(r.get("due"));
+    return Ui.nz(r.get("status")).isEmpty() && d != null && d.isBefore(now);
+  }
+
+  /** "due in 3 h", "overdue 2 days", "back, not seen". */
+  static dueText(r, now) {
+    const st = Ui.nz(r.get("status"));
+    if (st.equals(Results.BACK)) return Ui.nz(r.get("seen_by")).isEmpty() ? "back, not seen" : "seen by " + r.get("seen_by");
+    if (st.equals(Results.CANCEL)) return "cancelled";
+    const d = Protocols.parse(r.get("due"));
+    if (d == null) return "";
+    const m = Duration.between(now, d).toMinutes();
+    const span = Results.span(Math.abs(m));
+    return m >= 0 ? "due in " + span : "OVERDUE " + span;
+  }
+
+  static span(minutes) {
+    if (minutes < 60) return minutes + " min";
+    const h = idiv(minutes, 60);
+    if (h < 48) return h + " h";
+    return idiv(h, 24) + " days";
+  }
+
+  /** Sent "19 Oct 9:40". */
+  static when(stamp) {
+    const t = Protocols.parse(stamp);
+    if (t == null) return Ui.nz(stamp);
+    return Dates.nice(t.toLocalDate().toString()) + " " + Ui.nz(stamp).substring(11);
+  }
+
+  /** Median hours from sent to back for each test with at least 3 results in the last 30 days: test, n, median, usual. */
+  static turnaround(db, now) {
+    const by = new JMap();
+    for (const r of db.rows("SELECT test, kind, sent, back_at FROM " + Results.TABLE + " WHERE status='BACK' AND back_at>=? ORDER BY test",
+        Protocols.stamp(now.minusDays(30)))) {
+      const s = Protocols.parse(r.get("sent")), b = Protocols.parse(r.get("back_at"));
+      if (s == null || b == null || b.isBefore(s)) continue;
+      const k = r.get("test");
+      if (!by.containsKey(k)) by.put(k, []);
+      by.get(k).add(Duration.between(s, b).toMinutes());
+    }
+    const out = [];
+    for (const e of by.entrySet()) {
+      const v = e.getValue();
+      if (v.size() < 3) continue;
+      v.sort((a, b) => a - b);
+      const med = v.size() % 2 === 1 ? v.get(idiv(v.size(), 2)) : idiv(v.get(idiv(v.size(), 2) - 1) + v.get(idiv(v.size(), 2)), 2);
+      out.add([e.getKey(), String(v.size()), Results.span(med), String(Results.hoursOf(e.getKey(), Results.kindOf(e.getKey()))),
+        med > Results.hoursOf(e.getKey(), Results.kindOf(e.getKey())) * 60 ? "1" : ""]);
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------- views
+
+  /** One test on a list: name, when sent, due or result, with Result / Seen buttons. */
+  static row(a, db, r, showPatient) {
+    const now = Protocols.now();
+    const box = Ui.v(a);
+    box.setPadding(0, Ui.dp(a, 6), 0, Ui.dp(a, 6));
+    const st = Ui.nz(r.get("status"));
+    const back = st.equals(Results.BACK), unseen = back && Ui.nz(r.get("seen_by")).isEmpty(), late = Results.isLate(r, now);
+    const abn = "1".equals(r.get("abnormal"));
+    const color = late || (unseen && abn) ? Ui.RED : unseen ? Results.COLOR : back ? Ui.MUTED : Ui.TEXT;
+    const icon = back ? (abn ? "⚠ " : "✓ ") : late ? "⏰ " : "🧪 ";
+    const t = Ui.tv(a, icon + Ui.nz(r.get("test")) + (back && !Ui.nz(r.get("result")).isEmpty() ? ": " + r.get("result") : ""), 15, color, unseen || late);
+    box.addView(t);
+    const sub = (showPatient ? Ui.nz(r.get("pname")) + "  ·  " + Db.shortName(r.get("loc")) + (Ui.nz(r.get("pbed")).isEmpty() ? "" : " bed " + r.get("pbed")) + "\n" : "")
+        + "Sent " + Results.when(r.get("sent")) + "  ·  " + Ui.nz(r.get("lab")) + "  ·  " + Results.dueText(r, now)
+        + (back ? "  ·  back " + Results.when(r.get("back_at")) : "");
+    const s = Ui.tv(a, sub, 12, late ? Ui.RED : Ui.MUTED, false);
+    box.addView(s);
+    const btns = Ui.h(a);
+    if (!back) btns.addView(Ui.button(a, "Result came", Results.COLOR, {
+      onClick: (v) => { Results.resultDialog(a, db, r); }
+    }));
+    if (unseen) btns.addView(Ui.button(a, "✓ Seen", abn ? Ui.RED : Ui.GREEN, {
+      onClick: (v) => {
+        Results.seen(db, r, CallDutyActivity.myName(a));
+        a.render();
+      }
+    }));
+    if (back && "Culture".equals(r.get("kind")) && db.num("SELECT COUNT(*) FROM cultures WHERE inv_id=?", r.get("id")) === 0)
+      btns.addView(Ui.outlineButton(a, "+ Sensitivity", Antibiogram.COLOR, a.opener(CultureActivity, "id", r.get("patient_id"), "inv", r.get("id"))));
+    if (btns.getChildCount() > 0) {
+      for (let i = 1; i < btns.getChildCount(); i++) Ui.margins(btns.getChildAt(i), 8, 0, 0, 0);
+      box.addView(btns);
+      Ui.margins(btns, 0, 6, 0, 0);
+    }
+    if (showPatient) box.setOnClickListener(a.opener(PatientActivity, "id", r.get("patient_id")));
+    box.setOnLongClickListener({
+      onLongClick: (v) => {
+        Results.editMenu(a, db, r);
+        return true;
+      }
+    });
+    return box;
+  }
+
+  static editMenu(a, db, r) {
+    new AlertDialog.Builder(a).setTitle(Ui.nz(r.get("test")))
+        .setItems(["Enter or change the result", "Not needed (take off the list)"], {
+          onClick: (d, w) => {
+            if (w === 0) Results.resultDialog(a, db, r);
+            else {
+              Results.cancel(db, r);
+              a.render();
+            }
+          }
+        }).setNegativeButton("Close", null).show();
+  }
+
+  /** The patient page's "Results awaited" section. */
+  static section(a, db, pid) {
+    const box = Ui.v(a);
+    const rows = Results.forPatient(db, pid);
+    const open = Results.waitingFor(db, pid);
+    box.addView(Ui.heading(a, "Results awaited  ·  " + open, Results.COLOR));
+    const card = Ui.card(a);
+    if (rows.isEmpty()) card.addView(Ui.muted(a, "Note each test when it is sent: it stays here until the result is entered and seen."));
+    for (const r of rows) card.addView(Results.row(a, db, r, false));
+    const add = Ui.outlineButton(a, "+ Tests sent", Results.COLOR, {
+      onClick: (v) => { Results.sendDialog(a, db, pid); }
+    });
+    card.addView(add);
+    Ui.margins(add, 0, 8, 0, 0);
+    box.addView(card);
+    return box;
+  }
+
+  /** Tick the tests sent (or a whole set), add others, and when they went. */
+  static sendDialog(a, db, pid) {
+    const f = new Form(a);
+    const picked = new JSet();
+    const sets = new Bands.Flow(a);
+    const chips = new Bands.Flow(a);
+    const paint = [null];
+    paint[0] = {
+      run: () => {
+        chips.removeAllViews();
+        for (const t of Results.TESTS) {
+          const on = picked.contains(t[0]);
+          const c = Ui.chip(a, t[0], on, Results.COLOR);
+          c.setOnClickListener({
+            onClick: (v) => {
+              if (on) picked.remove(t[0]);
+              else picked.add(t[0]);
+              paint[0].run();
+            }
+          });
+          chips.addView(c);
+        }
+      }
+    };
+    for (const s of Results.SETS) {
+      const c = Ui.chip(a, "+ " + s[0], false, Ui.TEAL);
+      c.setOnClickListener({
+        onClick: (v) => {
+          for (let i = 1; i < s.length; i++) picked.add(s[i]);
+          paint[0].run();
+        }
+      });
+      sets.addView(c);
+    }
+    paint[0].run();
+    f.view.addView(Ui.muted(a, "Sets"));
+    f.view.addView(sets);
+    f.view.addView(Ui.muted(a, "Tests"));
+    f.view.addView(chips);
+    f.suggest("other", "Other tests (separate with commas)", "", Results.names());
+    f.date("date", "Sent on", Dates.todayIso());
+    f.time("time", "Time", Dates.now());
+    const labs = new Array(Results.LABS.length + 1).fill(null);
+    labs[0] = "Usual for each test";
+    for (let i = 0; i < Results.LABS.length; i++) labs[i + 1] = Results.LABS[i];
+    const vals = new Array(labs.length).fill(null);
+    vals[0] = "";
+    for (let i = 0; i < Results.LABS.length; i++) vals[i + 1] = Results.LABS[i];
+    f.choice("lab", "Sent to", labs, vals, "", null);
+    Ui.formDialog(a, "Tests sent", f, "Save", {
+      run: () => {
+        const tests = ArrayList(picked);
+        for (const o of f.get("other").jsplit("[,;\\n]")) if (!o.trim().isEmpty()) tests.add(o.trim());
+        if (tests.isEmpty()) {
+          Ui.toast(a, "Tick or write at least one test");
+          return false;
+        }
+        let at = Protocols.parse(f.get("date") + " " + f.get("time"));
+        if (at == null) at = Protocols.now();
+        const by = CallDutyActivity.myName(a);
+        for (const t of tests) Results.send(db, pid, t, at, f.get("lab"), by);
+        Ui.toast(a, tests.size() + (tests.size() === 1 ? " test" : " tests") + " on the list");
+        a.render();
+        return true;
+      }
+    });
+  }
+
+  /** Enter the result; a culture result offers the sensitivity form for the antibiogram. */
+  static resultDialog(a, db, r) {
+    const f = new Form(a);
+    f.multi("result", "Result (" + Ui.nz(r.get("test")) + ")", Ui.nz(r.get("result")));
+    f.check("abnormal", "Abnormal: needs attention", "1".equals(r.get("abnormal")));
+    f.date("date", "Came back on", Dates.todayIso());
+    f.time("time", "Time", Dates.now());
+    f.check("seen", "I have seen it (no reminder)", true);
+    Ui.formDialog(a, "Result", f, "Save", {
+      run: () => {
+        if (!f.require("result", "Write the result (or 'normal')")) return false;
+        const at = Protocols.parse(f.get("date") + " " + f.get("time"));
+        const me = CallDutyActivity.myName(a);
+        Results.back(db, r, f.get("result"), "1".equals(f.get("abnormal")), me, at == null ? Protocols.now() : at);
+        const fresh = db.row("SELECT * FROM " + Results.TABLE + " WHERE id=?", r.get("id"));
+        if ("1".equals(f.get("seen")) && fresh != null) Results.seen(db, fresh, me);
+        if ("Culture".equals(r.get("kind")) && !f.get("result").toLowerCase().matches(".*\\b(no growth|sterile|negative|not detected)\\b.*")) {
+          new AlertDialog.Builder(a).setTitle("Add the sensitivity?")
+              .setMessage("Enter the organism and its sensitivity pattern, so it counts in the department's antibiogram.")
+              .setPositiveButton("Add now", {
+                onClick: (d, w) => {
+                  a.open(CultureActivity, "id", r.get("patient_id"), "inv", r.get("id"));
+                }
+              }).setNegativeButton("Later", null).show();
+        }
+        a.render();
+        return true;
+      }
+    });
+  }
+
+  /** Home card when tests are overdue or results lie unseen; null otherwise. */
+  static homeCard(a, db) {
+    const late = Results.overdue(db, Protocols.now()).size(), un = Results.unseen(db).size();
+    if (late + un === 0) return null;
+    const card = Ui.card(a);
+    card.addView(Ui.softPill(a, "PENDING RESULTS", late > 0 ? Ui.RED : Results.COLOR));
+    const bits = [];
+    if (late > 0) bits.add(late + (late === 1 ? " test overdue" : " tests overdue"));
+    if (un > 0) bits.add(un + (un === 1 ? " result back, not seen" : " results back, not seen"));
+    const t = Ui.tv(a, "🧪 " + TextUtils.join("  ·  ", bits), 16, Ui.TEXT, true);
+    card.addView(t);
+    Ui.margins(t, 0, 6, 0, 0);
+    const go = Ui.outlineButton(a, "Open pending results", late > 0 ? Ui.RED : Results.COLOR, a.opener(ResultsActivity, "tab", un > 0 && late === 0 ? "unseen" : "late"));
+    card.addView(go);
+    Ui.margins(go, 0, 10, 0, 0);
+    const c = late > 0 ? Ui.RED : Results.COLOR;
+    const g = Ui.round(a, Ui.mix(c, Color.WHITE, 0.93), 18);
+    g.setStroke(Ui.dp(a, 2), c);
+    card.setBackground(g);
+    return card;
+  }
+}
+;
+/* ---- app/ResultsActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Pending results of every in-patient, ward by ward: waiting, overdue, back but not seen, and how long the labs take. */
+class ResultsActivity extends Base {
+  static TABS = ["late", "unseen", "all", "tat"];
+
+  constructor() { super(); this.tab = "late"; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const t = b != null ? b.getString("tab") : this.getIntent().getStringExtra("tab");
+    if (t != null) this.tab = t;
+    else if (Results.overdue(this.db, Protocols.now()).isEmpty()) this.tab = Results.unseen(this.db).isEmpty() ? "all" : "unseen";
+    this.setTitle("Pending results");
+    this.subtitle = "Tests sent and not back, results not yet seen";
+    this.headerColor(Results.COLOR);
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("tab", this.tab);
+  }
+
+  tabChip(key, label, color) {
+    const c = Ui.chip(this, label, this.tab.equals(key), color);
+    c.setOnClickListener({
+      onClick: (v) => {
+        this.tab = key;
+        this.render();
+      }
+    });
+    return c;
+  }
+
+  render() {
+    const now = Protocols.now();
+    const page = Ui.v(this);
+    const late = Results.overdue(this.db, now), unseen = Results.unseen(this.db), all = Results.waiting(this.db);
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), 0);
+    chips.addView(this.tabChip("late", "Overdue · " + late.size(), Ui.RED));
+    chips.addView(this.tabChip("unseen", "Back, not seen · " + unseen.size(), Results.COLOR));
+    chips.addView(this.tabChip("all", "Waiting · " + all.size(), Ui.SLATE));
+    chips.addView(this.tabChip("tat", "Lab turnaround", Ui.TEAL));
+    page.addView(Ui.hscroll(this, chips));
+
+    if (this.tab.equals("tat")) {
+      page.addView(Ui.heading(this, "Median time to report  ·  last 30 days", Ui.TEAL));
+      const tat = Results.turnaround(this.db, now);
+      if (tat.isEmpty()) page.addView(this.emptyNote("Shows once a test has 3 or more results entered in the last 30 days."));
+      else {
+        const card = Ui.card(this);
+        for (const t of tat) {
+          const r = Ui.h(this);
+          r.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
+          r.addView(Ui.tv(this, t[0], 14, Ui.TEXT, true), Ui.weight(1.4));
+          r.addView(Ui.tv(this, t[1] + " tests", 13, Ui.MUTED, false), Ui.weight(0.8));
+          r.addView(Ui.tv(this, t[2] + " (usual " + t[3] + " h)", 13, "1".equals(t[4]) ? Ui.RED : Ui.GREEN, true), Ui.weight(1.3));
+          card.addView(r);
+        }
+        page.addView(card);
+        page.addView(this.emptyNote("Red: slower than the usual time. From sent to the result entered in TVMCHMED."));
+      }
+      this.setPage(page);
+      return;
+    }
+
+    const rows = this.tab.equals("late") ? late : this.tab.equals("unseen") ? unseen : all;
+    if (rows.isEmpty()) page.addView(this.emptyNote(this.tab.equals("late") ? "Nothing overdue." : this.tab.equals("unseen") ? "Every result that came back has been seen."
+        : "No tests waiting. Note tests from a patient's page: + Tests sent."));
+    let lastWard = null, lastPatient = null;
+    let card = null;
+    for (const r of rows) {
+      if (!r.get("loc").equals(lastWard)) {
+        lastWard = r.get("loc");
+        lastPatient = null;
+        let n = 0;
+        for (const x of rows) if (lastWard.equals(x.get("loc"))) n++;
+        page.addView(Ui.heading(this, Db.unitName(lastWard) + "  ·  " + n, Ui.unitColor(lastWard)));
+      }
+      if (!r.get("patient_id").equals(lastPatient)) {
+        lastPatient = r.get("patient_id");
+        card = Ui.card(this);
+        const name = Ui.tv(this, r.get("pname") + "  ·  " + Ui.nz(r.get("page")) + Ui.nz(r.get("psex"))
+            + (Ui.nz(r.get("pbed")).isEmpty() ? "" : "  ·  bed " + r.get("pbed")), 15, Ui.TEXT, true);
+        name.setOnClickListener(this.opener(PatientActivity, "id", r.get("patient_id")));
+        card.addView(name);
+        page.addView(card);
+      }
+      card.addView(Results.row(this, this.db, r, false));
+    }
+    this.setPage(page);
+  }
+}
+;
 /* ---- app/Roster.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -51591,6 +60310,8 @@ class SettingsActivity extends Base {
     }
 
     const page = Ui.v(this);
+    // first on the page so it is easy to find (9.01)
+    page.addView(this.phoneCard());
     if (Cloud.isOwner(this)) {
       this.adminBox = Ui.v(this);
       page.addView(this.adminBox);
@@ -51672,6 +60393,15 @@ class SettingsActivity extends Base {
     row2.addView(sw2);
     c.addView(row2);
     Ui.margins(row2, 0, 14, 0, 0);
+    const memoOn = Memo.on(this.db);
+    c.addView(this.switchRow("Memo section", memoOn ? "On: faculty can issue memos calling for an explanation" : "Off on every phone: the Memo section is hidden",
+      memoOn, memoOn ? Ui.GREEN : Ui.RED, {
+        onCheckedChanged: (b, v) => {
+          Memo.set(this.db, v);
+          Ui.toast(this, v ? "Memo section is now on for everyone" : "Memo section is now off for everyone");
+          this.fillAdmin();
+        }
+      }));
     this.adminBox.addView(c);
     const bk = Ui.card(this);
     bk.addView(Ui.tv(this, "Nightly backup", 15, Ui.TEXT, true));
@@ -52037,6 +60767,49 @@ class SettingsActivity extends Base {
   }
 
   /** Light or dark look, and the tour and version notes again (8.10). */
+  /** This phone's own switches (9.00): every notification, and the ✨ AI Copilot button. */
+  phoneCard() {
+    const card = Ui.card(this);
+    card.addView(Ui.tv(this, "On this phone", 16, Ui.TEXT, true));
+    const nOn = Notify.on(this);
+    card.addView(this.switchRow("Notifications", nOn ? "On: chats, HOD messages, approvals, reminders, calls and updates"
+      : "All notifications are off on this phone. Open the app to see what is new.", nOn, nOn ? Ui.GREEN : Ui.RED,
+      {
+        onCheckedChanged: (b, v) => {
+          Notify.set(this, v);
+          Ui.toast(this, v ? "Notifications are on" : "All notifications are off on this phone");
+          this.recreate();
+        }
+      }));
+    const cOn = Copilot.enabled(this);
+    card.addView(this.switchRow("✨ AI Copilot", cOn ? "On: the ✨ button on every screen (ask, fill forms, draft notes). Names never leave the phone."
+      : "Off: no ✨ button on any screen", cOn, cOn ? Copilot.COLOR : Ui.MUTED,
+      {
+        onCheckedChanged: (b, v) => {
+          Copilot.setEnabled(this, v);
+          Ui.toast(this, v ? "AI Copilot is on" : "AI Copilot is off");
+          this.recreate();
+        }
+      }));
+    return card;
+  }
+
+  /** A title, a coloured state line and an on/off switch. */
+  switchRow(title, state, on, color, l) {
+    const row = Ui.h(this);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(0, Ui.dp(this, 12), 0, 0);
+    const t = Ui.v(this);
+    t.addView(Ui.tv(this, title, 15, Ui.TEXT, true));
+    t.addView(Ui.tv(this, state, 13, color, true));
+    row.addView(t, Ui.weight(1));
+    const sw = new Switch(this);
+    sw.setChecked(on);
+    sw.setOnCheckedChangeListener(l);
+    row.addView(sw);
+    return row;
+  }
+
   lookCard() {
     const card = Ui.card(this);
     card.addView(Ui.tv(this, "Look", 16, Ui.TEXT, true));
@@ -52247,6 +61020,13 @@ class SpotActivity extends Base {
     this.subtitle = "Discussion for faculty and students";
     this.headerColors = Spots.gradient(kind);
     if (s != null && Spots.canEdit(this, s)) this.headerAction("Edit", this.opener(SpotEditActivity, "id", String(this.id)));
+    else if (s != null && Conduct.canReport(this, s.get("staff_id"))) this.headerAction("🚩 Report", {
+      onClick: (v) => {
+        const r = this.db.row("SELECT * FROM spots WHERE id=?", String(this.id));
+        if (r != null) Conduct.report(this, "spots", r.get("id"), r.get("staff_id"), r.get("name"),
+          Ui.nz(r.get("title")) + "\n" + Ui.nz(r.get("history")) + "\n" + Ui.nz(r.get("question")), r.get("image"));
+      }
+    });
   }
 
   liveRefresh() {
@@ -52375,6 +61155,14 @@ class SpotActivity extends Base {
     const body = Ui.body(this, Ui.nz(c.get("text")));
     b.addView(body);
     Ui.margins(body, 0, 4, 0, 0);
+    if (!me && !SessionAttendance.canRun(this) && Conduct.canReport(this, c.get("staff_id"))) {
+      b.setOnLongClickListener({
+        onLongClick: (v) => {
+          Conduct.report(this, "spot_comments", c.get("id"), c.get("staff_id"), c.get("name"), c.get("text"), null);
+          return true;
+        }
+      });
+    }
     if (me || SessionAttendance.canRun(this)) {
       b.setOnLongClickListener({
         onLongClick: (v) => {
@@ -52900,7 +61688,9 @@ class StaffActivity extends Base {
     const row = Ui.h(this);
     row.setGravity(Gravity.CENTER_VERTICAL);
     row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+    row.addView(People.avatar(this, s, 40, StaffActivity.CAT_COLORS[this.cat]));
     const t = Ui.v(this);
+    t.setPadding(Ui.dp(this, 10), 0, 0, 0);
     t.addView(Ui.tv(this, s.get("name"), 15, Ui.TEXT, true));
     const bits = [];
     if (!Ui.nz(s.get("reg_no")).isEmpty()) bits.add(s.get("reg_no"));
@@ -53151,6 +61941,318 @@ class StaffActivity extends Base {
     });
   }
 }
+;
+/* ---- app/Stats.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Simple statistics for PG thesis data (8.40): summaries, chi-square test of a 2-way table, Welch's t-test and Pearson's
+ * correlation, with p values from the regularized incomplete gamma and beta functions (Numerical Recipes). Pure Java, no Android.
+ */
+class Stats {
+  static summary(v) {
+    const s = new Stats.Summary();
+    s.n = v.length;
+    if (v.length === 0) return s;
+    const x = v.slice();
+    x.sort((p, q) => p - q);
+    let sum = 0;
+    for (const d of x) sum += d;
+    s.mean = sum / x.length;
+    let ss = 0;
+    for (const d of x) ss += (d - s.mean) * (d - s.mean);
+    s.sd = x.length > 1 ? Math.sqrt(ss / (x.length - 1)) : 0;
+    s.median = Stats.quantile(x, 0.5);
+    s.q1 = Stats.quantile(x, 0.25);
+    s.q3 = Stats.quantile(x, 0.75);
+    s.min = x[0];
+    s.max = x[x.length - 1];
+    return s;
+  }
+
+  /** Linear interpolation between order statistics (type 7, as in R and Excel). x sorted. */
+  static quantile(x, p) {
+    if (x.length === 1) return x[0];
+    const h = (x.length - 1) * p;
+    const lo = Math.floor(h);
+    const hi = Math.min(x.length - 1, lo + 1);
+    return x[lo] + (h - lo) * (x[hi] - x[lo]);
+  }
+
+  /** Counts of each value, in order of first appearance unless an order is given. */
+  static counts(values, order) {
+    const m = new JMap();
+    if (order != null) for (const o of order) m.put(o, 0);
+    for (const v of values) {
+      if (v == null || v.trim().isEmpty()) continue;
+      m.put(v, (m.containsKey(v) ? m.get(v) : 0) + 1);
+    }
+    return m;
+  }
+
+  /** Pearson chi-square test of independence on a table of counts [row][col]; rows/cols with no counts are dropped. */
+  static chiSquare(t) {
+    const rows = [];
+    for (const r of t) {
+      let s = 0;
+      for (const v of r) s += v;
+      if (s > 0) rows.add(r);
+    }
+    const cols = t.length === 0 ? 0 : t[0].length;
+    const keep = [];
+    for (let j = 0; j < cols; j++) {
+      let s = 0;
+      for (const r of rows) s += r[j];
+      if (s > 0) keep.add(j);
+    }
+    const res = new Stats.Test();
+    res.name = "Chi-square test";
+    const R = rows.size(), C = keep.size();
+    if (R < 2 || C < 2) {
+      res.p = NaN;
+      res.note = "Needs at least two groups with data on each side.";
+      return res;
+    }
+    const rs = new Array(R).fill(0), cs = new Array(C).fill(0);
+    let n = 0;
+    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
+      const v = rows.get(i)[keep.get(j)];
+      rs[i] += v;
+      cs[j] += v;
+      n += v;
+    }
+    let chi = 0;
+    let small = 0;
+    for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) {
+      const e = rs[i] * cs[j] / n;
+      if (e < 5) small++;
+      const o = rows.get(i)[keep.get(j)];
+      chi += (o - e) * (o - e) / e;
+    }
+    res.stat = chi;
+    res.df = (R - 1) * (C - 1);
+    res.p = Stats.gammaQ(res.df / 2.0, chi / 2.0);
+    if (small > 0 && R === 2 && C === 2) {
+      res.p = Stats.fisher2x2(rows.get(0)[keep.get(0)], rows.get(0)[keep.get(1)], rows.get(1)[keep.get(0)], rows.get(1)[keep.get(1)]);
+      res.name = "Fisher's exact test";
+      res.note = "Expected counts below 5, so Fisher's exact test is used.";
+    } else if (small > 0) res.note = "Some expected counts are below 5: interpret with caution or merge groups.";
+    return res;
+  }
+
+  /** Two-sided Fisher's exact test for a 2x2 table. */
+  static fisher2x2(a, b, c, d) {
+    const r1 = a + b, r2 = c + d, c1 = a + c, n = r1 + r2;
+    const pObs = Stats.hyper(a, r1, c1, n);
+    let p = 0;
+    const lo = Math.max(0, c1 - r2), hi = Math.min(r1, c1);
+    for (let x = lo; x <= hi; x++) {
+      const px = Stats.hyper(x, r1, c1, n);
+      if (px <= pObs * (1 + 1e-7)) p += px;
+    }
+    return Math.min(1, p);
+  }
+
+  static hyper(x, r1, c1, n) {
+    return Math.exp(Stats.lnChoose(r1, x) + Stats.lnChoose(n - r1, c1 - x) - Stats.lnChoose(n, c1));
+  }
+
+  static lnChoose(n, k) {
+    return Stats.lnGamma(n + 1) - Stats.lnGamma(k + 1) - Stats.lnGamma(n - k + 1);
+  }
+
+  /** Welch's two-sample t-test (unequal variances), two-sided. */
+  static tTest(a, b) {
+    const r = new Stats.Test();
+    r.name = "Student's t-test (Welch)";
+    if (a.length < 2 || b.length < 2) {
+      r.p = NaN;
+      r.note = "Needs at least two values in each group.";
+      return r;
+    }
+    const x = Stats.summary(a), y = Stats.summary(b);
+    const va = x.sd * x.sd / a.length, vb = y.sd * y.sd / b.length;
+    if (va + vb === 0) {
+      r.p = x.mean === y.mean ? 1 : 0;
+      return r;
+    }
+    r.stat = (x.mean - y.mean) / Math.sqrt(va + vb);
+    r.df = (va + vb) * (va + vb) / (va * va / (a.length - 1) + vb * vb / (b.length - 1));
+    r.p = Stats.tTwoSided(r.stat, r.df);
+    return r;
+  }
+
+  /** One-way ANOVA for three or more groups. */
+  static anova(groups) {
+    const r = new Stats.Test();
+    r.name = "One-way ANOVA";
+    let k = 0, n = 0;
+    let grand = 0;
+    for (const g of groups) if (g.length > 0) {
+      k++;
+      n += g.length;
+      for (const v of g) grand += v;
+    }
+    if (k < 2 || n - k < 1) {
+      r.p = NaN;
+      r.note = "Needs at least two groups with values.";
+      return r;
+    }
+    grand /= n;
+    let ssb = 0, ssw = 0;
+    for (const g of groups) if (g.length > 0) {
+      const s = Stats.summary(g);
+      ssb += g.length * (s.mean - grand) * (s.mean - grand);
+      for (const v of g) ssw += (v - s.mean) * (v - s.mean);
+    }
+    const df1 = k - 1, df2 = n - k;
+    if (ssw === 0) {
+      r.p = ssb === 0 ? 1 : 0;
+      return r;
+    }
+    r.stat = (ssb / df1) / (ssw / df2);
+    r.df = df1;
+    r.note = "F(" + Stats.fmt(df1) + ", " + Stats.fmt(df2) + ")";
+    r.p = Stats.betaI(df2 / 2.0, df1 / 2.0, df2 / (df2 + df1 * r.stat));
+    return r;
+  }
+
+  /** Pearson correlation r and its two-sided p (t with n-2 df). */
+  static pearson(x, y) {
+    const r = new Stats.Test();
+    r.name = "Pearson correlation";
+    const n = Math.min(x.length, y.length);
+    if (n < 3) {
+      r.p = NaN;
+      r.note = "Needs at least three pairs.";
+      return r;
+    }
+    let mx = 0, my = 0;
+    for (let i = 0; i < n; i++) { mx += x[i]; my += y[i]; }
+    mx /= n;
+    my /= n;
+    let sxy = 0, sxx = 0, syy = 0;
+    for (let i = 0; i < n; i++) {
+      sxy += (x[i] - mx) * (y[i] - my);
+      sxx += (x[i] - mx) * (x[i] - mx);
+      syy += (y[i] - my) * (y[i] - my);
+    }
+    if (sxx === 0 || syy === 0) {
+      r.p = NaN;
+      r.note = "One of the two has the same value in every case.";
+      return r;
+    }
+    const rr = sxy / Math.sqrt(sxx * syy);
+    r.stat = rr;
+    r.df = n - 2;
+    const t = Math.abs(rr) >= 1 ? 1e9 : rr * Math.sqrt((n - 2) / (1 - rr * rr));
+    r.p = Stats.tTwoSided(t, n - 2);
+    return r;
+  }
+
+  static tTwoSided(t, df) {
+    return Stats.betaI(df / 2.0, 0.5, df / (df + t * t));
+  }
+
+  // ---------------------------------------------------------------- special functions
+
+  static lnGamma(x) {
+    const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+    let y = x, tmp = x + 5.5;
+    tmp -= (x + 0.5) * Math.log(tmp);
+    let ser = 1.000000000190015;
+    for (const v of c) ser += v / ++y;
+    return -tmp + Math.log(2.5066282746310005 * ser / x);
+  }
+
+  /** Upper regularized incomplete gamma Q(a, x) = 1 - P(a, x). */
+  static gammaQ(a, x) {
+    if (x <= 0) return 1;
+    if (x < a + 1) {
+      let ap = a, sum = 1.0 / a, del = sum;
+      for (let n = 0; n < 500; n++) {
+        ap++;
+        del *= x / ap;
+        sum += del;
+        if (Math.abs(del) < Math.abs(sum) * 1e-14) break;
+      }
+      return 1 - sum * Math.exp(-x + a * Math.log(x) - Stats.lnGamma(a));
+    }
+    let b = x + 1 - a, c = 1 / 1e-300, d = 1 / b, h = d;
+    for (let i = 1; i < 500; i++) {
+      const an = -i * (i - a);
+      b += 2;
+      d = an * d + b;
+      if (Math.abs(d) < 1e-300) d = 1e-300;
+      c = b + an / c;
+      if (Math.abs(c) < 1e-300) c = 1e-300;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < 1e-14) break;
+    }
+    return Math.exp(-x + a * Math.log(x) - Stats.lnGamma(a)) * h;
+  }
+
+  /** Regularized incomplete beta I_x(a, b). */
+  static betaI(a, b, x) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const bt = Math.exp(Stats.lnGamma(a + b) - Stats.lnGamma(a) - Stats.lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    if (x < (a + 1) / (a + b + 2)) return bt * Stats.betacf(a, b, x) / a;
+    return 1 - bt * Stats.betacf(b, a, 1 - x) / b;
+  }
+
+  static betacf(a, b, x) {
+    const qab = a + b, qap = a + 1, qam = a - 1;
+    let c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < 1e-300) d = 1e-300;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= 500; m++) {
+      const m2 = 2 * m;
+      let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < 1e-300) d = 1e-300;
+      c = 1 + aa / c;
+      if (Math.abs(c) < 1e-300) c = 1e-300;
+      d = 1 / d;
+      h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d;
+      if (Math.abs(d) < 1e-300) d = 1e-300;
+      c = 1 + aa / c;
+      if (Math.abs(c) < 1e-300) c = 1e-300;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < 1e-14) break;
+    }
+    return h;
+  }
+
+  static fmt(v) {
+    if (Number.isNaN(v)) return "-";
+    if (Math.abs(v) >= 100 || v === Math.rint(v)) return jfmt("%.0f", v);
+    if (Math.abs(v) >= 10) return jfmt("%.1f", v);
+    return jfmt("%.2f", v);
+  }
+
+  static pText(p) {
+    if (Number.isNaN(p)) return "p not available";
+    if (p < 0.001) return "p < 0.001";
+    return "p = " + jfmt("%.3f", p);
+  }
+}
+
+Stats.Summary = class {
+  constructor() { this.n = 0; this.mean = 0; this.sd = 0; this.median = 0; this.q1 = 0; this.q3 = 0; this.min = 0; this.max = 0; }
+};
+
+/** Result of a test: the statistic, degrees of freedom, p, and the test's name. */
+Stats.Test = class {
+  constructor() { this.name = null; this.stat = 0; this.df = 0; this.p = 0; this.note = ""; }
+};
 ;
 /* ---- app/SummaryExport.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -54613,6 +63715,907 @@ class TasksActivity extends Base {
   }
 }
 ;
+/* ---- app/Thesis.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Thesis helper (8.40): a PG's data-collection form kept on their dissertation (fields as JSON), one row per case in
+ * thesis_cases, cases picked from the wards with the age, sex, diagnosis, stay and labs filled in, a de-identified master chart
+ * (CSV for Excel) and simple statistics. Names and IP numbers never go into the master chart.
+ */
+class Thesis {
+  static COLOR = 0xFF7C3AED;
+  static NUMBER = "number";
+  static CHOICE = "choice";
+  static YESNO = "yesno";
+  static TEXT = "text";
+  static DATE = "date";
+  static TYPES = [Thesis.NUMBER, Thesis.CHOICE, Thesis.YESNO, Thesis.TEXT, Thesis.DATE];
+  static TYPE_NAMES = ["Number", "Choice (one of a list)", "Yes / No", "Text", "Date"];
+  static AI_MARK = "Design a data collection form";
+
+  /** source key, label: where a field is filled from when a case is picked from the wards. */
+  static sources() {
+    const s = [];
+    s.add(["", "Typed by hand"]);
+    s.add(["age", "Age (years)"]);
+    s.add(["sex", "Sex"]);
+    s.add(["diagnosis", "Diagnosis"]);
+    s.add(["admit_date", "Admission date"]);
+    s.add(["outcome", "Outcome (discharged / died / in ward)"]);
+    s.add(["stay", "Days in hospital"]);
+    for (const p of Labs.PARAMS) {
+      s.add(["first:" + p.key, p.name + " on admission (first)"]);
+      s.add(["last:" + p.key, p.name + ", latest"]);
+    }
+    return s;
+  }
+
+  /** Ready fields a PG can add with one tap: label, type, unit, options, source. */
+  static COMMON = [
+    ["Age", Thesis.NUMBER, "years", "", "age"], ["Sex", Thesis.CHOICE, "", "Male|Female", "sex"], ["Diagnosis", Thesis.TEXT, "", "", "diagnosis"],
+    ["Outcome", Thesis.CHOICE, "", "Discharged|Died|In ward", "outcome"], ["Days in hospital", Thesis.NUMBER, "days", "", "stay"],
+    ["Hb on admission", Thesis.NUMBER, "g/dL", "", "first:hb"], ["Platelets on admission", Thesis.NUMBER, "lakh/µL", "", "first:plt"],
+    ["Creatinine on admission", Thesis.NUMBER, "mg/dL", "", "first:creat"], ["Sodium on admission", Thesis.NUMBER, "mEq/L", "", "first:na"],
+    ["Diabetes", Thesis.YESNO, "", "", ""], ["Hypertension", Thesis.YESNO, "", "", ""], ["Smoker", Thesis.YESNO, "", "", ""]];
+
+  static fields(diss) {
+    try {
+      return new JSONArray(Ui.nz(diss.get("fields")).isEmpty() ? "[]" : diss.get("fields"));
+    } catch (e) {
+      return new JSONArray();
+    }
+  }
+
+  static saveFields(db, dissId, f) {
+    const cv = new ContentValues();
+    cv.put("fields", f.toString());
+    db.update("dissertations", cv, dissId);
+  }
+
+  static newKey(f) {
+    let max = 0;
+    for (let i = 0; i < f.length(); i++) {
+      const k = f.optJSONObject(i).optString("k");
+      if (k.startsWith("f")) try { max = Math.max(max, Integer.parseInt(k.substring(1))); } catch (ignored) { }
+    }
+    return "f" + (max + 1);
+  }
+
+  static field(key, label, type, unit, options, src) {
+    const o = new JSONObject();
+    try {
+      o.put("k", key).put("label", label.trim()).put("type", type).put("unit", Ui.nz(unit).trim()).put("options", Ui.nz(options).trim()).put("src", Ui.nz(src));
+    } catch (ignored) {
+    }
+    return o;
+  }
+
+  static options(f) {
+    if (Thesis.YESNO.equals(f.optString("type"))) return ["Yes", "No"];
+    const out = [];
+    for (const s of f.optString("options").jsplit("\\|")) if (!s.trim().isEmpty()) out.add(s.trim());
+    return out;
+  }
+
+  static typeName(t) {
+    for (let i = 0; i < Thesis.TYPES.length; i++) if (Thesis.TYPES[i].equals(t)) return Thesis.TYPE_NAMES[i];
+    return t;
+  }
+
+  // ---------------------------------------------------------------- cases
+
+  static cases(db, dissId) {
+    return db.rows("SELECT * FROM thesis_cases WHERE diss_id=? ORDER BY case_no, id", String(dissId));
+  }
+
+  static data(c) {
+    try {
+      return new JSONObject(Ui.nz(c.get("data")).isEmpty() ? "{}" : c.get("data"));
+    } catch (e) {
+      return new JSONObject();
+    }
+  }
+
+  static saveCase(db, dissId, caseId, patientId, data, by) {
+    const cv = new ContentValues();
+    cv.put("data", data.toString());
+    if (caseId > 0) {
+      db.update("thesis_cases", cv, caseId);
+      return caseId;
+    }
+    cv.put("diss_id", dissId);
+    cv.put("case_no", db.num("SELECT COALESCE(MAX(case_no), 0) FROM thesis_cases WHERE diss_id=?", String(dissId)) + 1);
+    cv.put("patient_id", patientId);
+    cv.put("date", Dates.todayIso());
+    cv.put("by_name", Ui.nz(by));
+    cv.put("created", Dates.todayIso() + " " + Dates.now());
+    const id = db.insert("thesis_cases", cv);
+    // the dissertation's "cases collected" follows the data
+    const dv = new ContentValues();
+    dv.put("collected", String(db.num("SELECT COUNT(*) FROM thesis_cases WHERE diss_id=?", String(dissId))));
+    db.update("dissertations", dv, dissId);
+    return id;
+  }
+
+  /** A field's value for a ward patient (by its source), or "". */
+  static fromPatient(db, p, src) {
+    if (src == null || src.isEmpty()) return "";
+    if (src === "age") return Ui.nz(p.get("age"));
+    if (src === "sex") return "F".equals(p.get("sex")) ? "Female" : "M".equals(p.get("sex")) ? "Male" : "";
+    if (src === "diagnosis") return Ui.nz(p.get("diagnosis"));
+    if (src === "admit_date") return Ui.nz(p.get("admit_date"));
+    if (src === "outcome") return Db.DIED.equals(p.get("status")) ? "Died" : Db.IN.equals(p.get("status")) ? "In ward" : "Discharged";
+    if (src === "stay") {
+      const a = Dates.parse(p.get("admit_date"));
+      const b = Db.IN.equals(p.get("status")) ? Dates.today() : Dates.parse(p.get("outcome_date"));
+      return a == null || b == null || b.isBefore(a) ? "" : String(b.toEpochDay() - a.toEpochDay());
+    }
+    const c = src.indexOf(':');
+    if (c > 0) {
+      const which = src.substring(0, c), key = src.substring(c + 1).replaceAllRx("[^a-z]", "");
+      const l = db.row("SELECT " + key + " FROM labs WHERE patient_id=? AND " + key + "<>'' ORDER BY date " + ("first".equals(which) ? "ASC" : "DESC")
+          + ", time " + ("first".equals(which) ? "ASC" : "DESC") + " LIMIT 1", Ui.nz(p.get("id")));
+      return l == null ? "" : Ui.nz(l.get(key));
+    }
+    return "";
+  }
+
+  /** A new case's values from a ward patient: every field that has a source. */
+  static prefill(db, fields, p) {
+    const o = new JSONObject();
+    for (let i = 0; i < fields.length(); i++) {
+      const f = fields.optJSONObject(i);
+      const v = Thesis.fromPatient(db, p, f.optString("src"));
+      if (!v.isEmpty()) try { o.put(f.optString("k"), v); } catch (ignored) { }
+    }
+    return o;
+  }
+
+  /** Patients whose diagnosis has one of the match words (| separated), newest first, not yet in the thesis. */
+  static suggestions(db, diss) {
+    const out = [];
+    const words = Ui.nz(diss.get("match_words")).trim().toLowerCase();
+    if (words.isEmpty()) return out;
+    const used = new JSet();
+    for (const c of Thesis.cases(db, Long.parseLong(diss.get("id")))) used.add(Ui.nz(c.get("patient_id")));
+    for (const p of db.rows("SELECT * FROM patients ORDER BY admit_date DESC, id DESC LIMIT 600")) {
+      if (used.contains(p.get("id"))) continue;
+      const dx = Ui.nz(p.get("diagnosis")).toLowerCase();
+      for (const w of words.jsplit("\\|")) if (!w.trim().isEmpty() && dx.contains(w.trim())) { out.add(p); break; }
+      if (out.size() >= 40) break;
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------- AI field suggestions
+
+  static aiSystem() {
+    return Thesis.AI_MARK + " (proforma) for a postgraduate MD General Medicine thesis in an Indian government medical college. "
+        + "List 10 to 25 variables needed to answer the aim, in the order they are collected. One per line, exactly as:\n"
+        + "Label | type | unit or options\n"
+        + "type is one of: number, choice, yesno, text, date. For choice give the options separated by /. No numbering, no markdown, "
+        + "no patient identifiers (no name, IP number, address or phone).";
+  }
+
+  static aiUser(diss) {
+    return "Thesis title: " + Ui.nz(diss.get("title")) + "\nStudy design: " + Ui.nz(diss.get("design")) + "\nSample size: " + Ui.nz(diss.get("sample_size"));
+  }
+
+  static LINE = Pattern.compile("^\\s*(?:[-*•\\d.)]+\\s*)?([^|]{2,80})\\|\\s*(number|numeric|choice|categorical|yesno|yes/no|yes-no|text|date)\\s*(?:\\|\\s*(.*))?$", Pattern.CASE_INSENSITIVE);
+
+  /** The AI's lines as fields; sources are guessed for age, sex, diagnosis, outcome and stay. */
+  static parseAi(reply, existing) {
+    const out = [];
+    const all = new JSONArray();
+    for (let i = 0; i < existing.length(); i++) all.put(existing.optJSONObject(i));
+    for (const line of Ui.nz(reply).split("\r").join("").jsplit("\n")) {
+      const m = Thesis.LINE.matcher(line);
+      if (!m.matches()) continue;
+      const label = m.group(1).split("*").join("").trim();
+      const t = m.group(2).toLowerCase();
+      const type = t.startsWith("num") ? Thesis.NUMBER : t.startsWith("choice") || t.startsWith("cat") ? Thesis.CHOICE : t.startsWith("yes") ? Thesis.YESNO : t.equals("date") ? Thesis.DATE : Thesis.TEXT;
+      const rest = Ui.nz(m.group(3)).trim();
+      const unit = type.equals(Thesis.NUMBER) ? rest : "", opts = type.equals(Thesis.CHOICE) ? rest.replaceAllRx("\\s*[/,;]\\s*", "|") : "";
+      if (label.matches("(?i).*\\b(name|ip ?no|ip number|address|phone|mobile)\\b.*")) continue;
+      const src = Thesis.guessSource(label, type);
+      const f = Thesis.field(Thesis.newKey(all), label, type, unit, opts, src);
+      all.put(f);
+      out.add(f);
+    }
+    return out;
+  }
+
+  static guessSource(label, type) {
+    const l = label.toLowerCase();
+    if (l.equals("age") || l.startsWith("age ")) return "age";
+    if (l.equals("sex") || l.equals("gender")) return "sex";
+    if (l.contains("diagnosis")) return "diagnosis";
+    if (l.contains("outcome") || l.contains("mortality")) return Thesis.CHOICE.equals(type) ? "outcome" : "";
+    if (l.contains("hospital stay") || l.contains("length of stay") || l.contains("duration of stay")) return "stay";
+    if (l.contains("date of admission") || l.contains("admission date")) return "admit_date";
+    return "";
+  }
+
+  // ---------------------------------------------------------------- master chart and analysis
+
+  /** The de-identified master chart as CSV (Case no, date, every field). */
+  static csv(fields, cases) {
+    const b = new StringBuilder("Case no,Date entered");
+    for (let i = 0; i < fields.length(); i++) {
+      const f = fields.optJSONObject(i);
+      b.append(",").append(Thesis.cell(f.optString("label") + (f.optString("unit").isEmpty() ? "" : " (" + f.optString("unit") + ")")));
+    }
+    b.append("\r\n");
+    for (const c of cases) {
+      const d = Thesis.data(c);
+      b.append(Ui.nz(c.get("case_no"))).append(",").append(Thesis.cell(c.get("date")));
+      for (let i = 0; i < fields.length(); i++) b.append(",").append(Thesis.cell(d.optString(fields.optJSONObject(i).optString("k"))));
+      b.append("\r\n");
+    }
+    return b.toString();
+  }
+
+  static cell(s) {
+    const v = Ui.nz(s);
+    return /[,"\r\n]/.test(v) ? "\"" + v.split("\"").join("\"\"") + "\"" : v;   // Java: v.matches(".*[,\"\\r\\n].*")
+  }
+
+  static numbers(f, cases) {
+    const v = [];
+    for (const c of cases) {
+      const d = Labs.num(Thesis.data(c).optString(f.optString("k")));
+      if (d != null) v.add(d);
+    }
+    return v;
+  }
+
+  static values(f, cases) {
+    const v = [];
+    for (const c of cases) v.add(Thesis.data(c).optString(f.optString("k")).trim());
+    return v;
+  }
+
+  /** Lines describing one field: mean ± SD, median (IQR), range; or counts with %. */
+  static describe(f, cases) {
+    const out = [];
+    const type = f.optString("type");
+    if (Thesis.NUMBER.equals(type)) {
+      const s = Stats.summary(Thesis.numbers(f, cases));
+      if (s.n === 0) out.add("No values yet");
+      else {
+        const u = f.optString("unit").isEmpty() ? "" : " " + f.optString("unit");
+        out.add("n = " + s.n + "   ·   mean " + Stats.fmt(s.mean) + " ± " + Stats.fmt(s.sd) + u);
+        out.add("median " + Stats.fmt(s.median) + " (IQR " + Stats.fmt(s.q1) + " to " + Stats.fmt(s.q3) + ")   ·   range " + Stats.fmt(s.min) + " to " + Stats.fmt(s.max));
+      }
+    } else if (Thesis.CHOICE.equals(type) || Thesis.YESNO.equals(type)) {
+      const m = Stats.counts(Thesis.values(f, cases), Thesis.options(f));
+      let n = 0;
+      for (const v of m.values()) n += v;
+      for (const e of m.entrySet())
+        out.add(e.getKey() + ":  " + e.getValue() + (n > 0 ? "  (" + Math.round(100.0 * e.getValue() / n) + "%)" : ""));
+      if (n === 0) out.clear();
+      if (out.isEmpty()) out.add("No values yet");
+    } else {
+      let n = 0;
+      for (const v of Thesis.values(f, cases)) if (!v.isEmpty()) n++;
+      out.add(n + " filled");
+    }
+    return out;
+  }
+
+  /** Compares an outcome field across the groups of a choice / yes-no field: chi-square / Fisher, t-test or ANOVA. */
+  static compare(group, outcome, cases) {
+    const out = [];
+    const g = Thesis.options(group);
+    const gk = group.optString("k"), ok = outcome.optString("k");
+    let t;
+    if (Thesis.NUMBER.equals(outcome.optString("type"))) {
+      const groups = [];
+      for (const gv of g) {
+        const a = [];
+        for (const c of cases) {
+          const d = Thesis.data(c);
+          const x = Labs.num(d.optString(ok));
+          if (gv.equalsIgnoreCase(d.optString(gk).trim()) && x != null) a.add(x);
+        }
+        groups.add(a);
+        const s = Stats.summary(a);
+        out.add(gv + ":  n " + s.n + (s.n > 0 ? ",  mean " + Stats.fmt(s.mean) + " ± " + Stats.fmt(s.sd) : ""));
+      }
+      const nonEmpty = [];
+      for (const a of groups) if (a.length > 0) nonEmpty.add(a);
+      t = nonEmpty.size() === 2 ? Stats.tTest(nonEmpty.get(0), nonEmpty.get(1)) : Stats.anova(nonEmpty);
+    } else {
+      const o = Thesis.options(outcome);
+      const table = [];
+      for (let i = 0; i < g.length; i++) table.push(new Array(o.length).fill(0));
+      for (const c of cases) {
+        const d = Thesis.data(c);
+        const i = Thesis.indexOf(g, d.optString(gk)), j = Thesis.indexOf(o, d.optString(ok));
+        if (i >= 0 && j >= 0) table[i][j]++;
+      }
+      for (let i = 0; i < g.length; i++) {
+        const r = new StringBuilder(g[i]).append(":  ");
+        let rs = 0;
+        for (const v of table[i]) rs += v;
+        for (let j = 0; j < o.length; j++)
+          r.append(j === 0 ? "" : ",  ").append(o[j]).append(" ").append(table[i][j]).append(rs > 0 ? " (" + Math.round(100.0 * table[i][j] / rs) + "%)" : "");
+        out.add(r.toString());
+      }
+      t = Stats.chiSquare(table);
+    }
+    out.add(t.name + ":  " + Stats.pText(t.p) + (Number.isNaN(t.p) || t.p >= 0.05 ? "  (not significant)" : "  (significant at 0.05)"));
+    if (!t.note.isEmpty()) out.add(t.note);
+    return out;
+  }
+
+  /** Pearson correlation between two number fields. */
+  static correlate(a, b, cases) {
+    const xa = [], ya = [];
+    for (const c of cases) {
+      const d = Thesis.data(c);
+      const u = Labs.num(d.optString(a.optString("k"))), v = Labs.num(d.optString(b.optString("k")));
+      if (u != null && v != null) { xa.add(u); ya.add(v); }
+    }
+    const t = Stats.pearson(xa, ya);
+    const out = [];
+    out.add(xa.length + " pairs:  r = " + Stats.fmt(t.stat) + ",  " + Stats.pText(t.p));
+    if (!t.note.isEmpty()) out.add(t.note);
+    return out;
+  }
+
+  static indexOf(a, v) {
+    for (let i = 0; i < a.length; i++) if (a[i].equalsIgnoreCase(Ui.nz(v).trim())) return i;
+    return -1;
+  }
+
+  /** Word/PDF report: descriptive table of every field (FormDoc). */
+  static report(db, diss, fields, cases) {
+    const f = new FormDoc();
+    f.upper = "";
+    f.college = db.setting("college", "Tirunelveli Medical College");
+    f.address = "Tirunelveli";
+    f.dept = db.setting("dept", "Department of General Medicine");
+    f.title = "THESIS DATA SUMMARY";
+    f.footer = "Thesis data of " + Ui.nz(diss.get("pg")) + "  •  " + f.dept + ", " + f.college;
+    f.fileBase = "Thesis_data_" + Ui.nz(diss.get("pg")).replaceAllRx("[^A-Za-z0-9]+", "_");
+    const a = f.block("STUDY", 0xFF4C1D95, 0.25, 0.75);
+    a.row(16, new FormDoc.Cell("Title").b().size(9), new FormDoc.Cell(Ui.nz(diss.get("title"))).size(9));
+    a.row(16, new FormDoc.Cell("PG / Guide").b().size(9), new FormDoc.Cell(Ui.nz(diss.get("pg")) + "  /  " + Ui.nz(diss.get("guide"))).size(9));
+    a.row(16, new FormDoc.Cell("Cases").b().size(9), new FormDoc.Cell(cases.size() + (Ui.nz(diss.get("sample_size")).isEmpty() ? "" : " of " + diss.get("sample_size"))).size(9));
+    const t = f.block("DESCRIPTIVE STATISTICS", 0xFF4C1D95, 0.35, 0.65);
+    for (let i = 0; i < fields.length(); i++) {
+      const fl = fields.optJSONObject(i);
+      if (Thesis.TEXT.equals(fl.optString("type")) || Thesis.DATE.equals(fl.optString("type"))) continue;
+      t.row(16, new FormDoc.Cell(fl.optString("label") + (fl.optString("unit").isEmpty() ? "" : " (" + fl.optString("unit") + ")")).b().size(9),
+          new FormDoc.Cell(TextUtils.join("\n", Thesis.describe(fl, cases))).size(9));
+    }
+    return f;
+  }
+}
+;
+/* ---- app/ThesisActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Thesis helper (8.40) for one dissertation ("diss"): the data-collection form, the cases (typed, or picked from the wards with
+ * the facts filled in), the master chart for Excel, a summary report and simple tests (chi-square / Fisher, t-test / ANOVA,
+ * correlation). The PG and faculty edit; everyone else can look.
+ */
+class ThesisActivity extends Base {
+  static WAIT = "thesis_wait";
+
+  constructor() { super(); this.dissId = 0; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.dissId = Long.parseLong(this.getIntent().getStringExtra("diss"));
+    this.setTitle("Thesis data");
+    this.subtitle = "Form, cases, master chart and statistics";
+    this.headerColor(Thesis.COLOR);
+  }
+
+  static canEdit(a, d) {
+    if (DissertationActivity.isFaculty(a)) return true;
+    const me = Reminders.myName(a, a.db);
+    return !me.isEmpty() && Reminders.anyLine(d.get("pg"), Reminders.tokens(me), "");
+  }
+
+  diss() {
+    return this.db.row("SELECT * FROM dissertations WHERE id=?", String(this.dissId));
+  }
+
+  render() {
+    const d = this.diss();
+    if (d == null) {
+      this.finish();
+      return;
+    }
+    const edit = ThesisActivity.canEdit(this, d);
+    const fields = Thesis.fields(d);
+    const cases = Thesis.cases(this.db, this.dissId);
+    const page = Ui.v(this);
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Thesis.COLOR), 20));
+    hero.addView(Ui.tv(this, Ui.nz(d.get("title")).isEmpty() ? "Thesis topic not entered yet" : d.get("title"), 17, Color.WHITE, true));
+    hero.addView(Ui.tv(this, Ui.nz(d.get("pg")) + (Ui.nz(d.get("guide")).isEmpty() ? "" : "  ·  Guide " + d.get("guide")), 13, 0xE6FFFFFF, false));
+    let target = 0;
+    try { target = Integer.parseInt(Ui.nz(d.get("sample_size")).replaceAllRx("[^0-9]", "")); } catch (ignored) { }
+    const n = Ui.tv(this, cases.size() + (target > 0 ? " of " + target + " cases" : cases.size() === 1 ? " case" : " cases"), 22, Color.WHITE, true);
+    hero.addView(n);
+    Ui.margins(n, 0, 8, 0, 0);
+    if (target > 0) hero.addView(Ui.bar(this, Math.min(cases.size(), target), target, 0xFFFFFFFF));
+    page.addView(hero);
+
+    if (edit) {
+      const act = Ui.v(this);
+      act.setPadding(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), 0);
+      act.addView(Ui.buttonRow(this, Ui.button(this, "+ Add a case", Thesis.COLOR, {
+        onClick: (v) => {
+          if (Thesis.fields(this.diss()).length() === 0) Ui.toast(this, "Make the form first: add the fields below");
+          else this.caseDialog(null, 0, new JSONObject());
+        }
+      }), Ui.outlineButton(this, "From the wards", Thesis.COLOR, {
+        onClick: (v) => { this.fromWards(); }
+      })));
+      page.addView(act);
+    }
+
+    // the form
+    page.addView(Ui.heading(this, "Data collection form  ·  " + fields.length() + (fields.length() === 1 ? " field" : " fields"), Thesis.COLOR));
+    const fc = Ui.card(this);
+    if (fields.length() === 0) fc.addView(Ui.muted(this, "No fields yet. Add common ones in one tap, let the AI suggest a proforma from your title, or add your own."));
+    for (let i = 0; i < fields.length(); i++) {
+      const at = i;
+      const f = fields.optJSONObject(i);
+      const row = Ui.v(this);
+      row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+      row.addView(Ui.tv(this, (i + 1) + ".  " + f.optString("label") + (f.optString("unit").isEmpty() ? "" : " (" + f.optString("unit") + ")"), 15, Ui.TEXT, true));
+      let src = "";
+      for (const s of Thesis.sources()) if (s[0].equals(f.optString("src")) && !s[0].isEmpty()) src = "  ·  from the ward: " + s[1];
+      const opts = Thesis.CHOICE.equals(f.optString("type")) ? ": " + f.optString("options").split("|").join(" / ") : "";
+      row.addView(Ui.muted(this, Thesis.typeName(f.optString("type")) + opts + src));
+      if (edit) {
+        Ui.ripple(row, Ui.alpha(Thesis.COLOR, 0x22));
+        row.setOnClickListener({
+          onClick: (v) => { this.fieldDialog(at, f); }
+        });
+      }
+      fc.addView(row);
+      fc.addView(Ui.divider(this));
+    }
+    if (edit) {
+      const b1 = Ui.buttonRow(this, Ui.outlineButton(this, "+ Field", Thesis.COLOR, {
+        onClick: (v) => { this.fieldDialog(-1, null); }
+      }), Ui.outlineButton(this, "+ Common fields", Thesis.COLOR, {
+        onClick: (v) => { this.commonDialog(); }
+      }));
+      fc.addView(b1);
+      Ui.margins(b1, 0, 8, 0, 0);
+      const b2 = Ui.buttonRow(this, Ui.outlineButton(this, "✨ Suggest the form with AI", Ui.PURPLE, {
+        onClick: (v) => {
+          const dd = this.diss();
+          if (Ui.nz(dd.get("title")).trim().isEmpty()) {
+            Ui.toast(this, "Enter the thesis title on the dissertation first");
+            return;
+          }
+          AiRun.ask(this, "Thesis proforma", Thesis.aiSystem(), Thesis.aiUser(dd), 3000, ThesisActivity.WAIT, null, {
+            got: (text, who) => { if (text != null) this.useAi(text); }
+          });
+        }
+      }));
+      const app = AiRun.waiting(this, ThesisActivity.WAIT);
+      if (!app.isEmpty()) b2.addView(Ui.outlineButton(this, "Paste " + app + "'s answer", Ui.PURPLE, {
+        onClick: (v) => {
+          const t = AiRun.paste(this, ThesisActivity.WAIT, Thesis.AI_MARK);
+          if (t != null) this.useAi(t);
+        }
+      }));
+      fc.addView(b2);
+      Ui.margins(b2, 0, 6, 0, 0);
+      const mw = Ui.outlineButton(this, Ui.nz(d.get("match_words")).isEmpty() ? "Words that find my cases in the wards" : "Finds: " + d.get("match_words").split("|").join(", "),
+          Ui.SLATE, {
+            onClick: (v) => { this.matchDialog(); }
+          });
+      fc.addView(mw);
+      Ui.margins(mw, 0, 6, 0, 0);
+    }
+    page.addView(fc);
+
+    // analysis
+    if (!cases.isEmpty() && fields.length() > 0) {
+      page.addView(Ui.heading(this, "Analysis", Thesis.COLOR));
+      const an = Ui.card(this);
+      for (let i = 0; i < fields.length(); i++) {
+        const f = fields.optJSONObject(i);
+        if (Thesis.TEXT.equals(f.optString("type")) || Thesis.DATE.equals(f.optString("type"))) continue;
+        an.addView(Ui.tv(this, f.optString("label"), 14, Ui.TEXT, true));
+        for (const l of Thesis.describe(f, cases)) an.addView(Ui.tv(this, l, 13, Ui.MUTED, false));
+        if (Thesis.CHOICE.equals(f.optString("type")) || Thesis.YESNO.equals(f.optString("type"))) an.addView(this.bars(f, cases));
+        const sp = new View(this);
+        an.addView(sp, new LinearLayout.LayoutParams(1, Ui.dp(this, 8)));
+      }
+      const ab = Ui.buttonRow(this, Ui.outlineButton(this, "Compare groups", Thesis.COLOR, {
+        onClick: (v) => { this.compareDialog(); }
+      }), Ui.outlineButton(this, "Correlation", Thesis.COLOR, {
+        onClick: (v) => { this.correlateDialog(); }
+      }));
+      an.addView(ab);
+      const note = Ui.muted(this, "Simple tests to explore the data. Confirm the final analysis with the statistician (SPSS, R or Epi Info).");
+      note.setTextSize(12);
+      an.addView(note);
+      Ui.margins(note, 0, 8, 0, 0);
+      page.addView(an);
+
+      const ex = Ui.v(this);
+      ex.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), 0);
+      ex.addView(Ui.buttonRow(this, Ui.button(this, "Master chart (Excel)", Ui.GREEN, {
+        onClick: (v) => { this.masterChart(); }
+      }), Ui.outlineButton(this, "Summary PDF / Word", Thesis.COLOR, {
+        onClick: (v) => { this.reportDialog(); }
+      })));
+      page.addView(ex);
+    }
+
+    // cases
+    page.addView(Ui.heading(this, cases.isEmpty() ? "No cases yet" : "Cases  ·  " + cases.size(), Thesis.COLOR));
+    for (let i = cases.size() - 1; i >= 0; i--) {
+      const c = cases.get(i);
+      const dt = Thesis.data(c);
+      const sub = new StringBuilder();
+      let shown = 0;
+      for (let k = 0; k < fields.length() && shown < 4; k++) {
+        const f = fields.optJSONObject(k);
+        const v = dt.optString(f.optString("k"));
+        if (v.isEmpty()) continue;
+        sub.append(shown === 0 ? "" : "  ·  ").append(f.optString("label")).append(" ").append(v);
+        shown++;
+      }
+      let filled = 0;
+      for (let k = 0; k < fields.length(); k++) if (!dt.optString(fields.optJSONObject(k).optString("k")).isEmpty()) filled++;
+      page.addView(this.entryCard("Case " + c.get("case_no"), filled === fields.length() ? Thesis.COLOR : Ui.AMBER, filled + "/" + fields.length() + " filled  ·  " + Dates.nice(c.get("date")),
+          sub.toString(), Ui.nz(c.get("by_name")), edit ? {
+            onClick: (v) => { this.caseDialog(c, 0, Thesis.data(c)); }
+          } : null, 4));
+    }
+    this.setPage(page);
+  }
+
+  bars(f, cases) {
+    const box = Ui.v(this);
+    const m = Stats.counts(Thesis.values(f, cases), Thesis.options(f));
+    let max = 1;
+    for (const v of m.values()) max = Math.max(max, v);
+    for (const e of m.entrySet()) {
+      const r = Ui.h(this);
+      r.setGravity(Gravity.CENTER_VERTICAL);
+      const l = Ui.tv(this, e.getKey(), 12, Ui.MUTED, false);
+      r.addView(l, new LinearLayout.LayoutParams(Ui.dp(this, 90), LinearLayout.LayoutParams.WRAP_CONTENT));
+      r.addView(Ui.bar(this, e.getValue(), max, Thesis.COLOR), new LinearLayout.LayoutParams(0, Ui.dp(this, 10), 1));
+      box.addView(r);
+      Ui.margins(r, 0, 3, 0, 0);
+    }
+    return box;
+  }
+
+  // ---------- the form ----------
+
+  fieldDialog(at, f) {
+    const form = new Form(this);
+    form.text("label", "Field name", f == null ? "" : f.optString("label"), Form.PLAIN);
+    form.choice("type", "Type", Thesis.TYPE_NAMES, Thesis.TYPES, f == null ? Thesis.NUMBER : f.optString("type"), null);
+    form.text("unit", "Unit (numbers)", f == null ? "" : f.optString("unit"), Form.PLAIN);
+    form.text("options", "Choices, separated by / (choice)", f == null ? "" : f.optString("options").split("|").join(" / "), Form.PLAIN);
+    const src = Thesis.sources();
+    const sl = new Array(src.length).fill(null), sv = new Array(src.length).fill(null);
+    for (let i = 0; i < src.length; i++) { sv[i] = src[i][0]; sl[i] = src[i][1]; }
+    form.choice("src", "When picked from the wards, fill from", sl, sv, f == null ? "" : f.optString("src"), null);
+    Ui.formDialog(this, f == null ? "New field" : "Field", form, "Save", {
+      run: () => {
+        if (form.get("label").trim().isEmpty()) {
+          Ui.toast(this, "Give the field a name");
+          return false;
+        }
+        const type = form.get("type");
+        const opts = form.get("options").trim().replaceAllRx("\\s*[/,;|]\\s*", "|");
+        if (Thesis.CHOICE.equals(type) && opts.jsplit("\\|").length < 2) {
+          Ui.toast(this, "Give at least two choices, separated by /");
+          return false;
+        }
+        const all = Thesis.fields(this.diss());
+        const nf = Thesis.field(f == null ? Thesis.newKey(all) : f.optString("k"), form.get("label"), type, form.get("unit"), opts, form.get("src"));
+        try {
+          if (at < 0) all.put(nf);
+          else all.put(at, nf);
+        } catch (ignored) {
+        }
+        Thesis.saveFields(this.db, this.dissId, all);
+        this.render();
+        return true;
+      }
+    });
+    if (f != null) {
+      const moves = ["Move up", "Move down", "Delete this field"];
+      const more = Ui.outlineButton(this, "Move or delete…", Ui.SLATE, {
+        onClick: (v) => {
+          new AlertDialog.Builder(this).setItems(moves, {
+            onClick: (dd, w) => { this.moveField(at, w); }
+          }).show();
+        }
+      });
+      form.view.addView(more);
+    }
+  }
+
+  moveField(at, how) {
+    const all = Thesis.fields(this.diss());
+    const l = [];
+    for (let i = 0; i < all.length(); i++) l.add(all.optJSONObject(i));
+    if (how === 0 && at > 0) l.splice(at - 1, 0, l.splice(at, 1)[0]);
+    else if (how === 1 && at < l.size() - 1) l.splice(at + 1, 0, l.splice(at, 1)[0]);
+    else if (how === 2) l.splice(at, 1);
+    const out = new JSONArray();
+    for (const o of l) out.put(o);
+    Thesis.saveFields(this.db, this.dissId, out);
+    this.render();
+  }
+
+  commonDialog() {
+    const labels = new Array(Thesis.COMMON.length).fill(null);
+    const on = new Array(labels.length).fill(false);
+    const all = Thesis.fields(this.diss());
+    for (let i = 0; i < labels.length; i++) {
+      labels[i] = Thesis.COMMON[i][0];
+      let have = false;
+      for (let k = 0; k < all.length(); k++) if (all.optJSONObject(k).optString("label").equalsIgnoreCase(labels[i])) have = true;
+      on[i] = false;
+      if (have) labels[i] = labels[i] + "  (already in the form)";
+    }
+    new AlertDialog.Builder(this).setTitle("Add common fields").setMultiChoiceItems(labels, on, {
+      onClick: (d, w, c) => { on[w] = c; }
+    }).setPositiveButton("Add", {
+      onClick: (d, w) => {
+        const all = Thesis.fields(this.diss());
+        for (let i = 0; i < on.length; i++) if (on[i]) {
+          const c = Thesis.COMMON[i];
+          all.put(Thesis.field(Thesis.newKey(all), c[0], c[1], c[2], c[3], c[4]));
+        }
+        Thesis.saveFields(this.db, this.dissId, all);
+        this.render();
+      }
+    }).setNegativeButton("Cancel", null).show();
+  }
+
+  useAi(text) {
+    const all = Thesis.fields(this.diss());
+    const got = Thesis.parseAi(text, all);
+    if (got.isEmpty()) {
+      new AlertDialog.Builder(this).setTitle("No fields found").setMessage("The answer had no lines like \"Age | number | years\". Try again.").setPositiveButton("OK", null).show();
+      return;
+    }
+    const labels = new Array(got.size()).fill(null);
+    const on = new Array(got.size()).fill(false);
+    for (let i = 0; i < labels.length; i++) {
+      const f = got.get(i);
+      labels[i] = f.optString("label") + "  ·  " + Thesis.typeName(f.optString("type")) + (f.optString("options").isEmpty() ? "" : ": " + f.optString("options").split("|").join(" / "));
+      on[i] = true;
+    }
+    new AlertDialog.Builder(this).setTitle("✨ Suggested fields: untick any you don't need").setMultiChoiceItems(labels, on, {
+      onClick: (d, w, c) => { on[w] = c; }
+    }).setPositiveButton("Add to the form", {
+      onClick: (d, w) => {
+        for (let i = 0; i < on.length; i++) if (on[i]) all.put(got.get(i));
+        Thesis.saveFields(this.db, this.dissId, all);
+        this.render();
+      }
+    }).setNegativeButton("Cancel", null).show();
+  }
+
+  matchDialog() {
+    const form = new Form(this);
+    form.text("w", "Diagnosis words, separated by / (e.g. dengue / DHF)", Ui.nz(this.diss().get("match_words")).split("|").join(" / "), Form.PLAIN);
+    Ui.formDialog(this, "Find my cases", form, "Save", {
+      run: () => {
+        const cv = new ContentValues();
+        cv.put("match_words", form.get("w").trim().replaceAllRx("\\s*[/,;|]\\s*", "|"));
+        this.db.update("dissertations", cv, this.dissId);
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  // ---------- cases ----------
+
+  fromWards() {
+    const d = this.diss();
+    if (Thesis.fields(d).length() === 0) {
+      Ui.toast(this, "Make the form first: add the fields");
+      return;
+    }
+    if (Ui.nz(d.get("match_words")).trim().isEmpty()) {
+      this.matchDialog();
+      return;
+    }
+    const s = Thesis.suggestions(this.db, d);
+    if (s.isEmpty()) {
+      new AlertDialog.Builder(this).setTitle("No new cases found").setMessage("No patient's diagnosis has " + d.get("match_words").split("|").join(", ")
+          + ", or all of them are already in the thesis.").setPositiveButton("OK", null).show();
+      return;
+    }
+    const items = new Array(s.size()).fill(null);
+    for (let i = 0; i < items.length; i++) {
+      const p = s.get(i);
+      items[i] = Ui.nz(p.get("name")) + "  ·  " + Ui.nz(p.get("age")) + Ui.nz(p.get("sex")) + "  ·  " + Ui.nz(p.get("diagnosis")) + "  ·  " + Dates.nice(p.get("admit_date"))
+          + (Db.IN.equals(p.get("status")) ? "  ·  in ward" : "");
+    }
+    new AlertDialog.Builder(this).setTitle("Pick a case (facts are filled in)").setItems(items, {
+      onClick: (dd, w) => {
+        const p = s.get(w);
+        this.caseDialog(null, Long.parseLong(p.get("id")), Thesis.prefill(this.db, Thesis.fields(this.diss()), p));
+      }
+    }).setNegativeButton("Cancel", null).show();
+  }
+
+  caseDialog(c, patientId, values) {
+    const fields = Thesis.fields(this.diss());
+    const form = new Form(this);
+    if (patientId > 0 || (c != null && !"0".equals(Ui.nz(c.get("patient_id"))) && !Ui.nz(c.get("patient_id")).isEmpty()))
+      form.view.addView(Ui.muted(this, "Linked to a ward patient. The master chart keeps only the case number, never the name."));
+    for (let i = 0; i < fields.length(); i++) {
+      const f = fields.optJSONObject(i);
+      const k = f.optString("k"), label = f.optString("label") + (f.optString("unit").isEmpty() ? "" : " (" + f.optString("unit") + ")");
+      const v = values.optString(k);
+      const type = f.optString("type");
+      if (Thesis.CHOICE.equals(type) || Thesis.YESNO.equals(type)) {
+        const o = Thesis.options(f);
+        const vals = new Array(o.length + 1).fill(null), labs = new Array(o.length + 1).fill(null);
+        vals[0] = "";
+        labs[0] = "Not known";
+        for (let j = 0; j < o.length; j++) { vals[j + 1] = o[j]; labs[j + 1] = o[j]; }
+        const hit = Thesis.indexOf(o, v);
+        form.choice(k, label, labs, vals, hit >= 0 ? o[hit] : "", null);
+      } else if (Thesis.NUMBER.equals(type)) form.text(k, label, v, Form.DECIMAL);
+      else if (Thesis.DATE.equals(type)) form.optionalDate(k, label, v);
+      else form.multi(k, label, v);
+    }
+    if (c != null) {
+      const del = Ui.outlineButton(this, "Delete this case", Ui.RED, {
+        onClick: (v) => {
+          Ui.confirm(this, "Delete case " + c.get("case_no") + "?", "Its data is removed from every phone.", "Delete", {
+            run: () => {
+              this.db.delete("thesis_cases", Long.parseLong(c.get("id")));
+              this.render();
+            }
+          });
+        }
+      });
+      form.view.addView(del);
+    }
+    Ui.formDialog(this, c == null ? "New case" : "Case " + c.get("case_no"), form, "Save", {
+      run: () => {
+        const o = new JSONObject();
+        for (let i = 0; i < fields.length(); i++) {
+          const k = fields.optJSONObject(i).optString("k");
+          const v = form.has(k) ? Ui.nz(form.get(k)).trim() : "";
+          if (!v.isEmpty()) try { o.put(k, v); } catch (ignored) { }
+        }
+        Thesis.saveCase(this.db, this.dissId, c == null ? 0 : Long.parseLong(c.get("id")), patientId, o, ExamCases.myName(this, this.db));
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  // ---------- analysis ----------
+
+  ofTypes(...types) {
+    if (types.length === 1 && Array.isArray(types[0])) types = types[0];
+    const out = [];
+    const f = Thesis.fields(this.diss());
+    for (let i = 0; i < f.length(); i++) for (const t of types) if (t.equals(f.optJSONObject(i).optString("type"))) out.add(f.optJSONObject(i));
+    return out;
+  }
+
+  labels(l) {
+    const s = new Array(l.size()).fill(null);
+    for (let i = 0; i < s.length; i++) s[i] = l.get(i).optString("label");
+    return s;
+  }
+
+  compareDialog() {
+    const groups = this.ofTypes(Thesis.CHOICE, Thesis.YESNO);
+    const outs = this.ofTypes(Thesis.CHOICE, Thesis.YESNO, Thesis.NUMBER);
+    if (groups.isEmpty() || outs.size() < 2) {
+      Ui.toast(this, "Needs a choice or yes/no field to make groups, and another field to compare");
+      return;
+    }
+    const form = new Form(this);
+    const gl = this.labels(groups), gv = new Array(gl.length).fill(null);
+    for (let i = 0; i < gv.length; i++) gv[i] = String(i);
+    const ol = this.labels(outs), ov = new Array(ol.length).fill(null);
+    for (let i = 0; i < ov.length; i++) ov[i] = String(i);
+    form.choice("g", "Groups by", gl, gv, "0", null);
+    form.choice("o", "Compare", ol, ov, ov.length > 1 ? "1" : "0", null);
+    Ui.formDialog(this, "Compare groups", form, "Compare", {
+      run: () => {
+        const g = groups.get(Integer.parseInt(form.get("g"))), o = outs.get(Integer.parseInt(form.get("o")));
+        if (g.optString("k").equals(o.optString("k"))) {
+          Ui.toast(this, "Choose two different fields");
+          return false;
+        }
+        const res = Thesis.compare(g, o, Thesis.cases(this.db, this.dissId));
+        this.result(o.optString("label") + " by " + g.optString("label"), res);
+        return true;
+      }
+    });
+  }
+
+  correlateDialog() {
+    const nums = this.ofTypes(Thesis.NUMBER);
+    if (nums.size() < 2) {
+      Ui.toast(this, "Needs two number fields");
+      return;
+    }
+    const form = new Form(this);
+    const l = this.labels(nums), v = new Array(l.length).fill(null);
+    for (let i = 0; i < v.length; i++) v[i] = String(i);
+    form.choice("a", "First", l, v, "0", null);
+    form.choice("b", "Second", l, v, "1", null);
+    Ui.formDialog(this, "Correlation", form, "Check", {
+      run: () => {
+        const a = nums.get(Integer.parseInt(form.get("a"))), b = nums.get(Integer.parseInt(form.get("b")));
+        this.result(a.optString("label") + " and " + b.optString("label"), Thesis.correlate(a, b, Thesis.cases(this.db, this.dissId)));
+        return true;
+      }
+    });
+  }
+
+  result(title, lines) {
+    const text = TextUtils.join("\n", lines);
+    new AlertDialog.Builder(this).setTitle(title).setMessage(text)
+        .setPositiveButton("Share", {
+          onClick: (d, w) => { ReportActivity.shareText(this, title + "\n" + text); }
+        }).setNegativeButton("Close", null).show();
+  }
+
+  masterChart() {
+    try {
+      const d = this.diss();
+      const rel = SummaryExport.DIR + "/Master_chart_" + Ui.nz(d.get("pg")).replaceAllRx("[^A-Za-z0-9]+", "_") + ".csv";
+      const f = this.db.file(rel);
+      if (f.getParentFile() != null) f.getParentFile().mkdirs();
+      const out = new FileOutputStream(f);
+      try {
+        out.write(new Uint8Array([0xEF, 0xBB, 0xBF]));   // so Excel reads µ and other symbols
+        out.write(jbytes(Thesis.csv(Thesis.fields(d), Thesis.cases(this.db, this.dissId))));
+      } finally {
+        out.close();
+      }
+      Store.share(this, rel, "Master chart");
+    } catch (e) {
+      Ui.toast(this, "Could not make the master chart: " + e.getMessage());
+    }
+  }
+
+  reportDialog() {
+    new AlertDialog.Builder(this).setTitle("Thesis data summary").setItems(["PDF", "Word"], {
+      onClick: (dd, w) => {
+        try {
+          const d = this.diss();
+          const f = Thesis.report(this.db, d, Thesis.fields(d), Thesis.cases(this.db, this.dissId));
+          const rel = w === 0 ? f.pdf(this) : f.docx(this);
+          Store.share(this, rel, "Thesis data summary");
+        } catch (e) {
+          Ui.toast(this, "Could not make it: " + e.getMessage());
+        }
+      }
+    }).setNegativeButton("Cancel", null).show();
+  }
+}
+;
 /* ---- app/TimelineActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -55264,6 +65267,8 @@ class UnitActivity extends Base {
     this.subtitle = (day === 0 ? "Admits every day" : "Admits every " + Dates.DAYS[day]) + (head.isEmpty() ? "" : "  ·  " + head);
     this.headerAction("+ Admit", this.opener(FormActivity, "kind", "patient", "unit", code));
     const page = Ui.v(this);
+    // the unit's or ward's team first, with their photos (9.00)
+    page.addView(People.board(this, db, code));
 
     // Census
     const census = Ui.card(this);
@@ -57453,6 +67458,894 @@ class VivaActivity extends Base {
   }
 }
 ;
+/* ---- app/WaAdmit.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * An admission message copied from WhatsApp, to the admission form (8.70). Reads labelled lines ("Name: …", "IP no - …",
+ * "Dx: …") and the usual short forms written on one line ("Murugan 45/M IP 23456 bed 12"). The patient's details go into the
+ * admission form; the clinical lines (c/o, h/o, k/c/o, O/E, vitals, CVS, RS, P/A, CNS, investigations, Rx) go to the case sheet
+ * after saving, through the same tick-and-correct preview as a scanned case sheet. Nothing leaves the phone: the message is read by
+ * rules, not an AI, because it carries the patient's name and number. Plain Java so it can be tested and ported.
+ */
+class WaAdmit {
+  constructor() {}
+
+  /** WhatsApp's own line start: "[19/10/26, 9:41 pm] Dr. Ravi: " or "19/10/2026, 21:41 - Dr. Ravi: ". */
+  static WA_PREFIX = Pattern.compile("^\\s*(?:\\[\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4},?\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:[ap]\\.?m\\.?)?\\]\\s*[^:]{1,40}:\\s*"
+      + "|\\d{1,2}[/.-]\\d{1,2}[/.-]\\d{2,4},?\\s+\\d{1,2}:\\d{2}\\s*(?:[ap]\\.?m\\.?)?\\s+-\\s+[^:]{1,40}:\\s*)", Pattern.CASE_INSENSITIVE);
+  /** "Label: value", "Label - value", "Label = value". */
+  static LABEL = Pattern.compile("^\\s*[*_•\\-]*\\s*([A-Za-z\\u0394][A-Za-z ./#&'()\\u0394]{0,30}?)\\s*[*_]*\\s*(?::|=|\\s[-\\u2013]\\s|-(?=\\s*\\d))\\s*(.*)$");
+
+  static label(key, ...names) {
+    if (names.length === 1 && Array.isArray(names[0])) names = names[0];
+    for (const n of names) WaAdmit.LABELS.put(n, key);
+  }
+
+  static $clinit() {
+    WaAdmit.LABELS = new JMap();
+    WaAdmit.label("name", "name", "pt name", "patient name", "patient", "pt", "name of the patient", "name of patient");
+    WaAdmit.label("age", "age", "age (years)");
+    WaAdmit.label("sex", "sex", "gender");
+    WaAdmit.label("agesex", "age/sex", "age / sex", "age sex", "a/s");
+    WaAdmit.label("ip_no", "ip", "ip no", "ip no.", "ipno", "i.p", "i.p.", "i.p no", "i.p. no", "i.p.no", "ip number", "ip num", "inpatient no", "in patient no", "ipd no", "uhid", "ip#");
+    WaAdmit.label("phone", "ph", "ph no", "phone", "phone no", "mob", "mobile", "mobile no", "cell", "cell no", "contact", "contact no", "attender no", "attender phone");
+    WaAdmit.label("address", "address", "addr", "add", "r/o", "resident of", "native", "native of", "place", "village");
+    WaAdmit.label("diagnosis", "dx", "diagnosis", "diag", "impression", "prov dx", "provisional diagnosis", "provisional dx", "working diagnosis", "Δ", "d/d", "case of",
+        "admitted for", "admitted with", "admitted as");
+    WaAdmit.label("bed", "bed", "bed no", "bed no.", "bed number", "b/no", "bed#");
+    WaAdmit.label("cmchis_no", "cmchis", "cmchis no", "cmchis id", "cm card", "cmchis card", "insurance", "insurance id", "pmjay", "cm insurance");
+    WaAdmit.label("ar_no", "ar", "ar no", "ar no.", "ar number", "accident register", "accident register no");
+    WaAdmit.label("date", "doa", "date of admission", "admitted on", "date", "adm date", "admission date");
+    WaAdmit.label("time", "toa", "time", "time of admission", "adm time");
+    WaAdmit.label("mlc", "mlc", "mlc/nmlc", "medico legal", "medicolegal");
+    // clinical parts, under CaseScan's headings
+    WaAdmit.label("#Chief complaints", "c/o", "complaints", "complaint", "chief complaints", "chief complaint", "cc", "presenting complaints", "complaining of");
+    WaAdmit.label("#History of present illness", "h/o", "hopi", "hpi", "history", "history of present illness", "present illness", "hpi/hopi");
+    WaAdmit.label("#Past history", "k/c/o", "kco", "k/c/o.", "known case of", "past history", "past h/o", "pmh", "pmhx", "comorbidities", "co-morbidities", "comorbidity");
+    WaAdmit.label("#Personal history", "personal history", "personal h/o", "habits");
+    WaAdmit.label("#Family history", "family history", "family h/o");
+    WaAdmit.label("#Drug history", "drug history", "treatment history", "on treatment", "medications", "drugs");
+    WaAdmit.label("#Allergy", "allergy", "allergies", "drug allergy", "known allergy");
+    WaAdmit.label("#General examination", "o/e", "oe", "on examination", "ge", "general examination", "gpe", "general");
+    WaAdmit.label("#Vitals", "vitals", "vital signs", "v/s");
+    WaAdmit.label("#Cardiovascular system", "cvs");
+    WaAdmit.label("#Respiratory system", "rs", "r/s", "chest");
+    WaAdmit.label("#Abdomen", "p/a", "pa", "abd", "abdomen", "per abdomen");
+    WaAdmit.label("#Central nervous system", "cns");
+    WaAdmit.label("#Local examination", "l/e", "local examination");
+    WaAdmit.label("#Investigations", "inv", "invx", "investigations", "investigation", "to do", "todo", "labs", "reports");
+    WaAdmit.label("#Treatment", "rx", "treatment", "tt", "plan", "management", "advice", "orders");
+  }
+
+  static keyOf(label) {
+    const k = label.toLowerCase().replaceAllRx("[*_]", "").replaceAllRx("\\s+", " ").trim();
+    let v = WaAdmit.LABELS.get(k);
+    if (v == null) v = WaAdmit.LABELS.get(k.replaceAllRx("\\.$", ""));
+    return v == null ? null : v;
+  }
+
+  static AGE_SEX = Pattern.compile("(?<![\\d/])(\\d{1,3})\\s*(?:y|yr|yrs|years?|yo)?\\s*(?:old)?\\s*[/,\\s]?\\s*(m|f|male|female|man|woman|boy|girl)\\b", Pattern.CASE_INSENSITIVE);
+  static AGE_ONLY = Pattern.compile("(\\d{1,3})\\s*(?:y|yr|yrs|years?)\\b", Pattern.CASE_INSENSITIVE);
+  static SEX_WORD = Pattern.compile("\\b(male|female|man|woman|boy|girl)\\b", Pattern.CASE_INSENSITIVE);
+  static IP = Pattern.compile("\\b(?:ip|i\\.p\\.?|uhid)[.\\s]*(?:no\\.?|number|num)?\\s*[:#.\\-]?\\s*([A-Za-z]{0,3}\\s?\\d[\\d/\\-]{2,14})", Pattern.CASE_INSENSITIVE);
+  static BED = Pattern.compile("\\bbed\\s*(?:no\\.?|number)?\\s*[:#.\\-]?\\s*([A-Za-z]?\\d{1,3}[A-Za-z]?)\\b", Pattern.CASE_INSENSITIVE);
+  static PHONE = Pattern.compile("(?<!\\d)(?:\\+?91[\\s-]?)?([6-9]\\d{4}[\\s-]?\\d{5})(?!\\d)");
+  static MLC = Pattern.compile("\\b(n\\.?m\\.?l\\.?c|non[\\s-]?mlc|m\\.?l\\.?c)\\b", Pattern.CASE_INSENSITIVE);
+  static AR = Pattern.compile("\\bar\\s*(?:no\\.?|number)?\\s*[:#.\\-]?\\s*(\\d[\\d/\\-]{1,12})", Pattern.CASE_INSENSITIVE);
+  static DATE = Pattern.compile("(\\d{1,2})[/.\\-](\\d{1,2})[/.\\-](\\d{2,4})");
+  static TIME = Pattern.compile("(\\d{1,2})[:.](\\d{2})\\s*([ap])?\\.?\\s*m?\\.?", Pattern.CASE_INSENSITIVE);
+  /** A line that is only a name (and maybe age/sex after it): up to four words of letters. */
+  static NAME_LINE = Pattern.compile("^(?:(?:mr|mrs|ms|mrs\\.|mr\\.|ms\\.|thiru|tmt|selvi|master|baby)\\.?\\s+)?([A-Za-z][A-Za-z.']*(?:\\s+[A-Za-z][A-Za-z.']*){0,3})\\s*(?:[,\\-]|$)", Pattern.CASE_INSENSITIVE);
+  /** Clinical words that mark an unlabelled line as vitals. */
+  static VITALS = Pattern.compile("\\b(bp|pr|pulse|hr|spo2|sp02|rr|temp|grbs|cbg|rbs)\\b\\s*[:\\-]?\\s*\\d", Pattern.CASE_INSENSITIVE);
+  /** Labels written without a colon: "R/o Palayamkottai", "Dx dengue fever", "Admitted for snake bite". */
+  static SPACE_LABEL = Pattern.compile("^(r/o|resident of|native of|dx|d/d|diagnosis|impression|prov\\.? dx|admitted (?:for|with|as)|case of|address)\\b\\.?\\s+(.+)$", Pattern.CASE_INSENSITIVE);
+  static CLINICAL_START = Pattern.compile("^(c/o|h/o|k/c/o|kco|o/e|cvs|rs|p/a|cns|rx|inv)\\b\\.?\\s*[:\\-]?\\s*(.*)$", Pattern.CASE_INSENSITIVE);
+  static NOT_A_NAME = Pattern.compile("(?i)\\b(admission|admitted|new|case|patient|unit|ward|triage|imcu|fever|opd|casualty|dear|sir|madam|good|morning|"
+      + "evening|night|duty|update|ok|hi|hello|transfer|referred|bed|ip|date|time|age|sex)\\b");
+
+  static parse(text) {
+    const r = new WaAdmit.Result();
+    const clinical = new StringBuilder();
+    let lastClinical = null;
+    const lines = [];
+    for (const raw of Ui.nz(text).split("\r").join("\n").split("\n")) {
+      const l = WaAdmit.WA_PREFIX.matcher(raw).replaceFirst("").split("*").join("").split("_").join(" ").replaceAllRx("[ \\t]+", " ").trim();
+      if (l.isEmpty()) continue;
+      // "CVS S1S2+  RS BAE+ NVBS": one line per system
+      if (WaAdmit.CLINICAL_START.matcher(l).matches()) {
+        for (const part of l.split(/\s+(?=(?:cvs|rs|r\/s|p\/a|cns)\b\s*[:\-]?\s*\S)/i)) lines.push(part.trim());
+      } else lines.push(l);
+    }
+    for (const l of lines) {
+      const m = WaAdmit.LABEL.matcher(l);
+      const lm = m.matches();
+      const lab = lm ? m.group(1) : null;
+      let key = lm ? WaAdmit.keyOf(lab) : null;
+      let val = key != null ? m.group(2).trim() : l;
+      if (key == null) {
+        const sp = WaAdmit.SPACE_LABEL.matcher(l);
+        if (sp.matches()) {
+          key = WaAdmit.keyOf(sp.group(1).replaceAllRx("\\s+", " "));
+          val = sp.group(2).trim();
+        }
+      }
+      if (key == null) {
+        const c = WaAdmit.CLINICAL_START.matcher(l);
+        if (c.matches()) {
+          key = WaAdmit.keyOf(c.group(1));
+          val = c.group(2).trim();
+          if (c.group(1).toLowerCase().startsWith("k")) val = "Known case of " + val;
+        }
+      }
+      if (key == null && WaAdmit.VITALS.matcher(l).find() && !WaAdmit.AGE_SEX.matcher(l).find()) {
+        key = "#Vitals";
+        val = l;
+      }
+      if (key != null && key.startsWith("#")) {
+        const head = key.substring(1);
+        if (head.equals("Past history") && lm && lab.toLowerCase().startsWith("k") && !val.startsWith("Known case of")) val = "Known case of " + val;
+        if (head.equals(lastClinical)) clinical.append(val.isEmpty() ? "" : "\n" + val);
+        else clinical.append(clinical.length() === 0 ? "" : "\n").append(head).append(": ").append(val);
+        lastClinical = head;
+        continue;
+      }
+      if (key != null) {
+        lastClinical = null;
+        WaAdmit.put(r, key, val);
+        continue;
+      }
+      // an unlabelled line: the short forms ("Murugan 45/M IP 23456"), else it follows the clinical part above it
+      const used = WaAdmit.shortForms(r, l);
+      if (!used && lastClinical != null) {
+        clinical.append("\n").append(l);
+        continue;
+      }
+      if (!used) r.unplaced.push(l);
+    }
+    // a lone unplaced short line is the diagnosis when none was labelled ("Dengue fever with thrombocytopenia")
+    if (!r.fields.containsKey("diagnosis") && r.unplaced.length === 1 && r.unplaced[0].length <= 80 && r.fields.containsKey("name")) {
+      r.fields.put("diagnosis", r.unplaced.removeAt(0));
+    }
+    r.clinical = clinical.toString().trim();
+    return r;
+  }
+
+  /** Fields found in an unlabelled line. True when the line gave something. */
+  static shortForms(r, l) {
+    let used = false;
+    let rest = l;
+    const as = WaAdmit.AGE_SEX.matcher(rest);
+    if (as.find() && !r.fields.containsKey("age")) {
+      r.fields.put("age", as.group(1));
+      r.fields.put("sex", WaAdmit.sexOf(as.group(2)));
+      // the words before the age are the name, when there is no name yet
+      const before = rest.substring(0, as.start()).replaceAllRx("[,\\-:]+\\s*$", "").trim();
+      if (!r.fields.containsKey("name") && WaAdmit.looksLikeName(before)) r.fields.put("name", WaAdmit.tidyName(before));
+      rest = rest.substring(0, as.start()) + " " + rest.substring(as.end());
+      used = true;
+    }
+    const ip = WaAdmit.IP.matcher(rest);
+    if (ip.find() && !r.fields.containsKey("ip_no")) {
+      r.fields.put("ip_no", ip.group(1).split(" ").join(""));
+      rest = rest.substring(0, ip.start()) + " " + rest.substring(ip.end());
+      used = true;
+    }
+    const bed = WaAdmit.BED.matcher(rest);
+    if (bed.find() && !r.fields.containsKey("bed")) {
+      r.fields.put("bed", bed.group(1));
+      rest = rest.substring(0, bed.start()) + " " + rest.substring(bed.end());
+      used = true;
+    }
+    const ph = WaAdmit.PHONE.matcher(rest);
+    if (ph.find() && !r.fields.containsKey("phone")) {
+      r.fields.put("phone", ph.group(1).replaceAllRx("[\\s-]", ""));
+      rest = rest.substring(0, ph.start()) + " " + rest.substring(ph.end());
+      used = true;
+    }
+    const ar = WaAdmit.AR.matcher(rest);
+    if (ar.find() && !r.fields.containsKey("ar_no")) {
+      r.fields.put("ar_no", ar.group(1));
+      r.fields.put("mlc", "MLC");
+      rest = rest.substring(0, ar.start()) + " " + rest.substring(ar.end());
+      used = true;
+    }
+    const mlc = WaAdmit.MLC.matcher(rest);
+    if (mlc.find()) {
+      if (!r.fields.containsKey("mlc")) r.fields.put("mlc", mlc.group(1).toLowerCase().startsWith("m") ? "MLC" : "NMLC");
+      rest = rest.substring(0, mlc.start()) + " " + rest.substring(mlc.end());
+      used = true;
+    }
+    if (rest.toLowerCase().matches(".*\\b(cmchis|cm card|insurance)\\b.*")) {
+      r.fields.put("cmchis", "1");
+      used = true;
+    }
+    if (!used && !r.fields.containsKey("name")) {
+      const n = WaAdmit.NAME_LINE.matcher(l);
+      if (n.find() && n.group(1).length >= 3 && WaAdmit.looksLikeName(n.group(1)) && l.length <= 40) {
+        r.fields.put("name", WaAdmit.tidyName(n.group(1)));
+        used = true;
+      }
+    }
+    return used;
+  }
+
+  static looksLikeName(s) {
+    const t = Ui.nz(s).trim();
+    if (t.length < 2 || t.length > 40 || !t.matches("(?i)[A-Za-z][A-Za-z .']*")) return false;
+    if (t.jsplit("\\s+").length > 4) return false;
+    return !WaAdmit.NOT_A_NAME.matcher(t).find();
+  }
+
+  static tidyName(s) {
+    const t = Ui.nz(s).replaceAllRx("(?i)^(mr|mrs|ms|thiru|tmt|selvi|master)\\.?\\s+", "").replaceAllRx("[,.\\-]+$", "").trim();
+    const b = new StringBuilder();
+    for (const w of t.jsplit("\\s+")) {
+      if (w.isEmpty()) continue;
+      if (b.length() > 0) b.append(' ');
+      b.append(w.length <= 2 && w.equals(w.toUpperCase()) ? w : Character.toUpperCase(w.charAt(0)) + w.substring(1).toLowerCase());
+    }
+    return b.toString();
+  }
+
+  static sexOf(s) {
+    const t = Ui.nz(s).toLowerCase();
+    return t.startsWith("f") || t.equals("woman") || t.equals("girl") ? "F" : "M";
+  }
+
+  static put(r, key, val) {
+    if (val.isEmpty()) return;
+    switch (key) {
+      case "name": {
+        // "Name: Murugan, 45/M" carries the age and sex too
+        const as = WaAdmit.AGE_SEX.matcher(val);
+        if (as.find()) {
+          r.fields.put("age", as.group(1));
+          r.fields.put("sex", WaAdmit.sexOf(as.group(2)));
+          val = val.substring(0, as.start()).replaceAllRx("[,\\-:/]+\\s*$", "").trim();
+        }
+        if (!val.isEmpty()) r.fields.put("name", WaAdmit.tidyName(val));
+        break;
+      }
+      case "age": {
+        const as = WaAdmit.AGE_SEX.matcher(val);
+        if (as.find()) {
+          r.fields.put("age", as.group(1));
+          r.fields.put("sex", WaAdmit.sexOf(as.group(2)));
+        } else {
+          const d = Pattern.compile("\\d{1,3}").matcher(val);
+          if (d.find()) r.fields.put("age", d.group());
+          const s = WaAdmit.SEX_WORD.matcher(val);
+          if (s.find()) r.fields.put("sex", WaAdmit.sexOf(s.group(1)));
+        }
+        break;
+      }
+      case "agesex": {
+        const as = WaAdmit.AGE_SEX.matcher(val);
+        if (as.find()) {
+          r.fields.put("age", as.group(1));
+          r.fields.put("sex", WaAdmit.sexOf(as.group(2)));
+        }
+        break;
+      }
+      case "sex":
+        r.fields.put("sex", WaAdmit.sexOf(val));
+        break;
+      case "ip_no":
+        r.fields.put("ip_no", val.replaceAllRx("(?i)^(no\\.?|number)\\s*", "").replaceAllRx("\\s+", "").replaceAllRx("[.,]+$", ""));
+        break;
+      case "phone": {
+        const p = WaAdmit.PHONE.matcher(val);
+        r.fields.put("phone", p.find() ? p.group(1).replaceAllRx("[\\s-]", "") : val.replaceAllRx("[^0-9+]", ""));
+        break;
+      }
+      case "bed":
+        r.fields.put("bed", val.replaceAllRx("(?i)^(no\\.?|number)\\s*", "").replaceAllRx("[.,]+$", ""));
+        break;
+      case "cmchis_no": {
+        const t = val.toLowerCase();
+        if (t.matches("(no|nil|not available|nill|-|na|n/a|none)\\.?")) break;
+        r.fields.put("cmchis", "1");
+        if (!t.matches("(yes|y|available|present|covered)\\.?")) r.fields.put("cmchis_no", val);
+        break;
+      }
+      case "ar_no":
+        r.fields.put("ar_no", val);
+        r.fields.put("mlc", "MLC");
+        break;
+      case "mlc": {
+        const m = WaAdmit.MLC.matcher(val);
+        const t = val.toLowerCase();
+        if (m.find()) r.fields.put("mlc", m.group(1).toLowerCase().startsWith("m") ? "MLC" : "NMLC");
+        else if (t.startsWith("y")) r.fields.put("mlc", "MLC");
+        else if (t.startsWith("n")) r.fields.put("mlc", "NMLC");
+        break;
+      }
+      case "date": {
+        const d = WaAdmit.isoDate(val);
+        if (d != null) r.fields.put("date", d);
+        const dm = WaAdmit.DATE.matcher(val);
+        const t = WaAdmit.TIME.matcher(dm.find() ? val.substring(dm.end()) : val);
+        if (t.find() && WaAdmit.hhmm(t) != null && !r.fields.containsKey("time")) r.fields.put("time", WaAdmit.hhmm(t));
+        break;
+      }
+      case "time": {
+        const t = WaAdmit.TIME.matcher(val);
+        if (t.find() && WaAdmit.hhmm(t) != null) r.fields.put("time", WaAdmit.hhmm(t));
+        break;
+      }
+      default:
+        r.fields.put(key, val);
+    }
+  }
+
+  /** "19/10/26", "19.10.2026", "19-10-2026" to "2026-10-19"; null if not a date. */
+  static isoDate(s) {
+    const m = WaAdmit.DATE.matcher(Ui.nz(s));
+    if (!m.find()) return null;
+    const d = Integer.parseInt(m.group(1)), mo = Integer.parseInt(m.group(2));
+    let y = Integer.parseInt(m.group(3));
+    if (y < 100) y += 2000;
+    if (d < 1 || d > 31 || mo < 1 || mo > 12) return null;
+    try {
+      return LocalDate.of(y, mo, d).toString();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static hhmm(t) {
+    let h = Integer.parseInt(t.group(1));
+    const min = Integer.parseInt(t.group(2));
+    const ap = t.group(3);
+    if (ap != null) {
+      if (ap.equalsIgnoreCase("p") && h < 12) h += 12;
+      if (ap.equalsIgnoreCase("a") && h === 12) h = 0;
+    }
+    if (h > 23 || min > 59) return null;
+    return jfmt("%02d:%02d", h, min);
+  }
+
+  /** What was filled, for the message after pasting: "name, age, sex, IP number, diagnosis". */
+  static summary(r) {
+    const names = [["name", "name"], ["age", "age"], ["sex", "sex"], ["ip_no", "IP number"], ["phone", "phone"], ["address", "address"],
+      ["diagnosis", "diagnosis"], ["bed", "bed"], ["cmchis", "CMCHIS"], ["mlc", "MLC / NMLC"], ["ar_no", "AR number"], ["date", "date"], ["time", "time"]];
+    const b = new StringBuilder();
+    for (const n of names) if (r.fields.containsKey(n[0])) b.append(b.length() === 0 ? "" : ", ").append(n[1]);
+    return b.toString();
+  }
+}
+
+WaAdmit.Result = class {
+  constructor() {
+    /** Admission form fields: name, age, sex, ip_no, phone, address, diagnosis, bed, cmchis, cmchis_no, mlc, ar_no, date, time. */
+    this.fields = new JMap();
+    /** The clinical part under CaseScan's headings ("Chief complaints: …"), for the case sheet. */
+    this.clinical = "";
+    /** Lines that went nowhere. */
+    this.unplaced = [];
+  }
+};
+;
+/* ---- app/Wall.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Department wall screen (8.60): what the whole department needs to see at a glance, for a TV or a tablet on the wall of the
+ * duty room. Built fresh every 30 seconds from the synced records. Patients are shown by ward, bed and initials unless names are
+ * switched on for this screen (a wall can be seen by visitors).
+ */
+class Wall {
+  constructor() {}
+
+  static COLOR = 0xFF0F172A;
+
+  static prefs(c) {
+    return c.getSharedPreferences("wall", Context.MODE_PRIVATE);
+  }
+
+  static names(c) {
+    return Wall.prefs(c).getBoolean("names", false);
+  }
+
+  static setNames(c, on) {
+    Wall.prefs(c).edit().putBoolean("names", on).apply();
+  }
+
+  /** "Ramesh Kumar" -> "R.K." */
+  static initials(name) {
+    const b = new StringBuilder();
+    for (const w of Ui.nz(name).replaceAllRx("(?i)\\b(mr|mrs|ms|dr|selvi|thiru|tmt)\\.?\\s+", "").trim().jsplit("[\\s.]+")) {
+      if (w.isEmpty() || !Character.isLetter(w.charAt(0))) continue;
+      b.append(Character.toUpperCase(w.charAt(0))).append('.');
+      if (b.length() >= 6) break;
+    }
+    return b.length() === 0 ? "?" : b.toString();
+  }
+
+  /** "M3 bed 12 · R.K. 54/M" (or the name when names are on). */
+  static who(p, names) {
+    const bed = Ui.nz(p.get("bed"));
+    return Db.shortName(p.get("location")) + (bed.isEmpty() ? "" : " bed " + bed) + "  ·  "
+        + (names ? Ui.nz(p.get("name")) : Wall.initials(p.get("name"))) + " " + Ui.nz(p.get("age")) + "/" + Ui.nz(p.get("sex")).toUpperCase();
+  }
+
+  static since(day) {
+    return "(date>'" + day + "' OR (date='" + day + "' AND IFNULL(time,'')>='07:30'))";
+  }
+
+  static build(db, names) {
+    const d = new Wall.Data();
+    const day = Dates.admitDay().toString();
+    d.admitting = db.admittingUnits(Dates.dow(Dates.admitDay()));
+    d.dap = Census.dapOf(db, day);
+    const al = Alerts.active(db);
+    if (!al.isEmpty()) {
+      d.alert = Ui.nz(al.get(0).get("message"));
+      d.alertBy = Ui.nz(al.get(0).get("posted_by"));
+    }
+    d.total = db.totalInpatients();
+    d.male = db.num("SELECT COUNT(*) FROM patients WHERE status='IN' AND location<>'KDP' AND sex='M'");
+    d.female = d.total - d.male;
+    d.vent = db.num("SELECT COUNT(*) FROM patients WHERE status='IN' AND vent='1'");
+    const s = Wall.since(day);
+    d.admitted = db.num("SELECT COUNT(*) FROM events WHERE type='ADMIT' AND " + s);
+    d.discharged = db.num("SELECT COUNT(*) FROM events WHERE type='DISCHARGE' AND " + s);
+    d.died = db.num("SELECT COUNT(*) FROM events WHERE type='DEATH' AND " + s);
+    d.moved = db.num("SELECT COUNT(*) FROM events WHERE type='TRANSFER' AND " + s);
+    for (const w of Db.CENSUS_WARDS) {
+      const x = new Wall.Ward();
+      x.code = w;
+      x.count = db.census(w, null);
+      x.capacity = db.capacity(w);
+      d.wards.add(x);
+    }
+
+    // see first: red worsening trends, then red NEWS2
+    const listed = new JSet();
+    for (const h of Watch.all(db)) {
+      if (!Watch.anyRed(h.flags) || d.sick.size() >= 8) continue;
+      listed.add(h.patient.get("id"));
+      d.sick.add(new Wall.Item(Wall.who(h.patient, names), h.flags.get(0).text, true, Long.parseLong(h.patient.get("id"))));
+    }
+    try {
+      for (const f of Ews.flagged(db)) {
+        if (!f.result.red() || d.sick.size() >= 8 || !listed.add(f.patient.get("id"))) continue;
+        d.sick.add(new Wall.Item(Wall.who(f.patient, names), "High NEWS2 score", true, Long.parseLong(f.patient.get("id"))));
+      }
+    } catch (ignored) {
+      // NEWS2 is optional on the wall
+    }
+
+    const now = Protocols.now();
+    for (const r of Protocols.active(db)) {
+      const p = Protocols.byId(r.get("protocol"));
+      const pt = db.row("SELECT * FROM patients WHERE id=?", Ui.nz(r.get("patient_id")));
+      if (p == null || pt == null) continue;
+      const nx = Protocols.next(r);
+      const late = nx != null && !nx[1].isAfter(now);
+      d.protocols.add(new Wall.Item(p.emoji + " " + p.name + "  ·  " + Wall.who(pt, names),
+          nx == null ? "Running" : nx[0].label + " " + Protocols.dueText(nx[1], now), late, Long.parseLong(pt.get("id"))));
+    }
+
+    const late = Results.overdue(db, now), un = Results.unseen(db);
+    d.overdue = late.size();
+    d.unseen = un.size();
+    for (const r of un) {
+      if (d.results.size() >= 6) break;
+      d.results.add(new Wall.Item("Back, not seen: " + Ui.nz(r.get("test")), Wall.wardBed(r, names), "1".equals(r.get("abnormal")), Long.parseLong(r.get("patient_id"))));
+    }
+    for (const r of late) {
+      if (d.results.size() >= 6) break;
+      d.results.add(new Wall.Item("Overdue: " + Ui.nz(r.get("test")), Wall.wardBed(r, names) + "  ·  " + Results.dueText(r, now).toLowerCase(), true,
+          Long.parseLong(r.get("patient_id"))));
+    }
+
+    const today = Dates.todayIso();
+    for (const a of db.rows("SELECT kind, topic, presenter, moderator FROM academics WHERE date=? ORDER BY id", today)) {
+      const k = Db.ACAD_KINDS.indexOf(a.get("kind"));
+      d.academics.add(new Wall.Item((k < 0 ? Ui.nz(a.get("kind")) : Db.ACAD_LABELS[k]) + ": " + Ui.nz(a.get("topic")),
+          Wall.join("Presenter " + Ui.nz(a.get("presenter")), Ui.nz(a.get("moderator")).isEmpty() ? "" : "Moderator " + a.get("moderator")), false, 0));
+    }
+    for (const a of db.rows("SELECT kind, topic, taken_by, batch FROM classes WHERE date=? ORDER BY id", today)) {
+      const k = Db.CLASS_KINDS.indexOf(a.get("kind"));
+      d.academics.add(new Wall.Item((k < 0 ? Ui.nz(a.get("kind")) : Db.CLASS_LABELS[k]) + ": " + Ui.nz(a.get("topic")),
+          Wall.join(Ui.nz(a.get("taken_by")), Ui.nz(a.get("batch"))), false, 0));
+    }
+    for (const n of db.rows("SELECT title, category, date FROM notices WHERE date>=? OR pinned=1 ORDER BY pinned DESC, date DESC, id DESC LIMIT 3",
+        Dates.today().minusDays(3).toString()))
+      d.notices.add(new Wall.Item(Ui.nz(n.get("title")), Ui.nz(n.get("category")) + "  ·  " + Dates.nice(n.get("date")), false, 0));
+    return d;
+  }
+
+  static wardBed(r, names) {
+    const bed = Ui.nz(r.get("pbed"));
+    return Db.shortName(r.get("loc")) + (bed.isEmpty() ? "" : " bed " + bed) + "  ·  " + (names ? Ui.nz(r.get("pname")) : Wall.initials(r.get("pname")));
+  }
+
+  static join(a, b) {
+    return a.trim().isEmpty() ? b : b.trim().isEmpty() ? a : a + "  ·  " + b;
+  }
+}
+
+Wall.Ward = class {
+  constructor() { this.code = null; this.count = 0; this.capacity = 0; }
+};
+
+Wall.Item = class {
+  constructor(text, sub, red, pid) {
+    this.text = text;
+    this.sub = sub;
+    this.red = red;
+    this.patientId = pid;
+  }
+};
+
+Wall.Data = class {
+  constructor() {
+    this.admitting = [];
+    this.dap = ""; this.alert = ""; this.alertBy = "";
+    this.total = 0; this.male = 0; this.female = 0; this.admitted = 0; this.discharged = 0; this.died = 0; this.moved = 0; this.vent = 0;
+    this.wards = [];
+    this.sick = []; this.protocols = []; this.results = []; this.academics = []; this.notices = [];
+    this.overdue = 0; this.unseen = 0;
+  }
+};
+;
+/* ---- app/WallActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Department wall screen (8.60): full screen, dark, readable across a room. Clock, today's admitting unit and DAP, the HOD's
+ * urgent message, the census of every ward with today's movement, patients to see first, running protocol timers, pending
+ * results and today's academics. Refreshes by itself every 30 seconds and keeps the screen on. Wide screens (TV, tablet on its
+ * side) show two columns; a phone held upright shows one scrolling column. Tap anywhere for options.
+ */
+class WallActivity extends Activity {
+  static REFRESH_MS = 30000;
+  static CLOCK = DateTimeFormatter.ofPattern("h:mm", Locale.ENGLISH);
+  static AMPM = DateTimeFormatter.ofPattern("a", Locale.ENGLISH);
+  static AMBER = 0xFFFBBF24;
+  static SOFT = 0xB3FFFFFF;
+  static PANEL = 0x1AFFFFFF;
+
+  constructor() {
+    super();
+    this.db = null;
+    this.root = null;
+    this.clock = null;
+    this.ampm = null;
+    this.updated = null;
+    this.k = 1;
+    this.wide = false;
+    this.handler = new Handler(Looper.getMainLooper());
+    this.refresher = {
+      run: () => {
+        Sync.kick(this);
+        this.draw();
+        this.handler.postDelayed(this.refresher, WallActivity.REFRESH_MS);
+      }
+    };
+    this.ticker = {
+      run: () => {
+        this.tick();
+        this.handler.postDelayed(this.ticker, 1000);
+      }
+    };
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.db = Db.get(this);
+    this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    this.root = new FrameLayout(this);
+    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFF0B1120, 0xFF0F2A4A, 0xFF082F49]);
+    this.root.setBackground(bg);
+    this.root.setOnClickListener({
+      onClick: (v) => { this.menu(); }
+    });
+    this.setContentView(this.root);
+    this.draw();
+  }
+
+  onResume() {
+    super.onResume();
+    document.body.classList.add("wall-screen");   // web only: fill a TV, not the 820 px phone frame
+    this.handler.removeCallbacks(this.refresher);
+    this.handler.removeCallbacks(this.ticker);
+    this.handler.postDelayed(this.refresher, WallActivity.REFRESH_MS);
+    this.handler.postDelayed(this.ticker, 1000);
+  }
+
+  onPause() {
+    super.onPause();
+    document.body.classList.remove("wall-screen");
+    this.handler.removeCallbacks(this.refresher);
+    this.handler.removeCallbacks(this.ticker);
+  }
+
+  menu() {
+    const names = Wall.names(this);
+    new AlertDialog.Builder(this).setTitle("Wall screen")
+        .setItems([names ? "Show initials only (privacy)" : "Show patient names", "Refresh now", "Close the wall screen"], {
+          onClick: (d, w) => {
+            if (w === 0) {
+              Wall.setNames(this, !names);
+              this.draw();
+            } else if (w === 1) {
+              Sync.kick(this);
+              this.draw();
+            } else this.finish();
+          }
+        }).setNegativeButton("Cancel", null).show();
+  }
+
+  // ---------------------------------------------------------------- sizes
+
+  px(dp) {
+    return Ui.dp(this, dp * this.k);
+  }
+
+  t(s, sp, color, bold) {
+    return Ui.tv(this, s, sp * this.k, color, bold);
+  }
+
+  w(weight) {
+    return new LinearLayout.LayoutParams(0, WRAP_CONTENT, weight);
+  }
+
+  panel() {
+    const p = Ui.v(this);
+    p.setBackground(Ui.round(this, WallActivity.PANEL, 18 * this.k));
+    p.setPadding(this.px(16), this.px(12), this.px(16), this.px(12));
+    return p;
+  }
+
+  label(s, color) {
+    const l = this.t(s, 12, color, true);
+    l.setLetterSpacing(0.12);
+    return l;
+  }
+
+  // ---------------------------------------------------------------- the screen
+
+  draw() {
+    const wdp = this.getResources().getDisplayMetrics().widthPixels / this.getResources().getDisplayMetrics().density;
+    const hdp = this.getResources().getDisplayMetrics().heightPixels / this.getResources().getDisplayMetrics().density;
+    this.wide = wdp > hdp && wdp >= 640;
+    this.k = this.wide ? Math.max(0.6, Math.min(2.6, Math.min(wdp / 1280, hdp / 720))) : Math.max(0.8, Math.min(1.5, wdp / 420));
+    const d = Wall.build(this.db, Wall.names(this));
+    const k = this.k, wide = this.wide;
+    this.root.removeAllViews();
+
+    const page = Ui.v(this);
+    page.setPadding(this.px(wide ? 28 : 16), this.px(wide ? 20 : 14), this.px(wide ? 28 : 16), this.px(12));
+    page.addView(this.topBar());
+    if (!d.alert.isEmpty()) {
+      const a = this.t("🚨  HOD: " + d.alert + (d.alertBy.isEmpty() ? "" : "   — " + d.alertBy), 18, Color.WHITE, true);
+      a.setBackground(Ui.round(this, Ui.RED, 16 * k));
+      a.setPadding(this.px(18), this.px(10), this.px(18), this.px(10));
+      const blink = new AlphaAnimation(1, 0.55);
+      blink.setDuration(900);
+      blink.setRepeatMode(Animation.REVERSE);
+      blink.setRepeatCount(Animation.INFINITE);
+      a.startAnimation(blink);
+      page.addView(a);
+      Ui.margins(a, 0, toInt(12 * k), 0, 0);
+    }
+
+    const left = Ui.v(this), right = Ui.v(this);
+    left.addView(this.todayRow(d));
+    const census = this.censusGrid(d);
+    left.addView(census);
+    Ui.margins(census, 0, toInt(14 * k), 0, 0);
+
+    this.addList(right, "SEE FIRST  ·  GETTING WORSE", Ui.RED, d.sick, wide ? 5 : 8, "No red flags on the deterioration watch or NEWS2.");
+    if (!d.protocols.isEmpty()) this.addList(right, "PROTOCOL TIMERS RUNNING", 0xFFFB923C, d.protocols, 3, "");
+    const res = "PENDING RESULTS" + (d.overdue + d.unseen > 0 ? "  ·  " + d.overdue + " OVERDUE  ·  " + d.unseen + " NOT SEEN" : "");
+    this.addList(right, res, 0xFF60A5FA, d.results, wide ? 4 : 6, "No overdue tests, every result seen.");
+    const today = ArrayList(d.academics);
+    today.addAll(d.notices);
+    this.addList(right, "TODAY  ·  ACADEMICS & NOTICES", 0xFF34D399, today, wide ? 3 : 6, "No class or notice today.");
+
+    if (wide) {
+      const body = Ui.h(this);
+      body.setGravity(Gravity.TOP);
+      body.addView(left, this.w(1.2));
+      const gap = new View(this);
+      body.addView(gap, new LinearLayout.LayoutParams(this.px(18), 1));
+      body.addView(right, this.w(1));
+      page.addView(body, new LinearLayout.LayoutParams(MATCH_PARENT, 0, 1));
+      Ui.margins(body, 0, toInt(14 * k), 0, 0);
+    } else {
+      page.addView(left);
+      Ui.margins(left, 0, toInt(12 * k), 0, 0);
+      page.addView(right);
+    }
+    this.updated = this.t("", 11, 0x80FFFFFF, false);
+    this.updated.setGravity(Gravity.CENTER);
+    page.addView(this.updated);
+    Ui.margins(this.updated, 0, toInt(10 * k), 0, 0);
+
+    if (wide) this.root.addView(page, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    else {
+      const sc = new ScrollView(this);
+      sc.addView(page);
+      this.root.addView(sc, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    }
+    this.tick();
+  }
+
+  tick() {
+    if (this.clock == null) return;
+    const now = Dates.time();
+    this.clock.setText(now.format(WallActivity.CLOCK));
+    this.ampm.setText(" " + now.format(WallActivity.AMPM).toUpperCase());
+    if (this.updated != null) this.updated.setText("TVMCHMED wall screen  ·  updates by itself every 30 seconds  ·  "
+        + (Wall.names(this) ? "names shown" : "initials only") + "  ·  tap for options");
+  }
+
+  topBar() {
+    const wide = this.wide, k = this.k;
+    const bar = Ui.h(this);
+    bar.setGravity(Gravity.CENTER_VERTICAL);
+    const logo = new ImageView(this);
+    logo.setImageResource(R.drawable.dept_logo);
+    logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    logo.setBackground(Ui.round(this, Color.WHITE, 40 * k));
+    logo.setPadding(this.px(3), this.px(3), this.px(3), this.px(3));
+    bar.addView(logo, new LinearLayout.LayoutParams(this.px(wide ? 64 : 48), this.px(wide ? 64 : 48)));
+    const names = Ui.v(this);
+    names.setPadding(this.px(14), 0, this.px(8), 0);
+    names.addView(this.t(this.db.setting("dept", "Department of General Medicine"), wide ? 24 : 17, Color.WHITE, true));
+    names.addView(this.t(this.db.setting("college", "Tirunelveli Medical College Hospital") + "  ·  HOD " + this.db.setting("hod", ""), wide ? 14 : 12, WallActivity.SOFT, false));
+    bar.addView(names, this.w(1));
+    const time = Ui.v(this);
+    time.setGravity(Gravity.END);
+    const hm = Ui.h(this);
+    hm.setGravity(Gravity.BOTTOM);
+    this.clock = this.t("", wide ? 46 : 30, Color.WHITE, true);
+    this.ampm = this.t("", wide ? 18 : 13, WallActivity.SOFT, true);
+    this.ampm.setPadding(0, 0, 0, this.px(wide ? 8 : 5));
+    hm.addView(this.clock);
+    hm.addView(this.ampm);
+    time.addView(hm);
+    const date = this.t(Dates.longFmt(Dates.today()), wide ? 14 : 12, WallActivity.SOFT, false);
+    date.setGravity(Gravity.END);
+    time.addView(date);
+    bar.addView(time);
+    return bar;
+  }
+
+  /** Admitting unit and DAP, beside the department total and today's movement. */
+  todayRow(d) {
+    const row = Ui.h(this);
+    const adm = this.panel();
+    adm.addView(this.label("ADMITTING TODAY", WallActivity.AMBER));
+    const units = d.admitting.isEmpty() ? "-" : TextUtils.join(" · ", d.admitting);
+    const u = this.t(units, 40, d.admitting.isEmpty() ? Color.WHITE : Ui.mix(Ui.unitColor(d.admitting.get(0)), Color.WHITE, 0.35), true);
+    adm.addView(u);
+    adm.addView(this.t("DAP  " + (d.dap.isEmpty() ? "not entered" : d.dap), 15, Color.WHITE, true));
+    adm.addView(this.t("Duty from 7:30 AM", 11, WallActivity.SOFT, false));
+    row.addView(adm, this.w(1));
+    const gap = new View(this);
+    row.addView(gap, new LinearLayout.LayoutParams(this.px(12), 1));
+
+    const tot = this.panel();
+    tot.addView(this.label("INPATIENTS NOW", 0xFF7DD3FC));
+    const big = Ui.h(this);
+    big.setGravity(Gravity.BOTTOM);
+    big.addView(this.t(String(d.total), 40, Color.WHITE, true));
+    const mf = this.t("   ♂ " + d.male + "   ♀ " + d.female + (d.vent > 0 ? "   🫁 " + d.vent : ""), 14, WallActivity.SOFT, true);
+    mf.setPadding(0, 0, 0, this.px(8));
+    big.addView(mf);
+    tot.addView(big);
+    const mv = Ui.h(this);
+    mv.addView(this.move("Admitted", d.admitted, 0xFF34D399), this.w(1));
+    mv.addView(this.move("Discharged", d.discharged, 0xFF7DD3FC), this.w(1));
+    mv.addView(this.move("Moved", d.moved, 0xFFC4B5FD), this.w(1));
+    mv.addView(this.move("Died", d.died, 0xFFFCA5A5), this.w(1));
+    tot.addView(mv);
+    tot.addView(this.t("Since 7:30 AM", 11, WallActivity.SOFT, false));
+    row.addView(tot, this.w(1.5));
+    return row;
+  }
+
+  move(label, n, color) {
+    const c = Ui.v(this);
+    c.addView(this.t(String(n), 22, color, true));
+    const l = this.t(label, 11, WallActivity.SOFT, false);
+    l.setSingleLine(true);
+    l.setEllipsize(TextUtils.TruncateAt.END);
+    c.addView(l);
+    return c;
+  }
+
+  /** Every ward: name, patients, beds and an occupancy bar, five to a row (three on a phone). */
+  censusGrid(d) {
+    const k = this.k;
+    const box = this.panel();
+    box.addView(this.label("WARD CENSUS", 0xFF7DD3FC));
+    const per = this.wide ? 5 : 3;
+    let row = null;
+    for (let i = 0; i < d.wards.size(); i++) {
+      if (i % per === 0) {
+        row = Ui.h(this);
+        box.addView(row);
+        Ui.margins(row, 0, toInt(8 * k), 0, 0);
+      }
+      const x = d.wards.get(i);
+      const color = Ui.unitColor(x.code);
+      const tile = Ui.v(this);
+      tile.setBackground(Ui.round(this, Ui.alpha(color, 0x40), 12 * k));
+      tile.setPadding(this.px(10), this.px(6), this.px(10), this.px(8));
+      const wn = this.t(Db.shortName(x.code), 13, Color.WHITE, true);
+      wn.setSingleLine(true);
+      wn.setEllipsize(TextUtils.TruncateAt.END);
+      tile.addView(wn);
+      const n = Ui.h(this);
+      n.setGravity(Gravity.BOTTOM);
+      n.addView(this.t(String(x.count), 26, Color.WHITE, true));
+      if (x.capacity > 0) {
+        const of = this.t(" / " + x.capacity, 12, WallActivity.SOFT, false);
+        of.setPadding(0, 0, 0, this.px(4));
+        n.addView(of);
+      }
+      tile.addView(n);
+      if (x.capacity > 0) {
+        const occ = Math.min(1.2, x.count / x.capacity);
+        const bar = Ui.h(this);
+        bar.setBackground(Ui.round(this, 0x33FFFFFF, 4));
+        const fill = new View(this);
+        fill.setBackground(Ui.round(this, occ > 1 ? 0xFFF87171 : occ > 0.85 ? WallActivity.AMBER : 0xFF34D399, 4));
+        const f = Math.max(0.02, Math.min(1, occ));
+        bar.addView(fill, new LinearLayout.LayoutParams(0, MATCH_PARENT, f));
+        if (f < 1) bar.addView(new View(this), new LinearLayout.LayoutParams(0, MATCH_PARENT, 1 - f));
+        tile.addView(bar, new LinearLayout.LayoutParams(MATCH_PARENT, this.px(5)));
+      }
+      const lp = this.w(1);
+      lp.setMargins(i % per === 0 ? 0 : this.px(6), 0, 0, 0);
+      row.addView(tile, lp);
+    }
+    if (row != null) while (row.getChildCount() < per) {
+      const sp = new View(this);
+      const lp = new LinearLayout.LayoutParams(0, 1, 1);
+      lp.setMargins(this.px(6), 0, 0, 0);
+      row.addView(sp, lp);
+    }
+    return box;
+  }
+
+  addList(col, title, color, items, max, empty) {
+    const k = this.k;
+    const p = this.panel();
+    p.addView(this.label(title, color));
+    if (items.isEmpty()) p.addView(this.t(empty, 14, WallActivity.SOFT, false));
+    let shown = 0;
+    for (const it of items) {
+      if (shown === max) {
+        p.addView(this.t("+ " + (items.size() - max) + " more", 12, WallActivity.SOFT, true));
+        break;
+      }
+      shown++;
+      const a = this.t((it.red ? "● " : "") + it.text, 15, it.red ? 0xFFFCA5A5 : Color.WHITE, true);
+      a.setMaxLines(2);
+      p.addView(a);
+      Ui.margins(a, 0, toInt(6 * k), 0, 0);
+      if (!Ui.nz(it.sub).isEmpty()) {
+        const s = this.t(it.sub, 12, WallActivity.SOFT, false);
+        s.setMaxLines(2);
+        p.addView(s);
+      }
+    }
+    if (col.getChildCount() > 0) {
+      col.addView(p);
+      Ui.margins(p, 0, toInt(12 * k), 0, 0);
+    } else col.addView(p);
+  }
+}
+;
 /* ---- app/WardDuty.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -58284,6 +69177,573 @@ class WeekAcademicsActivity extends Base {
   }
 }
 ;
+/* ---- app/Wrapped.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * TVMCHMED Wrapped (8.40): the year in story cards, for one member ("me"), a unit (M1 … M7) or the whole department. Everything is
+ * counted on the phone from the records already shared; no patient names appear on any card.
+ */
+class Wrapped {
+  static ME = "me";
+  static DEPT = "dept";
+
+  static PALETTES = [
+            [0xFF7C3AED, 0xFFDB2777], [0xFF0EA5E9, 0xFF6366F1], [0xFFF97316, 0xFFE11D48], [0xFF10B981, 0xFF0EA5E9],
+            [0xFFF59E0B, 0xFFEF4444], [0xFF8B5CF6, 0xFF06B6D4], [0xFFEC4899, 0xFFF97316], [0xFF22C55E, 0xFF14B8A6],
+            [0xFF6366F1, 0xFFA855F7], [0xFF0F172A, 0xFF7C3AED]];
+
+  /** "Dr. S. Rajkumar" → "s rajkumar". */
+  static norm(name) {
+    let s = " " + Ui.nz(name).toLowerCase().replaceAllRx("[^a-z ]", " ") + " ";
+    s = s.replaceAllRx(" (dr|prof|mr|mrs|ms) ", " ");
+    return s.replaceAllRx("\\s+", " ").trim();
+  }
+
+  /** Whether a free-text field (a roster cell, "PGs: A, B") names the person. */
+  static names(text, normName) {
+    if (normName.length < 4) return false;
+    return (" " + Wrapped.norm(text) + " ").contains(" " + normName + " ");
+  }
+
+  static range(year) {
+    const y = Integer.parseInt(year);
+    let from = LocalDate.of(y, 1, 1), to = LocalDate.of(y, 12, 31);
+    if (to.isAfter(Dates.today())) to = Dates.today();
+    return [from, to];
+  }
+
+  static build(db, c, who, year) {
+    const s = new Wrapped.Story();
+    s.who = who;
+    s.year = year;
+    const r = Wrapped.range(year);
+    const d0 = r[0].toString(), d1 = r[1].toString();
+    if (Wrapped.ME.equals(who)) Wrapped.me(db, c, s, d0, d1);
+    else Wrapped.unit(db, s, Wrapped.DEPT.equals(who) ? null : who, d0, d1);
+    return s;
+  }
+
+  static pal(s) {
+    return Wrapped.PALETTES[s.slides.size() % Wrapped.PALETTES.length];
+  }
+
+  static add(s, emoji, big, unit, title, line, summaryLabel) {
+    s.slides.add(new Wrapped.Slide(emoji, big, unit, title, line, Wrapped.pal(s)));
+    if (summaryLabel != null) s.summary.add([summaryLabel, String(big)]);
+  }
+
+  // ---------------------------------------------------------------- a member
+
+  static me(db, c, s, d0, d1) {
+    const sid = Cloud.myStaff(c);
+    const st = sid > 0 ? db.row("SELECT * FROM staff WHERE id=?", String(sid)) : null;
+    const name = st != null ? Ui.nz(st.get("name")) : Chat.myName(c, db);
+    const n = Wrapped.norm(name);
+    const unit = st == null ? "" : Ui.nz(st.get("unit"));
+    s.label = name.isEmpty() ? "You" : name;
+    s.slides.add(new Wrapped.Slide("✨", -1, "", "Your " + s.year + " in TVMCHMED", (name.isEmpty() ? "" : name + "\n") + "Tap to see your year", Wrapped.pal(s)));
+
+    // duty days: any roster, DAP register, ward or CCB duty naming the person
+    const days = new JSet();
+    const duty = [["duty_roster", "date"], ["dap", "date"], ["ward_duty", "date"], ["ccb_duty", "date"]];
+    for (const t of duty) {
+      for (const row of db.rows("SELECT * FROM " + t[0] + " WHERE date BETWEEN ? AND ?", d0, d1)) {
+        for (const e of row.entrySet()) {
+          if (e.getKey().equals("id") || e.getKey().equals("date") || e.getKey().equals("unit") || e.getKey().equals("by_name")) continue;
+          if (Wrapped.names(e.getValue(), n)) {
+            days.add(row.get("date"));
+            break;
+          }
+        }
+      }
+    }
+    if (!days.isEmpty()) Wrapped.add(s, "🌙", days.size(), "days", "On duty", "Rosters, DAP and ward duty lists that named you. Thank you for every one of them.", "Duty days");
+
+    let sheets = 0;
+    const dx = new JMap();
+    for (const p of db.rows("SELECT cs_by, diagnosis FROM patients WHERE admit_date BETWEEN ? AND ? AND cs_by<>''", d0, d1)) {
+      if (!Wrapped.names(p.get("cs_by"), n)) continue;
+      sheets++;
+      const k = Ui.nz(p.get("diagnosis")).trim();
+      if (!k.isEmpty()) dx.put(k, (dx.containsKey(k) ? dx.get(k) : 0) + 1);
+    }
+    if (sheets > 0) Wrapped.add(s, "📝", sheets, "case sheets", "Case sheets you wrote", Wrapped.top(dx) == null ? "" : "Most often: " + Wrapped.top(dx), "Case sheets");
+
+    if (!unit.isEmpty()) {
+      const adm = db.num("SELECT COUNT(*) FROM patients WHERE home_unit=? AND admit_date BETWEEN ? AND ?", unit, d0, d1);
+      if (adm > 0) Wrapped.add(s, "🏥", adm, "patients", Db.unitName(unit) + " admitted", Wrapped.busiest(db, unit, d0, d1), "Unit admissions");
+    }
+
+    let presented = 0;
+    for (const a of db.rows("SELECT student FROM exam_allots WHERE date BETWEEN ? AND ? AND presented='1'", d0, d1)) if (Wrapped.names(a.get("student"), n)) presented++;
+    for (const a of db.rows("SELECT presenter FROM academics WHERE date BETWEEN ? AND ?", d0, d1)) if (Wrapped.names(a.get("presenter"), n)) presented++;
+    if (presented > 0) Wrapped.add(s, "🎤", presented, "presentations", "Cases and talks you presented", "Exam cases, seminars, journal clubs and case presentations.", "Presentations");
+
+    const mcq = sid > 0 ? db.rows("SELECT a.correct FROM mcq_answers a JOIN mcqs q ON q.id=a.mcq_id WHERE a.staff_id=? AND q.date BETWEEN ? AND ?", String(sid), d0, d1)
+        : [];
+    if (!mcq.isEmpty()) {
+      let right = 0;
+      for (const m of mcq) if ("1".equals(m.get("correct"))) right++;
+      Wrapped.add(s, "🧠", mcq.size(), "MCQs", "Daily MCQs answered", Math.round(100.0 * right / mcq.size()) + "% right", "MCQs answered");
+    }
+
+    if (sid > 0) {
+      const proc = new JMap();
+      let lb = 0;
+      for (const l of db.rows("SELECT procedure FROM logbook WHERE staff_id=? AND date BETWEEN ? AND ?", String(sid), d0, d1)) {
+        lb++;
+        const k = Ui.nz(l.get("procedure")).trim();
+        if (!k.isEmpty()) proc.put(k, (proc.containsKey(k) ? proc.get(k) : 0) + 1);
+      }
+      if (lb > 0) Wrapped.add(s, "🩺", lb, "procedures", "Logbook procedures", Wrapped.top(proc) == null ? "" : "Most often: " + Wrapped.top(proc), "Procedures");
+    }
+
+    let learn = 0;
+    for (const l of db.rows("SELECT by_name FROM learn_points WHERE substr(time,1,10) BETWEEN ? AND ?", d0, d1)) if (Wrapped.names(l.get("by_name"), n)) learn++;
+    if (sid > 0) {
+      learn += db.num("SELECT COUNT(*) FROM learn_notes WHERE by_staff=? AND substr(created,1,10) BETWEEN ? AND ?", String(sid), d0, d1);
+      learn += db.num("SELECT COUNT(*) FROM doubt_answers WHERE by_staff=? AND substr(created,1,10) BETWEEN ? AND ?", String(sid), d0, d1);
+    }
+    if (learn > 0) Wrapped.add(s, "💡", learn, "posts", "Teaching others", "Learning board points and topics, and PG questions you answered.", "Teaching posts");
+
+    if (s.slides.size() === 1) s.slides.add(new Wrapped.Slide("🌱", -1, "", "Your story starts here",
+        "Nothing named you yet this year. Link your account to your Students / Staff list entry (Account screen) so your duties and work count.", Wrapped.pal(s)));
+    Wrapped.finish(s);
+  }
+
+  // ---------------------------------------------------------------- a unit or the department
+
+  static unit(db, s, unit, d0, d1) {
+    const where = unit == null ? "" : " AND home_unit='" + unit.split("'").join("") + "'";
+    const pw = unit == null ? "" : " AND p.home_unit='" + unit.split("'").join("") + "'";
+    s.label = unit == null ? "Department of Medicine" : Db.unitName(unit);
+    s.slides.add(new Wrapped.Slide("✨", -1, "", s.label + "\n" + s.year + " Wrapped", "Tirunelveli Medical College\nTap to see the year", Wrapped.pal(s)));
+    const adm = db.num("SELECT COUNT(*) FROM patients WHERE admit_date BETWEEN ? AND ?" + where, d0, d1);
+    Wrapped.add(s, "🏥", adm, "admissions", "Patients admitted", unit == null ? "" : Wrapped.busiest(db, unit, d0, d1), "Admissions");
+    if (unit == null && adm > 0) {
+      let bu = "";
+      let bn = 0;
+      for (const u of Db.WARD_UNITS) {
+        const k = db.num("SELECT COUNT(*) FROM patients WHERE home_unit=? AND admit_date BETWEEN ? AND ?", u, d0, d1);
+        if (k > bn) { bn = k; bu = u; }
+      }
+      if (bn > 0) s.slides.get(s.slides.size() - 1).list.add("Busiest unit: " + Db.unitName(bu) + " (" + bn + ")");
+    }
+    const dis = db.num("SELECT COUNT(*) FROM events e JOIN patients p ON p.id=e.patient_id WHERE e.type=? AND e.date BETWEEN ? AND ?" + pw, Db.DISCHARGE, d0, d1);
+    const died = db.num("SELECT COUNT(*) FROM events e JOIN patients p ON p.id=e.patient_id WHERE e.type=? AND e.date BETWEEN ? AND ?" + pw, Db.DEATH, d0, d1);
+    if (dis > 0) Wrapped.add(s, "🏡", dis, "went home", "Discharged well", dis + died > 0 ? Math.round(100.0 * dis / (dis + died)) + "% of those who left the wards went home" : "", "Discharged");
+    const dx = new JMap();
+    for (const p of db.rows("SELECT diagnosis FROM patients WHERE admit_date BETWEEN ? AND ?" + where, d0, d1)) {
+      const k = Wrapped.cap(Ui.nz(p.get("diagnosis")).trim());
+      if (!k.isEmpty()) dx.put(k, (dx.containsKey(k) ? dx.get(k) : 0) + 1);
+    }
+    if (!dx.isEmpty()) {
+      const sl = new Wrapped.Slide("🔬", -1, "", "Top diagnoses", "What brought patients to us", Wrapped.pal(s));
+      const es = Wrapped.sorted(dx);
+      for (let i = 0; i < Math.min(5, es.size()); i++) sl.list.add((i + 1) + ".  " + es.get(i).getKey() + "  ·  " + es.get(i).getValue());
+      s.slides.add(sl);
+    }
+    const crit = db.num("SELECT COUNT(*) FROM events e JOIN patients p ON p.id=e.patient_id WHERE e.type=? AND e.to_loc IN (?, ?) AND e.date BETWEEN ? AND ?" + pw,
+        Db.TRANSFER, Db.IMCU, Db.CCB, d0, d1);
+    if (crit > 0) Wrapped.add(s, "🚑", crit, "transfers", "Moved to IMCU or CCB", "Sicker patients stepped up to intensive care.", "IMCU/CCB transfers");
+    let stay = 0;
+    let n = 0;
+    for (const p of db.rows("SELECT admit_date, outcome_date FROM patients WHERE status<>'IN' AND outcome_date BETWEEN ? AND ?" + where, d0, d1)) {
+      const a = Dates.parse(p.get("admit_date")), b = Dates.parse(p.get("outcome_date"));
+      if (a == null || b == null || b.isBefore(a)) continue;
+      stay += b.toEpochDay() - a.toEpochDay();
+      n++;
+    }
+    if (n > 0) s.slides.add(new Wrapped.Slide("🛏", Math.round(stay / n * 10), "", "Average stay", "days in hospital (" + n + " stays)", Wrapped.pal(s)));
+    const sheets = db.num("SELECT COUNT(*) FROM patients WHERE cs_by<>'' AND admit_date BETWEEN ? AND ?" + where, d0, d1);
+    if (sheets > 0) Wrapped.add(s, "📝", sheets, "case sheets", "Case sheets written", "", "Case sheets");
+    const acad = db.num("SELECT COUNT(*) FROM academics WHERE date BETWEEN ? AND ?" + (unit == null ? "" : " AND unit='" + unit.split("'").join("") + "'"), d0, d1);
+    if (acad > 0) Wrapped.add(s, "🎓", acad, "sessions", "Academic sessions", "Seminars, journal clubs, case presentations and classes.", "Academic sessions");
+    const exam = db.num("SELECT COUNT(*) FROM exam_allots a JOIN patients p ON p.id=a.patient_id WHERE a.date BETWEEN ? AND ?" + pw, d0, d1);
+    if (exam > 0) Wrapped.add(s, "📚", exam, "exam cases", "Exam cases given to students", "", "Exam cases");
+    Wrapped.finish(s);
+  }
+
+  static finish(s) {
+    const end = new Wrapped.Slide("🎉", -1, "", "That was " + s.year, s.label, Wrapped.PALETTES[Wrapped.PALETTES.length - 1]);
+    for (const r of s.summary) end.list.add(r[0] + ":  " + r[1]);
+    s.slides.add(end);
+  }
+
+  static cap(s) {
+    return s.isEmpty() ? s : Character.toUpperCase(s.charAt(0)) + s.substring(1).toLowerCase();
+  }
+
+  static sorted(m) {
+    const es = ArrayList(m.entrySet());
+    Collections.sort(es, {
+      compare: (a, b) => b.getValue() - a.getValue() !== 0 ? b.getValue() - a.getValue() : a.getKey().compareTo(b.getKey())
+    });
+    return es;
+  }
+
+  static top(m) {
+    if (m.isEmpty()) return null;
+    const e = Wrapped.sorted(m).get(0);
+    return e.getKey() + " (" + e.getValue() + ")";
+  }
+
+  static busiest(db, unit, d0, d1) {
+    const r = db.row("SELECT admit_date, COUNT(*) AS n FROM patients WHERE home_unit=? AND admit_date BETWEEN ? AND ? GROUP BY admit_date ORDER BY n DESC, admit_date LIMIT 1", unit, d0, d1);
+    return r == null ? "" : "Busiest day: " + Dates.nice(r.get("admit_date")) + " with " + r.get("n") + " admissions";
+  }
+
+  /** The year as WhatsApp text. */
+  static text(s) {
+    const b = new StringBuilder("*✨ TVMCHMED Wrapped ").append(s.year).append("*\n").append(s.label).append("\n");
+    for (const r of s.summary) b.append("\n• ").append(r[0]).append(": ").append(r[1]);
+    for (const sl of s.slides) if (sl.big < 0 && !sl.list.isEmpty() && sl !== s.slides.get(s.slides.size() - 1)) {
+      b.append("\n\n*").append(sl.title).append("*");
+      for (const l of sl.list) b.append("\n").append(l);
+    }
+    return b.toString();
+  }
+
+  /** Big number as shown: average stay is kept in tenths. */
+  static shown(sl, v) {
+    if (sl.title.equals("Average stay")) return jfmt("%.1f", v / 10.0);
+    return Math.trunc(v).toLocaleString("en-US");   // Locale.ENGLISH "%,d"
+  }
+
+  static whoChoices(c) {
+    const m = new JMap();
+    m.put(Wrapped.ME, "Me");
+    m.put(Wrapped.DEPT, "Department");
+    for (const u of Db.WARD_UNITS) m.put(u, Db.shortName(u));
+    return m;
+  }
+}
+
+/** One story card. big < 0: no number (a list card). */
+Wrapped.Slide = class {
+  constructor(emoji, big, unit, title, line, colors) {
+    this.emoji = emoji; this.big = big; this.unit = unit; this.title = title; this.line = line; this.colors = colors;
+    this.list = [];
+  }
+};
+
+Wrapped.Story = class {
+  constructor() {
+    this.who = null; this.label = null; this.year = null;
+    this.slides = [];
+    /** summary lines for the last card and the share text: label, value. */
+    this.summary = [];
+  }
+};
+;
+/* ---- app/WrappedActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * TVMCHMED Wrapped (8.40): the year as full-screen story cards. Tap the right side for the next card and the left for the one
+ * before; cards move on by themselves after a few seconds. Numbers count up as each card opens. The last card shares as a picture.
+ */
+class WrappedActivity extends Activity {
+  static STEP_MS = 5500;
+
+  constructor() {
+    super();
+    this.db = null;
+    this.who = null; this.year = null;
+    this._story = null;   // Java field "story" (renamed: story() is a method)
+    this.at = 0;
+    this.root = null; this.card = null;
+    this.bars = null;
+    this.handler = new Handler(Looper.getMainLooper());
+    this.next = { run: () => { this.go(this.at + 1); } };
+    this.counter = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.db = Db.get(this);
+    this.who = b != null ? b.getString("who") : this.getIntent().getStringExtra("who");
+    this.year = b != null ? b.getString("year") : this.getIntent().getStringExtra("year");
+    if (this.who == null) this.who = Cloud.myStaff(this) > 0 ? Wrapped.ME : Wrapped.DEPT;
+    if (this.year == null) this.year = String(Dates.today().getYear());
+    this.at = b != null ? b.getInt("at", 0) : 0;
+    this.root = new FrameLayout(this);
+    this.setContentView(this.root);
+    this.load();
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("who", this.who);
+    out.putString("year", this.year);
+    out.putInt("at", this.at);
+  }
+
+  onPause() {
+    super.onPause();
+    this.handler.removeCallbacks(this.next);
+  }
+
+  onResume() {
+    super.onResume();
+    this.schedule();
+  }
+
+  load() {
+    this._story = Wrapped.build(this.db, this, this.who, this.year);
+    if (this.at >= this._story.slides.size()) this.at = 0;
+    this.draw();
+  }
+
+  schedule() {
+    this.handler.removeCallbacks(this.next);
+    if (this._story != null && this.at < this._story.slides.size() - 1) this.handler.postDelayed(this.next, WrappedActivity.STEP_MS);
+  }
+
+  go(i) {
+    if (i < 0 || i >= this._story.slides.size()) return;
+    this.at = i;
+    this.draw();
+  }
+
+  position() {
+    return this.at;
+  }
+
+  story() {
+    return this._story;
+  }
+
+  draw() {
+    const root = this.root, story = this._story;
+    root.removeAllViews();
+    const s = story.slides.get(this.at);
+    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, s.colors);
+    root.setBackground(bg);
+
+    // tap zones: left third goes back, the rest goes on
+    const taps = new View(this);
+    taps.setOnTouchListener({
+      onTouch: (v, e) => {
+        if (e.getAction() === MotionEvent.ACTION_UP) {
+          if (e.getX() < v.getWidth() / 3) this.go(this.at - 1);
+          else this.go(this.at + 1);
+        }
+        return true;
+      }
+    });
+    root.addView(taps, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+    const top = Ui.v(this);
+    top.setPadding(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12), 0);
+    this.bars = Ui.h(this);
+    for (let i = 0; i < story.slides.size(); i++) {
+      const seg = new View(this);
+      const g = new GradientDrawable();
+      g.setCornerRadius(Ui.dp(this, 2));
+      g.setColor(i <= this.at ? 0xF2FFFFFF : 0x55FFFFFF);
+      seg.setBackground(g);
+      const lp = new LinearLayout.LayoutParams(0, Ui.dp(this, 4), 1);
+      lp.setMargins(Ui.dp(this, 2), 0, Ui.dp(this, 2), 0);
+      this.bars.addView(seg, lp);
+    }
+    top.addView(this.bars);
+    const head = Ui.h(this);
+    head.setGravity(Gravity.CENTER_VERTICAL);
+    head.setPadding(0, Ui.dp(this, 10), 0, 0);
+    const hs = new HorizontalScrollView(this);
+    hs.setHorizontalScrollBarEnabled(false);
+    const chips = Ui.h(this);
+    for (const e of Wrapped.whoChoices(this).entrySet()) chips.addView(this.chip(e.getValue(), e.getKey().equals(this.who), e.getKey(), null));
+    const y = Dates.today().getYear();
+    for (let k = y; k >= y - 1; k--) chips.addView(this.chip(String(k), String(k).equals(this.year), null, String(k)));
+    hs.addView(chips);
+    head.addView(hs, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+    const close = Ui.tv(this, "  ✕", 22, Color.WHITE, true);
+    close.setOnClickListener({
+      onClick: (v) => { this.finish(); }
+    });
+    head.addView(close);
+    top.addView(head);
+    // top bar, the card (filling the middle) and the buttons stack, so a long card never runs under the buttons
+    const col = Ui.v(this);
+    root.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    col.addView(top);
+    // web: the column lets taps through to the tap zones below it (as Android does for views that are not clickable)
+    col.el.style.pointerEvents = "none";
+    hs.el.style.pointerEvents = "auto";
+    close.el.style.pointerEvents = "auto";
+
+    const card = this.card = new FrameLayout(this);
+    card.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR, s.colors));
+    const c = Ui.v(this);
+    c.setGravity(Gravity.CENTER_HORIZONTAL);
+    const pad = Ui.dp(this, 28);
+    c.setPadding(pad, pad, pad, pad);
+    const emoji = Ui.tv(this, s.emoji, 64, Color.WHITE, false);
+    emoji.setGravity(Gravity.CENTER);
+    c.addView(emoji);
+    if (s.big >= 0) {
+      const big = Ui.tv(this, Wrapped.shown(s, 0), 72, Color.WHITE, true);
+      big.setTypeface(Typeface.create("sans-serif-black", Typeface.BOLD));
+      big.setGravity(Gravity.CENTER);
+      c.addView(big);
+      if (!s.unit.isEmpty()) {
+        const u = Ui.tv(this, s.unit, 18, 0xE6FFFFFF, true);
+        u.setGravity(Gravity.CENTER);
+        c.addView(u);
+      }
+      if (this.counter != null) this.counter.cancel();
+      this.counter = ValueAnimator.ofFloat(0, 1);
+      this.counter.setDuration(Math.min(1800, 600 + s.big * 4));
+      this.counter.addUpdateListener({
+        onAnimationUpdate: (a) => {
+          const f = a.getAnimatedValue();
+          const eased = 1 - Math.pow(1 - f, 3);
+          big.setText(Wrapped.shown(s, Math.round(s.big * eased)));
+        }
+      });
+      this.counter.start();
+    }
+    const title = Ui.tv(this, s.title, s.big >= 0 ? 24 : 30, Color.WHITE, true);
+    title.setGravity(Gravity.CENTER);
+    c.addView(title);
+    Ui.margins(title, 0, 10, 0, 0);
+    if (!s.line.isEmpty()) {
+      const line = Ui.tv(this, s.line, 16, 0xEBFFFFFF, false);
+      line.setGravity(Gravity.CENTER);
+      c.addView(line);
+      Ui.margins(line, 0, 8, 0, 0);
+    }
+    for (const l of s.list) {
+      const t = Ui.tv(this, l, 17, Color.WHITE, true);
+      t.setGravity(Gravity.CENTER);
+      c.addView(t);
+      Ui.margins(t, 0, 8, 0, 0);
+    }
+    if (this.at === story.slides.size() - 1) {
+      const brand = Ui.tv(this, "TVMCHMED  ·  Department of Medicine, TVMC", 12, 0xCCFFFFFF, false);
+      brand.setGravity(Gravity.CENTER);
+      c.addView(brand);
+      Ui.margins(brand, 0, 18, 0, 0);
+    }
+    card.addView(c, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+    card.setClickable(false);
+    const centre = new FrameLayout(this);
+    centre.addView(card, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+    col.addView(centre, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+    c.setAlpha(0);
+    c.setScaleX(0.92);
+    c.setScaleY(0.92);
+    c.animate().alpha(1).scaleX(1).scaleY(1).setDuration(450).start();
+
+    if (this.at === story.slides.size() - 1) {
+      const btns = Ui.buttonRow(this, Ui.button(this, "Share the card", 0xFF22C55E, {
+        onClick: (v) => { this.shareCard(); }
+      }), Ui.button(this, "Share as text", 0xFF0F172A, {
+        onClick: (v) => { ReportActivity.shareText(this, Wrapped.text(this._story)); }
+      }), Ui.button(this, "Replay", 0xFF7C3AED, {
+        onClick: (v) => { this.go(0); }
+      }));
+      btns.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), Ui.dp(this, 24));
+      col.addView(btns);
+      btns.el.style.pointerEvents = "auto";
+    }
+    this.schedule();
+  }
+
+  chip(label, on, w, y) {
+    const t = Ui.tv(this, label, 13, on ? 0xFF0F172A : Color.WHITE, true);
+    const g = new GradientDrawable();
+    g.setCornerRadius(Ui.dp(this, 14));
+    g.setColor(on ? 0xF2FFFFFF : 0x33FFFFFF);
+    t.setBackground(g);
+    t.setPadding(Ui.dp(this, 12), Ui.dp(this, 5), Ui.dp(this, 12), Ui.dp(this, 5));
+    const lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(0, 0, Ui.dp(this, 6), 0);
+    t.setLayoutParams(lp);
+    t.setOnClickListener({
+      onClick: (v) => {
+        if (w != null) this.who = w;
+        if (y != null) this.year = y;
+        this.at = 0;
+        this.load();
+      }
+    });
+    return t;
+  }
+
+  /** The last card as a PNG picture shared to WhatsApp or anywhere. */
+  shareCard() {
+    try {
+      const card = this.card;
+      const w = card.getWidth() > 0 ? card.getWidth() : Ui.dp(this, 360), h = card.getHeight() > 0 ? card.getHeight() : Ui.dp(this, 480);
+      const bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+      // web: views cannot draw themselves into a bitmap, so the card's gradient and lines are painted the same way
+      this.paintCard(new Canvas(bmp), w, h, this._story.slides.get(this.at));
+      const rel = SummaryExport.DIR + "/wrapped_" + System.currentTimeMillis() + ".png";
+      const f = this.db.file(rel);
+      if (f.getParentFile() != null) f.getParentFile().mkdirs();
+      const out = new FileOutputStream(f);
+      try { bmp.compress(Bitmap.CompressFormat.PNG, 100, out); } finally { out.close(); }
+      const u = DocProvider.uri(rel);
+      const i = new Intent(Intent.ACTION_SEND);
+      i.setType("image/png");
+      i.putExtra(Intent.EXTRA_STREAM, u);
+      i.putExtra(Intent.EXTRA_TEXT, "My TVMCHMED Wrapped " + this.year);
+      i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+      this.startActivity(Intent.createChooser(i, "Share your Wrapped"));
+    } catch (e) {
+      Ui.toast(this, "Could not make the picture: " + e.getMessage());
+    }
+  }
+
+  /** Web only: the card painted on a canvas (gradient, emoji, number, unit, title, line, list and brand, centred). */
+  paintCard(cv, w, h, s) {
+    const bgp = new Paint(Paint.ANTI_ALIAS_FLAG);
+    bgp.setShader(new LinearGradient(0, 0, w, h, s.colors, null, Shader.TileMode.CLAMP));
+    cv.drawRect(0, 0, w, h, bgp);
+    const pad = Ui.dp(this, 28), max = w - 2 * pad;
+    const lines = [];
+    const add = (text, size, color, bold, gap) => {
+      const p = new Paint(Paint.ANTI_ALIAS_FLAG);
+      p.setTextSize(size);
+      p.setColor(color);
+      p.setTypeface(bold ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+      p.setTextAlign(Paint.Align.CENTER);
+      let first = true;
+      for (const para of String(text).jsplit("\n")) {
+        let rest = para;
+        do {
+          let n = p.breakText(rest, true, max, null);
+          if (n < rest.length) { const sp = rest.lastIndexOf(" ", n); if (sp > 0) n = sp; }
+          if (n <= 0) n = rest.length;
+          lines.push({ t: rest.substring(0, n).trim(), p: p, size: size, gap: first ? gap : 0 });
+          first = false;
+          rest = rest.substring(n).trim();
+        } while (rest.length > 0);
+      }
+    };
+    add(s.emoji, 64, Color.WHITE, false, 0);
+    if (s.big >= 0) {
+      add(Wrapped.shown(s, s.big), 72, Color.WHITE, true, 0);
+      if (!s.unit.isEmpty()) add(s.unit, 18, 0xE6FFFFFF, true, 0);
+    }
+    add(s.title, s.big >= 0 ? 24 : 30, Color.WHITE, true, 10);
+    if (!s.line.isEmpty()) add(s.line, 16, 0xEBFFFFFF, false, 8);
+    for (const l of s.list) add(l, 17, Color.WHITE, true, 8);
+    if (this.at === this._story.slides.size() - 1) add("TVMCHMED  ·  Department of Medicine, TVMC", 12, 0xCCFFFFFF, false, 18);
+    let total = 0;
+    for (const l of lines) total += l.gap + l.size * 1.25;
+    let yy = Math.max(pad, (h - total) / 2);
+    for (const l of lines) {
+      yy += l.gap + l.size * 1.25;
+      cv.drawText(l.t, w / 2, yy - l.size * 0.3, l.p);
+    }
+  }
+}
+;
 /* ---- app/Ws.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -58321,7 +69781,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, ApprovalActivity, Ask, AskActivity, AttendanceActivity, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, ConvictActivity, Crashes, CrashesActivity, DapActivity, Dashboard, DashboardActivity, Diagnoses, Dictation, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Ews, ExamCases, ExamCasesActivity, Extract, FacultyActivity, FacultyLeaveActivity, FacultyProfileActivity, FormActivity, FormDoc, Guidelines, HandoverActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, KdpActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, LiveCensusActivity, LiveQuizActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, MedSpeech, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, ObstetricActivity, Opinions, PatientActivity, PatientPick, PatientTimeline, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PresentationsActivity, Qr, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Roster, RosterFormActivity, SearchActivity, SessionAttendance, SettingsActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WardDuty, Watch, WatchActivity, WeekAcademicsActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Ask, AskActivity, AttendanceActivity, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, Conduct, ConductActivity, ConvictActivity, Copilot, Crashes, CrashesActivity, CultureActivity, DapActivity, Dashboard, DashboardActivity, Diagnoses, Dictation, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, Extract, FacultyActivity, FacultyLeaveActivity, FacultyProfileActivity, FormActivity, FormDoc, Guidelines, HandoverActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, Notify, ObstetricActivity, Opinions, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PresentationsActivity, ProtocolActivity, Protocols, Qr, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, SearchActivity, SessionAttendance, SettingsActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WaAdmit, Wall, WallActivity, WardDuty, Watch, WatchActivity, WeekAcademicsActivity, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
