@@ -5025,6 +5025,12 @@ if (typeof window.Linkify === 'undefined') window.Linkify = { WEB_URLS: 1, EMAIL
 if (View.FOCUS_DOWN === undefined) View.FOCUS_DOWN = 130;
 if (View.FOCUS_UP === undefined) View.FOCUS_UP = 33;
 ;
+/* ---- app/_shim_G.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+// 9.10 shim: the blank DAMA form ships with the website like res/raw/dama_form.pdf in the app.
+R.raw.dama_form = "dama_form.pdf";
+;
 /* ---- app/_shim_I.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -5885,7 +5891,7 @@ class Db extends SQLiteOpenHelper {
     "ENT", "Ophthalmology", "Neurosurgery", "Urology", "Cardiothoracic", "Emergency / casualty", "Dermatology", "Other"];
 
   static TABLES = ["units", "staff", "patients", "events", "classes", "academics", "cmchis", "settings",
-    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos"];
+    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama"];
   /** Tables kept on this phone only (in the backup file, never synced online). Case sheets are shared since 7.62. */
   static LOCAL_TABLES = [];
 
@@ -5897,7 +5903,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 56);
+    super(c, "tvmchmed.db", null, 57);
     this.ctx = c;
   }
 
@@ -6320,6 +6326,13 @@ class Db extends SQLiteOpenHelper {
         + "category TEXT DEFAULT '', subject TEXT DEFAULT '', details TEXT DEFAULT '', incident_date TEXT DEFAULT '', reply_by TEXT DEFAULT '', "
         + "explanation TEXT DEFAULT '', explained_on TEXT DEFAULT '', status TEXT DEFAULT 'Issued', decision TEXT DEFAULT '', remarks TEXT DEFAULT '', "
         + "closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '', seen TEXT DEFAULT '')");
+    }
+    if (oldV < 57) {
+      // 9.10: the DAMA (discharge against medical advice) form of a patient
+      db.execSQL("CREATE TABLE IF NOT EXISTS dama(id INTEGER PRIMARY KEY, patient_id TEXT, date TEXT, time TEXT DEFAULT '', reasons TEXT DEFAULT '', "
+        + "other_reason TEXT DEFAULT '', risks TEXT DEFAULT '', guardian TEXT DEFAULT '', pt_signs TEXT DEFAULT '', att_name TEXT DEFAULT '', "
+        + "att_relation TEXT DEFAULT '', att_phone TEXT DEFAULT '', wit1 TEXT DEFAULT '', wit2 TEXT DEFAULT '', physician TEXT DEFAULT '', "
+        + "designation TEXT DEFAULT '', reg_no TEXT DEFAULT '', hod TEXT DEFAULT '', notes TEXT DEFAULT '', by_name TEXT DEFAULT '', saved_on TEXT DEFAULT '')");
     }
     // Every synced table notes its changes for upload (IF NOT EXISTS, so new tables get theirs too).
     {
@@ -6779,6 +6792,7 @@ class Db extends SQLiteOpenHelper {
     this.getWritableDatabase().delete("case_sheets", "id=?", [String(id)]);
     for (const r of this.rows("SELECT id FROM plex WHERE patient_id=?", String(id))) this.delete("plex", Long.parseLong(r.get("id")));
     for (const r of this.rows("SELECT id FROM imaging WHERE patient_id=?", String(id))) Imaging.delete(this, Long.parseLong(r.get("id")));
+    for (const r of this.rows("SELECT id FROM dama WHERE patient_id=?", String(id))) this.delete("dama", Long.parseLong(r.get("id")));
     this.delete("patients", id);
   }
 
@@ -11320,6 +11334,7 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["9.10", "DAMA: every admitted patient has a DAMA (discharge against medical advice) section. Fill the reasons, risks explained, attendant and witnesses, print the filled Tamil and English form, and discharge as DAMA. The blank DAMA form is under DAMA forms on the home screen."],
     ["9.01", "The AI Copilot switch is now the first thing in Settings (with the notifications switch), there is an AI Copilot on/off item in the Menu, and a Turn off button inside the ✨ panel."],
     ["9.00", "Version 9.00. No more \"What's new\" slide after an update (it stays in Settings → What's new). Settings → On this phone: one switch turns off all notifications, and a separate on/off switch for the ✨ AI Copilot (or long-press ✨). PG Connect messages are deleted automatically after one month. Each unit's and special ward's page now opens with a colourful team board: unit chief, Professors, Assistant Professors, PGs by year, CRMIs and students with their photos. Your photo: tap your picture beside your name on the home page, in Account or in the Students list to add it, so everyone can recognise you. PG leave: after the unit Assistant Professor and Professor, the leave nodal officer (Dr. S. Rajkumar) approves before the HOD. Memo (home → Memo): faculty issue a memo calling for an explanation from a PG, CRMI or student for indiscipline or mismanagement of patients; the student writes the explanation in the app and the faculty member closes it with a decision; only they, the admin, HOD and Medical Registrar can see it; PDF / Word copy; the admin switches it on or off in Settings → Admin control. Run the latest supabase-setup.sql once."],
     ["8.90", "AI Copilot (8.90): a ✨ button on every screen. Tap it and ask, typed or spoken (🎤), in English or Tamil, about the screen you are on: a patient, the case sheet, a form, the census, tasks or anything else. It knows what the screen shows and the department's in-patients, and can do things for you: fill the form on screen (✎ buttons), draft a progress note for you to check, add a pending task, or open the right screen. Nothing is saved until you tap Save. Patient names, IP numbers and phone numbers never leave the phone (patients go as codes and their names come back only on your phone), and private chats are never read. It uses the Claude or Gemini key in Settings, or a free AI app with copy and paste. Drag the button up or down to move it; hide it in Settings → AI. Decision support only."],
@@ -29556,6 +29571,467 @@ class CultureActivity extends Base {
         : Ui.outlineButton(a, label, Antibiogram.COLOR, a.opener(CultureActivity, "id", String(pid)));
     box.addView(b);
     return box;
+  }
+}
+;
+/* ---- app/Dama.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * DAMA (9.10): the department's bilingual "Discharge against medical advice" form, one per patient. Filled in the app
+ * (reasons, risks explained, attendant, witnesses, treating physician) and printed as the same two-page form with the
+ * patient's details; the blank printed form ships with the app (res/raw/dama_form.pdf).
+ */
+class Dama {
+  static TABLE = "dama";
+  static COLOR = 0xFFB7372B;
+  /** The discharge type a DAMA discharge is recorded under (counted as LAMA in the census, audit and dashboard). */
+  static get DISCHARGE_TYPE() { return Db.DISCHARGE_TYPES[2]; }
+
+  static REASONS = ["Personal / family reasons", "Financial reasons", "Wish to seek treatment elsewhere", "Lack of confidence in treatment", "Other"];
+  static REASONS_TA = ["தனிப்பட்ட / குடும்பக் காரணங்கள்", "நிதி சார்ந்த காரணங்கள்", "வேறு மருத்துவமனையில் சிகிச்சை பெற விருப்பம்", "மருத்துவமனை சிகிச்சையில் நம்பிக்கையின்மை", "பிற (குறிப்பிடவும்)"];
+  static RISKS = ["The current diagnosis and the nature of treatment still required.", "The risks of leaving before the recommended treatment is complete, including possible worsening of condition, permanent disability, or risk to life.", "Available alternative treatment options.", "That the patient may be re-admitted to this hospital if needed."];
+  static RISKS_TA = ["தற்போதைய நோய் நிலை மற்றும் தேவைப்படும் தொடர் சிகிச்சையின் தன்மை", "பரிந்துரைக்கப்பட்ட சிகிச்சையை முழுமையாக முடிக்காமல் வெளியேறுவதால் ஏற்படக்கூடிய ஆபத்துகள் (நிலைமை மோசமடைதல், நிரந்தர ஊனம், உயிருக்கு ஆபத்து உட்பட)", "மாற்று சிகிச்சை வாய்ப்புகள்", "தேவைப்பட்டால் மீண்டும் மருத்துவமனையில் சேரலாம் என்பது"];
+  static SIGNS = ["Signature", "Left thumb impression", "Unable (attendant signs)"];
+  static REASON_TA = "நான் / நாங்கள், கீழே கையொப்பமிட்டவர், மேற்கூறிய நோயாளியை மருத்துவர்களின் ஆலோசனைக்கு மாறாக, கீழ்க்கண்ட காரணத்திற்காக மருத்துவமனையிலிருந்து வெளியேற்ற விரும்புகிறேன் / விரும்புகிறோம்:";
+  static REASON_EN = "I/We, the undersigned, wish to take the above patient out of Tirunelveli Medical College Hospital against the advice of the treating physician(s), for the reason(s) checked below:";
+  static RISK_TA = "சிகிச்சை பொறுப்பு மருத்துவர் பின்வரும் விஷயங்களை நோயாளி / உறவினருக்குத் தமிழில் விளக்கியுள்ளார்.";
+  static RISK_EN = "The treating physician has explained the following to the patient / attendant in a language they understand:";
+  static DECL_TA = "மேற்கண்ட அபாயங்கள் அனைத்தும் எனக்கு / எங்களுக்கு முழுமையாக விளக்கப்பட்டதாகவும், அவற்றை நான் / நாங்கள் முழுமையாகப் புரிந்துகொண்டதாகவும் இதன் மூலம் உறுதிப்படுத்துகிறேன் / உறுதிப்படுத்துகிறோம். "
+    + "மருத்துவர்களின் ஆலோசனைக்கு மாறாக, எனது / எங்களது சொந்த விருப்பப்படியும் பொறுப்பிலுமே நான் / நாங்கள் இந்த மருத்துவமனையை விட்டு வெளியேறுகிறேன் / வெளியேறுகிறோம். "
+    + "இதனால் ஏற்படக்கூடிய எந்தவொரு விளைவுக்கும் (உடல்நலம் மோசமடைதல் அல்லது உயிருக்கு ஆபத்து உட்பட) மருத்துவமனை, மருத்துவர்கள் மற்றும் பணியாளர்கள் பொறுப்பாக மாட்டார்கள் என்பதை ஏற்றுக்கொள்கிறேன் / ஏற்றுக்கொள்கிறோம். "
+    + "இந்த முடிவை எடுப்பதில் எவ்வித வற்புறுத்தலும் இல்லை என்பதையும், கேள்விகள் கேட்க வாய்ப்பு அளிக்கப்பட்டு, அவற்றுக்கு எனக்கு / எங்களுக்கு மனநிறைவான பதில்கள் கிடைத்தன என்பதையும் உறுதிப்படுத்துகிறேன் / உறுதிப்படுத்துகிறோம்.";
+  static DECL_EN = "I/We hereby declare that the above risks have been fully explained to me/us and that I/we fully understand them. I/We am/are leaving this hospital against the advice of the treating physician(s), "
+    + "entirely at my/our own wish and on my/our own responsibility. I/We accept that the hospital, its doctors, and staff shall not be held responsible for any consequences arising from this decision, "
+    + "including worsening of health or risk to life. I/We also confirm that no undue pressure was placed on me/us in making this decision, and that I/we had the opportunity to ask questions, which were answered to my/our satisfaction.";
+  static SIGN_TA = "மேற்கண்ட அபாயங்கள் நோயாளி / உறவினருக்கு தெளிவாக விளக்கப்பட்டு, அவர்கள் புரிந்துகொண்டதாக உறுதி செய்யப்பட்டது.";
+  static SIGN_EN = "The above risks have been clearly explained, and the patient / attendant has confirmed understanding.";
+  static THUMB_TA = "குறிப்பு: நோயாளி கையொப்பமிட இயலாத நிலையில் இருந்தால், இடது பெருவிரல் ரேகை பதிவு செய்யப்பட்டு ஒரு சாட்சியால் உறுதிப்படுத்தப்பட வேண்டும்.";
+  static THUMB_EN = "Note: If the patient is unable to sign, a left thumb impression should be taken and attested by a witness.";
+  static CERT_TA = "மேற்கண்ட நோயாளி / உறவினருக்கு நோய் நிலை, தொடர் சிகிச்சையின் அவசியம் மற்றும் முன்கூட்டியே வெளியேறுவதால் ஏற்படக்கூடிய அபாயங்கள் குறித்து நான் தெளிவாக விளக்கியுள்ளேன் என்பதை இதன் மூலம் சான்றளிக்கிறேன். "
+    + "நோயாளி / உறவினர் தெளிவான மனநிலையில் (sound mind) உள்ளனர் என்பதை உறுதி செய்துள்ளேன்.";
+  static CERT_EN = "I hereby certify that I have clearly explained the diagnosis, the need for continued treatment, and the risks of premature discharge to the above patient/attendant. "
+    + "I have confirmed that the patient/attendant is of sound mind and is capable of understanding the implications of this decision.";
+
+  static forPatient(db, pid) {
+    return db.row("SELECT * FROM dama WHERE patient_id=? ORDER BY id DESC LIMIT 1", String(pid));
+  }
+
+  static list(joined) {
+    return Ui.nz(joined).split("|");
+  }
+
+  /** "Financial reasons, Other: …" for the screen. */
+  static reasonText(d) {
+    const b = new StringBuilder();
+    const on = Dama.list(d.get("reasons"));
+    for (const r of Dama.REASONS) {
+      if (!on.contains(r)) continue;
+      const t = r.equals("Other") && !Ui.nz(d.get("other_reason")).isEmpty() ? "Other: " + d.get("other_reason") : r;
+      b.append(b.length() === 0 ? "" : ", ").append(t);
+    }
+    return b.toString();
+  }
+
+  static risksExplained(d) {
+    let n = 0;
+    for (const s of Dama.list(d.get("risks"))) if (!s.trim().isEmpty()) n++;
+    return n;
+  }
+
+  /** Shown on the patient screen: while admitted, or once a DAMA form or a DAMA discharge exists. */
+  static show(db, p) {
+    if (Db.IN === p.get("status")) return true;
+    if (Dama.forPatient(db, Long.parseLong(p.get("id"))) != null) return true;
+    return Ui.nz(p.get("outcome_note")).startsWith("Against medical advice");
+  }
+
+  /** The patient screen's DAMA card. */
+  static section(a, db, pid) {
+    const box = Ui.v(a);
+    box.addView(Ui.heading(a, "DAMA (discharge against medical advice)", Dama.COLOR));
+    const d = Dama.forPatient(db, pid);
+    const card = Ui.card(a);
+    if (d == null) {
+      card.addView(Ui.muted(a, "If the patient or attendant wants to leave against advice, fill the DAMA form here: reasons, risks explained, attendant and witnesses. It prints as the department's Tamil and English form."));
+    } else {
+      card.addView(Ui.tv(a, "✓ DAMA form filled  ·  " + Dates.nice(Ui.nz(d.get("date"))) + (Ui.nz(d.get("time")).isEmpty() ? "" : " " + d.get("time")), 15, Dama.COLOR, true));
+      const who = Ui.nz(d.get("att_name"));
+      if (!who.isEmpty()) card.addView(Ui.muted(a, "Attendant: " + who + (Ui.nz(d.get("att_relation")).isEmpty() ? "" : " (" + d.get("att_relation") + ")")));
+      const r = Dama.reasonText(d);
+      if (!r.isEmpty()) card.addView(Ui.muted(a, "Reason: " + r));
+      card.addView(Ui.muted(a, "Risks explained: " + Dama.risksExplained(d) + " of " + Dama.RISKS.length));
+    }
+    Ui.ripple(card, Ui.alpha(Dama.COLOR, 0x22));
+    card.setOnClickListener(a.opener(DamaActivity, "id", String(pid)));
+    const open = Ui.outlineButton(a, d == null ? "🖊  Fill DAMA form" : "Open DAMA form", Dama.COLOR, a.opener(DamaActivity, "id", String(pid)));
+    const blank = Ui.outlineButton(a, "📄  Blank form", Dama.COLOR, { onClick: (v) => { Dama.blank(a); } });
+    const row = Ui.buttonRow(a, open, blank);
+    card.addView(row);
+    Ui.margins(row, 0, 10, 0, 0);
+    box.addView(card);
+    return box;
+  }
+
+  /** Copies the printed blank form out of the app into files/exports and returns its path under files/. */
+  static blankFile(c) {
+    const rel = SummaryExport.DIR + "/DAMA_Form_blank.pdf";
+    const f = new File(c.getFilesDir(), rel);
+    f.getParentFile().mkdirs();
+    Store.copy(c.getResources().openRawResource(R.raw.dama_form), new FileOutputStream(f));
+    return rel;
+  }
+
+  /** Opens the blank form (to print) or shares it. */
+  static blank(a) {
+    new AlertDialog.Builder(a).setTitle("Blank DAMA form (PDF)")
+      .setItems(["Open / print", "Share / save"], {
+        onClick: (di, w) => {
+          try {
+            const rel = Dama.blankFile(a);
+            if (w === 0) Store.openWith(a, rel);
+            else Store.share(a, rel, "DAMA form");
+          } catch (e) {
+            Ui.toast(a, "Could not make the file: " + (e.getMessage ? e.getMessage() : e));
+          }
+        }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  static label(ta, en) {
+    return new FormDoc.Cell(ta + "\n" + en).b().fill(Dama.LABEL).size(7.5);
+  }
+
+  static val(s) {
+    return new FormDoc.Cell(s).size(8.5);
+  }
+
+  /** The filled two-page form, with the patient's details from the record. */
+  static build(db, p, d) {
+    const NAVY = Dama.NAVY, TEAL = Dama.TEAL, COLOR = Dama.COLOR, MUTE = Dama.MUTE;
+    const label = Dama.label, val = Dama.val;
+    const f = new FormDoc();
+    f.upper = "";
+    f.college = "Tirunelveli Medical College Hospital";
+    f.address = "Tirunelveli";
+    f.dept = "Department of Medicine";
+    f.title = "DISCHARGE AGAINST MEDICAL ADVICE (DAMA)";
+    f.footer = "Discharge Against Medical Advice (DAMA) Form – Dept. of Medicine, Tirunelveli Medical College Hospital";
+    f.fileBase = "DAMA_" + Ui.nz(p.get("ip_no")).replaceAllRx("[^A-Za-z0-9]+", "_") + "_" + Ui.nz(d.get("date")).replace(/-/g, "");
+
+    // FormDoc column widths are fractions of the page: these take relative weights
+    const frac = (...w) => { const t = w.reduce((x, y) => x + y, 0); return w.map(x => x / t); };
+    f.plain(frac(1)).row(18, new FormDoc.Cell("மருத்துவ ஆலோசனைக்கு மாறாக வெளியேறும் படிவம்\nதிருநெல்வேலி மருத்துவக் கல்லூரி மருத்துவமனை — மருத்துவத் துறை")
+      .b().center().size(10).color(NAVY));
+    const top = f.plain(frac(1, 1, 1));
+    top.row(16, new FormDoc.Cell("IP எண் / IP No.: " + Ui.nz(p.get("ip_no"))).b().size(9),
+      new FormDoc.Cell("தேதி / Date: " + Dates.nice(Ui.nz(d.get("date")))).b().size(9),
+      new FormDoc.Cell("நேரம் / Time: " + Ui.nz(d.get("time"))).b().size(9));
+
+    const pt = f.block("நோயாளி மற்றும் சேர்க்கை விவரங்கள்  •  Patient & Admission Details", NAVY, frac(1.1, 1.6, 1.1, 1.6));
+    const age = Ui.nz(p.get("age")) + (Ui.nz(p.get("age")).isEmpty() ? "" : " y") + " / " + Ui.nz(p.get("sex"));
+    pt.row(22, label("நோயாளியின் பெயர்", "Patient Name"), val(p.get("name")).span(3));
+    pt.row(22, label("வயது / பாலினம்", "Age / Sex"), val(age), label("தந்தை / கணவர் பெயர்", "Father's / Husband's Name"), val(d.get("guardian")));
+    pt.row(22, label("படுக்கை எண்", "Bed No."), val(p.get("bed")), label("வார்டு", "Ward"), val(Db.unitName(Ui.nz(p.get("location")))));
+    pt.row(22, label("சேர்க்கை தேதி", "Date of Admission"), val(Dates.nice(Ui.nz(p.get("admit_date")))), label("தொடர்பு எண்", "Contact Number"),
+      val(Ui.nz(d.get("att_phone")).isEmpty() ? p.get("phone") : d.get("att_phone")));
+    pt.row(22, label("நோய் கண்டறிதல்", "Provisional / Final Diagnosis"), val(p.get("diagnosis")).span(3));
+    pt.row(22, label("சிகிச்சை பொறுப்பு மருத்துவர் / பிரிவு", "Treating Unit / Physician"),
+      val(Db.unitName(Ui.nz(p.get("home_unit"))) + (Ui.nz(d.get("physician")).isEmpty() ? "" : "  /  " + d.get("physician"))).span(3));
+    pt.row(22, label("முகவரி", "Address"), val(p.get("address")).span(3));
+
+    const rs = f.block("வெளியேற்றத்திற்கான காரணம்  •  Reason for Discharge Against Medical Advice", NAVY, frac(1, 1));
+    rs.row(20, new FormDoc.Cell(Dama.REASON_TA + "\n" + Dama.REASON_EN).size(8).span(2));
+    const on = Dama.list(d.get("reasons"));
+    for (let i = 0; i < 4; i += 2)
+      rs.row(20, new FormDoc.Cell(FormDoc.box(on.contains(Dama.REASONS[i]), Dama.REASONS_TA[i] + "\n" + Dama.REASONS[i])).size(8),
+        new FormDoc.Cell(FormDoc.box(on.contains(Dama.REASONS[i + 1]), Dama.REASONS_TA[i + 1] + "\n" + Dama.REASONS[i + 1])).size(8));
+    rs.row(20, new FormDoc.Cell(FormDoc.box(on.contains("Other"), Dama.REASONS_TA[4] + "  Other (please specify): " + Ui.nz(d.get("other_reason")))).size(8).span(2));
+
+    const rk = f.block("விளக்கப்பட்ட அபாயங்கள்  •  Risks Explained to Patient / Attendant", COLOR, frac(0.25, 4, 0.9));
+    rk.row(18, new FormDoc.Cell(Dama.RISK_TA + "\n" + Dama.RISK_EN).size(8).span(3));
+    const ex = Dama.list(d.get("risks"));
+    for (let i = 0; i < Dama.RISKS.length; i++)
+      rk.row(22, new FormDoc.Cell(String(i + 1)).b().center().size(9), new FormDoc.Cell(Dama.RISKS_TA[i] + "\n" + Dama.RISKS[i]).size(8),
+        new FormDoc.Cell(FormDoc.box(ex.contains(String(i + 1)), "Explained")).size(8).color(COLOR));
+
+    const dc = f.block("நோயாளி / உறவினரின் உறுதிமொழி  •  Patient / Guardian Declaration", NAVY, frac(1));
+    dc.pageBefore = true;
+    dc.row(40, new FormDoc.Cell(Dama.DECL_TA + "\n\n" + Dama.DECL_EN).size(8));
+
+    const sg = f.block("கையொப்பங்கள்  •  Signatures", TEAL, frac(1.15, 1.5, 0.9, 1.2, 0.9));
+    sg.row(18, new FormDoc.Cell(Dama.SIGN_TA + "\n" + Dama.SIGN_EN).size(8).span(5));
+    sg.row(18, new FormDoc.Cell("").fill(TEAL), new FormDoc.Cell("பெயர் / Name").b().size(7.5).fill(TEAL).color(0xFFFFFFFF),
+      new FormDoc.Cell("உறவு / Relationship").b().size(7.5).fill(TEAL).color(0xFFFFFFFF),
+      new FormDoc.Cell("கையொப்பம் / Signature").b().size(7.5).fill(TEAL).color(0xFFFFFFFF),
+      new FormDoc.Cell("தேதி / நேரம் / Date / Time").b().size(7.5).fill(TEAL).color(0xFFFFFFFF));
+    const when = Dates.nice(Ui.nz(d.get("date"))) + " " + Ui.nz(d.get("time"));
+    const ptSign = Ui.nz(d.get("pt_signs"));
+    sg.row(26, label("நோயாளி", "Patient"), val(p.get("name")), val("சுயம் / Self"),
+      new FormDoc.Cell(ptSign.equals(Dama.SIGNS[0]) || ptSign.isEmpty() ? "" : ptSign).size(7).color(MUTE), val(when));
+    sg.row(26, label("உறவினர் / பாதுகாவலர்", "Attendant / Guardian"), val(d.get("att_name")), val(d.get("att_relation")), val(""), val(when));
+    sg.row(26, label("சாட்சி 1", "Witness 1"), val(d.get("wit1")), val(""), val(""), val(Ui.nz(d.get("wit1")).isEmpty() ? "" : when));
+    sg.row(26, label("சாட்சி 2", "Witness 2"), val(d.get("wit2")), val(""), val(""), val(Ui.nz(d.get("wit2")).isEmpty() ? "" : when));
+    sg.row(18, new FormDoc.Cell(Dama.THUMB_TA + "\n" + Dama.THUMB_EN).size(7.5).fill(0xFFFFF8E6).span(5));
+
+    const ph = f.block("மருத்துவரின் சான்றுரை  •  Physician's Certification", NAVY, frac(1.1, 1.6, 1.1, 1.6));
+    ph.keep = true;
+    ph.row(30, new FormDoc.Cell(Dama.CERT_TA + "\n\n" + Dama.CERT_EN).size(8).span(4));
+    ph.row(24, label("சிகிச்சை பொறுப்பு மருத்துவர் பெயர்", "Treating Physician Name"), val(d.get("physician")), label("பதவி", "Designation"), val(d.get("designation")));
+    ph.row(24, label("பதிவு எண்", "Registration No."), val(d.get("reg_no")), label("தேதி / நேரம்", "Date / Time"), val(when));
+    ph.row(30, label("கையொப்பம்", "Signature"), val("").span(3));
+
+    const hod = f.plain(frac(1.6, 1));
+    hod.row(34, new FormDoc.Cell("துறைத் தலைவர் எதிர்-கையொப்பம் (தேவைப்பட்டால்)\nHOD Countersignature (if required)" + (Ui.nz(d.get("hod")).isEmpty() ? "" : "\n" + d.get("hod"))).b().size(8),
+      new FormDoc.Cell("").bottom());
+    if (!Ui.nz(d.get("notes")).isEmpty()) f.plain(frac(1)).row(16, new FormDoc.Cell("Notes: " + d.get("notes")).size(8).color(MUTE));
+    return f;
+  }
+}
+Dama.NAVY = 0xFF1E3A5F; Dama.TEAL = 0xFF1E7A85; Dama.LABEL = 0xFFEEF4F7; Dama.MUTE = 0xFF475569;
+;
+/* ---- app/DamaActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * DAMA (9.10). With a patient id: that patient's DAMA form (fill, edit, print filled or blank, discharge as DAMA).
+ * Without one: the DAMA register of every form filled, and the blank form. See Dama.
+ */
+class DamaActivity extends Base {
+  constructor() {
+    super();
+    this.pid = 0;
+    /** The open DAMA form (for tests), wrapped so the Copilot never finds it and never reads attendant or witness names. */
+    this.editing = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const id = this.getIntent().getStringExtra("id");
+    this.pid = id == null ? 0 : Long.parseLong(id);
+    this.setTitle(this.pid === 0 ? "DAMA forms" : "DAMA form");
+    this.subtitle = "Discharge against medical advice";
+    this.headerColor(Dama.COLOR);
+    this.headerAction("Blank form", { onClick: (v) => { Dama.blank(this); } });
+  }
+
+  render() {
+    const page = Ui.v(this);
+    if (this.pid === 0) this.register(page);
+    else {
+      const p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.pid));
+      if (p == null) {
+        this.finish();
+        return;
+      }
+      this.patient(page, p);
+    }
+    this.setPage(page);
+  }
+
+  whiteButton(s, l) {
+    const t = Ui.tv(this, s, 15, Dama.COLOR, true);
+    t.setGravity(Gravity.CENTER);
+    t.setBackground(Ui.round(this, Color.WHITE, 12));
+    t.setPadding(0, Ui.dp(this, 11), 0, Ui.dp(this, 11));
+    t.setOnClickListener(l);
+    return t;
+  }
+
+  register(page) {
+    const db = this.db;
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Dama.COLOR), 20));
+    const all = db.num("SELECT COUNT(*) FROM dama"), month = db.num("SELECT COUNT(*) FROM dama WHERE date>=?", Dates.today().withDayOfMonth(1).toString());
+    hero.addView(Ui.tv(this, all + (all === 1 ? " DAMA form" : " DAMA forms") + "  ·  " + month + " this month", 17, Color.WHITE, true));
+    hero.addView(Ui.tv(this, "Fill a patient's DAMA form from their patient screen. The blank form prints in Tamil and English.", 13, 0xE6FFFFFF, false));
+    const b = this.whiteButton("📄  Blank DAMA form (PDF)", { onClick: (v) => { Dama.blank(this); } });
+    hero.addView(b);
+    Ui.margins(b, 0, 12, 0, 0);
+    const f = this.whiteButton("🖊  Fill for an admitted patient", { onClick: (v) => { this.pickPatient(); } });
+    hero.addView(f);
+    Ui.margins(f, 0, 8, 0, 0);
+    page.addView(hero);
+    const rows = db.rows("SELECT d.*, p.name, p.ip_no, p.location, p.status FROM dama d LEFT JOIN patients p ON p.id=d.patient_id ORDER BY d.date DESC, d.id DESC LIMIT 200");
+    for (const r of rows) {
+      const gone = Db.IN !== r.get("status");
+      page.addView(this.entryCard(gone ? "Left" : "Still admitted", gone ? Dama.COLOR : Ui.ORANGE, Ui.nz(r.get("name")) + (Ui.nz(r.get("ip_no")).isEmpty() ? "" : "  ·  IP " + r.get("ip_no")),
+        Db.shortName(Ui.nz(r.get("location"))) + "  ·  " + Dama.reasonText(r), Dates.nice(Ui.nz(r.get("date"))),
+        this.opener(DamaActivity, "id", Ui.nz(r.get("patient_id")))));
+    }
+    if (rows.isEmpty()) page.addView(this.emptyNote("No DAMA forms filled yet."));
+  }
+
+  pickPatient() {
+    const rows = this.db.rows("SELECT * FROM patients WHERE status=? ORDER BY name", Db.IN);
+    if (rows.isEmpty()) {
+      Ui.toast(this, "No admitted patients");
+      return;
+    }
+    const items = [];
+    for (const r of rows)
+      items.push(Ui.nz(r.get("name")) + "  ·  " + Db.shortName(Ui.nz(r.get("location"))) + (Ui.nz(r.get("bed")).isEmpty() ? "" : " bed " + r.get("bed")));
+    new AlertDialog.Builder(this).setTitle("DAMA form for")
+      .setItems(items, {
+        onClick: (d, w) => { this.startActivity(new Intent(this, DamaActivity).putExtra("id", rows.get(w).get("id"))); }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  patient(page, p) {
+    const db = this.db, pid = this.pid;
+    this.setTitle("DAMA · " + p.get("name"));
+    const d = Dama.forPatient(db, pid);
+    const inn = Db.IN === p.get("status");
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Dama.COLOR), 20));
+    hero.addView(Ui.tv(this, Ui.nz(p.get("name")) + (Ui.nz(p.get("ip_no")).isEmpty() ? "" : "  ·  IP " + p.get("ip_no")), 17, Color.WHITE, true));
+    hero.addView(Ui.tv(this, (inn ? "In " + Db.shortName(Ui.nz(p.get("location"))) + (Ui.nz(p.get("bed")).isEmpty() ? "" : ", bed " + p.get("bed"))
+      : "Left on " + Dates.nice(Ui.nz(p.get("outcome_date")))) + "  ·  " + Ui.nz(p.get("diagnosis")), 13, 0xE6FFFFFF, false));
+    const fill = this.whiteButton(d == null ? "🖊  Fill DAMA form" : "✎  Edit DAMA form", { onClick: (v) => { this.edit(p, d); } });
+    hero.addView(fill);
+    Ui.margins(fill, 0, 12, 0, 0);
+    page.addView(hero);
+
+    if (d == null) {
+      page.addView(this.emptyNote("No DAMA form yet. Fill it with the patient or attendant before they leave: reasons, risks explained, attendant and witnesses. Then print it for signatures."));
+    } else {
+      const card = Ui.card(this);
+      card.addView(Ui.kv(this, "Date / time", Dates.nice(Ui.nz(d.get("date"))) + " " + Ui.nz(d.get("time"))));
+      card.addView(Ui.kv(this, "Reason", Dama.reasonText(d)));
+      card.addView(Ui.kv(this, "Risks explained", Dama.risksExplained(d) + " of " + Dama.RISKS.length));
+      card.addView(Ui.kv(this, "Father's / husband's name", d.get("guardian")));
+      card.addView(Ui.kv(this, "Attendant", Ui.nz(d.get("att_name")) + (Ui.nz(d.get("att_relation")).isEmpty() ? "" : " (" + d.get("att_relation") + ")")));
+      card.addView(Ui.kv(this, "Attendant phone", d.get("att_phone")));
+      card.addView(Ui.kv(this, "Patient signs by", d.get("pt_signs")));
+      card.addView(Ui.kv(this, "Witnesses", DamaActivity.join(d.get("wit1"), d.get("wit2"))));
+      card.addView(Ui.kv(this, "Treating physician", DamaActivity.join(d.get("physician"), d.get("designation"))));
+      card.addView(Ui.kv(this, "Registration no.", d.get("reg_no")));
+      if (!Ui.nz(d.get("notes")).isEmpty()) card.addView(Ui.kv(this, "Notes", d.get("notes")));
+      if (Ui.nz(d.get("by_name")) !== "") card.addView(Ui.muted(this, "Filled by " + Ui.nz(d.get("by_name"))));
+      page.addView(card);
+    }
+
+    const acts = Ui.card(this);
+    const row = [];
+    if (d != null) row.add(Ui.button(this, "📄  Filled form", Dama.COLOR, { onClick: (v) => { this.download(p, d); } }));
+    row.add(Ui.outlineButton(this, "Blank form", Dama.COLOR, { onClick: (v) => { Dama.blank(this); } }));
+    acts.addView(Ui.buttonRow(this, ...row));
+    if (d != null && inn) {
+      const dis = Ui.button(this, "Discharge as DAMA", Ui.GREEN, {
+        onClick: (v) => {
+          PatientActivity.damaDischarge = pid;
+          const i = new Intent(this, PatientActivity).putExtra("id", String(pid));
+          i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+          this.startActivity(i);
+          this.finish();
+        }
+      });
+      acts.addView(dis);
+      Ui.margins(dis, 0, 8, 0, 0);
+    }
+    if (d != null) {
+      const del = Ui.outlineButton(this, "Delete this DAMA form", Ui.RED, {
+        onClick: (v) => {
+          Ui.confirm(this, "Delete DAMA form?", "The filled form for " + p.get("name") + " will be removed.", "Delete", {
+            run: () => {
+              db.delete(Dama.TABLE, Long.parseLong(d.get("id")));
+              this.render();
+            }
+          });
+        }
+      });
+      acts.addView(del);
+      Ui.margins(del, 0, 8, 0, 0);
+    }
+    page.addView(acts);
+  }
+
+  static join(a, b) {
+    a = Ui.nz(a);
+    b = Ui.nz(b);
+    return a.isEmpty() ? b : b.isEmpty() ? a : a + ", " + b;
+  }
+
+  edit(p, d) {
+    const db = this.db, pid = this.pid;
+    const f = new Form(this);
+    this.editing = { form: f };
+    f.date("date", "Date", d == null ? Dates.todayIso() : d.get("date"));
+    f.time("time", "Time", d == null ? Dates.now() : d.get("time"));
+    f.heading("Reason (வெளியேற்றத்திற்கான காரணம்)");
+    const on = d == null ? [] : Dama.list(d.get("reasons"));
+    for (let i = 0; i < Dama.REASONS.length; i++) f.check("r" + i, Dama.REASONS[i], on.contains(Dama.REASONS[i]));
+    f.text("other_reason", "Other reason (please specify)", d == null ? "" : d.get("other_reason"), Form.PLAIN);
+    f.heading("Risks explained (விளக்கப்பட்ட அபாயங்கள்)");
+    const ex = d == null ? [] : Dama.list(d.get("risks"));
+    const shortRisk = ["Diagnosis and treatment still needed", "Risks of leaving: worsening, disability, death", "Alternative treatment options", "Can be re-admitted if needed"];
+    for (let i = 0; i < Dama.RISKS.length; i++) f.check("k" + i, (i + 1) + ". " + shortRisk[i], d == null || ex.contains(String(i + 1)));
+    f.heading("Patient and attendant");
+    f.text("guardian", "Father's / husband's name", d == null ? "" : d.get("guardian"), Form.TEXT);
+    f.choice("pt_signs", "Patient signs by", Dama.SIGNS, Dama.SIGNS, d == null ? Dama.SIGNS[0] : Ui.nz(d.get("pt_signs")), null);
+    f.text("att_name", "Attendant / guardian name", d == null ? "" : d.get("att_name"), Form.TEXT);
+    f.text("att_relation", "Relationship to patient", d == null ? "" : d.get("att_relation"), Form.TEXT);
+    f.text("att_phone", "Attendant phone", d == null ? Ui.nz(p.get("phone")) : d.get("att_phone"), Form.PHONE);
+    f.text("wit1", "Witness 1 name", d == null ? "" : d.get("wit1"), Form.TEXT);
+    f.text("wit2", "Witness 2 name", d == null ? "" : d.get("wit2"), Form.TEXT);
+    f.heading("Treating physician");
+    f.text("physician", "Name", d == null ? CallDutyActivity.myName(this) : d.get("physician"), Form.TEXT);
+    f.text("designation", "Designation", d == null ? this.myDesignation() : d.get("designation"), Form.TEXT);
+    f.text("reg_no", "Registration no.", d == null ? "" : d.get("reg_no"), Form.PLAIN);
+    f.text("hod", "HOD countersignature by (if required)", d == null ? "" : d.get("hod"), Form.TEXT);
+    f.multi("notes", "Notes", d == null ? "" : d.get("notes"));
+    Ui.formDialog(this, "DAMA form · " + p.get("name"), f, "Save", {
+      run: () => {
+        const rs = new StringBuilder(), ks = new StringBuilder();
+        for (let i = 0; i < Dama.REASONS.length; i++) if ("1" === f.get("r" + i)) rs.append(rs.length() === 0 ? "" : "|").append(Dama.REASONS[i]);
+        for (let i = 0; i < Dama.RISKS.length; i++) if ("1" === f.get("k" + i)) ks.append(ks.length() === 0 ? "" : "|").append(i + 1);
+        if (rs.length() === 0) {
+          Ui.toast(this, "Tick at least one reason");
+          return false;
+        }
+        if (f.get("att_name").isEmpty() && !Dama.SIGNS[0].equals(f.get("pt_signs"))) {
+          Ui.toast(this, "Enter the attendant who signs");
+          return false;
+        }
+        const cv = new ContentValues();
+        cv.put("patient_id", String(pid));
+        cv.put("reasons", rs.toString());
+        cv.put("risks", ks.toString());
+        for (const k of ["date", "time", "other_reason", "guardian", "pt_signs", "att_name", "att_relation", "att_phone", "wit1", "wit2",
+          "physician", "designation", "reg_no", "hod", "notes"]) cv.put(k, f.get(k));
+        cv.put("by_name", CallDutyActivity.myName(this));
+        cv.put("saved_on", Dates.todayIso() + " " + Dates.now());
+        if (d == null) db.insert(Dama.TABLE, cv);
+        else db.update(Dama.TABLE, cv, Long.parseLong(d.get("id")));
+        if (ks.length() < Dama.RISKS.length) Ui.toast(this, "Saved. Not every risk is ticked as explained.");
+        else Ui.toast(this, "DAMA form saved");
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  myDesignation() {
+    const s = Cloud.myStaff(this);
+    if (s <= 0) return "";
+    const r = this.db.row("SELECT role FROM staff WHERE id=?", String(s));
+    return r == null ? "" : Ui.nz(r.get("role"));
+  }
+
+  download(p, d) {
+    new AlertDialog.Builder(this).setTitle("Filled DAMA form")
+      .setItems(["PDF (open / print)", "PDF (share)", "Word"], {
+        onClick: (di, w) => {
+          try {
+            const f = Dama.build(this.db, p, d);
+            const rel = w === 2 ? f.docx(this) : f.pdf(this);
+            if (w === 0) Store.openWith(this, rel);
+            else Store.share(this, rel, "DAMA form " + Ui.nz(p.get("name")));
+          } catch (e) {
+            Ui.toast(this, "Could not make the file: " + (e.getMessage ? e.getMessage() : e));
+          }
+        }
+      }).setNegativeButton("Cancel", null).show();
   }
 }
 ;
@@ -48368,6 +48844,8 @@ class MainActivity extends Base {
     m.add(new Module("Infusion calculator", "Dose to ml/hr", R.drawable.ic_drop, Infusion.COLOR, this.opener(InfusionActivity)));
     const running = Protocols.active(db).size();
     m.add(new Module("Protocol timers", running > 0 ? running + " running now" : "Snake bite, OP, DKA, K, fits", R.drawable.ic_warn, Protocols.COLOR, this.opener(ProtocolActivity)));
+    const dm = db.num("SELECT COUNT(*) FROM dama WHERE date>=?", Dates.today().withDayOfMonth(1).toString());
+    m.add(new Module("DAMA forms", dm > 0 ? dm + " this month · blank form" : "Against advice · blank form", R.drawable.ic_doc, Dama.COLOR, this.opener(DamaActivity)));
     m.add(new Module("Death certificate", "MCCD Form 4 helper", R.drawable.ic_doc, Mccd.COLOR, {
       onClick: (v) => { MccdActivity.pick(this); }
     }));
@@ -48443,7 +48921,7 @@ class MainActivity extends Base {
   /** Home sections, grouped like an iPhone home screen: four glass icons to a row inside frosted panels. */
   static GROUPS = [
     ["AI assistant", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped"],
-    ["Wards & critical care", "Search", "Protocol timers", "Infusion calculator", "Death certificate", "Live census", "Wall screen", "Census", "Bed board", "Tasks", "Pending results", "Antibiogram", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
+    ["Wards & critical care", "Search", "Protocol timers", "Infusion calculator", "DAMA forms", "Death certificate", "Live census", "Wall screen", "Census", "Bed board", "Tasks", "Pending results", "Antibiogram", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
     ["Duty & coordination", "PG Connect", "PG questions", "Intercom", "Handover", "Faculty chat", "DAP register", "Call duty", "Call over", "VIP cases"],
     ["Approvals & leave", "Approvals", "CMCHIS", "Attendance", "PG leave", "Duty swaps", "Faculty leave"],
     ["Academics, people & tools", "Presentations", "Latest journals", "Verify a document", "Conduct reports", "Memo", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
@@ -48452,9 +48930,9 @@ class MainActivity extends Base {
   static TILE_COLORS = (() => {
     const m = new JMap();
     const k = ["Fever ward", "Critical care", "IMCU", "Kandiyaperi", "DAP register", "Call duty", "Call over", "VIP cases",
-      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Faculty leave", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports"];
+      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Faculty leave", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports", "DAMA forms"];
     const c = [0xFFF97316, 0xFFEC4899, 0xFFEF4444, 0xFF10B981, 0xFF6366F1, 0xFF8B5CF6, 0xFF14B8A6, 0xFFF59E0B,
-      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C];
+      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C, 0xFFB7372B];
     for (let i = 0; i < k.length; i++) m.put(k[i], c[i]);
     return m;
   })();
@@ -53488,6 +53966,7 @@ class PatientActivity extends Base {
       page.addView(hw);
       page.addView(this.examRow());
     }
+    if (Dama.show(db, p)) page.addView(Dama.section(this, db, id));
 
     if (inn) {
       page.addView(Ui.heading(this, "Move or close", color));
@@ -53659,6 +54138,10 @@ class PatientActivity extends Base {
     } else {
       this.setPage(page);
     }
+    if (PatientActivity.damaDischarge === id) {
+      PatientActivity.damaDischarge = 0;
+      if (inn) this.discharge(Dama.DISCHARGE_TYPE);
+    }
   }
 
   static eventColor(e) {
@@ -53717,7 +54200,7 @@ class PatientActivity extends Base {
     UnitMoves.requestDialog(this, this.db, this.p, to, { run: () => { this.render(); } });
   }
 
-  discharge() {
+  discharge(preset) {
     const db = this.db, p = this.p, id = this.id;
     const f = this.when(new Form(this));
     // a case taken from another department goes back to it after treatment, or medicine discharges it
@@ -53727,7 +54210,7 @@ class PatientActivity extends Base {
     Collections.addAll(types, ...Db.DISCHARGE_TYPES);
     if (dept.isEmpty() && "OTHER_DEPT".equals(p.get("source"))) types.add(1, Db.BACK_TO + "the department it came from");
     const tv = ArrayList(types);
-    f.choice("type", "Type of discharge", tv, tv, tv[0], null);
+    f.choice("type", "Type of discharge", tv, tv, preset != null && types.contains(preset) ? preset : tv[0], null);
     const cs = CaseSheet.load(db, id);
     const fin = CaseSheet.s(cs, "final_dx");
     f.multi("dx", "Final diagnosis (needed to discharge)", fin.isEmpty() ? CaseSheet.withNewDiagnoses(Ui.nz(p.get("diagnosis")), cs) : fin);
@@ -53744,6 +54227,8 @@ class PatientActivity extends Base {
         }
         const note = f.get("type") + ". Final diagnosis: " + dx + (f.get("note").isEmpty() ? "" : ". " + f.get("note"));
         db.addEvent(id, f.get("date"), f.get("time"), Db.DISCHARGE, p.get("location"), "", note);
+        if (Dama.DISCHARGE_TYPE.equals(f.get("type")) && Dama.forPatient(db, id) == null)
+          Ui.toast(this, "Discharged. Fill the DAMA form below for the signatures.");
         this.render();
         return true;
       }
@@ -53794,6 +54279,8 @@ class PatientActivity extends Base {
     });
   }
 }
+/** Set by the DAMA form's "Discharge as DAMA": the patient screen opens the discharge with that type chosen. */
+PatientActivity.damaDischarge = 0;
 ;
 /* ---- app/PatientPick.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -69781,7 +70268,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Ask, AskActivity, AttendanceActivity, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, Conduct, ConductActivity, ConvictActivity, Copilot, Crashes, CrashesActivity, CultureActivity, DapActivity, Dashboard, DashboardActivity, Diagnoses, Dictation, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, Extract, FacultyActivity, FacultyLeaveActivity, FacultyProfileActivity, FormActivity, FormDoc, Guidelines, HandoverActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, Notify, ObstetricActivity, Opinions, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PresentationsActivity, ProtocolActivity, Protocols, Qr, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, SearchActivity, SessionAttendance, SettingsActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WaAdmit, Wall, WallActivity, WardDuty, Watch, WatchActivity, WeekAcademicsActivity, Wrapped, WrappedActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Ask, AskActivity, AttendanceActivity, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, Conduct, ConductActivity, ConvictActivity, Copilot, Crashes, CrashesActivity, CultureActivity, Dama, DamaActivity, DapActivity, Dashboard, DashboardActivity, Diagnoses, Dictation, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, Extract, FacultyActivity, FacultyLeaveActivity, FacultyProfileActivity, FormActivity, FormDoc, Guidelines, HandoverActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, Notify, ObstetricActivity, Opinions, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PresentationsActivity, ProtocolActivity, Protocols, Qr, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, SearchActivity, SessionAttendance, SettingsActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WaAdmit, Wall, WallActivity, WardDuty, Watch, WatchActivity, WeekAcademicsActivity, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
