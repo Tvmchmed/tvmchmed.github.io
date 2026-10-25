@@ -11479,6 +11479,7 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["9.87", "Tablets: every page now fills the whole screen instead of a narrow column in the middle; the home sections show more tiles in a row (up to 8) and the ward census up to 4 cards in a row on a wide screen. The website fills the screen too."],
     ["9.86", "Harrison's topic of the day is now the admin's: only the admin makes, uploads, edits, moves or removes decks (the server refuses anyone else; faculty can still tick a deck checked). Decks are copyright of the department: members view them only inside the app, with no PowerPoint download, no WhatsApp sharing and no screenshots. The admin can upload the PDF Claude makes; members see it page by page inside the Android app."],
     ["9.84", "Harrison's topic of the day: the deck requests no longer limit slides to 6 points, 15 words a point or the heading-as-title rule (admin's request), so the AI can put in as much as each slide needs."],
     ["9.83", "Harrison's topic of the day: every deck request (inside the app, or in Claude Pro) now asks the AI to use its own knowledge plus Harrison's, CMDT, Fishman's, Sleisenger and Fordtran's, Bradley and Daroff's, Braunwald's, Williams, Schrier's and Brenner and Rector's (leaning on the specialty book that fits the topic) and the latest guidelines, following the newest guideline where they differ. Decks now have a diagnostic and a management algorithm and a latest-guidelines slide; the Claude Pro request asks for a very colourful deck with real flowcharts, pathophysiology diagrams, tables, icons and a red-flag box."],
@@ -11895,7 +11896,19 @@ class Base extends Activity {
   }
 
   /** The page centred at no more than maxDp wide (only on screens wider than that). */
+  /** Home tiles in a row: 4 on a phone, up to 8 on a wide tablet, so tiles keep their size when the page fills the screen. */
+  static tileCols(c) {
+    return Math.max(4, Math.min(8, Math.floor(c.getResources().getConfiguration().screenWidthDp / 150)));
+  }
+
+  /** Ward census cards in a row: 2 on a phone, up to 4 on a wide tablet. */
+  static censusCols(c) {
+    return Math.max(2, Math.min(4, Math.floor(c.getResources().getConfiguration().screenWidthDp / 330)));
+  }
+
   static capped(c, content, maxDp) {
+    // 9.87 (the admin's wish): pages fill the whole tablet screen; home tiles add columns instead (tileCols)
+    if (Base.FULL_WIDTH) return content;
     const el = document.getElementById('app');
     const w = el && el.clientWidth ? el.clientWidth : c.getResources().getConfiguration().screenWidthDp;
     if (w <= maxDp + 40) return content;
@@ -12281,6 +12294,9 @@ Base.Opener = class {
     return l instanceof Base.Opener && l.kv.length === 0 ? l.cls.name : "";
   }
 };
+
+/** Pages use the whole screen width on tablets (9.87). */
+Base.FULL_WIDTH = true;
 ;
 /* ---- app/Abg.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -54237,7 +54253,7 @@ class MainActivity extends Base {
     const grid = Ui.v(this);
     let gr = null;
     for (let i = 0; i < Db.CENSUS_WARDS.length; i++) {
-      if (i % 2 === 0) {
+      if (i % Base.censusCols(this) === 0) {
         gr = Ui.h(this);
         gr.setGravity(Gravity.TOP);
         grid.addView(gr);
@@ -54645,18 +54661,19 @@ class MainActivity extends Base {
 
   /** Tiles four to a row in one frosted panel. */
   tilePanel(inn) {
+    const cols = Base.tileCols(this);
     const panel = Ui.card(this);
     panel.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 6));
     let row = null;
     for (let i = 0; i < inn.length; i++) {
-      if (i % 4 === 0) {
+      if (i % cols === 0) {
         row = Ui.h(this);
         row.setGravity(Gravity.TOP);
         panel.addView(row);
       }
       row.addView(this.moduleTile(inn[i]), Ui.weight(1));
     }
-    for (let i = inn.length % 4; i > 0 && i < 4; i++) row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+    for (let i = inn.length % cols; i > 0 && i < cols; i++) row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
     return panel;
   }
 
@@ -54665,6 +54682,7 @@ class MainActivity extends Base {
     const mods = all.filter(m => HomeLayout.matches(query, m.label, m.sub));
     if (mods.isEmpty()) return this.emptyNote("No section matches \"" + query.trim() + "\"");
     if (!Ui.nz(query).trim().isEmpty()) return this.tilePanel(mods);
+    const cols = Base.tileCols(this);
     const byLabel = new JMap();
     for (const m of mods) byLabel.put(m.label, m);
     const out = Ui.v(this);
@@ -54684,14 +54702,14 @@ class MainActivity extends Base {
       panel.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 6));
       let row = null;
       for (let i = 0; i < inn.size(); i++) {
-        if (i % 4 === 0) {
+        if (i % cols === 0) {
           row = Ui.h(this);
           row.setGravity(Gravity.TOP);
           panel.addView(row);
         }
         row.addView(this.moduleTile(inn.get(i)), Ui.weight(1));
       }
-      for (let i = inn.size() % 4; i > 0 && i < 4; i++) row.addView(new View(this), Ui.weight(1));
+      for (let i = inn.size() % cols; i > 0 && i < cols; i++) row.addView(new View(this), Ui.weight(1));
       out.addView(panel);
     }
     return out;
