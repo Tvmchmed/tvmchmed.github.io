@@ -3,5 +3,5 @@
 window.CONFIG = {
   url: 'https://dgxifayxugbprykzrnpj.supabase.co',
   key: 'sb_publishable_ibmSKedCcdJLB4505Tdyxg_25B3qViz',
-  version: '4.7'
+  version: '6.0'
 };

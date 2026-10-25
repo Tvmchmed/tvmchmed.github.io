@@ -4273,6 +4273,8 @@ const External = {
       if (!list.length) { finish(RESULT_CANCELED, null); return; }
       const uris = [];
       for (const f of list) {
+        // a very big file (a 1 GB book) is not read into memory: the screen sees its name and size and says what to do
+        if (f.size > 64 * 1024 * 1024) { const u = new Uri('blob:' + f.name); u.file = f; u.name = f.name; u.mime = f.type || mimeOf(f.name); uris.push(u); continue; }
         const bytes = new Uint8Array(await f.arrayBuffer());
         const u = new Uri('blob:' + f.name); u.bytes = bytes; u.name = f.name; u.mime = f.type || mimeOf(f.name);
         if (/^image\//.test(u.mime) || /\.(jpe?g|png|webp|heic|gif)$/i.test(f.name)) u.bitmap = await Bitmaps.decodeBytes(bytes, u.mime);
@@ -5815,6 +5817,42 @@ class AdminControl {
   static setIntercom(db, on) {
     db.setSetting(AdminControl.INTERCOM, on ? "on" : "off");
   }
+
+  /**
+   * Home sections the admin has hidden for everyone (9.71): {"label": "ScreenActivity" or ""}. A hidden section's tile goes
+   * from every phone's home page and its screen will not open (except for the admin, who still sees it marked hidden).
+   */
+  static HIDDEN = "admin_hidden_sections";
+  /** Screens that are never blocked, whatever is hidden: the home page, settings, sign-in and lock, and the patient screens. */
+  static NEVER = new JSet(["MainActivity", "SettingsActivity", "AccountActivity", "LockActivity", "PatientActivity", "FormActivity", "CaseSheetActivity", "UnitActivity"]);
+
+  static hidden(db) {
+    const out = new JMap();
+    try {
+      const o = new JSONObject(db.setting(AdminControl.HIDDEN, "{}"));
+      for (const k of o.keys()) out.put(k, o.optString(k));
+    } catch (ignored) {
+    }
+    return out;
+  }
+
+  static isHidden(db, label) {
+    return AdminControl.hidden(db).containsKey(label);
+  }
+
+  /** Saves the hidden sections: label to its screen's name. */
+  static setHidden(db, labels) {
+    const o = new JSONObject();
+    for (const e of labels.entrySet()) o.put(e.getKey(), Ui.nz(e.getValue()));
+    db.setSetting(AdminControl.HIDDEN, o.toString());
+  }
+
+  /** True when this screen belongs to a hidden section and the member is not the admin. */
+  static screenOff(c, db, screen) {
+    if (AdminControl.NEVER.contains(screen) || !Cloud.active(c) || Cloud.isOwner(c)) return false;
+    for (const s of AdminControl.hidden(db).values()) if (s.equals(screen)) return true;
+    return false;
+  }
 }
 ;
 /* ---- app/Db.js ---- */
@@ -5891,7 +5929,7 @@ class Db extends SQLiteOpenHelper {
     "ENT", "Ophthalmology", "Neurosurgery", "Urology", "Cardiothoracic", "Emergency / casualty", "Dermatology", "Other"];
 
   static TABLES = ["units", "staff", "patients", "events", "classes", "academics", "cmchis", "settings",
-    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done"];
+    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison"];
   /** Tables kept on this phone only (in the backup file, never synced online). Case sheets are shared since 7.62. */
   static LOCAL_TABLES = [];
 
@@ -5903,7 +5941,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 59);
+    super(c, "tvmchmed.db", null, 66);
     this.ctx = c;
   }
 
@@ -6349,6 +6387,43 @@ class Db extends SQLiteOpenHelper {
         + "by_name TEXT DEFAULT '', staff_id TEXT DEFAULT '', added_on TEXT DEFAULT '')");
       db.execSQL("CREATE TABLE IF NOT EXISTS uq_done(id INTEGER PRIMARY KEY, question_id TEXT, staff_id TEXT DEFAULT '', by_name TEXT DEFAULT '', "
         + "status TEXT DEFAULT 'Done', date TEXT DEFAULT '')");
+    }
+    if (oldV < 60) {
+      // 9.40: the Library of PDF e-books (kind FILE = uploaded PDF in ebooks/, DRIVE = a Google Drive link); cover = its front page
+      db.execSQL("CREATE TABLE IF NOT EXISTS ebooks(id INTEGER PRIMARY KEY, kind TEXT DEFAULT 'FILE', title TEXT, author TEXT DEFAULT '', "
+        + "shelf TEXT DEFAULT 'Others', file TEXT DEFAULT '', link TEXT DEFAULT '', size INTEGER DEFAULT 0, pages INTEGER DEFAULT 0, "
+        + "cover TEXT DEFAULT '', added_by TEXT DEFAULT '', by_name TEXT DEFAULT '', added_on TEXT DEFAULT '')");
+    }
+    if (oldV < 61) {
+      // 9.50: critical lab value alerts and who acknowledged them, when, with what action
+      db.execSQL("CREATE TABLE IF NOT EXISTS crit_alerts(id INTEGER PRIMARY KEY, patient_id TEXT, lab_id TEXT, test TEXT, value TEXT, why TEXT, "
+        + "unit TEXT DEFAULT '', lab_date TEXT DEFAULT '', raised_on TEXT, raised_by TEXT DEFAULT '', status TEXT DEFAULT 'Open', "
+        + "ack_by TEXT DEFAULT '', ack_staff TEXT DEFAULT '', ack_role TEXT DEFAULT '', ack_on TEXT DEFAULT '', action TEXT DEFAULT '', note TEXT DEFAULT '')");
+    }
+    if (oldV < 62) {
+      // 9.60: each person's flashcard progress (one row: card -> interval, ease, due, reviews, lapses) and study streak
+      db.execSQL("CREATE TABLE IF NOT EXISTS flash(id INTEGER PRIMARY KEY, staff_id TEXT, name TEXT DEFAULT '', data TEXT DEFAULT '{}', "
+        + "last_day TEXT DEFAULT '', streak INTEGER DEFAULT 0, done_today INTEGER DEFAULT 0, new_today INTEGER DEFAULT 0, "
+        + "total INTEGER DEFAULT 0, updated TEXT DEFAULT '')");
+    }
+    if (oldV < 63) {
+      // 9.70: PDFs and pictures attached to a university question or a learning board topic (files in academics/)
+      db.execSQL("CREATE TABLE IF NOT EXISTS attach(id INTEGER PRIMARY KEY, tbl TEXT, ref_id TEXT, file TEXT, name TEXT DEFAULT '', "
+        + "kind TEXT DEFAULT '', size INTEGER DEFAULT 0, added_by TEXT DEFAULT '', by_name TEXT DEFAULT '', added_on TEXT DEFAULT '')");
+    }
+    if (oldV < 64) {
+      // 9.72: who is away (a shared copy of approved faculty leave, without the reason) for the unit team boards
+      db.execSQL("CREATE TABLE IF NOT EXISTS away(id INTEGER PRIMARY KEY, src TEXT, staff_id TEXT, from_date TEXT, to_date TEXT, kind TEXT DEFAULT 'Leave')");
+    }
+    if (oldV < 65) {
+      // 9.80: Harrison's topic of the day: one teaching deck a day (slides as "## Title" / "- point" text)
+      db.execSQL("CREATE TABLE IF NOT EXISTS harrison(id INTEGER PRIMARY KEY, day TEXT, topic TEXT, part TEXT DEFAULT '', slides TEXT DEFAULT '', "
+        + "status TEXT DEFAULT 'Draft', checked_by TEXT DEFAULT '', made_by TEXT DEFAULT '', made_with TEXT DEFAULT '', made_on TEXT DEFAULT '')");
+    }
+    if (oldV < 66) {
+      // 9.81: a PowerPoint made in Claude Pro and uploaded to the deck
+      Db.addColumn(db, "harrison", "file", "TEXT DEFAULT ''");
+      Db.addColumn(db, "harrison", "file_name", "TEXT DEFAULT ''");
     }
     // Every synced table notes its changes for upload (IF NOT EXISTS, so new tables get theirs too).
     {
@@ -6906,7 +6981,7 @@ class Db extends SQLiteOpenHelper {
   // ---------- faculty files ----------
 
   /** Folders under filesDir that hold user files and travel with the backup. */
-  static FILE_DIRS = ["notices", "faculty", "leaves", "academics", "chat", "spots", "achievements", "imaging"];
+  static FILE_DIRS = ["notices", "faculty", "leaves", "academics", "chat", "spots", "achievements", "imaging", "ebooks"];
 
   static isFaculty(role) {
     for (const r of Db.FACULTY_ROLES) if (r.equals(role)) return true;
@@ -10346,6 +10421,7 @@ class Sync {
     }
     let changed = E2e.purgeLocal(c) > 0;
     await Sync.pushDeletedFiles(c, db);
+    try { Away.mirror(c, db); } catch (e) {}
     await Sync.push(c, db);
     changed = (await Sync.pull(c, db)) || changed;
     changed = E2e.purgeLocal(c) > 0 || changed;
@@ -10372,6 +10448,7 @@ class Sync {
         const rec = Sync.record(db, t, pk);
         if (!rec.getBoolean("deleted") && E2e.isSealed(t, rec.getJSONObject("data"))) await E2e.seal(c, db, rec.getJSONObject("data"));
         if (!rec.getBoolean("deleted")) await Sync.uploadFiles(c, db, rec.getJSONObject("data"), t, uploadedThisRun);
+        if (!rec.getBoolean("deleted") && t.equals("ebooks")) await Sync.uploadFiles(c, db, rec.getJSONObject("data"), "ebooks.cover", uploadedThisRun);
         arr.put(rec);
       }
       try {
@@ -10421,8 +10498,9 @@ class Sync {
   }
 
   static fileOf(t, data) {
+    if (t.equals("ebooks.cover")) return data.isNull("cover") ? "" : data.optString("cover", "");   // a Library book's front page
     if (t.equals("settings")) return "hod_photo".equals(data.optString("k")) && !data.isNull("v") ? data.optString("v", "") : "";
-    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : null;
+    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : t.equals("ebooks") ? "file" : t.equals("attach") ? "file" : t.equals("harrison") ? "file" : null;
     return col == null || data.isNull(col) ? "" : data.optString(col, "");
   }
 
@@ -10572,7 +10650,7 @@ class Sync {
 
   /** Only our own folders, no climbing out of them: file names come from other phones. */
   static safeRel(rel) {
-    return rel.matches("(people|faculty|notices|leaves|academics|chat|spots|achievements|imaging)/[A-Za-z0-9_./-]+") && !rel.contains("..");
+    return rel.matches("(people|faculty|notices|leaves|academics|chat|spots|achievements|imaging|ebooks)/[A-Za-z0-9_./-]+") && !rel.contains("..");
   }
 
   /** Downloads one shared file now (presentations are fetched only when someone opens them). Returns a Promise. */
@@ -10604,7 +10682,7 @@ class Sync {
   /** Downloads photos and documents that other phones added. */
   static async fetchFiles(c, db) {
     const want = [];
-    for (const r of db.rows("SELECT file AS f FROM docs UNION SELECT photo FROM staff UNION SELECT image FROM notices UNION SELECT letter FROM pg_leaves UNION SELECT v FROM settings WHERE k='hod_photo' UNION SELECT file FROM chat_messages WHERE file LIKE 'chat/%.jpg' AND deleted='' UNION SELECT image FROM spots UNION SELECT image FROM achievements UNION SELECT file FROM imaging_files")) {
+    for (const r of db.rows("SELECT file AS f FROM docs UNION SELECT photo FROM staff UNION SELECT image FROM notices UNION SELECT letter FROM pg_leaves UNION SELECT v FROM settings WHERE k='hod_photo' UNION SELECT file FROM chat_messages WHERE file LIKE 'chat/%.jpg' AND deleted='' UNION SELECT image FROM spots UNION SELECT image FROM achievements UNION SELECT file FROM imaging_files UNION SELECT cover FROM ebooks")) {
       const rel = r.get("f");
       if (!rel.isEmpty() && Sync.safeRel(rel) && !db.file(rel).exists() && !Sync.missingFiles.contains(rel)) want.add(rel);
     }
@@ -11085,7 +11163,7 @@ class Background extends JobService {
   static JOB = 7300;
   static CHANNEL = "alerts";
   static PERIOD_MS = 15 * 60 * 1000;
-  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212;
+  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215;
   /** Web: the repeating timer, started once. */
   static timer = null;
 
@@ -11189,6 +11267,44 @@ class Background extends JobService {
         else if (sb > (w.length > 1 ? Ui.toInt(w[1], 0) : 0)) Background.show(c, Background.N_SIGNOFF, "↩ Sign-off", "A document you sent was sent back for correction.", SignOff.COLOR, SignOffActivity);
       }
       e.putString("signoff_seen", sw + ":" + sb);
+    }
+
+    // Harrison's topic of the day (9.80): once a day, when the day's deck is out at 7 AM
+    try {
+      const h = Harrison.today(db);
+      if (h != null && !Ui.nz(h.get("day")).equals(p.getString("harrison_told", ""))) {
+        e.putString("harrison_told", Ui.nz(h.get("day")));
+        Background.show(c, Background.N_HARRISON, "📘 Harrison's topic of the day", Ui.nz(h.get("topic")), Harrison.COLOR, HarrisonActivity);
+      }
+    } catch (ignored) {
+      // the reminder is optional
+    }
+
+    // outbreak early warning (9.60): a new or bigger cluster of cases from one place, for faculty (no names)
+    try {
+      if (Outbreak.alerted(c)) {
+        const ob = Outbreak.fresh(c, db, "bg");
+        if (!ob.isEmpty()) {
+          Background.show(c, Background.N_OUTBREAK, "🦠 Possible outbreak", ob.size() === 1 ? Outbreak.line(ob.get(0)) : ob.size() + " clusters of cases from one place this week",
+            Outbreak.COLOR, OutbreakActivity);
+          Outbreak.mark(c, ob, "bg");
+        }
+      }
+    } catch (ignored) {
+      // the alert is optional
+    }
+
+    // critical lab values (9.50): a new one for this person's unit (no names or values on the lock screen)
+    try {
+      const open = new TreeSet();
+      for (const a of CriticalLabs.openForMe(c, db)) open.add(a.get("id"));
+      const prev = p.getString("crit_open", "");
+      let fresh = 0;
+      for (const id of open) if (!(("," + prev + ",").contains("," + id + ","))) fresh++;
+      e.putString("crit_open", TextUtils.join(",", [...open]));
+      if (fresh > 0 && p.contains("crit_open")) Background.show(c, Background.N_CRIT, "🚨 Critical lab value", fresh === 1 ? "A critical result in your unit needs acknowledgement" : fresh + " critical results in your unit need acknowledgement", CriticalLabs.COLOR, CriticalLabsActivity);
+    } catch (ignored) {
+      // the alert is optional
     }
 
     // early warning: a patient newly at a red NEWS2 (never names or numbers on the lock screen)
@@ -11363,6 +11479,19 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["9.86", "Harrison's topic of the day is now the admin's: only the admin makes, uploads, edits, moves or removes decks (the server refuses anyone else; faculty can still tick a deck checked). Decks are copyright of the department: members view them only inside the app, with no PowerPoint download, no WhatsApp sharing and no screenshots. The admin can upload the PDF Claude makes; members see it page by page inside the Android app."],
+    ["9.84", "Harrison's topic of the day: the deck requests no longer limit slides to 6 points, 15 words a point or the heading-as-title rule (admin's request), so the AI can put in as much as each slide needs."],
+    ["9.83", "Harrison's topic of the day: every deck request (inside the app, or in Claude Pro) now asks the AI to use its own knowledge plus Harrison's, CMDT, Fishman's, Sleisenger and Fordtran's, Bradley and Daroff's, Braunwald's, Williams, Schrier's and Brenner and Rector's (leaning on the specialty book that fits the topic) and the latest guidelines, following the newest guideline where they differ. Decks now have a diagnostic and a management algorithm and a latest-guidelines slide; the Claude Pro request asks for a very colourful deck with real flowcharts, pathophysiology diagrams, tables, icons and a red-flag box."],
+    ["9.82", "Harrison's topic of the day: send Claude's PowerPoint straight in. On the PowerPoint Claude makes, tap Share and choose TVMCHMED deck: it opens the Harrison's section and adds the file as the next day's deck (or replaces the deck on screen), with no download or file picker. For the admin and faculty."],
+    ["9.81", "Harrison's topic of the day: make the deck in Claude Pro too. Make it in Claude Pro copies a ready request for the next topic (or one you choose) and opens the Claude app or claude.ai, where your Claude Pro plan makes a real PowerPoint; download it, come back and tap Upload the PowerPoint Claude made. It becomes the deck for the next free day (or replaces the slides of the deck on screen), everyone downloads Claude's own PowerPoint, and the slides are read from the file for the in-app viewer and WhatsApp."],
+    ["9.80", "Harrison's topic of the day (in Academics): a teaching deck on one high-yield MD General Medicine topic every day, following the chapter in Harrison's Principles of Internal Medicine, 21st edition, from 100 topics that take turns across the systems. Each deck has 14 slides (why it matters to high-yield viva points, with India-specific points) and 5 MCQs with answers. It shows for everyone at 7 AM with a notification; read it one slide at a time, download it as PowerPoint or share it on WhatsApp. The admin and faculty make a week, two weeks or a month of decks in one tap with the AI key in Settings (or one at a time with a free AI app), and can check, correct, move or remove each one before its day. The slides are AI-written in its own words, not the book's text."],
+    ["9.72", "Unit team boards show who is away: a faculty member on leave, week off or on duty elsewhere gets a dashed amber photo with a leave badge and the day they are back, an Away today card says who is in (or warns when no faculty of the unit is in), and leave in the coming week is shown in advance. Everyone in the unit sees it; the reason for leave stays private. The TVMC discharge form has even word spacing and tidier alignment, and the blank DAMA form now carries the department logo."],
+    ["9.71", "Admin control: the admin can hide any home page section for everyone (Settings, Admin control, Home page sections). A hidden section goes from every phone's home page and its screen will not open for anyone; the admin still sees it, marked hidden, and can bring it back."],
+    ["9.70", "Six changes you asked for. Admit a patient now sits right under the admission day on the home page. University questions: attach the answer as a PDF or a picture (camera or gallery) next to any question, so it is at hand while revising; it shows on the flashcard too. Learning board: attach PDF, JPEG or PNG pages or snap one with the camera, and the AI can read the main points from them into the topic for you to check. Ward round mode: one bed at a time in bed order with NEWS2, abnormal labs, results awaited, pending tasks and yesterday's plan; tick or speak today's plan and it is saved as the progress note, then the next bed. Duty hours: each PG's and CRMI's hours, nights, longest stretch and short rests for the month from the duty roster, DAP register and CCB duty, flagged red over 30 hours at a stretch. Competency map: every PG's signed logbook procedures against the targets as a coloured map, and each PG's gaps before the end of the course."],
+    ["9.60", "Four new tools. Outbreak early warning (Outbreak watch in Wards): dengue, scrub typhus, leptospirosis, cholera, diarrhoea, malaria, chikungunya, typhoid, hepatitis A/E, influenza and encephalitis admissions are grouped by the village or town in the address; a few from one place within a week, or a disease rising across the district, alerts faculty and the HOD, with a map of where cases come from and a summary (no names) to send to public health. ABG interpreter: type the values or photograph the printout, and it works through each step (do the numbers fit, primary disorder, Winter's and expected compensation, anion gap corrected for albumin, delta ratio, lactate, P/F ratio and A-a gradient) with the causes to think of, and saves it in the case sheet. Tamil picture pill card: from the discharge medicines, each pill in its colour with a sunrise, sun and moon for morning, noon and night, before or after food, days and what it is for in Tamil, as a picture for WhatsApp or a PDF to print. Flashcards for PGs: the university questions (most asked first), Daily MCQs and Learning board notes as spaced-revision cards, 20 new a day, forgotten ones back tomorrow, with streaks."],
+    ["9.50", "Three new tools. Critical lab values: when a lab result typed or scanned is beyond the critical limit (for example potassium above 6.5, sodium below 120, Hb below 5, platelets below 20,000), the patient's unit PGs and faculty get an alert on the home screen, the patient page and a notification; the doctor who acts acknowledges it with what was done, and the app records who saw it and how many minutes it took, as NABH asks (Critical labs on the home screen; the admin can change the limits). Clinical scores: qSOFA, CURB-65, GCS, Child-Pugh, MELD-Na, Wells (PE), CHA₂DS₂-VASc and HAS-BLED, filled in from the patient's newest vitals, labs and past history, saved into the case sheet. Case report writer: from a patient's page, a journal case report in the CARE format, drafted from the case sheet with the name, IP number and dates taken out; AI can write the abstract, introduction and discussion (it never makes up references); save as Word or PDF."],
+    ["9.41", "The warning line about porn and vulgar words is removed from the chats, PG Connect, Presentations, Latest journals and the Library, and the one-time rule pop-up no longer appears. The rule itself still works quietly in the background, as before."],
+    ["9.40", "New Library section (Academics on the home screen): the department's PDF e-books on wooden shelves, each showing its front page, with shelves for each subject (cardiology, neurology, guidelines, exam preparation and more, or a new shelf of your own) and a search. Any member can add a book: a PDF up to 45 MB uploads straight into the Library; a bigger book (up to 1 GB or more) goes in as its Google Drive link, shared as Anyone with the link. Tap a book and it opens in your phone's own PDF reader (Adobe, Foxit or any other), never inside TVMCHMED; it downloads once, with the progress in a notification, and opens straight away after that. Long-press a book to share it, open it in Drive, remove the copy from your phone, edit or delete it."],
     ["9.31", "University questions now come filled in: every MD General Medicine (Branch I) paper in the question bank of The Tamil Nadu Dr. M.G.R. Medical University website, from 1990 to September 2026, all four papers, 3,374 questions copied exactly as printed (the older scanned papers read by eye, nothing written from memory). They load the first time you open University questions, marked as from MGR University, so Most asked, By topic and By paper work straight away; questions your department already typed in for the same exam are not added twice."],
     ["9.30", "Three new sections. Sign-off queue: a PG sends a discharge summary, death certificate or DAMA form from its screen to the unit's Assistant Professor, who reads it, corrects it and approves it (or sends it back with remarks); the printed form then says who approved it, a change after approval needs sign-off again, and an unapproved form prints marked as a draft. Case presentation: on any patient's page, the case sheet becomes ready slides with the name, IP number, phone and address left out; edit them, let the AI fill the differentials, discussion and take-home messages, and save as PowerPoint or a handout, or post it to Presentations. University questions: add the MD General Medicine university papers one question at a time, paste a paper or read a photo or PDF of it; the same question from different years is grouped, so the most asked come first, with topics, years and your own Done and Revise marks, and an AI answer outline for any question."],
     ["9.22", "This week's academics is back to the 9.12 look: the dark week header, the coloured crystal icons and each section in its own colour. Students attended and everything else stay."],
@@ -11619,6 +11748,10 @@ class Base extends Activity {
     Crashes.screen = this.constructor.name;
     this.db = Db.get(this);
     if (!(this instanceof AccountActivity) && Cloud.loginRequired(this)) { Cloud.openLogin(this); this.finish(); }
+    else if (AdminControl.screenOff(this, this.db, this.constructor.name)) {
+      Ui.toast(this, "The admin has turned this section off");
+      this.finish();
+    }
   }
 
   /** False on the first-page sign-in, which has nowhere to go back to. */
@@ -11781,7 +11914,7 @@ class Base extends Activity {
 
   opener(cls, ...kv) {
     if (kv.length === 1 && Array.isArray(kv[0])) kv = kv[0];
-    return { onClick: (v) => { this.open(cls, kv); } };
+    return new Base.Opener(this, cls, kv);
   }
 
   // ---------- rows shared by several screens ----------
@@ -12130,6 +12263,555 @@ class Base extends Activity {
     this.scheduleLine(card, "Symposium", "Monthly", symp > 0 ? "Held in " + Dates.month(today) : "Not yet held in " + Dates.month(today),
       symp > 0 ? DONE : lateMonth ? MISSED : DUE, Math.min(symp, 1), 1, ["kind", "academic", "sub", "SYMP"]);
     return this.tileGrid(card, ws);
+  }
+}
+
+/** A tap that opens a screen; the home page reads its screen to let the admin hide a section (9.71). */
+Base.Opener = class {
+  constructor(a, cls, kv) {
+    this.a = a;
+    this.cls = cls;
+    this.kv = kv;
+  }
+
+  onClick(v) { this.a.open(this.cls, this.kv); }
+
+  /** The screen's name when the tap opens it plainly (no extras), else "". */
+  static screenOf(l) {
+    return l instanceof Base.Opener && l.kv.length === 0 ? l.cls.name : "";
+  }
+};
+;
+/* ---- app/Abg.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * ABG interpreter (9.60): the stepwise reading of an arterial blood gas (fit of the numbers, the primary disorder,
+ * whether compensation is as expected, the anion gap corrected for albumin, the delta ratio, lactate and oxygenation),
+ * with the usual causes. Rule-based, the same every time; decision support only.
+ */
+class Abg {
+  static COLOR = 0xFF0369A1;
+  static KEY = "abg";
+  /** key, label, unit. */
+  static FIELDS = [["ph", "pH", ""], ["pco2", "pCO₂", "mmHg"], ["hco3", "HCO₃⁻", "mEq/L"], ["na", "Sodium", "mEq/L"],
+    ["cl", "Chloride", "mEq/L"], ["k", "Potassium", "mEq/L"], ["alb", "Albumin", "g/dL"], ["lactate", "Lactate", "mmol/L"],
+    ["po2", "pO₂", "mmHg"], ["fio2", "FiO₂", "%"], ["age", "Age", "years"]];
+
+  static d(inp, k) {
+    return Labs.num(inp.get(k));
+  }
+
+  static f1(v) {
+    return jfmt("%.1f", v);
+  }
+
+  static f0(v) {
+    return String(Math.round(v));
+  }
+
+  static interpret(inp) {
+    const Step = Abg.Step, f0 = Abg.f0, f1 = Abg.f1, d = Abg.d;
+    const r = new Abg.Result();
+    const ph = d(inp, "ph"), pco2 = d(inp, "pco2"), hco3 = d(inp, "hco3");
+    if (ph == null || pco2 == null || hco3 == null) {
+      r.missing = "pH, pCO₂ and HCO₃⁻ are needed";
+      return r;
+    }
+    if (ph < 6.5 || ph > 8 || pco2 <= 0 || hco3 <= 0) {
+      r.missing = "pH should be between 6.5 and 8, and pCO₂ and HCO₃⁻ above 0";
+      return r;
+    }
+    const na = d(inp, "na"), cl = d(inp, "cl"), alb = d(inp, "alb"), lac = d(inp, "lactate"), po2 = d(inp, "po2"), fio2 = d(inp, "fio2"), age = d(inp, "age"),
+      k = d(inp, "k");
+
+    // 1. do the numbers fit (Henderson)
+    const h = Math.pow(10, 9 - ph), hCalc = 24 * pco2 / hco3;
+    const fits = Math.abs(h - hCalc) / h <= 0.10;
+    r.steps.add(new Step("1. Do the numbers fit?", fits ? "Yes: H⁺ from the pH (" + f0(h) + " nmol/L) matches 24 × pCO₂ / HCO₃⁻ (" + f0(hCalc) + ")."
+      : "No: H⁺ from the pH is " + f0(h) + " nmol/L but 24 × pCO₂ / HCO₃⁻ gives " + f0(hCalc) + ". Recheck the numbers typed, or the sample (venous, air bubble, delay).",
+      fits ? Ui.GREEN : Ui.AMBER));
+
+    // 2. the pH
+    const acid = ph < 7.35, alk = ph > 7.45;
+    r.steps.add(new Step("2. pH " + ph, acid ? "Acidaemia (below 7.35)" : alk ? "Alkalaemia (above 7.45)" : "Within 7.35 to 7.45", acid || alk ? Ui.RED : Ui.GREEN));
+
+    // 3. the primary disorder
+    const mAcid = hco3 < 22, mAlk = hco3 > 26, rAcid = pco2 > 45, rAlk = pco2 < 35;
+    let primary;
+    if (acid) primary = mAcid && rAcid ? "mixed" + "A" : mAcid ? "metA" : rAcid ? "respA" : "?";
+    else if (alk) primary = mAlk && rAlk ? "mixed" + "L" : mAlk ? "metL" : rAlk ? "respL" : "?";
+    else primary = (mAcid && rAlk) || (mAlk && rAcid) ? "opposite" : (!mAcid && !mAlk && !rAcid && !rAlk) ? "normal" : "mild";
+    let pText;
+    switch (primary) {
+      case "mixedA": pText = "Mixed metabolic and respiratory acidosis: HCO₃⁻ low and pCO₂ high together."; r.found.add("Mixed metabolic and respiratory acidosis"); break;
+      case "metA": pText = "Metabolic acidosis: HCO₃⁻ " + f1(hco3) + " (below 22)."; break;
+      case "respA": pText = "Respiratory acidosis: pCO₂ " + f0(pco2) + " (above 45)."; break;
+      case "mixedL": pText = "Mixed metabolic and respiratory alkalosis: HCO₃⁻ high and pCO₂ low together."; r.found.add("Mixed metabolic and respiratory alkalosis"); break;
+      case "metL": pText = "Metabolic alkalosis: HCO₃⁻ " + f1(hco3) + " (above 26)."; break;
+      case "respL": pText = "Respiratory alkalosis: pCO₂ " + f0(pco2) + " (below 35)."; break;
+      case "opposite": pText = "Normal pH with HCO₃⁻ and pCO₂ both abnormal in opposite directions: a mixed disorder (full compensation is rare)."; break;
+      case "normal": pText = "pH, pCO₂ and HCO₃⁻ are all normal. Look at the anion gap: a hidden high anion gap acidosis can still be there."; break;
+      case "mild": pText = "pH normal with a small change in " + (mAcid || mAlk ? "HCO₃⁻" : "pCO₂") + ": likely a compensated or mild disorder."; break;
+      default: pText = "The pH is abnormal but neither pCO₂ nor HCO₃⁻ explains it: recheck the values."; break;
+    }
+    r.steps.add(new Step("3. Primary disorder", pText, primary === "normal" ? Ui.GREEN : Ui.RED));
+
+    // 4. compensation
+    let comp = null;
+    let compColor = Ui.GREEN;
+    if (primary === "metA" || (primary === "opposite" && mAcid) || (primary === "mild" && mAcid)) {
+      const exp = 1.5 * hco3 + 8;
+      const base = "Expected pCO₂ = 1.5 × HCO₃⁻ + 8 = " + f0(exp) + " ± 2 (Winter's formula). Measured " + f0(pco2) + ": ";
+      if (pco2 > exp + 2) {
+        comp = base + "higher, so a respiratory acidosis too (not breathing off enough: tiring, sedation, OP poisoning, snake bite or GBS weakness).";
+        r.found.add("Metabolic acidosis with an added respiratory acidosis");
+        r.causes.add("Added respiratory acidosis: respiratory muscle fatigue, CNS depression, OP poisoning, neurotoxic snake bite, GBS, COPD");
+        compColor = Ui.RED;
+      } else if (pco2 < exp - 2) {
+        comp = base + "lower, so a respiratory alkalosis too (sepsis, salicylates, liver failure, pulmonary embolism).";
+        r.found.add("Metabolic acidosis with an added respiratory alkalosis");
+        compColor = Ui.AMBER;
+      } else {
+        comp = base + "as expected: compensated by breathing.";
+        r.found.add("Metabolic acidosis with appropriate respiratory compensation");
+      }
+    } else if (primary === "metL" || (primary === "mild" && mAlk)) {
+      const exp = 0.7 * hco3 + 21;
+      const base = "Expected pCO₂ = 0.7 × HCO₃⁻ + 21 = " + f0(exp) + " ± 2. Measured " + f0(pco2) + ": ";
+      if (pco2 > exp + 2) {
+        comp = base + "higher, so a respiratory acidosis too.";
+        r.found.add("Metabolic alkalosis with an added respiratory acidosis");
+        compColor = Ui.AMBER;
+      } else if (pco2 < exp - 2) {
+        comp = base + "lower, so a respiratory alkalosis too.";
+        r.found.add("Metabolic alkalosis with an added respiratory alkalosis");
+        compColor = Ui.AMBER;
+      } else {
+        comp = base + "as expected.";
+        r.found.add("Metabolic alkalosis with appropriate compensation");
+      }
+      r.causes.add("Metabolic alkalosis: vomiting or NG aspiration, diuretics, hypokalaemia, hypovolaemia (contraction); check urine chloride (below 20 = chloride-responsive)");
+    } else if (primary === "respA" || (primary === "opposite" && rAcid) || (primary === "mild" && rAcid)) {
+      const dd = (pco2 - 40) / 10, acute = 24 + dd, chronic = 24 + 3.5 * dd;
+      const base = "Expected HCO₃⁻: acute " + f1(acute) + ", chronic " + f1(chronic) + " (1 and 3.5 per 10 mmHg rise). Measured " + f1(hco3) + ": ";
+      if (hco3 > chronic + 2) { comp = base + "higher than even chronic compensation, so a metabolic alkalosis too."; r.found.add("Respiratory acidosis with an added metabolic alkalosis"); compColor = Ui.AMBER; }
+      else if (hco3 < acute - 2) { comp = base + "lower than expected, so a metabolic acidosis too."; r.found.add("Respiratory acidosis with an added metabolic acidosis"); compColor = Ui.RED; }
+      else if (Math.abs(hco3 - acute) <= 2) { comp = base + "fits an acute respiratory acidosis."; r.found.add("Acute respiratory acidosis"); compColor = Ui.RED; }
+      else if (Math.abs(hco3 - chronic) <= 2) { comp = base + "fits a chronic (compensated) respiratory acidosis."; r.found.add("Chronic respiratory acidosis"); compColor = Ui.AMBER; }
+      else { comp = base + "between the two: acute on chronic respiratory acidosis."; r.found.add("Acute on chronic respiratory acidosis"); compColor = Ui.RED; }
+      r.causes.add("Respiratory acidosis: COPD or asthma exacerbation, hypoventilation (sedatives, opioids, alcohol), OP poisoning, neurotoxic snake bite, GBS, myasthenia, obesity hypoventilation");
+    } else if (primary === "respL" || (primary === "opposite" && rAlk) || (primary === "mild" && rAlk)) {
+      const dd = (40 - pco2) / 10, acute = 24 - 2 * dd, chronic = 24 - 5 * dd;
+      const base = "Expected HCO₃⁻: acute " + f1(acute) + ", chronic " + f1(chronic) + " (2 and 5 per 10 mmHg fall). Measured " + f1(hco3) + ": ";
+      if (hco3 < chronic - 2) { comp = base + "lower than even chronic compensation, so a metabolic acidosis too."; r.found.add("Respiratory alkalosis with an added metabolic acidosis"); compColor = Ui.RED; }
+      else if (hco3 > acute + 2) { comp = base + "higher than expected, so a metabolic alkalosis too."; r.found.add("Respiratory alkalosis with an added metabolic alkalosis"); compColor = Ui.AMBER; }
+      else if (Math.abs(hco3 - acute) <= 2) { comp = base + "fits an acute respiratory alkalosis."; r.found.add("Acute respiratory alkalosis"); compColor = Ui.AMBER; }
+      else { comp = base + "fits a chronic respiratory alkalosis."; r.found.add("Chronic respiratory alkalosis"); compColor = Ui.AMBER; }
+      r.causes.add("Respiratory alkalosis: sepsis, pneumonia, pulmonary embolism, pain or anxiety, early salicylate poisoning, liver failure, pregnancy, CNS disease");
+    }
+    if (comp != null) r.steps.add(new Step("4. Compensation", comp, compColor));
+    if (primary === "normal") r.found.add("Normal pH, pCO₂ and HCO₃⁻");
+
+    // 5. anion gap and delta ratio
+    if (na != null && cl != null) {
+      const ag = na - cl - hco3;
+      const agc = alb == null ? ag : ag + 2.5 * (4.0 - alb);
+      const high = agc > 12;
+      const b = new StringBuilder("Anion gap = Na⁺ − (Cl⁻ + HCO₃⁻) = " + f1(ag));
+      if (alb != null) b.append("; corrected for albumin ").append(f1(alb)).append(" g/dL = ").append(f1(agc));
+      b.append(high ? " (high: above 12)." : " (normal: 8 to 12).");
+      const hagma = "High anion gap acidosis: DKA, lactic acidosis (sepsis, shock, seizures, metformin), kidney failure, toxic alcohols (methanol), "
+        + "salicylates, paracetamol (pyroglutamic acid), starvation or alcoholic ketoacidosis";
+      const nagma = "Normal anion gap acidosis: diarrhoea, large volumes of normal saline, renal tubular acidosis, ureteric diversion, "
+        + "acetazolamide; check the urine anion gap (negative = gut loss, positive = kidney)";
+      if (high && hco3 < 24) {
+        const delta = (agc - 12) / (24 - hco3);
+        b.append(" Delta ratio (AG − 12) / (24 − HCO₃⁻) = ").append(jfmt("%.2f", delta)).append(": ");
+        if (delta < 0.4) { b.append("below 0.4, a normal anion gap acidosis is the main process."); r.found.add("High and normal anion gap acidosis (delta " + jfmt("%.1f", delta) + ")"); r.causes.add(nagma); }
+        else if (delta < 0.8) { b.append("0.4 to 0.8, a high and a normal anion gap acidosis together."); r.found.add("High and normal anion gap acidosis (delta " + jfmt("%.1f", delta) + ")"); r.causes.add(nagma); }
+        else if (delta <= 2) { b.append("0.8 to 2, a pure high anion gap acidosis."); r.found.add("High anion gap (AG " + f0(agc) + ")"); }
+        else { b.append("above 2, a high anion gap acidosis with a metabolic alkalosis (or a chronic respiratory acidosis) as well."); r.found.add("High anion gap acidosis with a metabolic alkalosis too (delta " + jfmt("%.1f", delta) + ")"); }
+        r.causes.add(0, hagma);
+      } else if (high) {
+        b.append(" A high anion gap with a normal HCO₃⁻: a hidden high anion gap acidosis balanced by an alkalosis.");
+        r.found.add("Hidden high anion gap acidosis (AG " + f0(agc) + ")");
+        r.causes.add(0, hagma);
+      } else if (mAcid) {
+        b.append(" A normal anion gap metabolic acidosis.");
+        r.found.add("Normal anion gap (hyperchloraemic)");
+        r.causes.add(0, nagma);
+      }
+      r.steps.add(new Step("5. Anion gap", b.toString(), high ? Ui.RED : Ui.GREEN));
+    } else if (mAcid) {
+      r.steps.add(new Step("5. Anion gap", "Add sodium and chloride to tell a high from a normal anion gap acidosis.", Ui.SLATE));
+    }
+
+    if (k != null && (k < 3.5 || k > 5.5))
+      r.steps.add(new Step("Potassium " + f1(k), k < 3.5 ? "Low: correct it (it worsens a metabolic alkalosis; in DKA give it before insulin if below 3.3)."
+        : "High: acidosis shifts potassium out of cells; check the ECG.", Ui.AMBER));
+
+    // 6. lactate
+    if (lac != null) {
+      r.steps.add(new Step("6. Lactate " + f1(lac), lac > 4 ? "High (above 4): shock or severe sepsis until proved otherwise; resuscitate and repeat in 2 hours."
+        : lac > 2 ? "Raised (above 2): look for poor perfusion, sepsis, seizures, metformin." : "Normal.", lac > 4 ? Ui.RED : lac > 2 ? Ui.AMBER : Ui.GREEN));
+      if (lac > 2) r.found.add("Lactate " + f1(lac));
+    }
+
+    // 7. oxygenation
+    if (po2 != null) {
+      const b = new StringBuilder("pO₂ " + f0(po2) + " mmHg" + (po2 < 60 ? ": hypoxaemia (respiratory failure if below 60)." : po2 < 80 ? ": mildly low." : "."));
+      let col = po2 < 60 ? Ui.RED : po2 < 80 ? Ui.AMBER : Ui.GREEN;
+      if (fio2 != null && fio2 >= 21 && fio2 <= 100) {
+        const pf = po2 / (fio2 / 100);
+        b.append(" P/F ratio ").append(f0(pf));
+        if (pf < 100) { b.append(": below 100, severe (ARDS range if on PEEP 5 or more)."); col = Ui.RED; r.found.add("P/F " + f0(pf) + " (severe)"); }
+        else if (pf < 200) { b.append(": 100 to 200, moderate."); col = Ui.RED; r.found.add("P/F " + f0(pf) + " (moderate)"); }
+        else if (pf <= 300) { b.append(": 200 to 300, mild."); if ((col | 0) === (Ui.GREEN | 0)) col = Ui.AMBER; r.found.add("P/F " + f0(pf) + " (mild)"); }
+        else b.append(": normal (above 300).");
+        const aa = (fio2 / 100) * (760 - 47) - pco2 / 0.8 - po2;
+        const expAa = age == null ? 10 : age / 4 + 4;
+        b.append(" A–a gradient ").append(f0(aa)).append(" (expected about ").append(f0(expAa)).append(")")
+          .append(aa > expAa + 5 ? ": raised, a lung cause (V/Q mismatch, shunt, diffusion)." : ": normal, so low pO₂ is from hypoventilation or low FiO₂.");
+      }
+      r.steps.add(new Step("7. Oxygenation", b.toString(), col));
+    }
+    if (primary === "metA" && r.causes.isEmpty()) r.causes.add("Metabolic acidosis: add sodium and chloride for the anion gap to narrow the causes");
+    return r;
+  }
+
+  // ---------- saved in the case sheet ----------
+
+  static save(db, pid, inp, r, date, time, by) {
+    const data = CaseSheet.load(db, pid);
+    let arr = data.optJSONArray(Abg.KEY);
+    if (arr == null) arr = new JSONArray();
+    try {
+      const vals = new JSONObject();
+      for (const f of Abg.FIELDS) if (!Ui.nz(inp.get(f[0])).trim().isEmpty()) vals.put(f[0], inp.get(f[0]).trim());
+      arr.put(new JSONObject().put("date", date).put("time", time).put("by", by).put("in", vals).put("summary", r.summary()));
+      data.put(Abg.KEY, arr);
+    } catch (ignored) {
+    }
+    CaseSheet.save(db, pid, data);
+  }
+
+  /** Saved readings, newest first. */
+  static saved(db, pid) {
+    const out = [];
+    const arr = CaseSheet.load(db, pid).optJSONArray(Abg.KEY);
+    if (arr == null) return out;
+    for (let i = arr.length() - 1; i >= 0; i--) if (arr.optJSONObject(i) != null) out.add(arr.optJSONObject(i));
+    return out;
+  }
+
+  // ---------- reading a printout ----------
+
+  static MARK = "Read this arterial blood gas (ABG) report";
+
+  static prompt() {
+    return Abg.MARK + " and copy the measured values. Reply with these lines only, one per line, leaving out any value not printed:\n"
+      + "ph: \npco2: (mmHg; if kPa multiply by 7.5)\nhco3: (actual HCO3 or cHCO3, mEq/L or mmol/L)\nna: \ncl: \nk: \nlactate: \npo2: (mmHg)\nfio2: (percent)\n"
+      + "Numbers only, no units, no other text.";
+  }
+
+  /** "ph: 7.21" lines into values (kPa converted). */
+  static parse(text) {
+    const out = new JMap();
+    for (const line of Ui.nz(text).jsplit("\n")) {
+      const l = line.toLowerCase().split("*").join("").trim();
+      let i = l.indexOf(':');
+      if (i < 0) i = l.indexOf('=');
+      if (i < 0) continue;
+      let k = l.substring(0, i).replaceAllRx("[^a-z0-9]", "");
+      const m = Pattern.compile("-?\\d+(\\.\\d+)?").matcher(l.substring(i + 1));
+      if (!m.find()) continue;
+      let v = m.group();
+      if (k === "hco3" || k === "chco3" || k === "bicarbonate") k = "hco3";
+      else if (k === "pco2" || k === "paco2") k = "pco2";
+      else if (k === "po2" || k === "pao2") k = "po2";
+      else if (k === "lac") k = "lactate";
+      let known = false;
+      for (const f of Abg.FIELDS) if (f[0] === k) known = true;
+      if (!known) continue;
+      const x = Double.parseDouble(v);
+      if ((k === "pco2" || k === "po2") && x < 20 && l.contains("kpa")) v = Abg.f1(x * 7.5);
+      if (k === "fio2" && x <= 1) v = Abg.f0(x * 100);
+      out.put(k, v);
+    }
+    return out;
+  }
+}
+
+Abg.Step = class {
+  constructor(title, text, color) {
+    this.title = title;
+    this.text = text;
+    this.color = color;
+  }
+};
+
+Abg.Result = class {
+  constructor() {
+    this.steps = [];
+    this.causes = [];
+    this.found = [];
+    this.missing = "";
+  }
+
+  summary() {
+    return TextUtils.join("; ", this.found);
+  }
+};
+;
+/* ---- app/AbgActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** ABG interpreter: type the values (or read a printout photo), see each step, save the reading in the case sheet. */
+class AbgActivity extends Base {
+  static REQ_CAMERA = 91;
+  static REQ_PICK = 92;
+  static WAIT = "abg_wait";
+
+  constructor() {
+    super();
+    this.id = -1;
+    this.p = null;
+    this.form = null;
+    this.values = new JMap();
+    this.last = null;
+    this.pendingCamera = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const db = this.db;
+    const s = this.getIntent().getStringExtra("id");
+    if (s != null) {
+      this.id = Long.parseLong(s);
+      this.p = db.row("SELECT * FROM patients WHERE id=?", s);
+    }
+    if (b != null) this.pendingCamera = b.getString("cam");
+    this.setTitle("ABG interpreter");
+    this.subtitle = this.p == null ? "Arterial blood gas, step by step" : Ui.nz(this.p.get("name"));
+    this.headerColor(Abg.COLOR);
+    this.values.put("fio2", "21");
+    if (this.p != null) {
+      const age = Ui.nz(this.p.get("age")).replaceAllRx("[^0-9]", "");
+      if (!age.isEmpty()) this.values.put("age", age);
+      const labs = Labs.rows(db, this.id);
+      for (let i = labs.size() - 1; i >= 0; i--) {
+        const l = labs.get(i);
+        if (Dates.parse(l.get("date")) == null || Dates.parse(l.get("date")).isBefore(Dates.today().minusDays(1))) break;
+        for (const k of ["na", "k"]) if (!this.values.containsKey(k) && !Ui.nz(l.get(k)).trim().isEmpty()) this.values.put(k, l.get(k).trim());
+      }
+    }
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    if (this.pendingCamera != null) out.putString("cam", this.pendingCamera);
+  }
+
+  liveRefresh() {
+    return false;
+  }
+
+  keep() {
+    if (this.form != null) for (const f of Abg.FIELDS) this.values.put(f[0], this.form.get(f[0]));
+  }
+
+  render() {
+    const db = this.db;
+    this.keep();
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Abg.COLOR), 20));
+    hero.addView(Ui.tv(this, "🫁  ABG, step by step", 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Type the values or read a printout photo. Add sodium, chloride and albumin for the anion gap, and pO₂ with FiO₂ for oxygenation.",
+      12, 0xE6FFFFFF, false));
+    const scan = Ui.button(this, "📷  Read an ABG printout", Abg.COLOR, { onClick: (v) => { this.photo(); } });
+    scan.setTextColor(0xFFFFFFFF);
+    scan.setBackground(Ui.outline(this, 0x2EFFFFFF, 0x99FFFFFF, 12));
+    hero.addView(scan);
+    Ui.margins(scan, 0, 10, 0, 0);
+    const app = AiRun.waiting(this, AbgActivity.WAIT);
+    if (!app.isEmpty()) {
+      const paste = Ui.button(this, "📋  Paste " + app + "'s answer", Ui.AMBER, {
+        onClick: (v) => {
+          const t = AiRun.paste(this, AbgActivity.WAIT, Abg.MARK);
+          if (t != null) this.got(t, app + " (AI)");
+        }
+      });
+      hero.addView(paste);
+      Ui.margins(paste, 0, 8, 0, 0);
+    }
+    page.addView(hero);
+
+    const form = this.form = new Form(this);
+    for (let i = 0; i < Abg.FIELDS.length; i += 2) {
+      form.beginRow();
+      for (let j = i; j < Math.min(i + 2, Abg.FIELDS.length); j++) {
+        const f = Abg.FIELDS[j];
+        form.text(f[0], f[1] + (f[2].isEmpty() ? "" : " (" + f[2] + ")"), Ui.nz(this.values.get(f[0])), Form.DECIMAL);
+      }
+      form.endRow();
+    }
+    const fc = Ui.card(this);
+    fc.addView(form.view);
+    const go = Ui.button(this, "Interpret", Abg.COLOR, {
+      onClick: (v) => {
+        this.keep();
+        this.last = Abg.interpret(this.values);
+        this.render();
+      }
+    });
+    fc.addView(go);
+    Ui.margins(go, 0, 10, 0, 0);
+    page.addView(fc);
+
+    const last = this.last;
+    if (last != null) {
+      if (!last.missing.isEmpty()) page.addView(this.emptyNote(last.missing));
+      else {
+        const sum = Ui.card(this);
+        sum.setBackground(Ui.outline(this, 0xFFF0F9FF, Abg.COLOR, 16));
+        sum.addView(Ui.tv(this, last.summary(), 16, Abg.COLOR, true));
+        page.addView(sum);
+        for (const s of last.steps) {
+          const c = Ui.card(this);
+          c.setBackground(Ui.outline(this, Ui.alpha(s.color, 0x10), Ui.alpha(s.color, 0x80), 14));
+          c.addView(Ui.tv(this, s.title, 14, s.color, true));
+          c.addView(Ui.body(this, s.text));
+          page.addView(c);
+        }
+        if (!last.causes.isEmpty()) {
+          page.addView(Ui.heading(this, "Think of", Abg.COLOR));
+          const c = Ui.card(this);
+          for (const x of last.causes) c.addView(Ui.body(this, "• " + x));
+          page.addView(c);
+        }
+        if (this.p != null && CaseSheet.canEdit(this, db, this.p)) {
+          const w = Ui.v(this);
+          w.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+          w.addView(Ui.button(this, "Save to the case sheet", Abg.COLOR, {
+            onClick: (v) => {
+              Abg.save(db, this.id, this.values, this.last, Dates.todayIso(), Dates.now(), Reminders.myName(this, db));
+              Ui.toast(this, "ABG saved in the case sheet");
+              this.render();
+            }
+          }));
+          page.addView(w);
+        }
+      }
+    }
+    if (this.id >= 0) {
+      const saved = Abg.saved(db, this.id);
+      if (!saved.isEmpty()) {
+        page.addView(Ui.heading(this, "Saved for this patient", Abg.COLOR));
+        const c = Ui.card(this);
+        for (const o of saved) {
+          const inp = o.optJSONObject("in");
+          const nums = inp == null ? "" : "pH " + inp.optString("ph") + ", pCO₂ " + inp.optString("pco2") + ", HCO₃⁻ " + inp.optString("hco3");
+          c.addView(Ui.kv(this, Dates.nice(o.optString("date")) + " " + o.optString("time") + "  ·  " + nums, ""));
+          c.addView(Ui.muted(this, o.optString("summary")));
+        }
+        page.addView(c);
+      }
+    }
+    const note = Ui.muted(this, "Decision support only: standard formulas (Winter's, expected compensation, albumin-corrected anion gap, delta ratio).");
+    Ui.margins(note, 16, 10, 16, 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+
+  photo() {
+    this.keep();
+    new AlertDialog.Builder(this).setTitle("ABG printout")
+      .setPositiveButton("Camera", {
+        onClick: (d, w) => {
+          this.pendingCamera = Imaging.DIR + "/abgscan_" + System.currentTimeMillis() + ".jpg";
+          if (!Store.capture(this, this.pendingCamera, AbgActivity.REQ_CAMERA)) this.pendingCamera = null;
+        }
+      })
+      .setNeutralButton("Gallery", { onClick: (d, w) => { Store.pick(this, ["image/*"], AbgActivity.REQ_PICK); } })
+      .setNegativeButton("Cancel", null).show();
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (res !== RESULT_OK || (req !== AbgActivity.REQ_CAMERA && req !== AbgActivity.REQ_PICK)) return;
+    try {
+      let rel = null;
+      if (req === AbgActivity.REQ_CAMERA && this.pendingCamera != null) {
+        rel = this.pendingCamera;
+        this.pendingCamera = null;
+      } else if (req === AbgActivity.REQ_PICK && data != null && data.getData() != null) rel = Store.importUri(this, data.getData(), Imaging.DIR, "abgscan");
+      if (rel == null) return;
+      const f = this.db.file(rel);
+      const jpg = f.exists() ? LabScan.jpeg(f) : null;
+      if (jpg == null) {
+        f.delete();
+        Ui.toast(this, "Pick or take a photo (JPG or PNG)");
+        return;
+      }
+      const out = new FileOutputStream(f);
+      try { out.write(jpg); } finally { out.close(); }
+      this.picture(rel, jpg);
+    } catch (e) {
+      Ui.toast(this, "Could not use the picture: " + e.getMessage());
+    }
+  }
+
+  picture(rel, jpg) {
+    const read = AiRun.vision(this, "Reading the ABG", Abg.prompt(), jpg, {
+      got: (text, who) => {
+        this.db.file(rel).delete();
+        this.got(text, who);
+      }
+    });
+    if (read) return;
+    const apps = DischargeActivity.CHAT_APPS;
+    const items = new Array(apps.length + 1).fill(null);
+    for (let i = 0; i < apps.length; i++) items[i] = "Free: " + apps[i][0] + " app";
+    items[apps.length] = "Use Gemini inside the app: add a free key";
+    new AlertDialog.Builder(this).setTitle("Which AI app reads it?")
+      .setItems(items, {
+        onClick: (d, w) => {
+          if (w < apps.length) {
+            AiRun.imageToApp(this, apps[w], Abg.prompt(), rel, AbgActivity.WAIT);
+            this.render();
+          } else this.open(SettingsActivity);
+        }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  /** The AI's reading into the boxes, to check before interpreting. */
+  got(text, who) {
+    const m = Abg.parse(text);
+    if (m.isEmpty()) {
+      Ui.toast(this, "No ABG values found in the answer");
+      return;
+    }
+    this.form = null;
+    this.values.putAll(m);
+    this.last = Abg.interpret(this.values);
+    Ui.toast(this, "Read by " + who + ": check each value against the printout");
+    this.render();
+  }
+
+  /** The patient page: the newest saved ABG and the button. */
+  static patientCard(a, db, pid) {
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), 0);
+    const s = Abg.saved(db, pid);
+    if (!s.isEmpty()) {
+      const t = Ui.muted(a, "🫁 ABG " + Dates.nice(s.get(0).optString("date")) + ": " + s.get(0).optString("summary"));
+      box.addView(t);
+      Ui.margins(t, 4, 0, 4, 6);
+    }
+    box.addView(Ui.outlineButton(a, "🫁  ABG interpreter", Abg.COLOR, a.opener(AbgActivity, "id", String(pid))));
+    return box;
   }
 }
 ;
@@ -15501,6 +16183,273 @@ class AskActivity extends Base {
   }
 }
 ;
+/* ---- app/Attach.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Files attached to a record (9.70): a PDF or a picture (gallery or camera) next to a university question or a learning
+ * board topic, so the answer is at hand while revising. The rows are shared (table attach) and the files go to the shared
+ * academics/ folder; another phone downloads a file the first time it is opened. The screen keeps one Attach for its
+ * request codes (reqBase camera, reqBase + 1 file) and passes onActivityResult to result().
+ */
+class Attach {
+  // interface Added { added(rel, name, pdf) }: the file is saved (rel under academics/) and, when the screen gave a record, its row is added.
+
+  static TABLE = "attach";
+  static DIR = "academics";
+  static MAX_BYTES = 45 * 1024 * 1024;
+  static COLOR = 0xFF0F766E;
+
+  constructor(a, reqBase) {
+    this.a = a;
+    this.reqBase = reqBase;
+    this.cameraRel = null;
+    this.tbl = null;
+    this.ref = null;
+    this._added = null;
+  }
+
+  save(out) {
+    out.putString("att_camera", this.cameraRel);
+    out.putString("att_tbl", this.tbl);
+    out.putString("att_ref", this.ref);
+  }
+
+  restore(b) {
+    if (b == null) return;
+    this.cameraRel = b.getString("att_camera");
+    this.tbl = b.getString("att_tbl");
+    this.ref = b.getString("att_ref");
+  }
+
+  /** Asks camera or file, then attaches to tbl/ref (ref null: the screen adds the row itself later). */
+  choose(table, refId, done) {
+    this.target(table, refId, done);
+    new AlertDialog.Builder(this.a).setTitle("Attach")
+      .setItems(["📷  Camera (snap a page)", "📎  PDF or picture from the phone"], {
+        onClick: (d, w) => {
+          if (w === 0) this.camera();
+          else this.pick();
+        }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  /** The screen's callback again after the phone recreated it (the camera can close the app). */
+  onAdded(done) {
+    this._added = done;
+  }
+
+  /** Where the next camera photo or picked file goes (for a screen with its own buttons). */
+  target(table, refId, done) {
+    this.tbl = table;
+    this.ref = refId;
+    this._added = done;
+  }
+
+  camera() {
+    this.cameraRel = Attach.DIR + "/att_" + System.currentTimeMillis() + ".jpg";
+    if (!Store.capture(this.a, this.cameraRel, this.reqBase)) this.cameraRel = null;
+  }
+
+  pick() {
+    Store.pick(this.a, ["application/pdf", "image/*"], this.reqBase + 1);
+  }
+
+  /** True when the request was this helper's. */
+  result(req, res, data) {
+    if (req !== this.reqBase && req !== this.reqBase + 1) return false;
+    if (res !== RESULT_OK) return true;
+    const a = this.a;
+    const db = Db.get(a);
+    try {
+      let rel = null, name = "";
+      if (req === this.reqBase && this.cameraRel != null) {
+        rel = this.cameraRel;
+        this.cameraRel = null;
+        const f = db.file(rel);
+        const jpg = f.exists() ? LabScan.jpeg(f) : null;
+        if (jpg == null) {
+          f.delete();
+          Ui.toast(a, "The photo was not saved");
+          return true;
+        }
+        const out = new FileOutputStream(f);
+        try { out.write(jpg); } finally { out.close(); }
+        name = "Photo " + Dates.nice(Dates.todayIso()) + " " + Dates.now();
+      } else if (req === this.reqBase + 1 && data != null && data.getData() != null) {
+        name = Ui.nz(Store.displayName(a, data.getData()));
+        rel = Store.importUri(a, data.getData(), Attach.DIR, "att");
+      }
+      if (rel == null) return true;
+      const f = db.file(rel);
+      const pdf = PageScan.isPdf(f);
+      if (!pdf && !rel.endsWith(".jpg")) {
+        f.delete();
+        Ui.toast(a, "Attach a PDF or a picture (JPG or PNG)");
+        return true;
+      }
+      if (f.length() > Attach.MAX_BYTES) {
+        f.delete();
+        Ui.toast(a, "That file is too big (over 45 MB)");
+        return true;
+      }
+      if (name.isEmpty()) name = pdf ? "PDF" : "Picture";
+      if (this.ref != null) Attach.add(a, db, this.tbl, this.ref, rel, name);
+      if (this._added != null) this._added.added(rel, name, pdf);
+      else a.render();
+    } catch (e) {
+      Ui.toast(a, "Could not attach it: " + (e && e.getMessage ? e.getMessage() : e));
+    }
+    return true;
+  }
+
+  // ---------- the rows ----------
+
+  static add(c, db, tbl, ref, rel, name) {
+    const cv = new ContentValues();
+    cv.put("tbl", tbl);
+    cv.put("ref_id", ref);
+    cv.put("file", rel);
+    cv.put("name", Ui.nz(name).length > 80 ? name.substring(0, 80) : Ui.nz(name));
+    cv.put("kind", rel.endsWith(".pdf") ? "pdf" : "image");
+    cv.put("size", db.file(rel).length());
+    cv.put("added_by", Approvals.me(c));
+    cv.put("by_name", CallDutyActivity.myName(c));
+    cv.put("added_on", Dates.todayIso() + " " + Dates.now());
+    return db.insert(Attach.TABLE, cv);
+  }
+
+  /** The files attached to these records, oldest first. (Java overloads: a collection of ids or one id.) */
+  static of(db, tbl, refs) {
+    if (typeof refs === "string" || typeof refs === "number") refs = [String(refs)];
+    const list = [];
+    for (const r of refs) list.push(r);
+    if (list.length === 0) return [];
+    let inq = "";
+    const args = [tbl];
+    for (const r of list) {
+      inq += inq.length === 0 ? "?" : ",?";
+      args.push(r);
+    }
+    return db.rows("SELECT * FROM " + Attach.TABLE + " WHERE tbl=? AND ref_id IN (" + inq + ") ORDER BY id", args);
+  }
+
+  /** Every file attached in one table, by record id (one query for a long list). */
+  static byRef(db, tbl) {
+    const out = new JMap();
+    for (const r of db.rows("SELECT * FROM " + Attach.TABLE + " WHERE tbl=? ORDER BY id", tbl)) {
+      const k = Ui.nz(r.get("ref_id"));
+      if (!out.containsKey(k)) out.put(k, []);
+      out.get(k).push(r);
+    }
+    return out;
+  }
+
+  /** How many files these records have, for a 📎 count. */
+  static count(db, tbl, refs) {
+    return Attach.of(db, tbl, refs).length;
+  }
+
+  static canRemove(c, r) {
+    if (!Cloud.active(c) || Cloud.isAdmin(c)) return true;
+    const me = Approvals.me(c);
+    return !me.isEmpty() && me.equals(r.get("added_by"));
+  }
+
+  static open(a, db, r) {
+    PresentationsActivity.openFileIn(a, db, r.get("file"), false, null);
+  }
+
+  static remove(db, r) {
+    db.delete(Attach.TABLE, Long.parseLong(r.get("id")));
+    db.forgetFile(r.get("file"));
+  }
+
+  /** A row of file chips: tap opens, long-press shares or removes; an optional "+ Attach" chip at the end. */
+  static strip(a, db, list, color, onAdd) {
+    const row = Ui.h(a);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    for (const r of list) {
+      let nm = Ui.nz(r.get("name"));
+      if (nm.length > 26) nm = nm.substring(0, 25) + "…";
+      const t = Ui.chip(a, ("pdf".equals(r.get("kind")) ? "📄 " : "🖼 ") + nm, false, color);
+      t.setOnClickListener({ onClick: (v) => { Attach.open(a, db, r); } });
+      t.setOnLongClickListener({
+        onLongClick: (v) => {
+          Attach.menu(a, db, r);
+          return true;
+        }
+      });
+      row.addView(t);
+      Ui.margins(t, 0, 0, 6, 0);
+    }
+    if (onAdd != null) {
+      const add = Ui.chip(a, list.length === 0 ? "📎  Attach PDF / picture" : "＋ 📎", false, color);
+      add.setTextColor(color);
+      add.setOnClickListener(onAdd);
+      row.addView(add);
+    }
+    const hs = new HorizontalScrollView(a);
+    hs.setHorizontalScrollBarEnabled(false);
+    hs.addView(row);
+    return hs;
+  }
+
+  static menu(a, db, r) {
+    const items = [];
+    items.push("Open");
+    items.push("Share");
+    if (Attach.canRemove(a, r)) items.push("Remove");
+    new AlertDialog.Builder(a).setTitle(Ui.nz(r.get("name")) + (Ui.nz(r.get("by_name")).isEmpty() ? "" : "  ·  " + r.get("by_name")))
+      .setItems(items, {
+        onClick: (d, w) => {
+          const s = items[w];
+          if (s.equals("Open")) Attach.open(a, db, r);
+          else if (s.equals("Share")) PresentationsActivity.openFileIn(a, db, r.get("file"), true, null);
+          else Ui.confirm(a, "Remove this file?", "It is removed for everyone.", "Remove", {
+            run: () => {
+              Attach.remove(db, r);
+              a.render();
+            }
+          });
+        }
+      }).setNegativeButton("Close", null).show();
+  }
+
+  /**
+   * Makes sure the files are on this phone (downloading those added on other phones), then runs next with their paths.
+   * Shows a toast and stops when a download fails. On the web the downloads are Promises; the files are then loaded into
+   * memory so the AI reader can read their bytes.
+   */
+  static ready(a, db, rels, next) {
+    const missing = [];
+    for (const rel of rels) if (!db.file(rel).exists()) missing.push(rel);
+    if (missing.length > 0 && !Cloud.active(a)) {
+      Ui.toast(a, "The file is not on this phone");
+      return;
+    }
+    if (missing.length > 0) Ui.toast(a, "Downloading…");
+    (async () => {
+      let err = null;
+      for (const rel of missing) {
+        try {
+          await Sync.fetchFile(a, db, rel);
+        } catch (e) {
+          err = e && e.message ? e.message : String(e);
+        }
+      }
+      for (const rel of rels) {
+        try { await VFS.read(rel); } catch (ignored) {}
+      }
+      return err;
+    })().then((e2) => {
+      if (a.isFinishing()) return;
+      if (e2 != null) Ui.toast(a, "Could not download: " + e2);
+      else next.run();
+    });
+  }
+}
+;
 /* ---- app/AttendanceActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -15820,6 +16769,82 @@ class AttendanceActivity extends Base {
       }
       page.addView(card);
     }
+  }
+}
+;
+/* ---- app/Away.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Who is away (9.72), for the unit team boards. Faculty leave itself stays private to the faculty, so a faculty phone keeps
+ * a small shared copy of each approved leave (who, from, to, kind: no reason) in the table "away"; every member's phone
+ * reads it, together with the staff attendance marks and approved PG leave, to show on the board who is on leave today
+ * and who goes on leave soon.
+ */
+class Away {
+  static TABLE = "away";
+  static LEAVE = 0xFFF59E0B;
+  static DUTY = 0xFF0EA5E9;
+
+  /** On this phone, when it can see faculty leave: brings the shared copy in line with the approved faculty leaves. */
+  static mirror(c, db) {
+    if (!Cloud.canSeeFacultyLeave(c)) return;
+    const keep = new Set();
+    for (const l of db.rows("SELECT * FROM faculty_leaves WHERE status='Approved' AND to_date>=?", Dates.today().minusDays(7).toString())) {
+      const src = "fl:" + l.get("id");
+      keep.add(src);
+      const kind = Ui.nz(l.get("type")).equals("Week off") ? "Week off" : "Leave";
+      const r = db.row("SELECT * FROM " + Away.TABLE + " WHERE src=?", src);
+      if (r != null && Ui.nz(r.get("staff_id")).equals(Ui.nz(l.get("staff_id"))) && Ui.nz(r.get("from_date")).equals(Ui.nz(l.get("from_date")))
+        && Ui.nz(r.get("to_date")).equals(Ui.nz(l.get("to_date"))) && Ui.nz(r.get("kind")).equals(kind)) continue;
+      const cv = new ContentValues();
+      cv.put("src", src);
+      cv.put("staff_id", Ui.nz(l.get("staff_id")));
+      cv.put("from_date", Ui.nz(l.get("from_date")));
+      cv.put("to_date", Ui.nz(l.get("to_date")));
+      cv.put("kind", kind);
+      if (r == null) db.insert(Away.TABLE, cv);
+      else db.update(Away.TABLE, cv, Long.parseLong(r.get("id")));
+    }
+    // a leave withdrawn, refused or deleted: its copy goes (old ones too, after a week)
+    for (const r of db.rows("SELECT id, src, to_date FROM " + Away.TABLE + " WHERE src LIKE 'fl:%'"))
+      if (!keep.has(r.get("src"))) db.delete(Away.TABLE, Long.parseLong(r.get("id")));
+  }
+
+  /** Away on a day: "Leave", "Week off", "On duty" (elsewhere) or "" when at work. */
+  static on(db, staffId, iso) {
+    const a = db.attendance(Ui.toLong(staffId, -1), iso);
+    if ("L" === a) return "Leave";
+    if ("WO" === a) return "Week off";
+    if ("OD" === a) return "On duty";
+    const r = db.row("SELECT kind FROM " + Away.TABLE + " WHERE staff_id=? AND ? BETWEEN from_date AND to_date", String(staffId), iso);
+    return r == null ? "" : Ui.nz(r.get("kind"));
+  }
+
+  /** The first working day after this person's absence that covers today (for "back on Mon 27 Oct"). */
+  static backOn(db, staffId, today) {
+    let d = today;
+    for (let i = 0; i < 60 && !Away.on(db, staffId, d.toString()).isEmpty(); i++) d = d.plusDays(1);
+    return d;
+  }
+
+  /** The next day within a week when this person will be away, or null. */
+  static soon(db, staffId, today) {
+    for (let i = 1; i <= 7; i++) {
+      const d = today.plusDays(i);
+      const k = Away.on(db, staffId, d.toString());
+      if (k.equals("Leave") || k.equals("On duty")) return d;
+    }
+    return null;
+  }
+
+  static icon(kind) {
+    return kind.equals("On duty") ? "✈️" : kind.equals("Week off") ? "🏖️" : "🌴";
+  }
+
+  /** "Mon 27 Oct" */
+  static day(d) {
+    return d.format(DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH));
   }
 }
 ;
@@ -18690,6 +19715,438 @@ class CasePresentationActivity extends Base {
     const box = Ui.v(a);
     box.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), 0);
     box.addView(Ui.outlineButton(a, "🎤  Case presentation (PowerPoint)", CasePresentation.COLOR, a.opener(CasePresentationActivity, "id", String(pid))));
+    return box;
+  }
+}
+;
+/* ---- app/CaseReport.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Case report writer (9.50): a journal case report in the CARE format for one patient, drafted from the case sheet with the
+ * identity removed, polished by AI (which never writes references), saved in the case sheet and exported as Word or PDF.
+ */
+class CaseReport {
+  static KEY = "case_report";
+  static COLOR = 0xFF1E40AF;
+  static TODO = "(to write)";
+  /** The CARE parts in order: key, heading. */
+  static PARTS = [["title", "Title"], ["keywords", "Keywords"], ["abstract", "Abstract"], ["intro", "Introduction"],
+    ["patient", "Patient information"], ["findings", "Clinical findings"], ["timeline", "Timeline"], ["diagnosis", "Diagnostic assessment"],
+    ["therapy", "Therapeutic intervention"], ["outcome", "Follow-up and outcomes"], ["discussion", "Discussion"],
+    ["learning", "Learning points"], ["perspective", "Patient perspective"], ["consent", "Informed consent"], ["refs", "References"]];
+  static CONSENT = "Written informed consent was obtained from the patient (or the legally authorised representative) for the publication "
+    + "of this case report and any accompanying images.";
+  static REFS = "(Add 5 to 10 references you have read, from PubMed. The AI does not write references.)";
+
+  static heading(key) {
+    for (const p of CaseReport.PARTS) if (p[0] === key) return p[1];
+    return key;
+  }
+
+  static get(s, k) {
+    return Ui.nz(s.get(k)).trim();
+  }
+
+  static join(...parts) {
+    if (parts.length === 1 && Array.isArray(parts[0])) parts = parts[0];
+    const b = new StringBuilder();
+    for (const p of parts) if (!Ui.nz(p).trim().isEmpty()) b.append(b.length() === 0 ? "" : "\n").append(p.trim());
+    return b.toString();
+  }
+
+  /** The first draft from the case sheet: facts in their CARE places, identity removed, the rest to write. */
+  static draft(db, p) {
+    const get = CaseReport.get, join = CaseReport.join;
+    const pid = Long.parseLong(p.get("id"));
+    const o = CaseSheet.load(db, pid);
+    const s = CaseSheet.caseSummary(db, p, o);
+    const out = new JMap();
+    for (const k of CaseReport.PARTS) out.put(k[0], CaseReport.TODO);
+    const age = Ui.nz(p.get("age")).trim();
+    const who = (age.isEmpty() ? "A " : "A " + age + "-year-old ") + CasePresentation.person(p) + " from southern Tamil Nadu, India";
+    const dx = CaseSheet.s(o, "final_dx").isEmpty() ? Ui.nz(p.get("diagnosis")) : CaseSheet.s(o, "final_dx");
+    out.put("patient", join(who + " presented with " + (get(s, "Presenting complaints").isEmpty() ? "(complaints)" : get(s, "Presenting complaints")),
+      get(s, "Past history").isEmpty() ? "" : "Past history: " + get(s, "Past history"),
+      get(s, "Personal and family history").isEmpty() ? "" : "Personal and family history: " + get(s, "Personal and family history")));
+    if (!get(s, "Examination").isEmpty()) out.put("findings", get(s, "Examination"));
+    const t = CaseReport.timeline(db, p);
+    if (!t.isEmpty()) out.put("timeline", t);
+    const diag = join(get(s, "Investigations"), get(s, "Imaging, ECG and ECHO"), get(s, "Opinions obtained").isEmpty() ? "" : "Opinions: " + get(s, "Opinions obtained"),
+      dx.isEmpty() ? "" : "Final diagnosis: " + dx + (CaseSheet.s(o, "final_dx_basis").isEmpty() ? "" : " (confirmed by " + CaseSheet.s(o, "final_dx_basis") + ")"));
+    if (!diag.isEmpty()) out.put("diagnosis", diag);
+    if (!get(s, "Current treatment").isEmpty()) out.put("therapy", get(s, "Current treatment"));
+    const status = Db.DIED === p.get("status") ? "The patient died in hospital." : Db.IN === p.get("status") ? "The patient is still in hospital."
+      : "The patient was discharged.";
+    out.put("outcome", join(get(s, "Course so far"), get(s, "Progress notes"), status));
+    out.put("consent", CaseReport.CONSENT);
+    out.put("refs", CaseReport.REFS);
+    for (const k of CaseReport.PARTS) out.put(k[0], Ai.deidentify(out.get(k[0]), p));
+    return out;
+  }
+
+  /** "Day 1: Admitted…", from the patient's timeline, oldest first; dates as hospital days so the report carries none. */
+  static timeline(db, p) {
+    const admit = Dates.parse(p.get("admit_date"));
+    const items = PatientTimeline.build(db, Long.parseLong(p.get("id")));
+    const b = new StringBuilder();
+    for (let i = items.size() - 1; i >= 0; i--) {
+      const it = items.get(i);
+      const d = it.date.length >= 10 ? Dates.parse(it.date.substring(0, 10)) : null;
+      const day = d == null || admit == null ? "" : "Day " + (ChronoUnit.DAYS.between(admit, d) + 1) + ": ";
+      const line = day + it.title + (it.detail.isEmpty() ? "" : " - " + it.detail.split("\n").join("; "));
+      if (b.length() + line.length > 3000) {
+        b.append("(later entries left out)");
+        break;
+      }
+      b.append(line).append('\n');
+    }
+    return b.toString().trim();
+  }
+
+  /** How many CARE parts are written (not empty, not "to write"). */
+  static written(r) {
+    let n = 0;
+    for (const k of CaseReport.PARTS) {
+      const v = Ui.nz(r.get(k[0])).trim();
+      if (!v.isEmpty() && v !== CaseReport.TODO && v !== CaseReport.REFS) n++;
+    }
+    return n;
+  }
+
+  // ---------- kept ----------
+
+  static prefs(c) {
+    return c.getSharedPreferences("casereport", Context.MODE_PRIVATE);
+  }
+
+  static load(c, db, p) {
+    const pid = Long.parseLong(p.get("id"));
+    let o = null;
+    if (CaseSheet.canEdit(c, db, p)) o = CaseSheet.load(db, pid).optJSONObject(CaseReport.KEY);
+    if (o == null) {
+      const s = CaseReport.prefs(c).getString("p" + pid, "");
+      try {
+        if (!s.isEmpty()) o = new JSONObject(s);
+      } catch (ignored) {
+      }
+    }
+    if (o == null) return null;
+    const out = new JMap();
+    for (const k of CaseReport.PARTS) out.put(k[0], o.optString(k[0], CaseReport.TODO));
+    return out;
+  }
+
+  static save(c, db, p, r) {
+    const pid = Long.parseLong(p.get("id"));
+    const o = new JSONObject();
+    try {
+      for (const k of CaseReport.PARTS) o.put(k[0], Ui.nz(r.get(k[0])));
+      o.put("saved_on", Dates.todayIso() + " " + Dates.now());
+    } catch (ignored) {
+    }
+    if (CaseSheet.canEdit(c, db, p)) {
+      const data = CaseSheet.load(db, pid);
+      try {
+        data.put(CaseReport.KEY, o);
+      } catch (ignored) {
+      }
+      CaseSheet.save(db, pid, data);
+    } else CaseReport.prefs(c).edit().putString("p" + pid, o.toString()).apply();
+  }
+
+  static has(c, db, p) {
+    return CaseReport.load(c, db, p) != null;
+  }
+
+  // ---------- the AI ----------
+
+  static MARK = "You are a professor of medicine and journal editor helping a postgraduate";
+
+  static system() {
+    return CaseReport.MARK + " at Tirunelveli Medical College Hospital, Tamil Nadu, India, write a case report for a peer-reviewed journal, following the "
+      + "CARE guideline (CAse REport, Gagnier et al. 2013).\n\n"
+      + "Rules:\n"
+      + "- Use only the facts given. Never add a finding, value, investigation, date, drug or outcome that is not there; where a fact is "
+      + "missing write [add: what is missing].\n"
+      + "- The patient's identity was removed on purpose. Never invent a name, initials, place, hospital number or date; keep hospital days (Day 1, Day 2).\n"
+      + "- Never write references or citations, and never name a study or guideline year you are not sure of. Under \"References\" list 4 to 6 "
+      + "PubMed search phrases the author can use to find the right papers, each starting with \"Search: \".\n"
+      + "- Title: short, with the diagnosis and the words \"case report\".\n"
+      + "- Keywords: 3 to 6, MeSH terms where possible, separated by semicolons.\n"
+      + "- Abstract: under 250 words, with the labels Introduction:, Case presentation:, Conclusion:.\n"
+      + "- Introduction: 1 or 2 short paragraphs on why this case is worth reporting (what is rare, new or instructive).\n"
+      + "- Patient information, Clinical findings, Timeline, Diagnostic assessment, Therapeutic intervention, Follow-up and outcomes: rewrite "
+      + "the facts given as clear journal prose (Timeline as dated-by-day lines).\n"
+      + "- Discussion: 3 or 4 paragraphs: how the case compares with what is generally known, the differential diagnosis, strengths and "
+      + "limitations, and what clinicians should take from it.\n"
+      + "- Learning points: 3 to 5 one-line points.\n"
+      + "- Patient perspective: write [ask the patient: a few lines in their own words] unless given.\n"
+      + "- Informed consent: keep the sentence given.\n\n"
+      + "Reply format, nothing else: each part as a line \"## heading\" (the headings exactly as given, in the same order) followed by its text.";
+  }
+
+  static user(r) {
+    const b = new StringBuilder("The case (identity removed):\n");
+    for (const k of CaseReport.PARTS) b.append("\n## ").append(k[1]).append("\n").append(Ui.nz(r.get(k[0])).trim().isEmpty() ? CaseReport.TODO : r.get(k[0]).trim()).append("\n");
+    return b.toString();
+  }
+
+  /** The AI's parts put back in their places (headings matched loosely); parts it left out stay as they were. */
+  static merge(old, text, p) {
+    const out = new JMap();
+    for (const k of old.keySet()) out.put(k, old.get(k));
+    let found = 0;
+    for (const s of CasePresentation.parse(text)) {
+      const h = s.title.toLowerCase();
+      for (const k of CaseReport.PARTS) {
+        const want = k[1].toLowerCase();
+        if (h.startsWith(want) || (k[0] === "findings" && h.contains("clinical finding")) || (k[0] === "outcome" && h.contains("outcome"))) {
+          const body = CaseReport.rawBody(text, s.title);
+          if (!body.isEmpty()) {
+            out.put(k[0], Ai.deidentify(body, p));
+            found++;
+          }
+          break;
+        }
+      }
+    }
+    return found < 3 ? null : out;
+  }
+
+  /** The text under a "## heading" as written (paragraphs kept; the presentation parser flattens them to bullets). */
+  static rawBody(text, title) {
+    const b = new StringBuilder();
+    let inside = false;
+    for (const raw of Ui.nz(text).jsplit("\n")) {
+      const l = raw.trim();
+      if (l.startsWith("#")) {
+        if (inside) break;
+        inside = l.replaceAllRx("^#+\\s*", "").split("*").join("").trim() === title;
+        continue;
+      }
+      if (inside) b.append(raw.split("**").join("").replaceAllRx("\\s+$", "")).append('\n');
+    }
+    return b.toString().trim().replaceAllRx("\n{3,}", "\n\n");
+  }
+
+  // ---------- files ----------
+
+  static doc(db, r) {
+    const f = new FormDoc();
+    f.upper = "";
+    f.college = db.setting("college", "Tirunelveli Medical College Hospital");
+    f.address = "Tirunelveli";
+    f.dept = db.setting("dept", "Department of General Medicine");
+    f.title = "CASE REPORT (CARE)";
+    f.footer = "Case report draft  •  patient identity removed  •  check every fact before submission";
+    const title = Ui.nz(r.get("title")).trim();
+    f.fileBase = "Case_report_" + Store.safeName(title.isEmpty() || title === CaseReport.TODO ? "draft" : title.length > 40 ? title.substring(0, 40) : title);
+    if (!title.isEmpty() && title !== CaseReport.TODO) f.plain(1).row(22, new FormDoc.Cell(title).size(13).b());
+    for (const k of CaseReport.PARTS) {
+      if (k[0] === "title") continue;
+      const v = Ui.nz(r.get(k[0])).trim();
+      if (v.isEmpty() || v === CaseReport.TODO) continue;
+      f.block(k[1].toUpperCase(), FormDoc.NAVY, 1).row(16, new FormDoc.Cell(v).size(9.5));
+    }
+    return f;
+  }
+
+  static asText(r) {
+    const b = new StringBuilder();
+    for (const k of CaseReport.PARTS) {
+      const v = Ui.nz(r.get(k[0])).trim();
+      if (v.isEmpty() || v === CaseReport.TODO) continue;
+      if (k[0] === "title") b.append(v).append("\n\n");
+      else b.append(k[1]).append("\n").append(v).append("\n\n");
+    }
+    return b.toString().trim();
+  }
+}
+;
+/* ---- app/CaseReportActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Case report writer: the CARE parts of a journal case report for one patient, drafted from the case sheet, polished by AI, saved as Word or PDF. */
+class CaseReportActivity extends Base {
+  constructor() {
+    super();
+    this.id = 0; this.p = null; this.report = null;
+    this.boxes = new JMap();
+  }
+  static WAIT = "casereport_wait";
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.id = Long.parseLong(this.getIntent().getStringExtra("id"));
+    this.p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.id));
+    this.setTitle("Case report");
+    this.subtitle = "For a journal · CARE format";
+    this.headerColor(CaseReport.COLOR);
+    this.report = CaseReport.load(this, this.db, this.p);
+    if (this.report == null) this.report = CaseReport.draft(this.db, this.p);
+  }
+
+  liveRefresh() {
+    return false;
+  }
+
+  onPause() {
+    this.keep();
+    CaseReport.save(this, this.db, this.p, this.report);
+    super.onPause();
+  }
+
+  /** What is typed in the boxes, into the report. */
+  keep() {
+    for (const k of this.boxes.keySet()) this.report.put(k, this.boxes.get(k).getText().toString());
+  }
+
+  white(s, l) {
+    const t = Ui.button(this, s, CaseReport.COLOR, l);
+    t.setTextColor(0xFFFFFFFF);
+    t.setBackground(Ui.outline(this, 0x2EFFFFFF, 0x99FFFFFF, 12));
+    return t;
+  }
+
+  render() {
+    this.keep();
+    this.boxes.clear();
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(CaseReport.COLOR), 20));
+    const done = CaseReport.written(this.report);
+    hero.addView(Ui.tv(this, "📝  CARE checklist: " + done + " of " + CaseReport.PARTS.length + " parts written", 17, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "The facts come from the case sheet with the name, IP number, phone, address and dates taken out (dates become hospital "
+      + "days). Let the AI draft the abstract, introduction and discussion, then check every line. The AI never writes references: add the papers "
+      + "you have read. Get the patient's written consent before you submit.", 12, 0xE6FFFFFF, false));
+    const ai = this.white("✨  Write the report with AI", { onClick: (v) => { this.askAi(); } });
+    hero.addView(ai);
+    Ui.margins(ai, 0, 12, 0, 0);
+    const app = AiRun.waiting(this, CaseReportActivity.WAIT);
+    if (!app.isEmpty()) {
+      const paste = this.white("📋  Paste " + app + "'s answer", {
+        onClick: (v) => {
+          const t = AiRun.paste(this, CaseReportActivity.WAIT, CaseReport.MARK);
+          if (t != null) this.useAi(t, app + " (AI)");
+        }
+      });
+      hero.addView(paste);
+      Ui.margins(paste, 0, 8, 0, 0);
+    }
+    const row = Ui.buttonRow(this, this.white("Word", { onClick: (v) => { this.file(false); } }),
+      this.white("PDF", { onClick: (v) => { this.file(true); } }),
+      this.white("Copy text", { onClick: (v) => { this.copy(); } }));
+    hero.addView(row);
+    Ui.margins(row, 0, 8, 0, 0);
+    page.addView(hero);
+
+    for (const k of CaseReport.PARTS) {
+      const v = Ui.nz(this.report.get(k[0]));
+      const todo = v.trim().isEmpty() || v.trim() === CaseReport.TODO;
+      page.addView(Ui.heading(this, (todo ? "○ " : "✓ ") + k[1], todo ? Ui.SLATE : CaseReport.COLOR));
+      const e = new EditText(this);
+      e.setText(todo ? "" : v);
+      e.setHint(CaseReportActivity.hint(k[0]));
+      e.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+      e.setSingleLine(false);
+      e.setMinLines(k[0] === "title" || k[0] === "keywords" ? 1 : 3);
+      e.setGravity(Gravity.TOP | Gravity.START);
+      e.setTextSize(14);
+      e.setBackground(Glass.panel(this, 12));
+      e.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+      page.addView(e);
+      Ui.margins(e, 12, 0, 12, 0);
+      this.boxes.put(k[0], e);
+    }
+    const reset = Ui.outlineButton(this, "Start again from the case sheet", Ui.SLATE, {
+      onClick: (v) => {
+        Ui.confirm(this, "Start again?", "Everything written here is replaced by a fresh draft from the case sheet.", "Start again", {
+          run: () => {
+            this.boxes.clear();
+            this.report = CaseReport.draft(this.db, this.p);
+            CaseReport.save(this, this.db, this.p, this.report);
+            this.render();
+          }
+        });
+      }
+    });
+    const w = Ui.v(this);
+    w.setPadding(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12), 0);
+    w.addView(reset);
+    page.addView(w);
+    this.setPage(page);
+  }
+
+  static hint(key) {
+    switch (key) {
+      case "title": return "Short, with the diagnosis and \"case report\"";
+      case "keywords": return "3 to 6 MeSH terms, separated by ;";
+      case "abstract": return "Introduction, Case presentation, Conclusion (under 250 words)";
+      case "intro": return "Why this case is worth reporting";
+      case "discussion": return "Compare with what is known, differentials, lessons";
+      case "learning": return "3 to 5 one-line take-home points";
+      case "perspective": return "A few lines from the patient, in their own words (optional)";
+      default: return CaseReport.TODO;
+    }
+  }
+
+  askAi() {
+    this.keep();
+    CaseReport.save(this, this.db, this.p, this.report);
+    AiRun.ask(this, "Case report", CaseReport.system(), CaseReport.user(this.report), 6000, CaseReportActivity.WAIT, null, {
+      got: (text, who) => {
+        if (text != null) this.useAi(text, who);
+      }
+    });
+    this.render();
+  }
+
+  useAi(text, who) {
+    this.keep();
+    const m = CaseReport.merge(this.report, text, this.p);
+    if (m == null) {
+      new AlertDialog.Builder(this).setTitle("The answer could not be read").setMessage("Ask the AI again, or copy its whole answer with the ## headings.")
+        .setPositiveButton("OK", null).show();
+      return;
+    }
+    this.boxes.clear();
+    this.report = m;
+    CaseReport.save(this, this.db, this.p, this.report);
+    Ui.toast(this, "Written by " + who + ". Check every fact and add your references.");
+    this.render();
+  }
+
+  file(pdf) {
+    this.keep();
+    CaseReport.save(this, this.db, this.p, this.report);
+    try {
+      const f = CaseReport.doc(this.db, this.report);
+      const rel = pdf ? f.pdf(this) : f.docx(this);
+      new AlertDialog.Builder(this).setTitle(pdf ? "PDF ready" : "Word file ready").setItems(["Open", "Share (WhatsApp, email, Drive…)"], {
+        onClick: (d, w) => {
+          if (w === 0) Store.openWith(this, rel);
+          else Store.share(this, rel, "Case report");
+        }
+      }).setNegativeButton("Close", null).show();
+    } catch (e) {
+      Ui.toast(this, "Could not make the file: " + e.getMessage());
+    }
+  }
+
+  copy() {
+    this.keep();
+    const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Case report", CaseReport.asText(this.report)));
+    Ui.toast(this, "Copied");
+  }
+
+  /** The patient page button. */
+  static patientButton(a, db, p) {
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), 0);
+    box.addView(Ui.outlineButton(a, CaseReport.has(a, db, p) ? "📝  Case report for a journal (continue)" : "📝  Write a case report for a journal",
+      CaseReport.COLOR, a.opener(CaseReportActivity, "id", p.get("id"))));
     return box;
   }
 }
@@ -26099,7 +27556,7 @@ class ChatActivity extends Base {
         + " ORDER BY time, id", String(this.chatId), duty ? E2e.dutyStart() : "");
     if (ms.isEmpty()) {
       const t = Ui.tv(this, this.onlyImportant ? "No important messages." : "🔒 Messages here are shared only with "
-          + (Chat.isGroup(this.chat) && Ui.nz(this.chat.get("members")).isEmpty() ? "the department faculty." : "the members of this chat.") + "\n" + Conduct.ruleLine() + "\nSay hello 👋", 13, 0xFF54656F, false);
+          + (Chat.isGroup(this.chat) && Ui.nz(this.chat.get("members")).isEmpty() ? "the department faculty." : "the members of this chat.") + "\nSay hello 👋", 13, 0xFF54656F, false);
       t.setGravity(Gravity.CENTER);
       t.setBackground(Ui.round(this, 0xFFFFF5C4, 10));
       t.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
@@ -26137,7 +27594,7 @@ class ChatActivity extends Base {
     const team = Chat.dutyTeam(this.db);
     const ready = E2e.ready(this.db, team);
     let s = "🔒 End-to-end encrypted: only today's duty team can read these messages and files.\n"
-        + "⏱ Everything here disappears at 7:30 AM when the DAP's duty ends.\n🚫 Screenshots are blocked.\n" + Conduct.ruleLine();
+        + "⏱ Everything here disappears at 7:30 AM when the DAP's duty ends.\n🚫 Screenshots are blocked.";
     if (ready < team.size()) s += "\n⚠ " + (team.size() - ready) + " of " + team.size() + " team members need to open the latest app before they can read new messages.";
     const t = Ui.tv(this, s, 12, 0xFF54656F, false);
     t.setBackground(Ui.round(this, 0xFFFFF5C4, 10));
@@ -28369,6 +29826,197 @@ class CmchisStages {
   }
 }
 ;
+/* ---- app/CompetencyActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * PG competency map (9.70): the signed logbook procedures against the department's targets for the whole MD course, as a
+ * coloured map: every PG down the side and every procedure across (faculty), or one PG's tiles with the gaps still to
+ * fill before the final exam.
+ */
+class CompetencyActivity extends Base {
+  constructor() {
+    super();
+    this.pg = -1;
+  }
+
+  static COLOR = 0xFF4338CA;
+  /** Short names for the map's columns, in Logbook.TARGETS order. */
+  static SHORT = ["CVL", "LP", "ETI", "Pleural tap", "ICD", "Ascitic tap", "BM", "ABG", "Art line", "MV", "NIV", "CPR",
+    "DC shock", "Pacing", "Pericardio", "Knee tap", "Liver bx", "Renal bx", "HD cath", "PLEX", "Ryle's", "Catheter", "OGD", "ECHO", "USG"];
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Competency map");
+    this.headerColor(CompetencyActivity.COLOR);
+    this.pg = Ui.toLong(this.getIntent().getStringExtra("staff"), -1);
+    if (this.pg < 0 && !Logbook.canSign(this)) this.pg = Logbook.myPg(this, this.db);
+  }
+
+  /** Green when the target is reached, amber when part way, red when none yet; grey when there is no target. */
+  static cellColor(r) {
+    if (r.target <= 0) return r.signed > 0 ? 0xFF86EFAC : 0xFFE2E8F0;
+    if (r.signed >= r.target) return 0xFF16A34A;
+    if (r.signed * 2 >= r.target) return 0xFFF59E0B;
+    return r.signed > 0 ? 0xFFFB923C : 0xFFEF4444;
+  }
+
+  static shortName(procedure) {
+    for (let i = 0; i < Logbook.TARGETS.length && i < CompetencyActivity.SHORT.length; i++) if (Logbook.TARGETS[i][0].equals(procedure)) return CompetencyActivity.SHORT[i];
+    return procedure;
+  }
+
+  /** Months left until the end of the course (30 June of the final year) for a PG in year 1 to 3. */
+  static monthsLeft(year, today) {
+    const end = Logbook.yearStart(today).plusYears(Math.max(0, 3 - year) + 1).minusDays(1);
+    return Math.max(0, ChronoUnit.MONTHS.between(today, end));
+  }
+
+  render() {
+    if (this.pg > 0) {
+      this.one();
+      return;
+    }
+    const COLOR = CompetencyActivity.COLOR;
+    this.subtitle = "Every PG against the logbook targets";
+    const today = Dates.today();
+    const rows = Logbook.league(this.db, today, true);
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(COLOR), 20));
+    let behind = 0;
+    for (const r of rows) if (!r.progress.onTrack) behind++;
+    hero.addView(Ui.tv(this, "🗺  " + rows.size() + " PGs  ·  " + behind + " behind", 20, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Signed logbook procedures against the department targets for the whole course so far. Green: target reached, "
+      + "amber: half way, orange: started, red: none yet. Tap a PG for their gaps.", 12, 0xE6FFFFFF, false));
+    page.addView(hero);
+    if (rows.isEmpty()) {
+      page.addView(this.emptyNote("No PGs in the Students list yet."));
+      this.setPage(page);
+      return;
+    }
+    const cw = Ui.dp(this, 46), nameW = Ui.dp(this, 128), rh = Ui.dp(this, 34);
+    const light = (c) => (c | 0) === (0xFFE2E8F0 | 0) || (c | 0) === (0xFF86EFAC | 0);
+    const grid = Ui.v(this);
+    const head = Ui.h(this);
+    head.addView(Ui.tv(this, "PG (year)", 11, Ui.MUTED, true), Ui.lp(nameW, LinearLayout.LayoutParams.WRAP_CONTENT));
+    for (const t of Logbook.TARGETS) {
+      const h = Ui.tv(this, CompetencyActivity.shortName(t[0]), 10, Ui.MUTED, true);
+      h.setGravity(Gravity.CENTER);
+      h.setMaxLines(2);
+      head.addView(h, Ui.lp(cw, LinearLayout.LayoutParams.WRAP_CONTENT));
+    }
+    grid.addView(head);
+    for (const r of rows) {
+      const line = Ui.h(this);
+      line.setGravity(Gravity.CENTER_VERTICAL);
+      const nm = Ui.tv(this, r.name + " (" + r.year + ")\n" + r.progress.pct + "%" + (r.progress.onTrack ? "" : " · behind"), 12, r.progress.onTrack ? Ui.TEXT : Ui.RED, true);
+      nm.setMaxLines(2);
+      line.addView(nm, Ui.lp(nameW, rh + Ui.dp(this, 6)));
+      for (const x of r.progress.rows) {
+        const cell = Ui.tv(this, x.target > 0 ? x.signed + "/" + x.target : (x.signed > 0 ? String(x.signed) : ""), 11,
+          light(CompetencyActivity.cellColor(x)) ? Ui.TEXT : 0xFFFFFFFF, true);
+        cell.setGravity(Gravity.CENTER);
+        cell.setBackground(Ui.round(this, CompetencyActivity.cellColor(x), 6));
+        const lp = Ui.lp(cw - Ui.dp(this, 4), rh);
+        lp.setMargins(Ui.dp(this, 2), Ui.dp(this, 2), Ui.dp(this, 2), Ui.dp(this, 2));
+        line.addView(cell, lp);
+      }
+      line.setOnClickListener({
+        onClick: (v) => {
+          this.pg = r.id;
+          this.render();
+        }
+      });
+      grid.addView(line);
+    }
+    const card = Ui.card(this);
+    const hs = new HorizontalScrollView(this);
+    hs.addView(grid);
+    card.addView(hs);
+    page.addView(card);
+    this.setPage(page);
+  }
+
+  /** One PG: a tile per procedure and the gaps before the exam. */
+  one() {
+    const COLOR = CompetencyActivity.COLOR;
+    const today = Dates.today();
+    const s = this.db.row("SELECT * FROM staff WHERE id=?", String(this.pg));
+    if (s == null) {
+      this.pg = -1;
+      this.render();
+      return;
+    }
+    const year = Math.max(1, CaseSheet.pgYear(s.get("batch"), today));
+    const pr = Logbook.progress(this.db, this.pg, year, today, true);
+    this.subtitle = Ui.nz(s.get("name")) + "  ·  year " + year;
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(COLOR), 20));
+    hero.addView(Ui.tv(this, "🗺  " + pr.pct + "% of the course targets", 20, 0xFFFFFFFF, true));
+    const months = CompetencyActivity.monthsLeft(year, today);
+    hero.addView(Ui.tv(this, (pr.onTrack ? "On track" : "Behind the pace for the time of year") + "  ·  " + months + (months === 1 ? " month" : " months")
+      + " to the end of the course" + (pr.pending > 0 ? "\n" + pr.pending + " entries waiting for a faculty signature" : ""), 14, 0xEFFFFFFF, false));
+    page.addView(hero);
+
+    const tiles = new Bands.Flow(this);
+    for (const r of pr.rows) {
+      const t = Ui.v(this);
+      t.setGravity(Gravity.CENTER);
+      t.setPadding(Ui.dp(this, 6), Ui.dp(this, 8), Ui.dp(this, 6), Ui.dp(this, 8));
+      const c = CompetencyActivity.cellColor(r);
+      const dark = (c | 0) !== (0xFFE2E8F0 | 0) && (c | 0) !== (0xFF86EFAC | 0);
+      t.setBackground(Ui.round(this, c, 12));
+      const n = Ui.tv(this, r.target > 0 ? r.signed + " / " + r.target : String(r.signed), 16, dark ? 0xFFFFFFFF : Ui.TEXT, true);
+      n.setGravity(Gravity.CENTER);
+      t.addView(n);
+      const l = Ui.tv(this, CompetencyActivity.shortName(r.procedure), 11, dark ? 0xEFFFFFFF : Ui.MUTED, false);
+      l.setGravity(Gravity.CENTER);
+      t.addView(l);
+      tiles.addView(t, Ui.lp(Ui.dp(this, 84), LinearLayout.LayoutParams.WRAP_CONTENT));
+    }
+    const tc = Ui.card(this);
+    tc.addView(tiles);
+    page.addView(tc);
+
+    const gaps = [];
+    for (const r of pr.rows) if (r.target > r.signed) gaps.push(r.procedure + ": " + (r.target - r.signed) + " more");
+    page.addView(Ui.heading(this, gaps.length === 0 ? "No gaps 🎉" : "Still to do · " + gaps.length, COLOR));
+    const gc = Ui.card(this);
+    if (gaps.length === 0) gc.addView(Ui.body(this, "Every target for the course so far is reached."));
+    for (const g of gaps) gc.addView(Ui.body(this, "• " + g));
+    page.addView(gc);
+    const w = Ui.v(this);
+    w.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    w.addView(Ui.button(this, "Open the logbook", COLOR, this.opener(LogbookActivity)));
+    if (Logbook.canSign(this)) {
+      const all = Ui.outlineButton(this, "All PGs", COLOR, {
+        onClick: (v) => {
+          this.pg = -1;
+          this.render();
+        }
+      });
+      w.addView(all);
+      Ui.margins(all, 0, 8, 0, 0);
+    }
+    page.addView(w);
+    const note = Ui.muted(this, "Targets are the department's (the admin or HOD can change them in the logbook), counted over the course so far; only signed entries count.");
+    Ui.margins(note, 16, 10, 16, 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+
+  onBackPressed() {
+    if (this.pg > 0 && Logbook.canSign(this) && this.getIntent().getStringExtra("staff") == null) {
+      this.pg = -1;
+      this.render();
+      return;
+    }
+    super.onBackPressed();
+  }
+}
+;
 /* ---- app/Conduct.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -29025,6 +30673,16 @@ class Copilot {
       ["live_quiz", "Live quiz", LiveQuizActivity, false],
       ["learning_board", "Learning board", TopicNotesActivity, false],
       ["presentations", "Presentations", PresentationsActivity, false],
+      ["library", "Library", LibraryActivity, false],
+      ["critical_labs", "Critical lab values", CriticalLabsActivity, false],
+      ["scores", "Clinical scores", ScoresActivity, false],
+      ["outbreak", "Outbreak early warning", OutbreakActivity, false],
+      ["abg", "ABG interpreter", AbgActivity, false],
+      ["flashcards", "Flashcards", FlashActivity, false],
+      ["wardround", "Ward round mode", WardRoundActivity, false],
+      ["dutyhours", "Duty hours and fatigue", DutyHoursActivity, false],
+      ["competency", "PG competency map", CompetencyActivity, false],
+      ["harrison", "Harrison's topic of the day (daily teaching slides)", HarrisonActivity, false],
       ["journals", "Latest journals", JournalsActivity, false],
       ["exam_cases", "Exam cases", ExamCasesActivity, false],
       ["logbook", "Logbook", LogbookActivity, false],
@@ -29908,6 +31566,392 @@ class CrashesActivity extends Base {
       page.addView(card);
     }
     this.setPage(page);
+  }
+}
+;
+/* ---- app/CriticalLabs.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Critical lab values (9.50): a lab value entered (typed or scanned) beyond the critical limit raises an alert for the
+ * patient's unit PGs and faculty. Someone treating the patient acknowledges it with what was done; the app keeps who saw it
+ * and when, and how long it took, as NABH asks for critical result reporting.
+ */
+class CriticalLabs {
+  static TABLE = "crit_alerts";
+  static COLOR = 0xFFDC2626;
+  static OPEN = "Open";
+  static SEEN = "Acknowledged";
+  static SETTING = "crit_limits";
+  static ACTIONS = ["Treated / treatment changed", "Repeat sample sent", "Informed the Assistant Professor", "Already known and on treatment",
+    "Sample error suspected (repeat sent)", "Other"];
+
+  /** The usual critical limits: below lo or above hi (-1 = no limit that side). The admin can change them. */
+  static DEFAULT = [["hb", "5", "20"], ["wbc", "1000", "50000"], ["plt", "0.2", "-1"], ["urea", "-1", "200"], ["creat", "-1", "6"],
+    ["na", "120", "160"], ["k", "2.5", "6.5"], ["sugar", "50", "500"], ["bili", "-1", "15"]];
+
+  /** {lo, hi} for a test from the department's setting, else the usual limit. */
+  static limits(db, key) {
+    const s = db.setting(CriticalLabs.SETTING, "");
+    for (const part of s.jsplit(";")) {
+      const kv = part.jsplit("=");
+      if (kv.length === 2 && kv[0].trim() === key) {
+        const lh = kv[1].jsplit(",", -1);
+        if (lh.length === 2) return [CriticalLabs.num(lh[0], -1), CriticalLabs.num(lh[1], -1)];
+      }
+    }
+    for (const d of CriticalLabs.DEFAULT) if (d[0] === key) return [CriticalLabs.num(d[1], -1), CriticalLabs.num(d[2], -1)];
+    return [-1, -1];
+  }
+
+  static num(s, def) {
+    const d = Labs.num(s);
+    return d == null ? def : d;
+  }
+
+  static setLimits(db, m) {
+    const b = new StringBuilder();
+    for (const p of Labs.PARAMS) {
+      const l = m.get(p.key);
+      if (l == null) continue;
+      b.append(b.length() === 0 ? "" : ";").append(p.key).append('=').append(l[0] < 0 ? "" : Labs.fmt(l[0])).append(',').append(l[1] < 0 ? "" : Labs.fmt(l[1]));
+    }
+    db.setSetting(CriticalLabs.SETTING, b.toString());
+  }
+
+  /** "K 7.1 mEq/L (critical above 6.5)" when the value is critical, else null. */
+  static breach(db, p, v) {
+    const l = CriticalLabs.limits(db, p.key);
+    if (l[0] >= 0 && v < l[0]) return "below " + Labs.fmt(l[0]);
+    if (l[1] >= 0 && v > l[1]) return "above " + Labs.fmt(l[1]);
+    return null;
+  }
+
+  static limitText(db, p) {
+    const l = CriticalLabs.limits(db, p.key);
+    if (l[0] < 0 && l[1] < 0) return "no limit";
+    if (l[0] < 0) return "above " + Labs.fmt(l[1]);
+    if (l[1] < 0) return "below " + Labs.fmt(l[0]);
+    return "below " + Labs.fmt(l[0]) + " or above " + Labs.fmt(l[1]);
+  }
+
+  /** Raises an alert for each critical value in this lab entry (once per test); returns the new alerts. */
+  static check(c, db, labId) {
+    const out = [];
+    const lab = db.row("SELECT * FROM labs WHERE id=?", String(labId));
+    if (lab == null) return out;
+    const p = db.row("SELECT * FROM patients WHERE id=?", lab.get("patient_id"));
+    if (p == null) return out;
+    for (const prm of Labs.PARAMS) {
+      const v = Labs.num(lab.get(prm.key));
+      if (v == null) continue;
+      const why = CriticalLabs.breach(db, prm, v);
+      if (why == null) continue;
+      if (db.num("SELECT COUNT(*) FROM " + CriticalLabs.TABLE + " WHERE lab_id=? AND test=?", String(labId), prm.key) > 0) continue;
+      const cv = new ContentValues();
+      cv.put("patient_id", lab.get("patient_id"));
+      cv.put("lab_id", labId);
+      cv.put("test", prm.key);
+      cv.put("value", Labs.fmt(v));
+      cv.put("why", why);
+      cv.put("unit", CaseSheet.owner(p));
+      cv.put("lab_date", Ui.nz(lab.get("date")) + " " + Ui.nz(lab.get("time")));
+      cv.put("raised_on", Dates.todayIso() + " " + Dates.now());
+      cv.put("raised_by", Reminders.myName(c, db));
+      cv.put("status", CriticalLabs.OPEN);
+      const id = db.insert(CriticalLabs.TABLE, cv);
+      if (id > 0) out.add(db.row("SELECT * FROM " + CriticalLabs.TABLE + " WHERE id=?", String(id)));
+    }
+    if (!out.isEmpty()) Sync.kick(c);
+    return out;
+  }
+
+  /** "Potassium 7.1 mEq/L (critical: above 6.5)". */
+  static describe(a) {
+    const p = Labs.param(a.get("test"));
+    const name = p == null ? a.get("test") : p.name, unit = p == null ? "" : " " + p.unit;
+    return name + " " + a.get("value") + unit + " (critical: " + a.get("why") + ")";
+  }
+
+  // ---------- who ----------
+
+  /** The patient's unit PGs and faculty, the HOD, registrar and admin (everyone when not shared online). */
+  static forMe(c, db, p) {
+    if (!Cloud.active(c) || Cloud.isAdmin(c)) return true;
+    const r = Cloud.role(c);
+    return (r === "pg" || SignOff.faculty(c)) && CaseSheet.canEdit(c, db, p);
+  }
+
+  /** Open alerts this person should act on, oldest first. */
+  static openForMe(c, db) {
+    const out = [];
+    for (const a of db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE status=? ORDER BY raised_on, id", CriticalLabs.OPEN)) {
+      const p = db.row("SELECT * FROM patients WHERE id=?", a.get("patient_id"));
+      if (p != null && CriticalLabs.forMe(c, db, p)) out.add(a);
+    }
+    return out;
+  }
+
+  static openFor(db, pid) {
+    return db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE status=? AND patient_id=? ORDER BY raised_on, id", CriticalLabs.OPEN, String(pid));
+  }
+
+  // ---------- acknowledging ----------
+
+  static acknowledge(c, db, a, action, note) {
+    const cv = new ContentValues();
+    cv.put("status", CriticalLabs.SEEN);
+    cv.put("ack_by", Reminders.myName(c, db));
+    cv.put("ack_staff", SignOff.me(c));
+    cv.put("ack_role", SignOff.myRole(c, db));
+    cv.put("ack_on", Dates.todayIso() + " " + Dates.now());
+    cv.put("action", action);
+    cv.put("note", Ui.nz(note).trim());
+    db.update(CriticalLabs.TABLE, cv, Long.parseLong(a.get("id")));
+    Sync.kick(c);
+  }
+
+  static at(s) {
+    try {
+      let t = Ui.nz(s).trim();
+      if (t.length === 16) t = t + ":00";
+      return LocalDateTime.parse(t.split(' ').join('T'));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** Minutes from the alert to its acknowledgement (or to now while open); -1 when unknown. */
+  static minutes(a) {
+    const from = CriticalLabs.at(a.get("raised_on"));
+    const to = CriticalLabs.SEEN === a.get("status") ? CriticalLabs.at(a.get("ack_on")) : LocalDateTime.of(Dates.today(), Dates.time());
+    if (from == null || to == null) return -1;
+    return Math.max(0, Duration.between(from, to).toMinutes());
+  }
+
+  static ago(min) {
+    if (min < 0) return "";
+    if (min < 60) return min + " min";
+    const h = Math.floor(min / 60);
+    return h < 48 ? h + " h " + (min % 60) + " min" : Math.floor(h / 24) + " days";
+  }
+
+  /** {alerts, acknowledged, within 30 minutes, median minutes} since the date (yyyy-MM-dd). */
+  static stats(db, since) {
+    const mins = [];
+    let all = 0, seen = 0, fast = 0;
+    for (const a of db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE raised_on>=?", since)) {
+      all++;
+      if (CriticalLabs.SEEN !== a.get("status")) continue;
+      seen++;
+      const m = CriticalLabs.minutes(a);
+      if (m < 0) continue;
+      mins.add(m);
+      if (m <= 30) fast++;
+    }
+    mins.sort((x, y) => x - y);
+    const median = mins.isEmpty() ? -1 : mins.get(Math.floor(mins.size() / 2));
+    return [all, seen, fast, median];
+  }
+
+  // ---------- on screen ----------
+
+  /** Shown right after values are saved: the critical ones, with "Acknowledge now" for the doctor treating the patient. */
+  static announce(a, db, fresh) {
+    if (fresh.isEmpty()) return;
+    const b = new StringBuilder();
+    for (const x of fresh) b.append("•  ").append(CriticalLabs.describe(x)).append('\n');
+    b.append("\nThe unit's PGs and faculty are alerted. Inform the treating team and act now.");
+    new AlertDialog.Builder(a).setTitle("🚨 Critical lab value").setMessage(b.toString().trim())
+      .setPositiveButton("I'm treating: acknowledge", { onClick: (d, w) => { CriticalLabs.ackDialog(a, db, fresh); } })
+      .setNegativeButton("Leave for the team", null).show();
+  }
+
+  /** Asks what was done and acknowledges the alerts. */
+  static ackDialog(a, db, alerts) {
+    const f = new Form(a);
+    const b = new StringBuilder();
+    for (const x of alerts) b.append(b.length() === 0 ? "" : "\n").append("🚨 ").append(CriticalLabs.describe(x));
+    f.view.addView(Ui.body(a, b.toString()));
+    f.choice("action", "What was done", CriticalLabs.ACTIONS, CriticalLabs.ACTIONS, CriticalLabs.ACTIONS[0], null);
+    f.text("note", "Details (drug, dose, repeat time…)", "", Form.PLAIN);
+    Ui.formDialog(a, "Acknowledge critical value", f, "Acknowledge", {
+      run: () => {
+        if ("Other" === f.get("action") && f.get("note").trim().isEmpty()) {
+          Ui.toast(a, "Write what was done");
+          return false;
+        }
+        for (const x of alerts) CriticalLabs.acknowledge(a, db, x, f.get("action"), f.get("note"));
+        Ui.toast(a, "Acknowledged at " + Dates.now());
+        a.render();
+        return true;
+      }
+    });
+  }
+
+  /** The red card on the patient's page while any alert is open. */
+  static patientCard(a, db, pid) {
+    const open = CriticalLabs.openFor(db, pid);
+    if (open.isEmpty()) return null;
+    const card = Ui.card(a);
+    card.setBackground(Ui.outline(a, 0xFFFEF2F2, CriticalLabs.COLOR, 14));
+    card.addView(Ui.tv(a, "🚨 Critical lab value" + (open.size() === 1 ? "" : "s") + " not yet acknowledged", 15, CriticalLabs.COLOR, true));
+    for (const x of open)
+      card.addView(Ui.body(a, CriticalLabs.describe(x) + "  ·  " + CriticalLabs.ago(CriticalLabs.minutes(x)) + " ago"));
+    const ack = Ui.button(a, "Acknowledge with action taken", CriticalLabs.COLOR, { onClick: (v) => { CriticalLabs.ackDialog(a, db, open); } });
+    card.addView(ack);
+    Ui.margins(ack, 0, 10, 0, 0);
+    return card;
+  }
+
+  /** The home screen card when critical values wait for me. */
+  static homeCard(a, db) {
+    const open = CriticalLabs.openForMe(a, db);
+    if (open.isEmpty()) return null;
+    const card = Ui.card(a);
+    card.setBackground(Ui.outline(a, 0xFFFEF2F2, CriticalLabs.COLOR, 18));
+    card.addView(Ui.softPill(a, "CRITICAL LAB VALUES", CriticalLabs.COLOR));
+    const t = Ui.tv(a, "🚨 " + open.size() + (open.size() === 1 ? " value waits" : " values wait") + " for acknowledgement", 16, Ui.TEXT, true);
+    card.addView(t);
+    Ui.margins(t, 0, 6, 0, 0);
+    let shown = 0;
+    for (const x of open) {
+      if (shown++ === 4) break;
+      const p = db.row("SELECT * FROM patients WHERE id=?", x.get("patient_id"));
+      const r = Ui.tv(a, (p == null ? "Patient" : Ui.nz(p.get("name"))) + "  ·  " + CriticalLabs.describe(x) + "  ·  " + CriticalLabs.ago(CriticalLabs.minutes(x)) + " ago", 13, Ui.TEXT, false);
+      r.setPadding(0, Ui.dp(a, 6), 0, 0);
+      r.setOnClickListener(a.opener(PatientActivity, "id", x.get("patient_id")));
+      card.addView(r);
+    }
+    const all = Ui.button(a, "Open critical values", CriticalLabs.COLOR, a.opener(CriticalLabsActivity));
+    card.addView(all);
+    Ui.margins(all, 0, 10, 0, 0);
+    return card;
+  }
+
+  static homeLine(c, db) {
+    const n = CriticalLabs.openForMe(c, db).size();
+    return n > 0 ? n + " to acknowledge" : "Alerts and response times";
+  }
+
+  static unitLabel(a) {
+    return Db.shortName(Ui.nz(a.get("unit"))).toUpperCase();
+  }
+}
+;
+/* ---- app/CriticalLabsActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Critical lab values: those waiting for acknowledgement, the last 30 days with who acknowledged and how fast, and the limits. */
+class CriticalLabsActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Critical lab values");
+    this.subtitle = "Alerts, acknowledgement and response times";
+    this.headerColor(CriticalLabs.COLOR);
+    if (!Cloud.active(this) || Cloud.isAdmin(this)) this.headerAction("Limits", { onClick: (v) => { this.limitsDialog(); } });
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const month = Dates.today().withDayOfMonth(1).toString();
+    const st = CriticalLabs.stats(db, month);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(CriticalLabs.COLOR), 20));
+    hero.addView(Ui.tv(this, "This month: " + st[0] + (st[0] === 1 ? " critical value" : " critical values"), 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, st[1] === 0 ? "None acknowledged yet."
+      : st[1] + " acknowledged, " + Math.round(100.0 * st[2] / st[1]) + "% within 30 minutes" + (st[3] >= 0 ? ", usually in " + CriticalLabs.ago(st[3]) : "") + ".",
+      13, 0xEFFFFFFF, false));
+    hero.addView(Ui.tv(this, "A value beyond the critical limit, typed or scanned, alerts the patient's unit PGs and faculty. The doctor who acts "
+      + "acknowledges it with what was done.", 12, 0xD9FFFFFF, false));
+    page.addView(hero);
+
+    const mine = CriticalLabs.openForMe(this, db);
+    page.addView(Ui.heading(this, "Waiting for acknowledgement · " + mine.size(), CriticalLabs.COLOR));
+    if (mine.isEmpty()) page.addView(this.emptyNote("Nothing waiting. 👍"));
+    const byPatient = new JMap();
+    const order = [];
+    for (const a of mine) {
+      const pid = a.get("patient_id");
+      if (!byPatient.containsKey(pid)) {
+        byPatient.put(pid, []);
+        order.add(pid);
+      }
+      byPatient.get(pid).add(a);
+    }
+    for (const pid of order) {
+      const list = byPatient.get(pid);
+      const p = db.row("SELECT * FROM patients WHERE id=?", pid);
+      const b = new StringBuilder();
+      for (const a of list) b.append(b.length() === 0 ? "" : "\n").append("🚨 ").append(CriticalLabs.describe(a));
+      const first = list.get(0);
+      const card = this.entryCard(CriticalLabs.unitLabel(first), CriticalLabs.COLOR, p == null ? "Patient" : Ui.nz(p.get("name")) + CriticalLabsActivity.bedOf(p),
+        b.toString() + "\nEntered by " + Ui.nz(first.get("raised_by")), CriticalLabs.ago(CriticalLabs.minutes(first)) + " ago",
+        this.opener(PatientActivity, "id", pid), 8);
+      const ack = Ui.button(this, "Acknowledge", CriticalLabs.COLOR, { onClick: (v) => { CriticalLabs.ackDialog(this, db, list); } });
+      card.addView(ack);
+      Ui.margins(ack, 0, 8, 0, 0);
+      page.addView(card);
+    }
+
+    const since = Dates.today().minusDays(30).toString();
+    const done = db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE status=? AND raised_on>=? ORDER BY ack_on DESC, id DESC LIMIT 60",
+      CriticalLabs.SEEN, since);
+    page.addView(Ui.heading(this, "Acknowledged in the last 30 days · " + done.size(), Ui.SLATE));
+    if (done.isEmpty()) page.addView(this.emptyNote("None yet."));
+    for (const a of done) {
+      const p = db.row("SELECT * FROM patients WHERE id=?", a.get("patient_id"));
+      const m = CriticalLabs.minutes(a);
+      const who = Ui.nz(a.get("ack_by")) + (Ui.nz(a.get("ack_role")).isEmpty() ? "" : " (" + a.get("ack_role") + ")");
+      page.addView(this.entryCard(CriticalLabs.unitLabel(a), m >= 0 && m <= 30 ? Ui.GREEN : Ui.AMBER, p == null ? "Patient" : Ui.nz(p.get("name")),
+        CriticalLabs.describe(a) + "\n✓ " + who + " · " + Ui.nz(a.get("action")) + (Ui.nz(a.get("note")).isEmpty() ? "" : ": " + a.get("note")),
+        "in " + CriticalLabs.ago(m), this.opener(PatientActivity, "id", a.get("patient_id")), 6));
+    }
+
+    const lim = Ui.card(this);
+    lim.addView(Ui.tv(this, "Critical limits", 15, Ui.TEXT, true));
+    const b = new StringBuilder();
+    for (const prm of Labs.PARAMS) b.append(b.length() === 0 ? "" : "\n").append(prm.name).append(" (").append(prm.unit).append("): ").append(CriticalLabs.limitText(db, prm));
+    lim.addView(Ui.muted(this, b.toString()));
+    if (!Cloud.active(this) || Cloud.isAdmin(this)) lim.addView(Ui.muted(this, "Change them with Limits at the top."));
+    page.addView(lim);
+    this.setPage(page);
+  }
+
+  static bedOf(p) {
+    const w = Db.shortName(Ui.nz(p.get("location"))), bed = Ui.nz(p.get("bed"));
+    return "  ·  " + w + (bed.isEmpty() ? "" : " bed " + bed);
+  }
+
+  /** The admin sets the department's critical limits (blank = no limit that side). */
+  limitsDialog() {
+    const db = this.db;
+    const f = new Form(this);
+    for (const p of Labs.PARAMS) {
+      const l = CriticalLabs.limits(db, p.key);
+      f.beginRow();
+      f.text(p.key + "_lo", p.name + " below", l[0] < 0 ? "" : Labs.fmt(l[0]), Form.DECIMAL);
+      f.text(p.key + "_hi", "or above (" + p.unit + ")", l[1] < 0 ? "" : Labs.fmt(l[1]), Form.DECIMAL);
+      f.endRow();
+    }
+    Ui.formDialog(this, "Critical limits", f, "Save", {
+      run: () => {
+        const m = new JMap();
+        for (const p of Labs.PARAMS) {
+          const lo = Labs.num(f.get(p.key + "_lo")), hi = Labs.num(f.get(p.key + "_hi"));
+          if ((!f.get(p.key + "_lo").trim().isEmpty() && lo == null) || (!f.get(p.key + "_hi").trim().isEmpty() && hi == null)) {
+            Ui.toast(this, p.name + ": enter numbers");
+            return false;
+          }
+          m.put(p.key, [lo == null ? -1 : lo, hi == null ? -1 : hi]);
+        }
+        CriticalLabs.setLimits(db, m);
+        Ui.toast(this, "Limits saved for the department");
+        this.render();
+        return true;
+      }
+    });
   }
 }
 ;
@@ -33418,7 +35462,7 @@ class DischargeForm {
         : "Ryles tube" + (s(o, "mg_ryles_type").isEmpty() ? "" : " (" + s(o, "mg_ryles_type").toLowerCase() + ")"));
     const trans = s(o, "transfusion").isEmpty() ? CaseSheet.cap(CaseSheet.transfusionText(o)) : s(o, "transfusion");
     b7.row(14, lbl("Procedures done", GREEN, GREEN_L), c(joinLines(proc, "; ")), lbl("Blood transfusion", GREEN, GREEN_L), c(trans));
-    b7.row(14, lbl("IMCU stay / Ventilator / NIV", GREEN, GREEN_L), c(icu), lbl("Cross-consultations", GREEN, GREEN_L), c(joinLines(ops, ", ")));
+    b7.row(14, lbl("IMCU / Ventilator / NIV", GREEN, GREEN_L), c(icu), lbl("Cross-consultations", GREEN, GREEN_L), c(joinLines(ops, ", ")));
 
     // 8. condition at discharge
     const b8 = f.block("8.  CONDITION AT DISCHARGE", TEAL, 0.17, 0.83);
@@ -33442,7 +35486,7 @@ class DischargeForm {
     for (const h of ["S.No", "Drug name & strength", "Dose", "Route", "Frequency (M – A – N)", "Duration", "Food relation / remarks"])
       mh.cells.add(c(h).b().size(7.5).color(PURPLE).fill(PURPLE_L).center());
     const meds = DischargeForm.meds(o);
-    const rows = Math.max(meds.size() + 1, 5);
+    const rows = Math.max(meds.size() + 1, 4);   // 9.72: one blank row to write in, at least 4 rows
     for (let i = 0; i < rows; i++) {
       const m = i < meds.size() ? meds.get(i) : ["", "", "", "", "", ""];
       b9.row(13, c(String(i + 1)).b().center().fill(PURPLE_L), c(m[0]).b(), c(m[1]).center(), c(m[2]).center(), c(m[3]).center(), c(m[4]).center(), c(m[5]));
@@ -33480,7 +35524,7 @@ class DischargeForm {
     const sg = f.block(null, 0, 0.25, 0.25, 0.25, 0.25);
     sg.keep = true;
     sg.row(28, c("Name & signature").size(7).color(0xFF94A3B8).bottom(), c("Name & signature").size(7).color(0xFF94A3B8).bottom(),
-        c("Name & signature").size(7).color(0xFF94A3B8).bottom(), c(chief.isEmpty() ? "Name & signature" : dr(chief)).size(7.5).color(0xFF334155).bottom());
+        c("Name & signature").size(7).color(0xFF94A3B8).bottom(), (chief.isEmpty() ? c("Name & signature").size(7).color(0xFF94A3B8) : c(dr(chief)).size(7.5).color(0xFF334155)).bottom());
     sg.row(14, c("CRMI (prepared by)").b().fill(0xFFFFE0B2).color(ORANGE).center(), c("POSTGRADUATE (verified by)").b().fill(0xFFE1BEE7).color(PURPLE).center(),
         c("ASSISTANT PROFESSOR").b().fill(0xFFC8E6C9).color(GREEN).center(), c("UNIT CHIEF (Professor)").b().fill(0xFFBBDEFB).color(BLUE).center());
     sg.row(14, c("Summary received; instructions explained in patient’s own language.        Patient / Attender signature: ________________        Date: __________")
@@ -35901,6 +37945,306 @@ class Drugs {
     let t = Ui.nz(s).toLowerCase().trim();
     t = t.replaceAllRx("^(inj|tab|cap|syp|syr|neb|ivf|iv)\\.?\\s+", "");
     return t.replaceAllRx("\\s+", " ").trim();
+  }
+}
+;
+/* ---- app/DutyHours.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Duty hours and fatigue (9.70): each PG's and CRMI's duties for a month from the daily duty roster, the DAP register
+ * (the admitting unit's 24-hour duty) and the CCB duty, with the hours, nights, the longest stretch without a break and
+ * short rests between duties, so the roster stays fair and nobody works too long. Routine ward hours are not counted.
+ */
+class DutyHours {
+  static COLOR = 0xFF9333EA;
+  /** Over this many hours in one stretch is flagged red. */
+  static LONG_STRETCH = 30;
+  /** A rest shorter than this between two duties counts as a short rest. */
+  static SHORT_REST = 10;
+  static MANY_NIGHTS = 8;
+
+  /** Roster field, start (hours from midnight of the roster's date), length in hours, night duty, label. */
+  static ROSTER_SHIFTS = [
+    ["male_op", 8.0, 6.0, false, "Male OP"], ["female_op", 8.0, 6.0, false, "Female OP"], ["fever_op", 8.0, 6.0, false, "Fever OP"],
+    ["triage_pg_day", 7.5, 4.5, false, "Triage (day)"], ["triage_pg_night", 12.0, 19.5, true, "Triage (12 PM to 7.30 AM)"],
+    ["op_crri", 8.0, 6.0, false, "OP (CRRI)"], ["triage_crri", 7.5, 24.0, true, "Triage 24 h (CRRI)"], ["stepdown_crri", 8.0, 6.0, false, "Step down (CRRI)"],
+    ["crri_triage_day", 7.5, 12.0, false, "Triage day (CRRI)"], ["crri_triage_night", 19.5, 12.0, true, "Triage night (CRRI)"],
+    ["imcu_day", 7.5, 12.0, false, "IMCU day"], ["imcu_night", 19.5, 12.0, true, "IMCU night"],
+    ["ccb_day_pg", 7.5, 12.0, false, "CCB day"], ["ccb_day_crri", 7.5, 12.0, false, "CCB day (CRRI)"],
+    ["ccb_night_pg", 19.5, 12.0, true, "CCB night"], ["ccb_night_crri", 19.5, 12.0, true, "CCB night (CRRI)"],
+    ["fever_day_pg", 8.0, 12.0, false, "Fever ward day"], ["fever_day_crmi", 8.0, 12.0, false, "Fever ward day (CRMI)"],
+    ["fever_night", 20.0, 12.0, true, "Fever ward night"]];
+
+  /** The names written in a roster box: one per line or separated by commas, without phone numbers or "Dr." */
+  static names(text) {
+    const out = [];
+    for (const part of Ui.nz(text).jsplit("\n|,|&|/|;|\\band\\b")) {
+      const n = Roster.name(part).replaceAllRx("(?i)^(dr\\.?|pg|crri|crmi)\\s*[:.]?\\s*", "").replaceAllRx("[*_]", "").trim();
+      if (n.replaceAllRx("[^A-Za-z]", "").length >= 3) out.push(n);
+    }
+    return out;
+  }
+
+  static add(people, staff, name, date, startH, hours, night, label) {
+    let p = null;
+    for (const s of staff)
+      if (Chat.sameName(s.get("name"), name)) {
+        const k = "s:" + s.get("id");
+        p = people.get(k);
+        if (p == null) {
+          p = new DutyHours.Person();
+          p.key = k;
+          p.name = Ui.nz(s.get("name"));
+          p.role = Ui.nz(s.get("role"));
+          p.unit = Ui.nz(s.get("unit"));
+          p.staffId = Long.parseLong(s.get("id"));
+          people.put(k, p);
+        }
+        break;
+      }
+    if (p == null) {
+      const k = "n:" + Chat.bare(name);
+      p = people.get(k);
+      if (p == null) {
+        p = new DutyHours.Person();
+        p.key = k;
+        p.name = name;
+        people.put(k, p);
+      }
+    }
+    const s = new DutyHours.Shift();
+    s.start = date.atStartOfDay().plusMinutes(Math.round(startH * 60));
+    s.hours = hours;
+    s.night = night;
+    s.label = label;
+    for (const o of p.shifts) if (o.start.equals(s.start) && o.hours === s.hours) return;   // the same duty from two registers
+    p.shifts.push(s);
+  }
+
+  /** Everyone's duties from first to last (inclusive), most hours first. */
+  static people(db, first, last) {
+    const staff = db.rows("SELECT id, name, role, unit FROM staff WHERE role IN ('Postgraduate','CRMI') ORDER BY id");
+    const people = new JMap();
+    const from = first.minusDays(2).toString(), to = last.toString();
+    for (const r of db.rows("SELECT * FROM duty_roster WHERE date>=? AND date<=? ORDER BY date", from, to)) {
+      const d = Dates.parse(r.get("date"));
+      if (d == null) continue;
+      for (const f of DutyHours.ROSTER_SHIFTS)
+        for (const n of DutyHours.names(r.get(f[0]))) DutyHours.add(people, staff, n, d, f[1], f[2], f[3], f[4]);
+    }
+    for (const r of db.rows("SELECT * FROM dap WHERE date>=? AND date<=? ORDER BY date", from, to)) {
+      const d = Dates.parse(r.get("date"));
+      if (d == null) continue;
+      for (const n of DutyHours.names(r.get("pgs"))) DutyHours.add(people, staff, n, d, 7.5, 24, true, "24-hour admission duty (" + Db.shortName(Ui.nz(r.get("unit"))) + ")");
+    }
+    for (const r of db.rows("SELECT * FROM ccb_duty WHERE date>=? AND date<=? ORDER BY date", from, to)) {
+      const d = Dates.parse(r.get("date"));
+      if (d == null) continue;
+      for (const n of DutyHours.names(r.get("day_pg"))) DutyHours.add(people, staff, n, d, 7.5, 12, false, "CCB day");
+      for (const n of DutyHours.names(r.get("day_crmi"))) DutyHours.add(people, staff, n, d, 7.5, 12, false, "CCB day (CRRI)");
+      for (const n of DutyHours.names(r.get("night_pg"))) DutyHours.add(people, staff, n, d, 19.5, 12, true, "CCB night");
+      for (const n of DutyHours.names(r.get("night_crmi"))) DutyHours.add(people, staff, n, d, 19.5, 12, true, "CCB night (CRRI)");
+    }
+    const out = [];
+    const lo = first.atStartOfDay(), hi = last.plusDays(1).atStartOfDay();
+    const weekAgo = LocalDateTime.of(Dates.today(), Dates.time()).minusDays(7);
+    for (const p of people.values()) {
+      Collections.sort(p.shifts, { compare: (a, b) => a.start.compareTo(b.start) });
+      // stretches: duties that touch or overlap (under an hour apart) run together
+      let runStart = null, runEnd = null, prevEnd = null;
+      const inMonth = [];
+      for (const s of p.shifts) {
+        if (runEnd != null && !s.start.isAfter(runEnd.plusHours(1))) {
+          if (s.end().isAfter(runEnd)) runEnd = s.end();
+        } else {
+          runStart = s.start;
+          runEnd = s.end();
+        }
+        const counted = !s.start.isBefore(lo) && s.start.isBefore(hi);
+        if (counted) {
+          inMonth.push(s);
+          p.hours += s.hours;
+          if (s.night) p.nights++;
+          if (s.hours >= 24) p.full24++;
+          if (s.end().isAfter(weekAgo)) p.last7 += s.hours;
+          const stretch = Duration.between(runStart, runEnd).toMinutes() / 60.0;
+          if (stretch > p.longest) p.longest = stretch;
+          if (prevEnd != null) {
+            const rest = Duration.between(prevEnd, s.start).toMinutes() / 60.0;
+            if (rest > 1 && rest < DutyHours.SHORT_REST) p.shortRests++;
+          }
+        }
+        if (prevEnd == null || s.end().isAfter(prevEnd)) prevEnd = s.end();
+      }
+      p.shifts.clear();
+      p.shifts.addAll(inMonth);
+      if (!p.shifts.isEmpty()) out.push(p);
+    }
+    Collections.sort(out, { compare: (a, b) => b.hours - a.hours });
+    return out;
+  }
+
+  static h(hours) {
+    return hours === Math.rint(hours) ? String(Math.trunc(hours)) : jfmt("%.1f", hours);
+  }
+
+  static average(list) {
+    let t = 0;
+    for (const p of list) t += p.hours;
+    return list.isEmpty() ? 0 : t / list.size();
+  }
+
+  static homeLine(db) {
+    const t = Dates.today();
+    let red = 0;
+    for (const p of DutyHours.people(db, t.withDayOfMonth(1), t)) if (p.red()) red++;
+    return red > 0 ? red + (red === 1 ? " long stretch this month" : " long stretches this month") : "Hours, nights, rest";
+  }
+}
+
+DutyHours.Shift = class {
+  constructor() {
+    this.start = null;
+    this.hours = 0;
+    this.night = false;
+    this.label = "";
+  }
+
+  end() {
+    return this.start.plusMinutes(Math.round(this.hours * 60));
+  }
+};
+
+DutyHours.Person = class {
+  constructor() {
+    this.key = "";
+    this.name = "";
+    this.role = "";
+    this.unit = "";
+    this.staffId = -1;
+    this.shifts = [];
+    this.hours = 0;
+    this.longest = 0;
+    this.last7 = 0;
+    this.nights = 0;
+    this.full24 = 0;
+    this.shortRests = 0;
+  }
+
+  red() { return this.longest > DutyHours.LONG_STRETCH; }
+
+  amber() { return !this.red() && (this.nights > DutyHours.MANY_NIGHTS || this.shortRests >= 2); }
+};
+;
+/* ---- app/DutyHoursActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Duty hours and fatigue: each PG's and CRMI's duty hours, nights, longest stretch and short rests for a month. */
+class DutyHoursActivity extends Base {
+  constructor() {
+    super();
+    this.month = null;
+    this.filter = "All";
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Duty hours");
+    this.subtitle = "Hours, nights and rest, for a fair roster";
+    this.headerColor(DutyHours.COLOR);
+    this.month = Dates.today().withDayOfMonth(1);
+  }
+
+  render() {
+    let last = this.month.plusMonths(1).minusDays(1);
+    if (last.isAfter(Dates.today())) last = Dates.today();
+    const all = DutyHours.people(this.db, this.month, last);
+    let red = 0, amber = 0;
+    for (const p of all) {
+      if (p.red()) red++;
+      else if (p.amber()) amber++;
+    }
+    let avg = DutyHours.average(all), max = 1;
+    for (const p of all) max = Math.max(max, p.hours);
+
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(DutyHours.COLOR), 20));
+    hero.addView(Ui.tv(this, "⏱  " + this.month.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + this.month.getYear(), 20, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, all.length + (all.length === 1 ? " person" : " people") + " on duty  ·  about " + DutyHours.h(Math.round(avg)) + " h each"
+      + (red > 0 ? "\n🔴 " + red + " worked over " + DutyHours.h(DutyHours.LONG_STRETCH) + " h at a stretch" : "")
+      + (amber > 0 ? "\n🟠 " + amber + " with many nights or short rests" : ""), 14, 0xEFFFFFFF, false));
+    hero.addView(Ui.tv(this, "From the daily duty roster, the DAP register (24-hour admission duty) and CCB duty. Routine ward hours are not counted.",
+      12, 0xD9FFFFFF, false));
+    const nav = Ui.buttonRow(this, this.white("‹  Earlier", { onClick: (v) => { this.month = this.month.minusMonths(1); this.render(); } }),
+      this.white("Later  ›", this.month.plusMonths(1).isAfter(Dates.today()) ? null : { onClick: (v) => { this.month = this.month.plusMonths(1); this.render(); } }));
+    hero.addView(nav);
+    Ui.margins(nav, 0, 10, 0, 0);
+    page.addView(hero);
+
+    const chips = Ui.h(this);
+    for (const f of ["All", "Postgraduate", "CRMI", "Flagged"]) {
+      const ch = Ui.chip(this, f.equals("Postgraduate") ? "PGs" : f.equals("CRMI") ? "CRMIs" : f, f.equals(this.filter), DutyHours.COLOR);
+      ch.setOnClickListener({ onClick: (v) => { this.filter = f; this.render(); } });
+      chips.addView(ch);
+      Ui.margins(ch, 0, 0, 6, 0);
+    }
+    page.addView(chips);
+    Ui.margins(chips, 14, 10, 14, 4);
+
+    let shown = 0;
+    for (const p of all) {
+      if (this.filter.equals("Flagged") && !p.red() && !p.amber()) continue;
+      if ((this.filter.equals("Postgraduate") || this.filter.equals("CRMI")) && !this.filter.equals(p.role)) continue;
+      shown++;
+      const color = p.red() ? Ui.RED : p.amber() ? Ui.AMBER : Ui.GREEN;
+      const c = Ui.card(this);
+      const top = Ui.h(this);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      const who = Ui.v(this);
+      who.addView(Ui.tv(this, p.name, 16, Ui.TEXT, true));
+      const sub = (p.role.equals("CRMI") ? "CRMI" : p.role.isEmpty() ? "Not in the Students list" : "PG") + (p.unit.isEmpty() ? "" : "  ·  " + Db.shortName(p.unit));
+      who.addView(Ui.muted(this, sub));
+      top.addView(who, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+      top.addView(Ui.tv(this, DutyHours.h(p.hours) + " h", 20, color, true));
+      c.addView(top);
+      const bar = Ui.bar(this, Math.round(p.hours), Math.round(max), color);
+      c.addView(bar);
+      Ui.margins(bar, 0, 8, 0, 6);
+      c.addView(Ui.body(this, p.shifts.length + (p.shifts.length === 1 ? " duty" : " duties") + "  ·  " + p.nights + (p.nights === 1 ? " night" : " nights") + (p.full24 > 0 ? "  ·  " + p.full24 + " of 24 h" : "")
+        + "  ·  longest stretch " + DutyHours.h(p.longest) + " h" + (p.shortRests > 0 ? "  ·  " + p.shortRests + " short rests" : "")
+        + "\nLast 7 days: " + DutyHours.h(p.last7) + " h"));
+      if (p.red()) c.addView(Ui.tv(this, "🔴 Over " + DutyHours.h(DutyHours.LONG_STRETCH) + " hours without a break: give rest after this duty", 13, Ui.RED, true));
+      else if (p.amber()) c.addView(Ui.tv(this, "🟠 " + (p.nights > DutyHours.MANY_NIGHTS ? "Many nights this month" : "Less than " + DutyHours.h(DutyHours.SHORT_REST) + " hours rest between duties more than once"), 13, Ui.AMBER, true));
+      c.setOnClickListener({ onClick: (v) => { this.detail(p); } });
+      Ui.ripple(c, 0x22000000);
+      page.addView(c);
+    }
+    if (shown === 0) page.addView(this.emptyNote(all.length === 0 ? "No duties recorded this month. Paste the morning roster in the DAP register, or fill the DAP and CCB duty."
+      : "No one in this list."));
+    const note = Ui.muted(this, "Red: over " + DutyHours.h(DutyHours.LONG_STRETCH) + " hours at a stretch. Amber: more than " + DutyHours.MANY_NIGHTS
+      + " nights in the month, or under " + DutyHours.h(DutyHours.SHORT_REST) + " hours of rest between duties twice or more. Names are matched to the Students list.");
+    Ui.margins(note, 16, 10, 16, 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+
+  white(s, l) {
+    const t = Ui.button(this, s, DutyHours.COLOR, l);
+    t.setTextColor(l == null ? 0x66FFFFFF : 0xFFFFFFFF);
+    t.setBackground(Ui.outline(this, 0x2EFFFFFF, 0x99FFFFFF, 12));
+    return t;
+  }
+
+  detail(p) {
+    let b = "";
+    for (const s of p.shifts) {
+      b += Dates.nice(s.start.toLocalDate().toString()) + "  " + jfmt("%02d:%02d", s.start.getHour(), s.start.getMinute())
+        + "  ·  " + DutyHours.h(s.hours) + " h  ·  " + s.label + (s.night ? "  🌙" : "") + "\n";
+    }
+    new AlertDialog.Builder(this).setTitle(p.name + "  ·  " + DutyHours.h(p.hours) + " h").setMessage(b.trim())
+      .setPositiveButton("Close", null).show();
   }
 }
 ;
@@ -39107,6 +41451,578 @@ class FacultyProfileActivity extends Base {
   }
 }
 ;
+/* ---- app/Flash.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Spaced-revision flashcards for PGs (9.60): cards from the university question bank (most asked first), the Daily MCQs
+ * and the Learning board notes. Each card comes back after a gap that grows when it is remembered and shrinks when it is
+ * not (the SM-2 method used by Anki), so weak topics return more often. Each person's progress is one row in the shared
+ * table flash, so it follows them to a new phone or the website.
+ */
+class Flash {
+  static TABLE = "flash";
+  static COLOR = 0xFF6D28D9;
+  static NEW_PER_DAY = 20;
+  static DECKS = [["uq", "University questions"], ["mcq", "Daily MCQs"], ["notes", "Learning board notes"]];
+  static AGAIN = 0;
+  static HARD = 1;
+  static GOOD = 2;
+  static EASY = 3;
+  static RATINGS = ["Again", "Hard", "Good", "Easy"];
+
+  // ---------- the cards ----------
+
+  static uqCache = null;
+  static uqCount = -1;
+
+  static cards(db, deck) {
+    const out = [];
+    if (deck === "uq") {
+      const n = db.num("SELECT COUNT(*) FROM " + QuestionBank.TABLE);
+      if (Flash.uqCache == null || n !== Flash.uqCount) {
+        Flash.uqCache = QuestionBank.groups(db);
+        QuestionBank.sortMostAsked(Flash.uqCache);
+        Flash.uqCount = n;
+      }
+      for (const g of Flash.uqCache) {
+        const q = g.latest();
+        out.add(new Flash.Card("uq:" + q.get("id"), deck, Ui.nz(q.get("text")).trim(), "",
+          g.topic + "  ·  asked " + g.times() + (g.times() === 1 ? " time" : " times") + (g.when().isEmpty() ? "" : " (" + g.when() + ")")
+          + (Ui.nz(q.get("marks")).isEmpty() ? "" : "  ·  " + q.get("marks") + " marks")));
+      }
+    } else if (deck === "mcq") {
+      for (const m of db.rows("SELECT * FROM mcqs WHERE IFNULL(question,'')<>'' ORDER BY date DESC, id DESC")) {
+        const f = new StringBuilder();
+        if (!Ui.nz(m.get("scenario")).trim().isEmpty()) f.append(m.get("scenario").trim()).append("\n\n");
+        f.append(Ui.nz(m.get("question")).trim()).append("\n");
+        const ans = Ui.nz(m.get("answer")).trim().toUpperCase();
+        let ansText = "";
+        for (const o of ["a", "b", "c", "d", "e"]) {
+          const t = Ui.nz(m.get("opt_" + o)).trim();
+          if (t.isEmpty()) continue;
+          f.append("\n").append(o.toUpperCase()).append(". ").append(t);
+          if (ans.startsWith(o.toUpperCase())) ansText = t;
+        }
+        const back = "Answer: " + ans + (ansText.isEmpty() ? "" : ". " + ansText)
+          + (Ui.nz(m.get("explanation")).trim().isEmpty() ? "" : "\n\n" + m.get("explanation").trim());
+        out.add(new Flash.Card("mcq:" + m.get("id"), deck, f.toString(), back, Ui.nz(m.get("subject")) + (Ui.nz(m.get("date")).isEmpty() ? "" : "  ·  " + Dates.nice(m.get("date")))));
+      }
+    } else if (deck === "notes") {
+      for (const n of db.rows("SELECT * FROM learn_notes ORDER BY id DESC")) {
+        const pts = TopicNotes.points(n);
+        if (pts.isEmpty()) continue;
+        const b = new StringBuilder();
+        let k = 1;
+        for (const p of pts) b.append(b.length() === 0 ? "" : "\n").append(k++).append(". ").append(p);
+        out.add(new Flash.Card("ln:" + n.get("id"), deck, Ui.nz(n.get("title")).trim() + "\n\nRecall the " + pts.size() + " points.", b.toString(),
+          Ui.nz(n.get("subject")) + (Ui.nz(n.get("by_name")).isEmpty() ? "" : "  ·  by " + n.get("by_name"))));
+      }
+    }
+    return out;
+  }
+
+  /** The university question's subject filter: empty for all topics. */
+  static filter(cards, topic) {
+    if (topic == null || topic.isEmpty()) return cards;
+    const out = [];
+    for (const c of cards) if (c.meta.startsWith(topic + "  ·")) out.add(c);
+    return out;
+  }
+
+  // ---------- this person's progress ----------
+
+  static who(c) {
+    const s = Cloud.myStaff(c);
+    return s > 0 ? String(s) : "me";
+  }
+
+  static row(c, db) {
+    return db.row("SELECT * FROM " + Flash.TABLE + " WHERE staff_id=? ORDER BY id LIMIT 1", Flash.who(c));
+  }
+
+  static data(row) {
+    try {
+      return row == null || Ui.nz(row.get("data")).isEmpty() ? new JSONObject() : new JSONObject(row.get("data"));
+    } catch (e) {
+      return new JSONObject();
+    }
+  }
+
+  static today() {
+    return Dates.today().toEpochDay();
+  }
+
+  /** Cards to do now: those due (oldest first), then new ones up to today's limit. */
+  static queue(c, db, decks, topic) {
+    const row = Flash.row(c, db);
+    const d = Flash.data(row);
+    const today = Flash.today();
+    const newLeft = Flash.NEW_PER_DAY - (row != null && String(today) === row.get("last_day") ? Ui.toInt(row.get("new_today"), 0) : 0);
+    const due = [], fresh = [];
+    const when = new JMap();
+    for (const deck of decks) {
+      let cs = Flash.cards(db, deck);
+      if (deck === "uq") cs = Flash.filter(cs, topic);
+      for (const k of cs) {
+        const s = Flash.State.of(d.optJSONArray(k.id));
+        if (s == null) {
+          if (fresh.size() < Math.max(0, newLeft)) fresh.add(k);
+        } else if (s.due <= today) {
+          due.add(k);
+          when.put(k.id, s.due);
+        }
+      }
+    }
+    Collections.sort(due, { compare: (a, b) => when.get(a.id) - when.get(b.id) });
+    const out = ArrayList(due);
+    // mix the new cards in among the reviews
+    const step = due.isEmpty() ? 1 : Math.max(1, Math.trunc(due.size() / Math.max(1, fresh.size())));
+    let at = 0;
+    for (const k of fresh) {
+      at = Math.min(out.size(), at + step);
+      out.add(at, k);
+      at++;
+    }
+    return out;
+  }
+
+  /** {due now, new left today, learned (seen at least once), total} for these decks. */
+  static counts(c, db, decks, topic) {
+    const row = Flash.row(c, db);
+    const d = Flash.data(row);
+    const today = Flash.today();
+    let due = 0, seen = 0, total = 0, fresh = 0;
+    for (const deck of decks) {
+      let cs = Flash.cards(db, deck);
+      if (deck === "uq") cs = Flash.filter(cs, topic);
+      for (const k of cs) {
+        total++;
+        const s = Flash.State.of(d.optJSONArray(k.id));
+        if (s == null) fresh++;
+        else {
+          seen++;
+          if (s.due <= today) due++;
+        }
+      }
+    }
+    const newLeft = Flash.NEW_PER_DAY - (row != null && String(today) === row.get("last_day") ? Ui.toInt(row.get("new_today"), 0) : 0);
+    return [due, Math.max(0, Math.min(fresh, newLeft)), seen, total];
+  }
+
+  /** The next state after a rating (SM-2 as Anki uses it). */
+  static next(s, rating) {
+    const n = new Flash.State();
+    if (s == null) {
+      n.reps = 1;
+      n.ivl = rating === Flash.EASY ? 4 : rating === Flash.AGAIN ? 0 : 1;
+      n.ease = 250;
+    } else {
+      n.reps = s.reps + 1;
+      n.lapses = s.lapses;
+      n.ease = s.ease;
+      const ivl = Math.max(1, s.ivl);
+      switch (rating) {
+        case Flash.AGAIN: n.ivl = 0; n.lapses++; n.ease = Math.max(130, s.ease - 20); break;
+        case Flash.HARD: n.ivl = Math.max(ivl + 1, Math.round(ivl * 1.2)); n.ease = Math.max(130, s.ease - 15); break;
+        case Flash.GOOD: n.ivl = Math.max(ivl + 1, Math.round(ivl * s.ease / 100)); break;
+        default: n.ivl = Math.max(ivl + 2, Math.round(ivl * s.ease / 100 * 1.3)); n.ease = s.ease + 15; break;
+      }
+    }
+    n.ivl = Math.min(n.ivl, 365);
+    n.due = Flash.today() + n.ivl;
+    return n;
+  }
+
+  /** "10 min", "1 day", "3 days", "2 months". */
+  static gap(n) {
+    if (n.ivl === 0) return "today";
+    if (n.ivl === 1) return "1 day";
+    if (n.ivl < 31) return n.ivl + " days";
+    return Math.round(n.ivl / 30) + (Math.round(n.ivl / 30) === 1 ? " month" : " months");
+  }
+
+  static state(c, db, cardId) {
+    return Flash.State.of(Flash.data(Flash.row(c, db)).optJSONArray(cardId));
+  }
+
+  /** Saves a rating, the day's new-card count and the study streak. */
+  static rate(c, db, card, rating) {
+    const row = Flash.row(c, db);
+    const d = Flash.data(row);
+    const old = Flash.State.of(d.optJSONArray(card.id));
+    const n = Flash.next(old, rating);
+    try {
+      d.put(card.id, n.json());
+    } catch (ignored) {
+    }
+    const t = Flash.today();
+    const lastDay = row == null ? "" : Ui.nz(row.get("last_day"));
+    let streak = row == null ? 0 : Ui.toInt(row.get("streak"), 0);
+    const doneToday = row == null || lastDay !== String(t) ? 0 : Ui.toInt(row.get("done_today"), 0);
+    const newToday = row == null || lastDay !== String(t) ? 0 : Ui.toInt(row.get("new_today"), 0);
+    if (lastDay !== String(t)) streak = lastDay === String(t - 1) ? streak + 1 : 1;
+    const cv = new ContentValues();
+    cv.put("staff_id", Flash.who(c));
+    cv.put("name", Reminders.myName(c, db));
+    cv.put("data", d.toString());
+    cv.put("last_day", String(t));
+    cv.put("streak", streak);
+    cv.put("done_today", doneToday + 1);
+    cv.put("new_today", newToday + (old == null ? 1 : 0));
+    cv.put("total", (row == null ? 0 : Ui.toInt(row.get("total"), 0)) + 1);
+    cv.put("updated", Dates.todayIso() + " " + Dates.now());
+    if (row == null) db.insert(Flash.TABLE, cv);
+    else db.update(Flash.TABLE, cv, Long.parseLong(row.get("id")));
+  }
+
+  /** {streak (days in a row, 0 if broken), cards today}. */
+  static streak(c, db) {
+    const row = Flash.row(c, db);
+    if (row == null) return [0, 0];
+    const last = Ui.toInt(row.get("last_day"), 0);
+    const s = last >= Flash.today() - 1 ? Ui.toInt(row.get("streak"), 0) : 0;
+    return [s, last === Flash.today() ? Ui.toInt(row.get("done_today"), 0) : 0];
+  }
+
+  /** Everyone's streaks, longest first (people who studied today or yesterday). */
+  static board(db) {
+    const out = [];
+    for (const r of db.rows("SELECT * FROM " + Flash.TABLE + " ORDER BY streak DESC, total DESC")) {
+      if (Ui.toInt(r.get("last_day"), 0) < Flash.today() - 1 || r.get("name").isEmpty()) continue;
+      out.add(r);
+      if (out.size() === 10) break;
+    }
+    return out;
+  }
+
+  // ---------- the AI answer outline for a university question, kept on this phone ----------
+
+  static prefs(c) {
+    return c.getSharedPreferences("flash", Context.MODE_PRIVATE);
+  }
+
+  static outline(c, cardId) {
+    return Flash.prefs(c).getString("o:" + cardId, "");
+  }
+
+  static setOutline(c, cardId, text) {
+    Flash.prefs(c).edit().putString("o:" + cardId, text).apply();
+  }
+
+  /** The question ids of a university question card's group (for its attached answers). */
+  static uqIds(cardId) {
+    const out = [];
+    if (Flash.uqCache != null && cardId.startsWith("uq:")) for (const g of Flash.uqCache)
+      if (("uq:" + g.latest().get("id")).equals(cardId)) return QuestionBankActivity.ids(g);
+    if (cardId.startsWith("uq:")) out.push(cardId.substring(3));
+    return out;
+  }
+
+  static question(db, cardId) {
+    return cardId.startsWith("uq:") ? db.row("SELECT * FROM " + QuestionBank.TABLE + " WHERE id=?", cardId.substring(3)) : null;
+  }
+
+  static homeLine(c, db) {
+    // cheap for the home screen: due cards from this person's row, new cards up to the day's limit
+    const row = Flash.row(c, db);
+    const d = Flash.data(row);
+    let due = 0;
+    for (const key of d.keys()) {
+      const s = Flash.State.of(d.optJSONArray(key));
+      if (s != null && s.due <= Flash.today()) due++;
+    }
+    const total = db.num("SELECT COUNT(*) FROM " + QuestionBank.TABLE) + db.num("SELECT COUNT(*) FROM mcqs") + db.num("SELECT COUNT(*) FROM learn_notes");
+    const newLeft = Flash.NEW_PER_DAY - (row != null && String(Flash.today()) === row.get("last_day") ? Ui.toInt(row.get("new_today"), 0) : 0);
+    const k = [due, Math.max(0, Math.min(newLeft, total - d.length()))];
+    const st = Flash.streak(c, db);
+    return k[0] + k[1] === 0 ? (st[0] > 0 ? "🔥 " + st[0] + "-day streak" : "Spaced revision") : (k[0] + k[1]) + " cards today" + (st[0] > 1 ? " · 🔥" + st[0] : "");
+  }
+
+  static dayOf(epochDay) {
+    return LocalDate.ofEpochDay(epochDay);
+  }
+}
+
+Flash.Card = class {
+  constructor(id, deck, front, back, meta) {
+    this.id = id;
+    this.deck = deck;
+    this.front = front;
+    this.back = back;
+    this.meta = meta;
+  }
+};
+
+/** Where a card stands for this person: interval (days), ease (x100), due (epoch day), reviews, lapses. */
+Flash.State = class {
+  constructor() {
+    this.ivl = 0;
+    this.ease = 250;
+    this.reps = 0;
+    this.lapses = 0;
+    this.due = 0;
+  }
+
+  json() {
+    return new JSONArray().put(this.ivl).put(this.ease).put(this.due).put(this.reps).put(this.lapses);
+  }
+
+  static of(a) {
+    const s = new Flash.State();
+    if (a == null) return null;
+    s.ivl = a.optInt(0);
+    s.ease = a.optInt(1, 250);
+    s.due = a.optLong(2);
+    s.reps = a.optInt(3);
+    s.lapses = a.optInt(4);
+    return s;
+  }
+};
+;
+/* ---- app/FlashActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Flashcards: today's cards from the chosen decks, one at a time; the answer, then Again / Hard / Good / Easy. */
+class FlashActivity extends Base {
+  static WAIT = "flash_wait";
+
+  constructor() {
+    super();
+    this.queue = null;
+    this.done = 0;
+    this.shown = false;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Flashcards");
+    this.subtitle = "Spaced revision: weak cards come back sooner";
+    this.headerColor(Flash.COLOR);
+    QuestionBank.seed(this, this.db);   // the MGR University past papers, the first time
+  }
+
+  liveRefresh() {
+    return false;
+  }
+
+  decks() {
+    const s = Flash.prefs(this).getString("decks", "uq,mcq,notes");
+    const out = [];
+    for (const d of s.jsplit(",")) if (!d.trim().isEmpty()) out.add(d.trim());
+    return out;
+  }
+
+  topic() {
+    return Flash.prefs(this).getString("topic", "");
+  }
+
+  onBackPressed() {
+    if (this.queue != null) {
+      this.queue = null;
+      this.render();
+      return;
+    }
+    super.onBackPressed();
+  }
+
+  render() {
+    const db = this.db;
+    if (this.queue != null) {
+      this.study();
+      return;
+    }
+    const page = Ui.v(this);
+    const decks = this.decks();
+    const k = Flash.counts(this, db, decks, this.topic());
+    const st = Flash.streak(this, db);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Flash.COLOR), 20));
+    hero.addView(Ui.tv(this, "🧠  " + (k[0] + k[1]) + " cards today", 22, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, k[0] + " to revise  ·  " + k[1] + " new  ·  " + k[2] + " of " + k[3] + " seen" + (st[0] > 0 ? "\n🔥 " + st[0] + "-day streak" : "")
+      + (st[1] > 0 ? "  ·  " + st[1] + " done today" : ""), 14, 0xEFFFFFFF, false));
+    hero.addView(Ui.tv(this, "Read the card, answer it in your head, then tap Show answer and say honestly how well you knew it. Remembered cards come "
+      + "back after longer and longer gaps; forgotten ones come back tomorrow.", 12, 0xD9FFFFFF, false));
+    const go = Ui.button(this, k[0] + k[1] === 0 ? "All done for today 🎉" : "Start", 0x33FFFFFF, {
+      onClick: (v) => {
+        this.queue = Flash.queue(this, db, this.decks(), this.topic());
+        this.done = 0;
+        this.shown = false;
+        if (this.queue.isEmpty()) {
+          this.queue = null;
+          Ui.toast(this, "Nothing due. Come back tomorrow, or add more decks.");
+          return;
+        }
+        this.render();
+      }
+    });
+    go.setTextColor(0xFFFFFFFF);
+    go.setBackground(Ui.outline(this, 0x2EFFFFFF, 0x99FFFFFF, 12));
+    hero.addView(go);
+    Ui.margins(go, 0, 12, 0, 0);
+    page.addView(hero);
+
+    page.addView(Ui.heading(this, "Decks", Flash.COLOR));
+    for (const d of Flash.DECKS) {
+      const on = decks.contains(d[0]);
+      const c = Flash.counts(this, db, [d[0]], d[0] === "uq" ? this.topic() : "");
+      page.addView(this.entryCard(on ? "ON" : "OFF", on ? Flash.COLOR : Ui.SLATE, d[1], c[3] === 0 ? "No cards yet" : c[0] + " to revise · " + c[2] + " of " + c[3] + " seen",
+        on ? "✓" : "", {
+          onClick: (v) => {
+            const l = this.decks();
+            if (on) l.removeObj(d[0]);
+            else l.add(d[0]);
+            Flash.prefs(this).edit().putString("decks", TextUtils.join(",", l)).apply();
+            this.render();
+          }
+        }));
+    }
+    if (decks.contains("uq")) {
+      const chips = Ui.h(this);
+      const topics = QuestionBank.topics();
+      const cur = this.topic();
+      const all = Ui.chip(this, "All topics", cur.isEmpty(), Flash.COLOR);
+      all.setOnClickListener({ onClick: (v) => { Flash.prefs(this).edit().putString("topic", "").apply(); this.render(); } });
+      chips.addView(all);
+      for (const t of topics) {
+        const ch = Ui.chip(this, t, t === cur, Flash.COLOR);
+        ch.setOnClickListener({ onClick: (v) => { Flash.prefs(this).edit().putString("topic", t).apply(); this.render(); } });
+        chips.addView(ch);
+      }
+      const hs = new HorizontalScrollView(this);
+      hs.setHorizontalScrollBarEnabled(false);
+      hs.addView(chips);
+      const lab = Ui.muted(this, "University questions from:");
+      Ui.margins(lab, 16, 8, 16, 4);
+      page.addView(lab);
+      page.addView(hs);
+      Ui.margins(hs, 14, 0, 14, 0);
+    }
+
+    const board = Flash.board(db);
+    if (!board.isEmpty()) {
+      page.addView(Ui.heading(this, "Streaks", Flash.COLOR));
+      const c = Ui.card(this);
+      for (const r of board) c.addView(Ui.kv(this, r.get("name"), "🔥 " + r.get("streak") + " days  ·  " + r.get("total") + " cards"));
+      page.addView(c);
+    }
+    this.setPage(page);
+  }
+
+  study() {
+    const db = this.db;
+    const page = Ui.v(this);
+    if (this.queue.isEmpty()) {
+      this.queue = null;
+      const c = Ui.card(this);
+      c.addView(Ui.tv(this, "🎉  Done: " + this.done + (this.done === 1 ? " card" : " cards"), 20, Flash.COLOR, true));
+      const st = Flash.streak(this, db);
+      c.addView(Ui.body(this, st[0] > 0 ? "🔥 " + st[0] + "-day streak. Come back tomorrow for the next ones." : "Come back tomorrow for the next ones."));
+      c.addView(Ui.button(this, "Back to the decks", Flash.COLOR, { onClick: (v) => { this.render(); } }));
+      page.addView(c);
+      this.setPage(page);
+      return;
+    }
+    const card = this.queue.get(0);
+    const prog = Ui.muted(this, this.queue.size() + " left  ·  " + this.done + " done  ·  " + FlashActivity.deckName(card.deck));
+    Ui.margins(prog, 16, 10, 16, 0);
+    page.addView(prog);
+    const c = Ui.card(this);
+    c.setMinimumHeight(Ui.dp(this, 220));
+    if (!card.meta.isEmpty()) c.addView(Ui.softPill(this, card.meta.length > 70 ? card.meta.substring(0, 70) + "…" : card.meta, Flash.COLOR));
+    const front = Ui.tv(this, card.front, card.front.length > 300 ? 15 : 18, Ui.TEXT, true);
+    c.addView(front);
+    Ui.margins(front, 0, 10, 0, 0);
+    page.addView(c);
+    if (!this.shown) {
+      const w = Ui.v(this);
+      w.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), 0);
+      w.addView(Ui.button(this, "Show answer", Flash.COLOR, { onClick: (v) => { this.shown = true; this.render(); } }));
+      page.addView(w);
+      this.setPage(page);
+      return;
+    }
+    const back = Ui.card(this);
+    back.setBackground(Ui.outline(this, 0xFFF5F3FF, Flash.COLOR, 16));
+    let answer = card.back;
+    if (card.deck === "uq") {
+      answer = Flash.outline(this, card.id);
+      if (answer.isEmpty()) {
+        back.addView(Ui.body(this, "Did you know the points you would write? Check with your notes or textbook, or let the AI make an answer outline."));
+        const ai = Ui.outlineButton(this, "✨  Answer outline (AI)", Flash.COLOR, { onClick: (v) => { this.outline(card); } });
+        back.addView(ai);
+        Ui.margins(ai, 0, 8, 0, 0);
+        const app = AiRun.waiting(this, FlashActivity.WAIT);
+        if (!app.isEmpty()) {
+          const paste = Ui.outlineButton(this, "📋  Paste " + app + "'s outline", Ui.AMBER, {
+            onClick: (v) => {
+              const t = AiRun.paste(this, FlashActivity.WAIT, null);
+              if (t != null) {
+                Flash.setOutline(this, card.id, t.trim());
+                this.render();
+              }
+            }
+          });
+          back.addView(paste);
+          Ui.margins(paste, 0, 8, 0, 0);
+        }
+      }
+    }
+    if (!answer.isEmpty()) back.addView(Ui.body(this, answer));
+    if (card.deck.equals("uq")) {
+      // 9.70: the answer pages attached to the question in University questions
+      const files = Attach.of(db, QuestionBank.TABLE, Flash.uqIds(card.id));
+      if (!files.isEmpty()) {
+        const strip = Attach.strip(this, db, files, Flash.COLOR, null);
+        back.addView(strip);
+        Ui.margins(strip, 0, 8, 0, 0);
+      }
+    }
+    page.addView(back);
+
+    const s = Flash.state(this, db, card.id);
+    const btns = [];
+    const colors = [Ui.RED, Ui.AMBER, Ui.GREEN, Ui.SKY];
+    for (let i = 0; i < 4; i++) {
+      const rating = i;
+      const n = Flash.next(s, i);
+      const b = Ui.button(this, Flash.RATINGS[i] + "\n" + Flash.gap(n), colors[i], { onClick: (v) => { this.rate(card, rating); } });
+      b.setGravity(Gravity.CENTER);
+      btns.add(b);
+    }
+    const row = Ui.buttonRow(this, btns);
+    Ui.margins(row, 12, 12, 12, 0);
+    page.addView(row);
+    this.setPage(page);
+  }
+
+  static deckName(key) {
+    for (const d of Flash.DECKS) if (d[0] === key) return d[1];
+    return key;
+  }
+
+  rate(card, rating) {
+    Flash.rate(this, this.db, card, rating);
+    this.queue.removeAt(0);
+    if (rating === Flash.AGAIN) this.queue.add(Math.min(this.queue.size(), 4), card);   // once more in this sitting
+    else this.done++;
+    this.shown = false;
+    this.render();
+  }
+
+  outline(card) {
+    const q = Flash.question(this.db, card.id);
+    if (q == null) return;
+    AiRun.ask(this, "Answer outline", QuestionBank.outlineSystem(), QuestionBank.outlineUser(q), 2000, FlashActivity.WAIT, null, {
+      got: (text, who) => {
+        if (text == null) return;
+        Flash.setOutline(this, card.id, text.trim() + "\n\n(" + who + ": check it against your textbook.)");
+        this.render();
+      }
+    });
+  }
+}
+;
 /* ---- app/FormActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -39744,7 +42660,9 @@ class FormDoc {
   static TICK = '☑';
 
   static box(on, label) {
-    return (on ? FormDoc.TICK : FormDoc.BOX) + ' ' + label;
+    // 9.72: a short label stays on one line with its box, so a box never sits alone at the end of a line
+    const l = label.length <= 28 && !label.endsWith(" ") ? label.split(' ').join('\u00A0') : label;
+    return (on ? FormDoc.TICK : FormDoc.BOX) + '\u00A0' + l;
   }
 
   /** "☑ A   ☐ B   ☐ C": the options, with the chosen ones ticked. */
@@ -41052,6 +43970,1074 @@ class HandoverActivity extends Base {
       s += '\n';
     }
     return s;
+  }
+}
+;
+/* ---- app/Harrison.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Harrison's topic of the day (9.80): a teaching deck on one high-yield MD General Medicine topic each day, following the chapter
+ * in Harrison's Principles of Internal Medicine (21st edition). The admin or a faculty member makes a month of decks at once with
+ * the AI key on their phone (or one at a time through a free AI app); faculty can check and correct them; each deck shows for
+ * everyone from 7 AM on its day, with a notification. The slides are the AI's own words following the chapter, not the book's text.
+ * Decks are synced in the table "harrison" (slides as text: "## Title" lines with "- point" lines under them).
+ */
+class Harrison {
+  static TABLE = "harrison";
+  static COLOR = 0xFF9F1239;
+  static RELEASE = LocalTime.of(7, 0);
+  static BOOK = "Harrison's Principles of Internal Medicine, 21st edition";
+  /** The start of the request copied to a free AI app, so a request pasted back by mistake is not taken as the answer. */
+  static MARK = "You are a professor of medicine preparing";
+  /** Uploaded PowerPoints live with the other academic files (allowed by the server). */
+  static DIR = "harrison";   // 9.86: its own folder, so the server lets only the admin upload there
+  static MAX_BYTES = 45 * 1024 * 1024;
+  static PPTX_MIME = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+
+  /** Topic, Harrison's part it sits in. Systems take turns, so the days vary. */
+  static TOPICS = [
+            ["Acute coronary syndromes: STEMI and NSTEMI", "Disorders of the Cardiovascular System"],
+            ["Sepsis and septic shock", "Critical Care Medicine"],
+            ["Diabetic ketoacidosis and hyperosmolar hyperglycaemic state", "Endocrinology and Metabolism"],
+            ["Ischaemic stroke", "Neurologic Disorders"],
+            ["Acute kidney injury", "Disorders of the Kidney and Urinary Tract"],
+            ["Community-acquired pneumonia", "Disorders of the Respiratory System"],
+            ["Cirrhosis and its complications", "Disorders of the Gastrointestinal System"],
+            ["Dengue and other arboviral fevers", "Infectious Diseases"],
+            ["Systemic lupus erythematosus", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Iron deficiency and megaloblastic anaemia", "Oncology and Hematology"],
+            ["Organophosphate and other poisonings", "Poisoning, Drug Overdose, and Envenomation"],
+            ["Heart failure", "Disorders of the Cardiovascular System"],
+            ["Acute respiratory distress syndrome", "Critical Care Medicine"],
+            ["Thyroid disorders: hypothyroidism and thyrotoxicosis", "Endocrinology and Metabolism"],
+            ["Status epilepticus and seizures", "Neurologic Disorders"],
+            ["Chronic kidney disease", "Disorders of the Kidney and Urinary Tract"],
+            ["Asthma", "Disorders of the Respiratory System"],
+            ["Upper gastrointestinal bleeding", "Disorders of the Gastrointestinal System"],
+            ["Tuberculosis", "Infectious Diseases"],
+            ["Rheumatoid arthritis", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Acute leukaemias", "Oncology and Hematology"],
+            ["Snakebite envenomation", "Poisoning, Drug Overdose, and Envenomation"],
+            ["Infective endocarditis", "Disorders of the Cardiovascular System"],
+            ["Shock: approach and management", "Critical Care Medicine"],
+            ["Type 2 diabetes mellitus: diagnosis and management", "Endocrinology and Metabolism"],
+            ["Guillain-Barré syndrome and acute flaccid paralysis", "Neurologic Disorders"],
+            ["Glomerular diseases: nephritic and nephrotic syndromes", "Disorders of the Kidney and Urinary Tract"],
+            ["Chronic obstructive pulmonary disease", "Disorders of the Respiratory System"],
+            ["Acute and chronic pancreatitis", "Disorders of the Gastrointestinal System"],
+            ["Malaria", "Infectious Diseases"],
+            ["Vasculitis syndromes", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Lymphomas", "Oncology and Hematology"],
+            ["Hypertension and hypertensive emergencies", "Disorders of the Cardiovascular System"],
+            ["Acid-base disorders", "Disorders of the Kidney and Urinary Tract"],
+            ["Adrenal insufficiency and Cushing's syndrome", "Endocrinology and Metabolism"],
+            ["Meningitis and encephalitis", "Neurologic Disorders"],
+            ["Hyponatraemia and hypernatraemia", "Disorders of the Kidney and Urinary Tract"],
+            ["Pulmonary embolism and deep vein thrombosis", "Disorders of the Respiratory System"],
+            ["Acute and chronic viral hepatitis", "Disorders of the Gastrointestinal System"],
+            ["HIV infection and AIDS", "Infectious Diseases"],
+            ["Spondyloarthritis", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Haemolytic anaemias", "Oncology and Hematology"],
+            ["Atrial fibrillation", "Disorders of the Cardiovascular System"],
+            ["Mechanical ventilation basics", "Critical Care Medicine"],
+            ["Calcium disorders and the parathyroids", "Endocrinology and Metabolism"],
+            ["Parkinson's disease and other movement disorders", "Neurologic Disorders"],
+            ["Potassium disorders: hypokalaemia and hyperkalaemia", "Disorders of the Kidney and Urinary Tract"],
+            ["Interstitial lung diseases", "Disorders of the Respiratory System"],
+            ["Inflammatory bowel disease", "Disorders of the Gastrointestinal System"],
+            ["Scrub typhus and rickettsial infections", "Infectious Diseases"],
+            ["Gout and crystal arthropathies", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Multiple myeloma", "Oncology and Hematology"],
+            ["Valvular heart disease and rheumatic fever", "Disorders of the Cardiovascular System"],
+            ["Cardiac arrest and resuscitation", "Critical Care Medicine"],
+            ["Pituitary disorders", "Endocrinology and Metabolism"],
+            ["Multiple sclerosis and demyelinating disease", "Neurologic Disorders"],
+            ["Pleural effusion and pneumothorax", "Disorders of the Respiratory System"],
+            ["Alcohol-related and non-alcoholic fatty liver disease", "Disorders of the Gastrointestinal System"],
+            ["Leptospirosis", "Infectious Diseases"],
+            ["Systemic sclerosis and inflammatory myopathies", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Bleeding disorders and disseminated intravascular coagulation", "Oncology and Hematology"],
+            ["Cardiomyopathies and myocarditis", "Disorders of the Cardiovascular System"],
+            ["Coma and altered sensorium: approach", "Critical Care Medicine"],
+            ["Hypoglycaemia", "Endocrinology and Metabolism"],
+            ["Myasthenia gravis and neuromuscular junction disorders", "Neurologic Disorders"],
+            ["Urinary tract infections", "Disorders of the Kidney and Urinary Tract"],
+            ["Bronchiectasis and lung abscess", "Disorders of the Respiratory System"],
+            ["Malabsorption and chronic diarrhoea", "Disorders of the Gastrointestinal System"],
+            ["Enteric fever", "Infectious Diseases"],
+            ["Approach to fever of unknown origin", "Cardinal Manifestations and Presentation of Diseases"],
+            ["Thrombocytopenia and immune thrombocytopenia", "Oncology and Hematology"],
+            ["Pericardial diseases", "Disorders of the Cardiovascular System"],
+            ["Paracetamol, sedative and other drug overdoses", "Poisoning, Drug Overdose, and Envenomation"],
+            ["Dyslipidaemia", "Endocrinology and Metabolism"],
+            ["Headache and migraine", "Neurologic Disorders"],
+            ["Haemorrhagic stroke and subarachnoid haemorrhage", "Neurologic Disorders"],
+            ["Lung cancer", "Oncology and Hematology"],
+            ["Peptic ulcer disease", "Disorders of the Gastrointestinal System"],
+            ["Tetanus, rabies and other neurological infections", "Infectious Diseases"],
+            ["Osteoarthritis and osteoporosis", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Myeloproliferative neoplasms and chronic myeloid leukaemia", "Oncology and Hematology"],
+            ["Syncope and bradyarrhythmias", "Cardinal Manifestations and Presentation of Diseases"],
+            ["Obstructive sleep apnoea and respiratory failure", "Disorders of the Respiratory System"],
+            ["Peripheral neuropathies", "Neurologic Disorders"],
+            ["Dementia and delirium", "Neurologic Disorders"],
+            ["Hepatic encephalopathy and acute liver failure", "Disorders of the Gastrointestinal System"],
+            ["Fungal infections in the immunocompromised", "Infectious Diseases"],
+            ["Sarcoidosis and amyloidosis", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Oncologic emergencies", "Oncology and Hematology"],
+            ["Heat stroke and environmental emergencies", "Poisoning, Drug Overdose, and Envenomation"],
+            ["Hyperaldosteronism, phaeochromocytoma and secondary hypertension", "Endocrinology and Metabolism"],
+            ["Polycystic kidney disease and tubulointerstitial diseases", "Disorders of the Kidney and Urinary Tract"],
+            ["Anaphylaxis and drug allergy", "Immune-Mediated, Inflammatory, and Rheumatologic Disorders"],
+            ["Approach to oedema and ascites", "Cardinal Manifestations and Presentation of Diseases"],
+            ["Antimicrobial stewardship and resistant infections", "Infectious Diseases"],
+            ["Motor neuron disease and spinal cord disorders", "Neurologic Disorders"],
+            ["Pulmonary hypertension", "Disorders of the Respiratory System"],
+            ["Approach to chest pain and dyspnoea", "Cardinal Manifestations and Presentation of Diseases"],
+            ["Anaemia in chronic disease and transfusion medicine", "Oncology and Hematology"],
+            ["Geriatric medicine: falls, frailty and polypharmacy", "The Profession of Medicine"]];
+
+  // ---------- who ----------
+
+  /** 9.86 (the admin's rule): only the admin (who makes the app) makes, uploads, edits, moves and removes decks. */
+  static canMake(c) {
+    return Cloud.isOwner(c);
+  }
+
+  /** The admin and faculty see the coming decks and tick them checked; everyone else only views the released ones. */
+  /** The line on every deck: the slides are the department's, to view inside the app only. */
+  static COPYRIGHT = "© Department of Medicine, Tirunelveli Medical College. View only inside TVMCHMED: no download, copying, sharing or screenshots.";
+
+  static canCheck(c) {
+    return Cloud.isAdmin(c) || SessionAttendance.canRun(c);
+  }
+
+  /** The deck's uploaded file is a PDF (shown page by page inside the Android app). */
+  static isPdf(d) {
+    return Ui.nz(d.get("file")).toLowerCase().endsWith(".pdf");
+  }
+
+  /** The file starts like a PDF ("%PDF"), whatever its name. */
+  static looksPdf(f) {
+    try {
+      const i = new FileInputStream(f);
+      const b = new Int8Array(4);
+      const n = i.read(b);
+      i.close();
+      return n === 4 && b[0] === 37 && b[1] === 80 && b[2] === 68 && b[3] === 70;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ---------- which deck shows ----------
+
+  static released(d, today, now) {
+    const day = Ui.nz(d.get("day"));
+    return day.compareTo(today.toString()) < 0 || day.equals(today.toString()) && !now.isBefore(Harrison.RELEASE);
+  }
+
+  /** Today's deck once it is out (7 AM), else null. */
+  static today(db) {
+    const d = db.row("SELECT * FROM " + Harrison.TABLE + " WHERE day=? ORDER BY id DESC LIMIT 1", Dates.today().toString());
+    return d != null && Harrison.released(d, Dates.today(), Dates.time()) ? d : null;
+  }
+
+  /** The decks this person can see: everything out so far, and the coming ones for the admin and faculty; newest day first. */
+  static list(c, db) {
+    const out = [];
+    const all = Harrison.canCheck(c);
+    const t = Dates.today();
+    const now = Dates.time();
+    for (const d of db.rows("SELECT * FROM " + Harrison.TABLE + " ORDER BY day DESC, id DESC"))
+      if (all || Harrison.released(d, t, now)) out.push(d);
+    return out;
+  }
+
+  static upcoming(db) {
+    return db.num("SELECT COUNT(*) FROM " + Harrison.TABLE + " WHERE day>?", Dates.today().toString());
+  }
+
+  static homeLine(db) {
+    const d = Harrison.today(db);
+    return d != null ? Ui.nz(d.get("topic")) : "A Harrison's deck every day";
+  }
+
+  // ---------- what to make next ----------
+
+  /** The day the next deck goes on: today if it has none, else the day after the last one planned. */
+  static nextDay(db) {
+    const t = Dates.today();
+    const r = db.row("SELECT MAX(day) AS d FROM " + Harrison.TABLE + " WHERE day>=?", t.toString());
+    const last = r == null ? null : Dates.parse(r.get("d"));
+    return last == null ? t : last.plusDays(1);
+  }
+
+  /** The next topic in the list not made yet; once all are made, the one made longest ago. */
+  static nextTopic(db, skip) {
+    let oldest = null;
+    let oldDay = null;
+    for (const t of Harrison.TOPICS) {
+      if (skip != null && skip.contains(t[0])) continue;
+      const r = db.row("SELECT MAX(day) AS d FROM " + Harrison.TABLE + " WHERE topic=?", t[0]);
+      const d = r == null ? null : r.get("d");
+      if (d == null || d.isEmpty()) return t;
+      if (oldDay == null || d.compareTo(oldDay) < 0) {
+        oldDay = d;
+        oldest = t;
+      }
+    }
+    return oldest != null ? oldest : Harrison.TOPICS[0];
+  }
+
+  // ---------- the AI request ----------
+
+  /** The department's reference shelf (9.83, the admin's list): the AI uses its own knowledge plus these and the latest guidelines. */
+  static BOOKS = ["Harrison's Principles of Internal Medicine (21st edition)", "CMDT: Current Medical Diagnosis and Treatment (latest edition)",
+      "Fishman's Pulmonary Diseases and Disorders", "Sleisenger and Fordtran's Gastrointestinal and Liver Disease",
+      "Bradley and Daroff's Neurology in Clinical Practice", "Braunwald's Heart Disease", "Williams Textbook of Endocrinology",
+      "Schrier's Diseases of the Kidney and Urinary Tract", "Brenner and Rector's The Kidney"];
+
+  /** The specialty textbooks that fit a Harrison's part, to lean on most. */
+  static specialty(part) {
+    const p = Ui.nz(part).toLowerCase();
+    if (p.contains("cardio")) return "Braunwald's Heart Disease";
+    if (p.contains("respirat")) return "Fishman's Pulmonary Diseases and Disorders";
+    if (p.contains("gastro")) return "Sleisenger and Fordtran's Gastrointestinal and Liver Disease";
+    if (p.contains("neuro")) return "Bradley and Daroff's Neurology in Clinical Practice";
+    if (p.contains("endocrin")) return "Williams Textbook of Endocrinology";
+    if (p.contains("kidney")) return "Schrier's Diseases of the Kidney and Brenner and Rector's The Kidney";
+    return "";
+  }
+
+  /** What every request says about the sources, whichever way the deck is made. */
+  static sources(part) {
+    let b = "";
+    for (const k of Harrison.BOOKS) b += (b.length === 0 ? "" : "; ") + k;
+    const sp = Harrison.specialty(part);
+    return "Use your own knowledge plus the standard textbooks: " + b + (sp.length === 0 ? "" : " (lean most on " + sp + " for this topic)")
+        + ", and the latest available guidelines on this topic (name the society and year only when you are sure, e.g. a current ESC, ADA, KDIGO, "
+        + "GOLD, GINA, IDSA, AASLD or Indian (ICMR, API) guideline). Where they differ, follow the newest guideline and say so. "
+        + "Write in your own words: never copy or quote any book's text. Do not invent numbers, trials or guideline years you are not sure of.";
+  }
+
+  /** The short source line on the cover and the screen. */
+  static sourceLine(part) {
+    const sp = Harrison.specialty(part);
+    return "Harrison's 21e · CMDT" + (sp.length === 0 ? "" : " · " + sp) + " · latest guidelines";
+  }
+
+  static system() {
+    return "You write accurate, exam-focused, crisp teaching slides for MD General Medicine postgraduates in India, the best a professor of medicine "
+        + "would make. Plain text only, no markdown tables, no bold or italics.";
+  }
+
+  static prompt(topic, part) {
+    return Harrison.MARK + " a teaching deck on \"" + topic + "\" for MD General Medicine postgraduates (Harrison's part: " + part + ").\n\n"
+        + Harrison.sources(part) + "\n\n"
+        + "Make 16 slides with these titles, in this order:\n"
+        + "1. Why it matters\n2. Definition and classification\n3. Pathophysiology\n4. Causes and risk factors\n5. Clinical features\n"
+        + "6. Examination clues\n7. Investigations\n8. Diagnosis and criteria\n9. Diagnostic algorithm\n10. Differential diagnosis\n"
+        + "11. Management: acute\n12. Management algorithm\n13. Management: long term and prevention\n14. Complications and prognosis\n"
+        + "15. What the latest guidelines say\n16. High-yield exam and viva points\n"
+        + "Then a slide titled \"Test yourself\" with 5 single-best-answer MCQs (options A to D) and a slide titled \"Answers\" with each answer "
+        + "and a one-line reason.\n\n"
+        + "Rules: crisp points, no filler. On the two algorithm slides write each step as a point with arrows, "
+        + "e.g. \"Suspected X → test Y → if positive: Z / if negative: W\". Where Indian practice or tropical causes matter, add a point starting "
+        + "\"India:\". Use generic drug names with usual adult doses only when you are sure.\n\n"
+        + "Write it exactly in this form and nothing else:\n"
+        + "## Why it matters\n- point\n- point\n## Definition and classification\n- point\n...";
+  }
+
+  /** The AI's answer as slides text ("## Title" and "- point" lines), or null when it does not look like a deck. */
+  static parse(answer) {
+    const t = Ui.nz(answer).split("\r").join("");
+    let b = "";
+    let started = false;
+    for (const raw of t.jsplit("\n")) {
+      const l = raw.trim().replaceAllRx("\\*\\*", "").replaceAllRx("^#{1,6}\\s*", "## ");
+      if (l.startsWith("## ")) {
+        const title = l.substring(3).replaceAllRx("^(slide\\s*)?\\d+[.):]?\\s*", "").replaceAllRx("^[:\\-–]\\s*", "").trim();
+        if (title.isEmpty()) continue;
+        started = true;
+        b += (b.length === 0 ? "" : "\n") + "## " + title;
+      } else if (started && !l.isEmpty()) {
+        const p = l.replaceAllRx("^[•\\-*▪◦]\\s*", "").trim();
+        if (!p.isEmpty()) b += "\n- " + p;
+      }
+    }
+    return Harrison.slides(b).length >= 5 ? b : null;
+  }
+
+  // ---------- made in Claude Pro (9.81) ----------
+
+  /** The request for Claude Pro (claude.ai or the Claude app), which makes a real .pptx file to download and upload here. */
+  static proPrompt(topic, part) {
+    return "Please make a PowerPoint file (.pptx, 16:9) that I can download: a teaching deck on \"" + topic + "\" for MD General Medicine "
+        + "postgraduates in India. Make it the best, most unique deck you have ever made: very colourful, crisp and to the point.\n\n"
+        + "SOURCES: " + Harrison.sources(part) + "\n\n"
+        + "SLIDES: 1. Title slide: \"Harrison's topic of the day\", the topic, \"Department of Medicine, Tirunelveli Medical College\" and the line "
+        + "\"Sources: " + Harrison.sourceLine(part) + "\". Then one slide each: Why it matters; Definition and classification; Pathophysiology; "
+        + "Causes and risk factors; Clinical features; Examination clues; Investigations; Diagnosis and criteria; Diagnostic algorithm; "
+        + "Differential diagnosis; Management: acute; Management algorithm; Management: long term and prevention; Complications and prognosis; "
+        + "What the latest guidelines say; High-yield exam and viva points; Test yourself (5 single-best-answer MCQs, options A to D); "
+        + "Answers (each with a one-line reason).\n\n"
+        + "VISUALS: real flowcharts drawn with shapes and arrows for the diagnostic and management algorithms (decision diamonds, colour-coded "
+        + "yes/no paths); a pathophysiology diagram (cycle or cascade with arrows); a classification tree or comparison table; a clean "
+        + "differential-diagnosis table; icons for symptoms and signs; a red-flag box for emergencies. Each slide has a vivid but readable colour "
+        + "theme (deep navy #0D3B66 and amber #F6A623 as the base, plus a fresh accent colour for each section), large text, and lots of space.\n\n"
+        + "RULES: add a point starting \"India:\" where Indian practice or tropical causes matter. Generic drug names, doses only when you are sure. "
+        + "A small source note at the bottom of the slides that use a guideline (society and year). Make the .pptx file itself, not just the text. Then also give me the same deck exported as a PDF file.";
+  }
+
+  /** The text of each slide of a .pptx (first paragraph = title, the rest = points), in the deck's "## Title" form; null if none. */
+  static readPptx(f) {
+    const xml = new Map();
+    try {
+      const z = new ZipInputStream(new FileInputStream(f));
+      try {
+        let e;
+        while ((e = z.getNextEntry()) != null) {
+          const m = /^ppt\/slides\/slide(\d+)\.xml$/.exec(e.getName());
+          if (m) xml.set(parseInt(m[1], 10), new TextDecoder("utf-8").decode(Extract.readAll(z)));
+        }
+      } finally {
+        z.close();
+      }
+    } catch (e) {
+      return null;
+    }
+    const keys = [...xml.keys()].sort((a, b) => a - b);
+    const all = [];
+    const seen = new Map();
+    for (const k of keys) {
+      const x = xml.get(k);
+      const paras = [];
+      for (const pm of x.match(/<a:p[ >][\s\S]*?<\/a:p>/g) || []) {
+        let t = "";
+        const re = /<a:t>([^<]*)<\/a:t>/g;
+        let tm;
+        while ((tm = re.exec(pm)) != null) t += tm[1];
+        const s = Harrison.unescape(t).trim();
+        if (s.length > 0 && !/^\d+(\s*\/\s*\d+)?$/.test(s)) paras.push(s);
+      }
+      all.push(paras);
+      for (const p of new Set(paras)) seen.set(p, (seen.get(p) || 0) + 1);
+    }
+    let b = "";
+    for (const raw of all) {
+      // a footer repeated on most slides is not a point
+      const paras = raw.filter(p => all.length < 3 || seen.get(p) * 2 <= all.length);
+      if (paras.length === 0) continue;
+      b += (b.length === 0 ? "" : "\n") + "## " + paras[0].split("\n").join(" ");
+      for (let i = 1; i < paras.length; i++) b += "\n- " + paras[i];
+    }
+    return b.length === 0 ? null : b;
+  }
+
+  static unescape(s) {
+    return s.split("&lt;").join("<").split("&gt;").join(">").split("&quot;").join("\"").split("&apos;").join("'").split("&#39;").join("'").split("&amp;").join("&");
+  }
+
+  /** The topic of an uploaded deck: the first slide's title, or the next topic. */
+  static topicOf(slides, db) {
+    for (const s of Harrison.slides(slides)) {
+      const t = s.title.replaceAllRx("(?i)harrison'?s topic of the day[:\\s-]*", "").trim();
+      if (!t.isEmpty()) return t;
+    }
+    return Harrison.nextTopic(db, null)[0];
+  }
+
+  /** Puts an uploaded PowerPoint on a deck (its slides text taken from the file so the viewer and WhatsApp still work). */
+  static setFile(db, id, rel, name, slides) {
+    const cv = new ContentValues();
+    cv.put("file", rel);
+    cv.put("file_name", name);
+    if (slides != null) cv.put("slides", slides);
+    cv.put("made_with", rel.toLowerCase().endsWith(".pdf") ? "Claude Pro (uploaded PDF)" : "Claude Pro (uploaded PowerPoint)");
+    cv.put("status", "Draft");
+    cv.put("checked_by", "");
+    db.update(Harrison.TABLE, cv, id);
+  }
+
+  /** The Harrison's part of a topic in the list, or "". */
+  static partOf(topic) {
+    for (const t of Harrison.TOPICS) if (t[0].equalsIgnoreCase(topic)) return t[1];
+    return "";
+  }
+
+  static hasFile(d) {
+    return !Ui.nz(d.get("file")).isEmpty();
+  }
+
+  // ---------- the slides ----------
+
+  static slides(text) {
+    const out = [];
+    let cur = null;
+    for (const raw of Ui.nz(text).jsplit("\n")) {
+      const l = raw.trim();
+      if (l.startsWith("## ")) {
+        cur = new Harrison.Slide(l.substring(3).trim());
+        out.push(cur);
+      } else if (cur != null && !l.isEmpty()) cur.points.push(l.replaceAllRx("^[•\\-*▪◦]\\s*", "").trim());
+    }
+    return out;
+  }
+
+  /** Saves a new deck on a day. */
+  static add(c, db, topic, part, day, slides, by) {
+    const cv = new ContentValues();
+    cv.put("day", day.toString());
+    cv.put("topic", topic);
+    cv.put("part", part);
+    cv.put("slides", slides);
+    cv.put("status", "Draft");
+    cv.put("made_by", Ui.nz(Cloud.prefs(c).getString("name", "")));
+    cv.put("made_with", by);
+    cv.put("made_on", Dates.today().toString());
+    return db.insert(Harrison.TABLE, cv);
+  }
+
+  static check(c, db, id, on) {
+    const cv = new ContentValues();
+    cv.put("status", on ? "Checked" : "Draft");
+    cv.put("checked_by", on ? Ui.nz(Cloud.prefs(c).getString("name", "")) : "");
+    db.update(Harrison.TABLE, cv, id);
+  }
+
+  static checked(d) {
+    return "Checked" === d.get("status");
+  }
+
+  static source(d) {
+    return "Sources: " + Harrison.sourceLine(d.get("part"));
+  }
+
+  static checkLine(d) {
+    return Harrison.checked(d) ? "Checked by " + (Ui.nz(d.get("checked_by")).isEmpty() ? "faculty" : Ui.nz(d.get("checked_by")))
+      : "AI-made, not yet checked by faculty";
+  }
+
+  // ---------- PowerPoint and WhatsApp ----------
+
+  /** Slides of more than 8 points are split, so the font stays readable. */
+  static pages(d) {
+    const out = [];
+    const cover = new Pptx.Page();
+    cover.cover = true;
+    cover.kicker = "HARRISON'S TOPIC OF THE DAY";
+    cover.title = Ui.nz(d.get("topic"));
+    const day = Dates.parse(d.get("day"));
+    cover.body = Harrison.source(d) + "\n" + (day == null ? "" : Dates.nice(day) + "\n") + Harrison.checkLine(d);
+    out.push(cover);
+    for (const s of Harrison.slides(d.get("slides"))) {
+      const parts = Math.max(1, Math.trunc((s.points.length + 7) / 8));
+      for (let i = 0; i < parts; i++) {
+        const pg = new Pptx.Page();
+        pg.title = s.title + (parts > 1 ? " (" + (i + 1) + "/" + parts + ")" : "");
+        let b = "";
+        for (let k = i * 8; k < Math.min(s.points.length, (i + 1) * 8); k++) b += (b.length === 0 ? "" : "\n") + s.points[k];
+        pg.body = b;
+        out.push(pg);
+      }
+    }
+    return out;
+  }
+
+  static fileBase(d) {
+    let t = Ui.nz(d.get("topic")).replaceAllRx("[^A-Za-z0-9]+", "_").replaceAllRx("^_|_$", "");
+    if (t.length > 40) t = t.substring(0, 40);
+    return "Harrison_" + Ui.nz(d.get("day")) + "_" + t;
+  }
+
+  static pptx(c, d) {
+    return Pptx.write(c, Harrison.fileBase(d), Harrison.pages(d), "TVMCHMED  ·  Department of Medicine, Tirunelveli Medical College  ·  " + Harrison.checkLine(d), SummaryExport.logoPng(c, 300));
+  }
+
+  static asText(d) {
+    let b = "";
+    b += "📘 Harrison's topic of the day: " + Ui.nz(d.get("topic")) + "\n" + Harrison.source(d) + "\n\n";
+    for (const s of Harrison.slides(d.get("slides"))) {
+      b += "*" + s.title + "*\n";
+      for (const p of s.points) b += "• " + p + "\n";
+      b += "\n";
+    }
+    b += Harrison.checkLine(d) + ". TVMCHMED, Dept. of Medicine, TVMC";
+    return b;
+  }
+}
+
+Harrison.Slide = class {
+  constructor(title) {
+    this.title = title;
+    this.points = [];
+  }
+};
+;
+/* ---- app/HarrisonActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Harrison's topic of the day (9.80): today's deck one slide at a time, earlier decks, and for the admin and faculty the month ahead. */
+class HarrisonActivity extends Base {
+  static WAIT = "harrison_wait";
+  /** Set while a request is in Claude Pro, waiting for its PowerPoint to be uploaded. */
+  static WAIT_PRO = "harrison_pro_wait";
+  static REQ_PPTX = 9810;
+  /** True while decks are being made, so a second tap does not start another run. */
+  static making = false;
+
+  constructor() {
+    super();
+    this.deck = -1;
+    this.slide = 0;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Harrison's topic of the day");
+    this.subtitle = "A teaching deck every day at 7 AM";
+    this.headerColor(Harrison.COLOR);
+    this.deck = Ui.toLong(this.getIntent().getStringExtra("id"), -1);
+  }
+
+  liveRefresh() {
+    return false;
+  }
+
+  current(all) {
+    if (this.deck > 0) for (const d of all) if (String(this.deck) === String(d.get("id"))) return d;
+    const t = Harrison.today(this.db);
+    if (t != null) return t;
+    for (const d of all) if (Harrison.released(d, Dates.today(), Dates.time())) return d;
+    // the admin and faculty, before the first deck is out: the next one to come, to check it
+    for (let i = all.length - 1; i >= 0; i--) if (Ui.nz(all[i].get("day")).compareTo(Dates.today().toString()) >= 0) return all[i];
+    return null;
+  }
+
+  render() {
+    const COLOR = Harrison.COLOR;
+    const all = Harrison.list(this, this.db);
+    const d = this.current(all);
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(COLOR), 20));
+    if (d == null) {
+      hero.addView(Ui.tv(this, "📘  No deck yet", 20, Color.WHITE, true));
+      hero.addView(Ui.tv(this, Harrison.canMake(this) ? "Make the decks for the coming days below. Each one shows for everyone at 7 AM on its day."
+        : "The first deck shows here at 7 AM once the faculty have planned them.", 13, 0xE6FFFFFF, false));
+      page.addView(hero);
+    } else {
+      const day = Dates.parse(d.get("day"));
+      const out = Harrison.released(d, Dates.today(), Dates.time());
+      const when = day == null ? "" : day.equals(Dates.today()) ? "Today" : Dates.nice(day);
+      hero.addView(Ui.tv(this, "📘  " + when + (out ? "" : "  ·  shows at 7 AM"), 13, 0xE6FFFFFF, true));
+      hero.addView(Ui.tv(this, Ui.nz(d.get("topic")), 21, Color.WHITE, true));
+      hero.addView(Ui.tv(this, Harrison.source(d), 12, 0xD9FFFFFF, false));
+      const chk = Ui.tv(this, (Harrison.checked(d) ? "✔  " : "⚠  ") + Harrison.checkLine(d), 12, Harrison.checked(d) ? 0xFFBBF7D0 : 0xFFFDE68A, true);
+      hero.addView(chk);
+      Ui.margins(chk, 0, 4, 0, 0);
+      if (Harrison.hasFile(d)) hero.addView(Ui.tv(this, Harrison.isPdf(d) ? "📤  Slides made in Claude" : "📤  PowerPoint made in Claude Pro", 12, 0xFFFFE4E6, true));
+      // 9.86: only the admin can take the deck out of the app (PowerPoint/PDF file, WhatsApp text); members read the slides here
+      if (Harrison.canMake(this)) {
+        const row = Ui.buttonRow(this, this.white(Harrison.isPdf(d) ? "PDF" : "PowerPoint", { onClick: (v) => { if (Harrison.isPdf(d)) Store.openWith(this, d.get("file")); else this.pptx(d); } }),
+          this.white("WhatsApp", { onClick: (v) => { this.shareText(d); } }));
+        hero.addView(row);
+        Ui.margins(row, 0, 12, 0, 0);
+      } else if (Harrison.isPdf(d)) {
+        hero.addView(Ui.tv(this, "The full colour slides are in the TVMCHMED Android app.", 12, 0xE6FFFFFF, false));
+      }
+      const cr = Ui.tv(this, Harrison.COPYRIGHT, 11, 0xCCFFFFFF, false);
+      hero.addView(cr);
+      Ui.margins(cr, 0, 10, 0, 0);
+      page.addView(hero);
+      if (!Harrison.isPdf(d) || Harrison.slides(d.get("slides")).length > 0) page.addView(this.viewer(d));
+    }
+
+    if (Harrison.canMake(this)) page.addView(this.tools(d));
+    else if (d != null && Harrison.canCheck(this)) page.addView(this.checkCard(d));
+
+    page.addView(Ui.heading(this, "All decks · " + all.length, COLOR));
+    if (all.length === 0) page.addView(this.emptyNote("No decks yet."));
+    for (const x of all) {
+      const c = Ui.card(this);
+      const day = Dates.parse(x.get("day"));
+      const out = Harrison.released(x, Dates.today(), Dates.time());
+      const top = Ui.h(this);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      top.addView(Ui.tv(this, day == null ? "" : (day.equals(Dates.today()) ? "Today" : Dates.nice(day)), 12, out ? COLOR : Ui.MUTED, true), Ui.weight(1));
+      top.addView(Ui.softPill(this, !out ? "Coming" : Harrison.checked(x) ? "Checked" : "Not checked", !out ? Ui.MUTED : Harrison.checked(x) ? Ui.GREEN : Ui.AMBER));
+      c.addView(top);
+      c.addView(Ui.tv(this, Ui.nz(x.get("topic")), 15, Ui.TEXT, true));
+      c.addView(Ui.muted(this, Harrison.slides(x.get("slides")).length + " slides" + (Ui.nz(x.get("part")).isEmpty() ? "" : "  ·  " + x.get("part"))
+        + (Harrison.hasFile(x) ? "  ·  📤 Claude Pro" : "")));
+      if (d != null && String(x.get("id")) === String(d.get("id"))) c.setBackground(Ui.outline(this, Ui.mix(COLOR, Color.WHITE, 0.92), COLOR, 16));
+      c.setOnClickListener({
+        onClick: (v) => {
+          this.deck = Long.parseLong(x.get("id"));
+          this.slide = 0;
+          this.render();
+        }
+      });
+      Ui.ripple(c, 0x22000000);
+      page.addView(c);
+    }
+    const note = Ui.muted(this, "The slides are written by AI from its own knowledge with Harrison's, CMDT, the specialty textbooks and the latest guidelines, in its own words (not the books' text). "
+      + "AI can make mistakes: read with the book, and faculty tick each deck once checked.");
+    Ui.margins(note, 16, 10, 16, 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+
+  /** One slide at a time, like the projector. */
+  viewer(d) {
+    const COLOR = Harrison.COLOR;
+    const ss = Harrison.slides(d.get("slides"));
+    const c = Ui.card(this);
+    if (ss.length === 0) {
+      c.addView(Ui.body(this, "This deck has no slides."));
+      return c;
+    }
+    if (this.slide >= ss.length) this.slide = ss.length - 1;
+    const s = ss[this.slide];
+    const band = Ui.h(this);
+    band.setGravity(Gravity.CENTER_VERTICAL);
+    band.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+    band.setBackground(Ui.round(this, 0xFF0D3B66, 12));
+    band.addView(Ui.tv(this, s.title, 17, Color.WHITE, true), Ui.weight(1));
+    band.addView(Ui.tv(this, (this.slide + 1) + " / " + ss.length, 12, 0xFFF6A623, true));
+    c.addView(band);
+    for (const p of s.points) {
+      const india = p.startsWith("India:");
+      const t = Ui.tv(this, "•  " + p, 15, india ? 0xFF9A3412 : Ui.TEXT, india);
+      c.addView(t);
+      Ui.margins(t, 0, 8, 0, 0);
+    }
+    const nav = Ui.buttonRow(this, Ui.outlineButton(this, "‹  Previous", COLOR, this.slide === 0 ? null : {
+      onClick: (v) => {
+        this.slide--;
+        this.render();
+      }
+    }), Ui.outlineButton(this, "Next  ›", COLOR, this.slide >= ss.length - 1 ? null : {
+      onClick: (v) => {
+        this.slide++;
+        this.render();
+      }
+    }));
+    c.addView(nav);
+    Ui.margins(nav, 0, 14, 0, 0);
+    return c;
+  }
+
+  /** For the admin and faculty: check, edit, move or remove this deck, and make the coming days' decks. */
+  tools(d) {
+    const COLOR = Harrison.COLOR;
+    const db = this.db;
+    const c = Ui.card(this);
+    c.addView(Ui.tv(this, "🗓  Planning (admin only)", 15, COLOR, true));
+    const ahead = Harrison.upcoming(db);
+    const next = Harrison.nextDay(db);
+    c.addView(Ui.body(this, ahead === 0 ? "No decks planned after today." : ahead + (ahead === 1 ? " deck" : " decks") + " planned, up to " + Dates.nice(next.minusDays(1)) + "."
+      + (ahead < 7 ? " Make more so the days do not run out." : "")));
+    const make = Ui.button(this, "✨  Make decks for the coming days", COLOR, { onClick: (v) => { this.chooseCount(); } });
+    c.addView(make);
+    Ui.margins(make, 0, 8, 0, 0);
+    const one = Ui.outlineButton(this, "+ One deck on a topic you choose", COLOR, { onClick: (v) => { this.chooseTopic(); } });
+    c.addView(one);
+    Ui.margins(one, 0, 8, 0, 0);
+    // 9.81: Claude Pro outside the app makes the real PowerPoint; it is uploaded here as the day's deck
+    const pro = Ui.outlineButton(this, "🟠  Make it in Claude Pro (claude.ai)", 0xFFC2410C, { onClick: (v) => { this.claudePro(); } });
+    c.addView(pro);
+    Ui.margins(pro, 0, 8, 0, 0);
+    const proTopic = AiRun.waiting(this, HarrisonActivity.WAIT_PRO);
+    const up = proTopic.isEmpty() ? Ui.outlineButton(this, "📤  Upload a PowerPoint (.pptx) or its PDF", COLOR, null)
+      : Ui.button(this, "📤  Upload the PowerPoint or PDF Claude made", 0xFFC2410C, null);
+    up.setOnClickListener({ onClick: (v) => { Store.pick(this, [Harrison.PPTX_MIME, "application/vnd.ms-powerpoint", "application/pdf", "application/octet-stream"], HarrisonActivity.REQ_PPTX); } });
+    c.addView(up);
+    Ui.margins(up, 0, 8, 0, 0);
+    if (!proTopic.isEmpty()) c.addView(Ui.muted(this, "In Claude: send the request, download the .pptx it makes, then tap Upload (on the Android app: Share → TVMCHMED deck). Topic: " + proTopic));
+    c.addView(Ui.muted(this, "Upload the PowerPoint first (its text becomes the slides), then its PDF: members see the PDF page by page inside the Android app and cannot download, share or screenshot it."));
+    const app = AiRun.waiting(this, HarrisonActivity.WAIT);
+    if (!app.isEmpty()) {
+      const paste = Ui.button(this, "📋  Paste " + app + "'s answer", Ui.GREEN, {
+        onClick: (v) => {
+          const t = AiRun.paste(this, HarrisonActivity.WAIT, Harrison.MARK);
+          if (t != null) this.gotPasted(t, app);
+        }
+      });
+      c.addView(paste);
+      Ui.margins(paste, 0, 8, 0, 0);
+    }
+    if (d != null) {
+      const h = Ui.tv(this, "This deck: " + Ui.nz(d.get("topic")), 13, Ui.MUTED, true);
+      c.addView(h);
+      Ui.margins(h, 0, 14, 0, 4);
+      const id = Long.parseLong(d.get("id"));
+      c.addView(Ui.buttonRow(this, Ui.outlineButton(this, Harrison.checked(d) ? "Untick checked" : "✔ Mark checked", Ui.GREEN, {
+        onClick: (v) => {
+          Harrison.check(this, db, id, !Harrison.checked(d));
+          this.render();
+        }
+      }), Ui.outlineButton(this, "✎ Edit slides", COLOR, { onClick: (v) => { this.edit(d); } })));
+      const r2 = Ui.buttonRow(this, Ui.outlineButton(this, "Change day", COLOR, { onClick: (v) => { this.changeDay(d); } }),
+        Ui.outlineButton(this, "Remove", Ui.RED, {
+          onClick: (v) => {
+            Ui.confirm(this, "Remove this deck?", Ui.nz(d.get("topic")) + " is removed for everyone.", "Remove", {
+              run: () => {
+                db.delete(Harrison.TABLE, id);
+                if (Harrison.hasFile(d)) db.forgetFile(d.get("file"));
+                this.deck = -1;
+                this.render();
+              }
+            });
+          }
+        }));
+      c.addView(r2);
+      Ui.margins(r2, 0, 8, 0, 0);
+    }
+    return c;
+  }
+
+  chooseCount() {
+    if (HarrisonActivity.making) {
+      Ui.toast(this, "Decks are being made: keep the app open");
+      return;
+    }
+    if (Ai.engines(this).isEmpty() && AiRun.fake == null) {
+      new AlertDialog.Builder(this).setTitle("Make decks ahead")
+        .setMessage("Making many decks at once needs a Claude key or a free Gemini key in Settings → AI. Without one, make one deck at a time "
+          + "through a free AI app (copy and paste).")
+        .setPositiveButton("One deck now", { onClick: (di, w) => { this.one(Harrison.nextTopic(this.db, null)); } })
+        .setNeutralButton("Open Settings", { onClick: (di, w) => { this.startActivity(new Intent(this, SettingsActivity)); } })
+        .setNegativeButton("Cancel", null).show();
+      return;
+    }
+    const n = [7, 14, 30];
+    new AlertDialog.Builder(this).setTitle("Make decks for how many days?")
+      .setItems(["7 days", "14 days", "30 days (a month)"], { onClick: (di, w) => { this.makeAhead(n[w]); } })
+      .setNegativeButton("Cancel", null).show();
+  }
+
+  /** Makes n decks one after another on the coming free days, with the next topics in the list. */
+  makeAhead(n) {
+    const db = this.db;
+    const engine = AiRun.fake != null ? "Test" : Ai.engines(this).get(0);
+    const wait = new AlertDialog.Builder(this).setTitle("✨ Making the decks")
+      .setMessage("Deck 1 of " + n + "… Keep the app open: each takes about a minute.").setCancelable(false).show();
+    HarrisonActivity.making = true;
+    const job = {
+      run: () => {
+        const made = [];
+        let err = null;
+        for (let i = 0; i < n; i++) {
+          const k = i;
+          const t = Harrison.nextTopic(db, made);
+          this.runOnUiThread({
+            run: () => { try { wait.setMessage("Deck " + (k + 1) + " of " + n + "… Keep the app open: each takes about a minute."); } catch (ignored) { } }
+          });
+          try {
+            const ans = AiRun.fake != null ? AiRun.fake.answer(Harrison.system(), Harrison.prompt(t[0], t[1]))
+              : Ai.single(this, engine, Harrison.system(), Harrison.prompt(t[0], t[1]), 8000);
+            const s = Harrison.parse(ans);
+            if (s == null) {
+              err = "The answer for " + t[0] + " did not look like slides.";
+              break;
+            }
+            Harrison.add(this, db, t[0], t[1], Harrison.nextDay(db), s, engine);
+            made.push(t[0]);
+          } catch (f) {
+            err = f instanceof Ai.Failure ? f.getMessage() : "Could not get an answer: " + f.getMessage();
+            break;
+          }
+        }
+        const done = made.length;
+        const error = err;
+        this.runOnUiThread({
+          run: () => {
+            HarrisonActivity.making = false;
+            try { wait.dismiss(); } catch (ignored) { }
+            if (this.isFinishing()) return;
+            Sync.kick(this);
+            this.render();
+            new AlertDialog.Builder(this).setTitle(done + (done === 1 ? " deck made" : " decks made"))
+              .setMessage((done > 0 ? "They show for everyone at 7 AM on their days. Faculty can check and correct each one here before then." : "")
+                + (error == null ? "" : (done > 0 ? "\n\n" : "") + "Stopped: " + error))
+              .setPositiveButton("OK", null).show();
+          }
+        });
+      }
+    };
+    if (AiRun.fake != null) job.run();
+    else new Thread(job).start();
+  }
+
+  chooseTopic() {
+    const names = ["✎ Type my own topic"];
+    for (const t of Harrison.TOPICS) names.push(t[0]);
+    new AlertDialog.Builder(this).setTitle("Topic").setItems(names, {
+      onClick: (di, w) => {
+        if (w > 0) {
+          this.one(Harrison.TOPICS[w - 1]);
+          return;
+        }
+        const e = new EditText(this);
+        e.setHint("e.g. Hepatorenal syndrome");
+        e.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        new AlertDialog.Builder(this).setTitle("Your topic").setView(e)
+          .setPositiveButton("Make", {
+            onClick: (d2, w2) => {
+              const t = e.getText().toString().trim();
+              if (!t.isEmpty()) this.one([t, "the relevant part"]);
+            }
+          }).setNegativeButton("Cancel", null).show();
+      }
+    }).setNegativeButton("Cancel", null).show();
+  }
+
+  /** One deck, inside the app with a key, or through a free AI app with copy and paste. */
+  one(t) {
+    Ai.prefs(this).edit().putString("harrison_topic", t[0]).putString("harrison_part", t[1]).apply();
+    AiRun.ask(this, "Deck: " + t[0], Harrison.system(), Harrison.prompt(t[0], t[1]), 8000, HarrisonActivity.WAIT, null, {
+      got: (text, who) => { this.save(t[0], t[1], text, who); }
+    });
+    this.render();
+  }
+
+  gotPasted(text, app) {
+    this.save(Ai.prefs(this).getString("harrison_topic", Harrison.nextTopic(this.db, null)[0]), Ai.prefs(this).getString("harrison_part", ""), text, app + " (AI)");
+  }
+
+  save(topic, part, text, who) {
+    const s = Harrison.parse(text);
+    if (s == null) {
+      new AlertDialog.Builder(this).setTitle("No slides found").setMessage("The answer did not look like slides (\"## Title\" lines with points under them). Try again.")
+        .setPositiveButton("OK", null).show();
+      return;
+    }
+    const day = Harrison.nextDay(this.db);
+    this.deck = Harrison.add(this, this.db, topic, part, day, s, who);
+    this.slide = 0;
+    Sync.kick(this);
+    this.render();
+    Ui.toast(this, "Saved: shows for everyone on " + Dates.nice(day) + " at 7 AM");
+  }
+
+  edit(d) {
+    const e = new EditText(this);
+    e.setText(Ui.nz(d.get("slides")));
+    e.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+    e.setMinLines(10);
+    e.setTextSize(13);
+    e.setGravity(Gravity.TOP);
+    new AlertDialog.Builder(this).setTitle("Edit slides").setMessage("A line starting with ## is a slide title; the lines under it are its points.").setView(e)
+      .setPositiveButton("Save", {
+        onClick: (di, w) => {
+          const t = e.getText().toString().trim();
+          if (Harrison.slides(t).length === 0) {
+            Ui.toast(this, "Keep at least one ## slide title");
+            return;
+          }
+          const cv = new ContentValues();
+          cv.put("slides", t);
+          this.db.update(Harrison.TABLE, cv, Long.parseLong(d.get("id")));
+          this.render();
+        }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  changeDay(d) {
+    let cur = Dates.parse(d.get("day"));
+    if (cur == null) cur = Dates.today();
+    new DatePickerDialog(this, {
+      onDateSet: (p, y, m, day) => {
+        const cv = new ContentValues();
+        cv.put("day", LocalDate.of(y, m + 1, day).toString());
+        this.db.update(Harrison.TABLE, cv, Long.parseLong(d.get("id")));
+        this.render();
+      }
+    }, cur.getYear(), cur.getMonthValue() - 1, cur.getDayOfMonth()).show();
+  }
+
+  /** Copies a Claude Pro request for the next (or a chosen) topic and opens Claude. */
+  claudePro() {
+    const db = this.db;
+    const next = Harrison.nextTopic(db, null);
+    new AlertDialog.Builder(this).setTitle("Make it in Claude Pro")
+      .setMessage("The request is copied and Claude opens (app or claude.ai). Paste it if it is not there, send it, and download the PowerPoint "
+        + "Claude makes. Then come back and tap Upload: it becomes the deck for " + Dates.nice(Harrison.nextDay(db)) + ".\n\nTopic: " + next[0])
+      .setPositiveButton("Open Claude", { onClick: (di, w) => { this.toClaude(next); } })
+      .setNeutralButton("Choose topic", {
+        onClick: (di, w) => {
+          const names = Harrison.TOPICS.map(t => t[0]);
+          new AlertDialog.Builder(this).setTitle("Topic").setItems(names, { onClick: (d2, k) => { this.toClaude(Harrison.TOPICS[k]); } })
+            .setNegativeButton("Cancel", null).show();
+        }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  toClaude(t) {
+    Ai.prefs(this).edit().putString("harrison_pro_part", t[1]).apply();
+    AiRun.toApp(this, DischargeActivity.CHAT_APPS[1], Harrison.proPrompt(t[0], t[1]), null);
+    Ai.prefs(this).edit().putString(HarrisonActivity.WAIT_PRO, t[0]).apply();
+    this.render();
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req !== HarrisonActivity.REQ_PPTX || res !== RESULT_OK || data == null || data.getData() == null) return;
+    try {
+      const name = Ui.nz(Store.displayName(this, data.getData()));
+      const rel = Store.importUri(this, data.getData(), Harrison.DIR, "harrison");
+      this.uploaded(rel, name);
+    } catch (e) {
+      Ui.toast(this, "Could not read the file: " + (e && e.getMessage ? e.getMessage() : e));
+    }
+  }
+
+  /** A picked PowerPoint: a new deck on the next free day, or the slides of the deck on screen. */
+  uploaded(rel, name) {
+    const db = this.db;
+    const f = db.file(rel);
+    if (f.length() > Harrison.MAX_BYTES) {
+      f.delete();
+      Ui.toast(this, "That file is too big (over 45 MB)");
+      return;
+    }
+    if (Harrison.looksPdf(f)) {
+      this.uploadedPdf(rel, name);
+      return;
+    }
+    const slides = Harrison.readPptx(f);
+    if (slides == null) {
+      f.delete();
+      new AlertDialog.Builder(this).setTitle("Not a PowerPoint").setMessage("Upload the .pptx file Claude made (download it from Claude first).")
+        .setPositiveButton("OK", null).show();
+      return;
+    }
+    const fname = name.isEmpty() ? "Claude PowerPoint.pptx" : name;
+    const waiting = AiRun.waiting(this, HarrisonActivity.WAIT_PRO);
+    const topic = waiting.isEmpty() ? Harrison.topicOf(slides, db) : waiting;
+    const part = waiting.isEmpty() ? "" : Ai.prefs(this).getString("harrison_pro_part", "");
+    const d = this.current(Harrison.list(this, db));
+    const day = Harrison.nextDay(db);
+    const opts = ["New deck for " + Dates.nice(day) + ": " + topic];
+    if (d != null) opts.push("Replace the slides of: " + Ui.nz(d.get("topic")));
+    new AlertDialog.Builder(this).setTitle(Harrison.slides(slides).length + " slides read").setItems(opts, {
+      onClick: (di, w) => {
+        let id;
+        if (w === 0) id = Harrison.add(this, db, topic, part.isEmpty() ? Harrison.partOf(topic) : part, day, slides, "Claude Pro");
+        else id = Long.parseLong(d.get("id"));
+        Harrison.setFile(db, id, rel, fname, slides);
+        Ai.prefs(this).edit().remove(HarrisonActivity.WAIT_PRO).apply();
+        this.deck = id;
+        this.slide = 0;
+        Sync.kick(this);
+        this.render();
+        Ui.toast(this, w === 0 ? "Saved: shows for everyone on " + Dates.nice(day) + " at 7 AM" : "Slides replaced");
+      }
+    }).setNegativeButton("Cancel", { onClick: (di, w) => { db.file(rel).delete(); } }).show();
+  }
+
+  /** 9.86: a PDF of the deck: the slides members view inside the Android app (the PowerPoint's text stays for the slide-by-slide view). */
+  uploadedPdf(rel, name) {
+    const db = this.db;
+    const fname = name.isEmpty() ? "Claude slides.pdf" : name;
+    const waiting = AiRun.waiting(this, HarrisonActivity.WAIT_PRO);
+    const d = this.current(Harrison.list(this, db));
+    const day = Harrison.nextDay(db);
+    const topic = !waiting.isEmpty() ? waiting : fname.replace(/\.pdf$/i, "").replace(/_/g, " ").trim();
+    const opts = [];
+    if (d != null) opts.push("The PDF of: " + Ui.nz(d.get("topic")));
+    opts.push("New deck for " + Dates.nice(day) + ": " + topic);
+    new AlertDialog.Builder(this).setTitle("PDF of the slides").setItems(opts, {
+      onClick: (di, w) => {
+        let id;
+        let slides;
+        if (d != null && w === 0) {
+          id = Long.parseLong(d.get("id"));
+          slides = Ui.nz(d.get("slides"));
+          if (Harrison.hasFile(d) && rel !== d.get("file")) db.forgetFile(d.get("file"));
+        } else {
+          const part = waiting.isEmpty() ? "" : Ai.prefs(this).getString("harrison_pro_part", "");
+          id = Harrison.add(this, db, topic, part.isEmpty() ? Harrison.partOf(topic) : part, day, "", "Claude Pro");
+          slides = "";
+        }
+        Harrison.setFile(db, id, rel, fname, slides);
+        Ai.prefs(this).edit().remove(HarrisonActivity.WAIT_PRO).apply();
+        this.deck = id;
+        this.slide = 0;
+        Sync.kick(this);
+        this.render();
+        Ui.toast(this, "PDF saved: members view it inside the app only");
+      }
+    }).setNegativeButton("Cancel", { onClick: (di, w) => { db.file(rel).delete(); } }).show();
+  }
+
+  /** Faculty (9.86): only the checked tick; making and changing decks is the admin's. */
+  checkCard(d) {
+    const c = Ui.card(this);
+    c.addView(Ui.tv(this, "Faculty check", 15, Harrison.COLOR, true));
+    c.addView(Ui.muted(this, "Read the deck and tick it once it is right. Only the admin makes, uploads or changes decks."));
+    const id = Long.parseLong(d.get("id"));
+    const b = Ui.outlineButton(this, Harrison.checked(d) ? "Untick checked" : "✔ Mark checked", Ui.GREEN, {
+      onClick: (v) => {
+        Harrison.check(this, this.db, id, !Harrison.checked(d));
+        this.render();
+      }
+    });
+    c.addView(b);
+    Ui.margins(b, 0, 8, 0, 0);
+    return c;
+  }
+
+  pptx(d) {
+    if (Harrison.hasFile(d)) {
+      new AlertDialog.Builder(this).setTitle("PowerPoint").setItems(["Open the Claude Pro PowerPoint", "Share it (WhatsApp, email, Drive…)", "The app-made version"], {
+        onClick: (di, w) => {
+          if (w < 2) PresentationsActivity.openFileIn(this, this.db, d.get("file"), w === 1, null);
+          else this.appPptx(d);
+        }
+      }).setNegativeButton("Close", null).show();
+      return;
+    }
+    this.appPptx(d);
+  }
+
+  appPptx(d) {
+    let rel;
+    try {
+      rel = Harrison.pptx(this, d);
+    } catch (e) {
+      Ui.toast(this, "Could not make the slides: " + e.getMessage());
+      return;
+    }
+    new AlertDialog.Builder(this).setTitle("PowerPoint ready").setItems(["Open", "Share (WhatsApp, email, Drive…)"], {
+      onClick: (di, w) => {
+        if (w === 0) Store.openWith(this, rel);
+        else Store.share(this, rel, "Harrison's topic of the day");
+      }
+    }).setNegativeButton("Close", null).show();
+  }
+
+  shareText(d) {
+    const i = new Intent(Intent.ACTION_SEND);
+    i.setType("text/plain");
+    i.putExtra(Intent.EXTRA_TEXT, Harrison.asText(d));
+    try {
+      this.startActivity(Intent.createChooser(i, "Share today's topic"));
+    } catch (e) {
+      Ui.toast(this, "No app to share with");
+    }
+  }
+
+  white(s, l) {
+    const t = Ui.tv(this, s, 14, Harrison.COLOR, true);
+    t.setGravity(Gravity.CENTER);
+    t.setBackground(Ui.round(this, Color.WHITE, 12));
+    t.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10));
+    t.setOnClickListener(l);
+    return t;
   }
 }
 ;
@@ -44055,9 +48041,6 @@ class JournalsActivity extends Base {
     });
     page.addView(search);
     Ui.margins(search, 12, 6, 12, 2);
-    const rule = Ui.muted(this, Conduct.ruleLine());
-    page.addView(rule);
-    Ui.margins(rule, 16, 4, 16, 0);
     this.list = Ui.v(this);
     page.addView(this.list);
     this.fillList();
@@ -45224,8 +49207,9 @@ class LabScan {
           Ui.toast(a, "Enter at least one value");
           return false;
         }
-        LabScan.save(db, pid, f.get("date"), Dates.now(), vals, CallDutyActivity.myName(a));
+        const labId = LabScan.save(db, pid, f.get("date"), Dates.now(), vals, CallDutyActivity.myName(a));
         a.render();
+        if (labId > 0) CriticalLabs.announce(a, db, CriticalLabs.check(a, db, labId));
         Ui.toast(a, "Lab values saved");
         return true;
       }
@@ -45387,9 +49371,10 @@ class Labs {
         cv.put("time", f.get("time"));
         cv.put("patient_id", pid);
         cv.put("by_name", CallDutyActivity.myName(a));
-        if (r == null) db.insert("labs", cv);
-        else db.update("labs", cv, Long.parseLong(r.get("id")));
+        const labId = r == null ? db.insert("labs", cv) : Long.parseLong(r.get("id"));
+        if (r != null) db.update("labs", cv, labId);
         a.render();
+        if (labId > 0) CriticalLabs.announce(a, db, CriticalLabs.check(a, db, labId));
         return true;
       }
     });
@@ -46828,6 +50813,764 @@ class LeaveForm {
         .setItems(['PDF', 'Word'], {
           onClick: (d, w) => { LeaveForm.make(a, r, w === 0); }
         }).setNegativeButton('Cancel', null).show();
+  }
+}
+;
+/* ---- app/Library.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The department's Library (9.40): PDF e-books on shelves, each shown with its front page. A book is either uploaded
+ * (kind FILE, up to MAX_BYTES, kept in the department's storage) or, for a bigger book, a Google Drive link (kind DRIVE,
+ * shared as "Anyone with the link"). Books are never read inside the app: the browser hands the PDF to its own reader, and a
+ * Drive book opens in Google Drive. (The front page is drawn by the phone app; the website shows a cloth cover until then.)
+ */
+class Library {
+  static TABLE = "ebooks";
+  static DIR = "ebooks";
+  static COLOR = 0xFF8B5E34;
+  static FILE = "FILE";
+  static DRIVE = "DRIVE";
+  /** The free storage plan takes files up to 50 MB; bigger books go in as a Google Drive link. */
+  static MAX_BYTES = 45 * 1024 * 1024;
+  static SHELVES = ["General medicine textbooks", "Cardiology", "Neurology", "Nephrology", "Gastroenterology & hepatology",
+    "Pulmonology", "Endocrinology & diabetes", "Infectious diseases", "Haematology & oncology", "Rheumatology",
+    "Critical care & emergency", "Toxicology", "Pharmacology", "Guidelines", "Exam preparation", "Research & statistics", "Others"];
+
+  // ---------- books ----------
+
+  static count(db) {
+    return db.num("SELECT COUNT(*) FROM " + Library.TABLE);
+  }
+
+  static homeLine(db) {
+    const n = Library.count(db);
+    return n === 0 ? "PDF e-books" : n + (n === 1 ? " book" : " books");
+  }
+
+  static book(db, id) {
+    return db.row("SELECT * FROM " + Library.TABLE + " WHERE id=?", String(id));
+  }
+
+  /** Books matching the words (title, author, shelf), by title. */
+  static find(db, query) {
+    const out = [];
+    const q = Ui.nz(query).trim().toLowerCase();
+    for (const b of db.rows("SELECT * FROM " + Library.TABLE + " ORDER BY title COLLATE NOCASE, id")) {
+      const hay = (Ui.nz(b.get("title")) + " " + Ui.nz(b.get("author")) + " " + Ui.nz(b.get("shelf"))).toLowerCase();
+      let all = true;
+      for (const w of q.split(/\s+/)) if (w !== "" && !hay.includes(w)) all = false;
+      if (all) out.push(b);
+    }
+    return out;
+  }
+
+  /** Shelf name -> its books (by title): the usual shelves first in their order, then the department's own, A to Z. */
+  static shelves(db) {
+    const by = new JMap();
+    const all = Library.find(db, "");
+    for (const s of Library.SHELVES) by.put(s, []);
+    const own = [];
+    for (const b of all) {
+      const s = Library.shelfOf(b);
+      if (!by.containsKey(s)) {
+        by.put(s, []);
+        own.push(s);
+      }
+    }
+    for (const b of all) by.get(Library.shelfOf(b)).push(b);
+    const out = new JMap();
+    for (const s of Library.SHELVES) if (by.get(s).length > 0 && s !== "Others") out.put(s, by.get(s));
+    own.sort((a, b) => a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0);
+    for (const s of own) out.put(s, by.get(s));
+    if (by.get("Others").length > 0) out.put("Others", by.get("Others"));
+    return out;
+  }
+
+  static shelfOf(b) {
+    const s = Ui.nz(b.get("shelf")).trim();
+    return s === "" ? "Others" : s;
+  }
+
+  /** Every shelf name to offer when adding a book: the usual ones and those the department made. */
+  static shelfNames(db) {
+    const out = Library.SHELVES.slice();
+    for (const r of db.rows("SELECT DISTINCT shelf FROM " + Library.TABLE + " WHERE shelf<>'' ORDER BY shelf COLLATE NOCASE"))
+      if (!out.includes(r.get("shelf"))) out.push(r.get("shelf"));
+    return out;
+  }
+
+  static isDrive(b) {
+    return Library.DRIVE === b.get("kind");
+  }
+
+  /** Where this device keeps the book's PDF once downloaded. */
+  static localRel(b) {
+    return Library.isDrive(b) ? Library.DIR + "/d_" + b.get("id") + ".pdf" : Ui.nz(b.get("file"));
+  }
+
+  static onPhone(db, b) {
+    const rel = Library.localRel(b);
+    return rel !== "" && db.file(rel).exists() && db.file(rel).length() > 0;
+  }
+
+  /** Space the downloaded books take on this device. */
+  static phoneBytes(db) {
+    let n = 0;
+    for (const b of Library.find(db, "")) if (Library.onPhone(db, b)) n += db.file(Library.localRel(b)).length();
+    return n;
+  }
+
+  /** Adds a book; returns its id (or -1 when the conduct rule refused the title). */
+  static add(c, db, kind, title, author, shelf, file, link, size, pages, cover) {
+    const cv = new ContentValues();
+    cv.put("kind", kind);
+    cv.put("title", title.trim());
+    cv.put("author", Ui.nz(author).trim());
+    cv.put("shelf", Ui.nz(shelf).trim() === "" ? "Others" : shelf.trim());
+    cv.put("file", Ui.nz(file));
+    cv.put("link", Ui.nz(link).trim());
+    cv.put("size", size);
+    cv.put("pages", pages);
+    cv.put("cover", Ui.nz(cover));
+    cv.put("added_by", Approvals.me(c));
+    cv.put("by_name", Reminders.myName(c, db));
+    cv.put("added_on", Dates.todayIso() + " " + Dates.now());
+    return db.insert(Library.TABLE, cv);
+  }
+
+  /** The uploader, the admin, HOD and registrar may change or delete a book (anyone when the app is not shared online). */
+  static canEdit(c, b) {
+    if (!Cloud.active(c) || Cloud.isAdmin(c)) return true;
+    const me = Approvals.me(c);
+    return me !== "" && me === b.get("added_by");
+  }
+
+  /** Removes the book for everyone, with its PDF and front page in the department's storage. */
+  static delete(db, b) {
+    if (!Library.isDrive(b)) db.forgetFile(b.get("file"));
+    else db.file(Library.localRel(b)).delete();
+    db.forgetFile(b.get("cover"));
+    db.delete(Library.TABLE, Long.parseLong(b.get("id")));
+  }
+
+  /** Frees the space a downloaded book takes on this device; it downloads again when next opened. */
+  static removeFromPhone(db, b) {
+    db.file(Library.localRel(b)).delete();
+  }
+
+  /** Removes PDFs and front pages here that no book uses any more (a deleted book, an add that was cancelled). */
+  static tidy(db) {
+    const files = db.file(Library.DIR).listFiles();
+    if (files == null) return;
+    const used = new Set();
+    for (const b of db.rows("SELECT * FROM " + Library.TABLE)) {
+      used.add(Library.localRel(b).split("/").pop());
+      used.add(Ui.nz(b.get("cover")).split("/").pop());
+    }
+    const old = System.currentTimeMillis() - 60 * 60 * 1000;
+    for (const f of files) if (!used.has(f.getName()) && f.lastModified() < old) f.delete();
+  }
+
+  // ---------- Google Drive ----------
+
+  /** The file id in a Google Drive share link, or "" when the text is not one. */
+  static driveId(link) {
+    const l = Ui.nz(link).trim();
+    if (!l.includes("drive.google.com") && !l.includes("docs.google.com") && !l.includes("drive.usercontent.google.com")) return "";
+    const m = /(?:\/file\/d\/|\/d\/|[?&]id=)([A-Za-z0-9_-]{20,})/.exec(l);
+    return m ? m[1] : "";
+  }
+
+  static driveDownload(id) {
+    return "https://drive.usercontent.google.com/download?id=" + id + "&export=download&confirm=t";
+  }
+
+  static driveView(id) {
+    return "https://drive.google.com/file/d/" + id + "/view";
+  }
+
+  // ---------- front pages ----------
+
+  /** The website can't draw a PDF's first page; the phone app adds it when someone opens the book there. */
+  static makeCover(c, uri, rel) {
+    return -1;
+  }
+
+  static SPINES = [0xFF7C2D12, 0xFF1E3A8A, 0xFF065F46, 0xFF6B21A8, 0xFF9F1239, 0xFF0F766E, 0xFF92400E, 0xFF334155];
+
+  /** A cloth-bound cover with the title, for a book whose front page isn't here (yet). */
+  static plainCover(c, title, author, wPx, hPx) {
+    const base = Library.SPINES[Math.abs(Ui.nz(title).hashCode()) % Library.SPINES.length];
+    const bm = Bitmap.createBitmap(wPx, hPx, Bitmap.Config.ARGB_8888);
+    const cv = new Canvas(bm);
+    const p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    p.setShader(new LinearGradient(0, 0, wPx, hPx, Ui.mix(base, 0xFFFFFFFF, 0.18), Ui.mix(base, 0xFF000000, 0.25), Shader.TileMode.CLAMP));
+    cv.drawRect(0, 0, wPx, hPx, p);
+    p.setShader(null);
+    p.setColor(0x33000000);
+    cv.drawRect(0, 0, wPx * 0.07, hPx, p);
+    p.setColor(0xCCF5D58A);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(Math.max(1, wPx / 90));
+    const m = wPx * 0.12;
+    cv.drawRect(new RectF(m, hPx * 0.08, wPx - m * 0.6, hPx * 0.92), p);
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFFF8E7B5);
+    p.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+    p.setTextSize(wPx / 8.5);
+    p.setTextAlign(Paint.Align.CENTER);
+    const cx = (m + wPx - m * 0.6) / 2;
+    let y = hPx * 0.30;
+    for (const l of Library.wrap(Ui.nz(title), p, wPx - m * 1.9, 5)) {
+      cv.drawText(l, cx, y, p);
+      y += p.getTextSize() * 1.2;
+    }
+    if (Ui.nz(author).trim() !== "") {
+      p.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+      p.setTextSize(wPx / 13);
+      p.setColor(0xE6F8E7B5);
+      const al = Library.wrap(author.trim(), p, wPx - m * 1.9, 2);
+      let ay = hPx * 0.84 - (al.length - 1) * p.getTextSize() * 1.2;
+      for (const l of al) {
+        cv.drawText(l, cx, ay, p);
+        ay += p.getTextSize() * 1.2;
+      }
+    }
+    return bm;
+  }
+
+  static wrap(s, p, width, maxLines) {
+    const out = [];
+    let line = "";
+    for (const w of s.trim().split(/\s+/)) {
+      const t = line === "" ? w : line + " " + w;
+      if (p.measureText(t) <= width || line === "") line = t;
+      else {
+        out.push(line);
+        line = w;
+      }
+    }
+    if (line !== "") out.push(line);
+    if (out.length > maxLines) {
+      const cut = out.slice(0, maxLines);
+      cut[maxLines - 1] = cut[maxLines - 1] + "…";
+      return cut;
+    }
+    return out;
+  }
+
+  static titleOf(fileName) {
+    let n = Ui.nz(fileName);
+    if (n.toLowerCase().endsWith(".pdf")) n = n.substring(0, n.length - 4);
+    return n.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  }
+}
+;
+/* ---- app/LibraryActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Library: the department's PDF e-books on wooden shelves, each with its front page. Tapping a book opens it in the browser's
+ * own PDF reader (an uploaded book downloads first, once) or, for a Google Drive book, in Google Drive; members add books by
+ * uploading a PDF (up to 45 MB) or, for a bigger book, with its Google Drive link.
+ */
+class LibraryActivity extends Base {
+  static REQ_PDF = 61;
+  static WOOD = 0xFF8B5E34;
+  static WOOD_DARK = 0xFF5C3A1E;
+  static WOOD_LIGHT = 0xFFB98552;
+
+  constructor() {
+    super();
+    this.query = "";
+    this.shelf = null;
+    this.list = null;
+    this.visible = false;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    if (b != null) {
+      this.query = Ui.nz(b.getString("query", ""));
+      this.shelf = b.getString("shelf");
+    }
+    this.setTitle("Library");
+    this.subtitle = "The department's PDF e-books";
+    this.headerColor(LibraryActivity.WOOD);
+    this.headerAction("+ Add book", { onClick: (v) => { this.addBook(); } });
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("query", this.query);
+    if (this.shelf != null) out.putString("shelf", this.shelf);
+  }
+
+  onResume() {
+    this.visible = true;
+    LibraryService.screen = this;
+    super.onResume();
+  }
+
+  onPause() {
+    this.visible = false;
+    super.onPause();
+  }
+
+  onDestroy() {
+    if (LibraryService.screen === this) LibraryService.screen = null;
+    super.onDestroy();
+  }
+
+  render() {
+    const db = this.db;
+    Library.tidy(db);
+    const W = LibraryActivity;
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Ui.gradient(this, [W.WOOD_LIGHT, W.WOOD, W.WOOD_DARK], 20));
+    const n = Library.count(db);
+    const shelves = Library.shelves(db).size();
+    hero.addView(Ui.tv(this, "📚  " + n + (n === 1 ? " book" : " books") + (n === 0 ? "" : " on " + shelves + (shelves === 1 ? " shelf" : " shelves")), 19, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Tap a book to open it in your PDF reader. Anyone can add a book: a PDF up to 45 MB uploads here; "
+      + "a bigger book goes in as its Google Drive link and opens in Google Drive.", 13, 0xEFFFFFFF, false));
+    const add = Ui.button(this, "Add a book", W.WOOD_DARK, { onClick: (v) => { this.addBook(); } });
+    hero.addView(add);
+    Ui.margins(add, 0, 12, 0, 0);
+    page.addView(hero);
+
+    const search = new EditText(this);
+    search.setHint("Search title, author or shelf");
+    search.setSingleLine(true);
+    search.setText(this.query);
+    search.setBackground(Glass.panel(this, 14));
+    search.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
+    search.addTextChangedListener({
+      beforeTextChanged: () => {}, onTextChanged: () => {},
+      afterTextChanged: (e) => { this.query = e.toString().trim(); this.fillList(); }
+    });
+    page.addView(search);
+    Ui.margins(search, 12, 6, 12, 4);
+    this.list = Ui.v(this);
+    page.addView(this.list);
+    this.fillList();
+
+    const here = Library.phoneBytes(db);
+    if (here > 0) {
+      const foot = Ui.card(this);
+      foot.addView(Ui.muted(this, "Downloaded books in this browser: " + Store.sizeLabel(here)));
+      const free = Ui.outlineButton(this, "Free up space", W.WOOD, { onClick: (v) => {
+        Ui.confirm(this, "Free up space?", "The downloaded copies are removed from this browser. The books stay in the Library and download again when opened.",
+          "Remove copies", { run: () => {
+            for (const b of Library.find(db, "")) if (!LibraryService.busy(b.get("id"))) Library.removeFromPhone(db, b);
+            this.render();
+          } });
+      } });
+      foot.addView(free);
+      Ui.margins(free, 0, 8, 0, 0);
+      page.addView(foot);
+    }
+    this.setPage(page);
+  }
+
+  fillList() {
+    if (this.list == null) return;
+    const db = this.db;
+    const W = LibraryActivity;
+    this.list.removeAllViews();
+    if (this.query !== "") {
+      const found = Library.find(db, this.query);
+      this.list.addView(Ui.heading(this, found.length + (found.length === 1 ? " book found" : " books found"), W.WOOD));
+      if (found.length === 0) this.list.addView(this.emptyNote("No book matches."));
+      else this.list.addView(this.grid(found));
+      return;
+    }
+    const all = Library.shelves(db);
+    if (all.isEmpty()) {
+      this.list.addView(this.emptyNote("The shelves are empty. Tap Add a book to put the first one here."));
+      return;
+    }
+    if (this.shelf != null && all.containsKey(this.shelf)) {
+      const back = Ui.chip(this, "‹ All shelves", false, W.WOOD);
+      back.setOnClickListener({ onClick: (v) => { this.shelf = null; this.render(); } });
+      this.list.addView(back);
+      Ui.margins(back, 14, 8, 0, 0);
+      this.list.addView(Ui.heading(this, this.shelf + " · " + all.get(this.shelf).length, W.WOOD));
+      this.list.addView(this.grid(all.get(this.shelf)));
+      return;
+    }
+    this.shelf = null;
+    for (const [name, books] of all) this.list.addView(this.shelfView(name, books));
+  }
+
+  plank(hDp) {
+    const W = LibraryActivity;
+    const v = new View(this);
+    const wood = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [W.WOOD_LIGHT, W.WOOD, W.WOOD_DARK]);
+    wood.setCornerRadius(Ui.dp(this, 3));
+    v.setBackground(wood);
+    v.setElevation(Ui.dp(this, 3));
+    return v;
+  }
+
+  /** One wooden shelf: its name, its books standing in a row (scroll sideways), and the plank under them. */
+  shelfView(name, books) {
+    const box = Ui.v(this);
+    const top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.setPadding(Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 4));
+    const t = Ui.tv(this, name, 16, Ui.TEXT, true);
+    top.addView(t, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+    const all = Ui.tv(this, books.length + (books.length === 1 ? " book  ›" : " books  ›"), 13, LibraryActivity.WOOD, true);
+    all.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), 0, Ui.dp(this, 4));
+    all.setOnClickListener({ onClick: (v) => { this.shelf = name; this.render(); } });
+    top.addView(all);
+    box.addView(top);
+    const row = Ui.h(this);
+    row.setGravity(Gravity.BOTTOM);
+    row.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), 0);
+    for (const b of books) {
+      const bv = this.bookView(b);
+      row.addView(bv, new LinearLayout.LayoutParams(Ui.dp(this, 108), ViewGroup.LayoutParams.WRAP_CONTENT));
+      Ui.margins(bv, 6, 0, 6, 0);
+    }
+    box.addView(Ui.hscroll(this, row));
+    const plank = this.plank();
+    box.addView(plank, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 12)));
+    Ui.margins(plank, 10, 2, 10, 4);
+    return box;
+  }
+
+  /** Books three to a row (a shelf opened in full, or search results). */
+  grid(books) {
+    const g = Ui.v(this);
+    g.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 8), 0);
+    let row = null;
+    for (let i = 0; i < books.length; i++) {
+      if (i % 3 === 0) {
+        row = Ui.h(this);
+        row.setGravity(Gravity.BOTTOM);
+        g.addView(row);
+      }
+      const cell = new FrameLayout(this);
+      cell.addView(this.bookView(books[i]), new FrameLayout.LayoutParams(Ui.dp(this, 108), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL));
+      row.addView(cell, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+      if (i % 3 === 2 || i === books.length - 1) {
+        for (let k = i % 3; k < 2; k++) row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        const plank = this.plank();
+        g.addView(plank, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 10)));
+        Ui.margins(plank, 2, 2, 2, 14);
+      }
+    }
+    return g;
+  }
+
+  /** A book: its front page with a soft shadow, a tick when it is here, the title and author under it. */
+  bookView(b) {
+    const db = this.db;
+    const v = Ui.v(this);
+    v.setGravity(Gravity.CENTER_HORIZONTAL);
+    const cover = new FrameLayout(this);
+    const img = new ImageView(this);
+    img.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    let bm = null;
+    const rel = Ui.nz(b.get("cover"));
+    if (rel !== "" && db.file(rel).exists()) bm = Ui.loadScaled(db.file(rel), 360);
+    if (bm == null) bm = Library.plainCover(this, b.get("title"), b.get("author"), 240, 340);
+    img.setImageBitmap(bm);
+    cover.addView(img, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    cover.setBackground(Ui.round(this, 0xFFFFFFFF, 4));
+    cover.setClipToOutline(true);
+    cover.setElevation(Ui.dp(this, 6));
+    const id = b.get("id");
+    if (LibraryService.busy(id)) {
+      const p = Ui.tv(this, "Downloading…", 12, 0xFFFFFFFF, true);
+      p.setGravity(Gravity.CENTER);
+      p.setBackgroundColor(0x99000000);
+      cover.addView(p, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 30), Gravity.BOTTOM));
+    } else if (Library.onPhone(db, b)) {
+      const ok = Ui.tv(this, "✓", 12, 0xFFFFFFFF, true);
+      ok.setGravity(Gravity.CENTER);
+      ok.setBackground(Ui.round(this, Ui.GREEN, 11));
+      const lp = new FrameLayout.LayoutParams(Ui.dp(this, 22), Ui.dp(this, 22), Gravity.TOP | Gravity.END);
+      lp.setMargins(0, Ui.dp(this, 5), Ui.dp(this, 5), 0);
+      cover.addView(ok, lp);
+    }
+    v.addView(cover, new LinearLayout.LayoutParams(Ui.dp(this, 100), Ui.dp(this, 142)));
+    Ui.margins(cover, 0, 6, 0, 0);
+    const t = Ui.tv(this, b.get("title"), 12, Ui.TEXT, true);
+    t.setMaxLines(2);
+    t.setEllipsize(TextUtils.TruncateAt.END);
+    t.setGravity(Gravity.CENTER_HORIZONTAL);
+    v.addView(t);
+    Ui.margins(t, 0, 8, 0, 0);
+    const sub = Ui.nz(b.get("author")) !== "" ? b.get("author") : Library.isDrive(b) ? "Google Drive" : LibraryActivity.sizeOf(b);
+    const a = Ui.tv(this, sub, 11, 0xFF78716C, false);
+    a.setSingleLine(true);
+    a.setEllipsize(TextUtils.TruncateAt.END);
+    a.setGravity(Gravity.CENTER_HORIZONTAL);
+    v.addView(a);
+    v.setPadding(0, 0, 0, Ui.dp(this, 8));
+    v.setOnClickListener({ onClick: (x) => { this.open(b); } });
+    v.setOnLongClickListener({ onLongClick: (x) => { this.actions(b); return true; } });
+    return v;
+  }
+
+  static sizeOf(b) {
+    const s = Ui.toLong(b.get("size"), 0);
+    return s > 0 ? Store.sizeLabel(s) : "PDF";
+  }
+
+  // ---------- opening ----------
+
+  /** Opens the book: a Drive book in Google Drive, an uploaded one in the browser's PDF reader (downloading it first). */
+  open(b) {
+    if (Library.isDrive(b)) {
+      this.openDrive(b);
+      return;
+    }
+    if (Library.onPhone(this.db, b)) {
+      Store.openWith(this, Library.localRel(b));
+      return;
+    }
+    const id = b.get("id");
+    if (LibraryService.busy(id)) {
+      LibraryService.openWhenReady = id;
+      Ui.toast(this, "Still downloading. It opens when ready.");
+      return;
+    }
+    if (!Cloud.active(this)) {
+      Ui.toast(this, "This book is not in this browser");
+      return;
+    }
+    LibraryService.openWhenReady = id;
+    LibraryService.start(this, id);
+    Ui.toast(this, "Downloading " + b.get("title") + "…");
+    this.render();
+  }
+
+  openDrive(b) {
+    try {
+      this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(Library.driveView(Library.driveId(b.get("link"))))));
+    } catch (e) {
+      Ui.toast(this, "Could not open the link");
+    }
+  }
+
+  /** Called when a book has downloaded (err null) or failed. */
+  downloaded(id, err) {
+    const b = Library.book(this.db, id);
+    const wanted = String(id) === String(LibraryService.openWhenReady);
+    if (wanted) LibraryService.openWhenReady = "";
+    this.render();
+    if (b == null) return;
+    if (err != null) {
+      new AlertDialog.Builder(this).setTitle("Could not download").setMessage(b.get("title") + "\n\n" + err).setPositiveButton("OK", null).show();
+      return;
+    }
+    if (wanted) Store.openWith(this, Library.localRel(b));
+  }
+
+  actions(b) {
+    const db = this.db;
+    const labels = [];
+    const runs = [];
+    const here = Library.onPhone(db, b);
+    labels.push(Library.isDrive(b) ? "Open in Google Drive" : "Open in my PDF reader");
+    runs.push(() => this.open(b));
+    if (here) {
+      labels.push("Share the PDF");
+      runs.push(() => Store.share(this, Library.localRel(b), b.get("title")));
+    }
+    if (Library.isDrive(b)) {
+      labels.push("Copy the Drive link");
+      runs.push(() => {
+        try { navigator.clipboard.writeText(b.get("link")); Ui.toast(this, "Link copied"); } catch (e) { Ui.toast(this, b.get("link")); }
+      });
+    }
+    if (here && !LibraryService.busy(b.get("id"))) {
+      labels.push("Remove from this browser (" + Store.sizeLabel(db.file(Library.localRel(b)).length()) + ")");
+      runs.push(() => { Library.removeFromPhone(db, b); this.render(); });
+    }
+    if (Library.canEdit(this, b)) {
+      labels.push("Edit title, author or shelf");
+      runs.push(() => this.edit(b));
+      labels.push("Delete for everyone");
+      runs.push(() => {
+        Ui.confirm(this, "Delete this book?", b.get("title") + " will be removed from the Library for everyone.", "Delete", {
+          run: () => { Library.delete(db, b); this.render(); }
+        });
+      });
+    } else if (Conduct.canReport(this, b.get("added_by"))) {
+      labels.push("🚩 Report this book");
+      runs.push(() => Conduct.report(this, Library.TABLE, b.get("id"), b.get("added_by"), b.get("by_name"), b.get("title"), b.get("cover")));
+    }
+    const info = (Library.isDrive(b) ? "Google Drive" : "Uploaded") + (Ui.toLong(b.get("size"), 0) > 0 ? " · " + LibraryActivity.sizeOf(b) : "")
+      + (Ui.toInt(b.get("pages"), 0) > 0 ? " · " + b.get("pages") + " pages" : "") + "\nShelf: " + Library.shelfOf(b)
+      + (Ui.nz(b.get("by_name")) === "" ? "" : "\nAdded by " + b.get("by_name")) + (Ui.nz(b.get("added_on")).length >= 10 ? " on " + Dates.nice(b.get("added_on").substring(0, 10)) : "");
+    new AlertDialog.Builder(this).setTitle(b.get("title")).setMessage(info).setItems(labels, (d, i) => runs[i]()).show();
+  }
+
+  edit(b) {
+    const f = new Form(this);
+    f.text("title", "Title *", b.get("title"), Form.PLAIN);
+    f.text("author", "Author / edition", b.get("author"), Form.PLAIN);
+    f.suggest("shelf", "Shelf", Library.shelfOf(b), Library.shelfNames(this.db));
+    if (Library.isDrive(b)) f.text("link", "Google Drive link *", b.get("link"), Form.PLAIN);
+    Ui.formDialog(this, "Edit book", f, "Save", { run: () => {
+      if (!f.require("title", "Enter the title")) return false;
+      if (Library.isDrive(b) && Library.driveId(f.get("link")) === "") {
+        Ui.toast(this, "Paste the Google Drive link of the PDF");
+        return false;
+      }
+      const cv = new ContentValues();
+      cv.put("title", f.get("title").trim());
+      cv.put("author", f.get("author").trim());
+      cv.put("shelf", f.get("shelf").trim() === "" ? "Others" : f.get("shelf").trim());
+      if (Library.isDrive(b)) cv.put("link", f.get("link").trim());
+      this.db.update(Library.TABLE, cv, Long.parseLong(b.get("id")));
+      this.render();
+      return true;
+    } });
+  }
+
+  // ---------- adding ----------
+
+  addBook() {
+    new AlertDialog.Builder(this).setTitle("Add a book")
+      .setItems(["Upload a PDF (up to 45 MB)", "Bigger book: paste its Google Drive link"], (d, i) => {
+        if (i === 0) Store.pick(this, ["application/pdf"], LibraryActivity.REQ_PDF);
+        else this.driveForm("", "");
+      }).show();
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req !== LibraryActivity.REQ_PDF || res !== RESULT_OK || data == null || data.getData() == null) return;
+    const uri = data.getData();
+    const name = Store.displayName(this, uri);
+    const mime = Ui.nz(this.getContentResolver().getType(uri));
+    if (!name.toLowerCase().endsWith(".pdf") && mime !== "application/pdf") {
+      Ui.toast(this, "Choose a PDF file");
+      return;
+    }
+    const size = uri.bytes ? uri.bytes.length : (uri.file ? uri.file.size : -1);
+    if (size > Library.MAX_BYTES) {
+      new AlertDialog.Builder(this).setTitle("This PDF is " + Store.sizeLabel(size))
+        .setMessage("Books over 45 MB go into the Library as a Google Drive link:\n\n1. Upload the PDF to Google Drive.\n2. Share it as \"Anyone with the link\" and copy the link.\n3. Tap Add with Drive link and paste it.")
+        .setPositiveButton("Add with Drive link", (d, i) => { this.driveForm(Library.titleOf(name), ""); })
+        .setNegativeButton("Cancel", null).show();
+      return;
+    }
+    if (uri.bytes && !new TextDecoder("latin1").decode(uri.bytes.subarray(0, 1024)).includes("%PDF")) {
+      Ui.toast(this, "This file is not a PDF");
+      return;
+    }
+    try {
+      const rel = Store.importUri(this, uri, Library.DIR, "b");
+      this.details(rel, Library.titleOf(name));
+    } catch (e) {
+      Ui.toast(this, "Could not read the file: " + e.message);
+    }
+  }
+
+  /** Title, author and shelf of an uploaded PDF, then it goes on the shelf (and up to the department's storage). */
+  details(rel, title) {
+    const db = this.db;
+    const f = new Form(this);
+    f.text("title", "Title *", title, Form.PLAIN);
+    f.text("author", "Author / edition", "", Form.PLAIN);
+    f.suggest("shelf", "Shelf", this.shelf != null ? this.shelf : "", Library.shelfNames(db));
+    Ui.formDialog(this, "Put on the shelf", f, "Add", { run: () => {
+      if (!f.require("title", "Enter the title")) return false;
+      const id = Library.add(this, db, Library.FILE, f.get("title"), f.get("author"), f.get("shelf"), rel, "", db.file(rel).length(), 0, "");
+      if (id < 0) {
+        db.file(rel).delete();
+        return true;
+      }
+      Ui.toast(this, Cloud.active(this) ? "Added. It is shared with the department in the background." : "Added");
+      this.render();
+      return true;
+    } });
+  }
+
+  /** A bigger book by its Google Drive link (its front page is added by the first phone that opens it). */
+  driveForm(title, link) {
+    const f = new Form(this);
+    f.text("link", "Google Drive link *", link, Form.PLAIN);
+    f.text("title", "Title *", title, Form.PLAIN);
+    f.text("author", "Author / edition", "", Form.PLAIN);
+    f.suggest("shelf", "Shelf", this.shelf != null ? this.shelf : "", Library.shelfNames(this.db));
+    Ui.formDialog(this, "Add a book from Google Drive", f, "Add", { run: () => {
+      if (Library.driveId(f.get("link")) === "") {
+        Ui.toast(this, "Paste the Google Drive link of the PDF (Share › Copy link)");
+        return false;
+      }
+      if (!f.require("title", "Enter the title")) return false;
+      const id = Library.add(this, this.db, Library.DRIVE, f.get("title"), f.get("author"), f.get("shelf"), "", f.get("link"), 0, 0, "");
+      if (id < 0) return true;
+      Ui.toast(this, "Added. Make sure the Drive file is shared as \"Anyone with the link\".");
+      this.render();
+      return true;
+    } });
+  }
+}
+;
+/* ---- app/LibraryService.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Library downloads on the website: an uploaded book is fetched from the department's storage into this browser, then the
+ * browser's own PDF reader opens it. (A Google Drive book opens in Google Drive instead, so nothing big comes in here.)
+ */
+class LibraryService {
+  /** id -> {bytes done, bytes in all} for downloads running. */
+  static progress = new JMap();
+  static errors = new JMap();
+  /** The Library on screen: it is told when a download finishes. */
+  static screen = null;
+  static openWhenReady = "";
+
+  static busy(id) {
+    return LibraryService.progress.containsKey(String(id));
+  }
+
+  static progressOf(id) {
+    const p = LibraryService.progress.get(String(id));
+    return p == null ? null : [p[0], p[1]];
+  }
+
+  static start(c, id) {
+    id = String(id);
+    LibraryService.errors.remove(id);
+    if (LibraryService.busy(id)) return;
+    const db = Db.get(c);
+    const b = Library.book(db, id);
+    LibraryService.progress.put(id, [0, b == null ? 0 : Ui.toLong(b.get("size"), 0)]);
+    (async () => {
+      let err = null;
+      try {
+        if (b == null) throw new IOException("This book was removed");
+        if (Library.isDrive(b)) throw new IOException("A Google Drive book opens in Google Drive");
+        await Sync.fetchFile(c, db, b.get("file"));
+      } catch (e) {
+        err = (e && e.message) || String(e);
+      }
+      LibraryService.progress.remove(id);
+      if (err != null) LibraryService.errors.put(id, err);
+      const a = LibraryService.screen;
+      if (a != null && !a.isFinishing() && a.visible) a.downloaded(id, err);
+      else if (err != null) Ui.toast(c, "Book not downloaded: " + err);
+    })();
+  }
+
+  static sizes(done, total) {
+    return total > 0 ? Store.sizeLabel(done) + " of " + Store.sizeLabel(total) + " (" + Math.floor(done * 100 / total) + "%)" : Store.sizeLabel(done);
+  }
+
+  static looksLikePdf(f) {
+    return true;
   }
 }
 ;
@@ -49309,7 +54052,6 @@ class MainActivity extends Base {
 
     for (const a of Alerts.active(db)) page.addView(Alerts.banner(this, a));
     Alerts.popupNew(this);
-    Conduct.showRuleOnce(this);
 
     const hero = Ui.card(this);
     hero.setBackground(Glass.hero(this, Ui.HERO, 24));
@@ -49359,6 +54101,10 @@ class MainActivity extends Base {
     if (ew != null) page.addView(ew);
     const pr = ProtocolActivity.homeCard(this, db);
     if (pr != null) page.addView(pr);
+    const ob = Outbreak.homeCard(this, db);
+    if (ob != null) page.addView(ob);
+    const cl = CriticalLabs.homeCard(this, db);
+    if (cl != null) page.addView(cl);
     const wt = Watch.homeCard(this, db);
     if (wt != null) page.addView(wt);
     const rs = Results.homeCard(this, db);
@@ -49368,6 +54114,11 @@ class MainActivity extends Base {
     const lb = Logbook.homeCard(this, db);
     if (lb != null) page.addView(lb);
     page.addView(this.admissionDayCard(Dates.admitDay().toString()));
+    // 9.70: the admit button sits right under the admission day (user asked)
+    const ab = Ui.v(this);
+    ab.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), 0);
+    ab.addView(Ui.button(this, "+  Admit a patient", Ui.PRIMARY, this.opener(FormActivity, "kind", "patient", "unit", db.todaysUnit())));
+    page.addView(ab);
     page.addView(this.dapCard(Dates.admitDay().toString()));
 
     for (const s of SessionAttendance.open(db)) page.addView(AcademicActivity.attendanceBanner(this, db, s));
@@ -49383,10 +54134,6 @@ class MainActivity extends Base {
         (upd.optString("notes").isEmpty() ? "" : upd.optString("notes") + "\n") + "Tap to install. Your records stay on the phone.", null, this.opener(SettingsActivity, Updates.INSTALL, "1")));
     }
 
-    const ab = Ui.v(this);
-    ab.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), 0);
-    ab.addView(Ui.button(this, "+  Admit a patient", Ui.PRIMARY, this.opener(FormActivity, "kind", "patient", "unit", db.todaysUnit())));
-    page.addView(ab);
     if (!Cloud.active(this)) {
       const waiting = Cloud.signedIn(this);
       page.addView(this.entryCard("Shared database", Ui.TEAL, waiting ? "Finish joining the shared database" : "Share records with the whole department",
@@ -49398,7 +54145,7 @@ class MainActivity extends Base {
     const mods = this.modules();
     const byLabel = new JMap();
     for (const m of mods) byLabel.put(m.label, m);
-    page.addView(TopicNotes.homeSection(this, db));
+    if (byLabel.containsKey("Learning board") || !AdminControl.isHidden(db, "Learning board")) page.addView(TopicNotes.homeSection(this, db));
     page.addView(Ui.heading(this, "Your sections", Ui.PRIMARY));
     const mine = [];
     for (const l of HomeLayout.picks(this, Cloud.role(this), byLabel.keySet(), HomeLayout.YOURS)) mine.push(byLabel.get(l));
@@ -49717,6 +54464,21 @@ class MainActivity extends Base {
     });
   }
 
+  /** Sections the admin hid: gone for everyone else, marked hidden for the admin. */
+  adminHidden(all) {
+    MainActivity.CATALOG.clear();
+    for (const x of all) MainActivity.CATALOG.put(x.label, Base.Opener.screenOf(x.l));
+    const hid = AdminControl.hidden(this.db);
+    if (hid.isEmpty()) return all;
+    const owner = Cloud.isOwner(this) || !Cloud.active(this);
+    const out = [];
+    for (const x of all) {
+      if (!hid.containsKey(x.label)) out.push(x);
+      else if (owner) out.push(new MainActivity.Module(x.label, "🚫 Hidden for everyone", x.icon, Ui.SLATE, x.l));
+    }
+    return out;
+  }
+
   modules() {
     const db = this.db;
     const Module = MainActivity.Module;
@@ -49781,6 +54543,16 @@ class MainActivity extends Base {
     m.add(new Module("Wrapped", "Your year in stories", R.drawable.ic_star, 0xFF7C3AED, this.opener(WrappedActivity)));
     const pres = PresentationsActivity.countAll(db);
     m.add(new Module("Presentations", pres === 0 ? "Department PPTs" : pres + " PPTs", R.drawable.ic_school, PresentationsActivity.COLOR, this.opener(PresentationsActivity, "kind", PresentationsActivity.ALL)));
+    m.add(new Module("Critical labs", CriticalLabs.homeLine(this, db), R.drawable.ic_warn, CriticalLabs.COLOR, this.opener(CriticalLabsActivity)));
+    m.add(new Module("Clinical scores", "qSOFA, CURB-65, MELD, CHA₂DS₂-VASc…", R.drawable.ic_tune, Scores.COLOR, this.opener(ScoresActivity)));
+    m.add(new Module("Outbreak watch", Outbreak.homeLine(db), R.drawable.ic_fever, Outbreak.COLOR, this.opener(OutbreakActivity)));
+    m.add(new Module("ABG interpreter", "Acid-base step by step", R.drawable.ic_drop, Abg.COLOR, this.opener(AbgActivity)));
+    m.add(new Module("Flashcards", Flash.homeLine(this, db), R.drawable.ic_bulb, Flash.COLOR, this.opener(FlashActivity)));
+    m.add(new Module("Ward round", "One bed at a time, notes saved", R.drawable.ic_bed, WardRoundActivity.COLOR, this.opener(WardRoundActivity)));
+    m.add(new Module("Duty hours", DutyHours.homeLine(db), R.drawable.ic_moon, DutyHours.COLOR, this.opener(DutyHoursActivity)));
+    m.add(new Module("Harrison's topic", Harrison.homeLine(db), R.drawable.ic_book, Harrison.COLOR, this.opener(HarrisonActivity)));
+    m.add(new Module("Competency map", "Logbook against targets", R.drawable.ic_trophy, CompetencyActivity.COLOR, this.opener(CompetencyActivity)));
+    m.add(new Module("Library", Library.homeLine(db), R.drawable.ic_book, Library.COLOR, this.opener(LibraryActivity)));
     const jn = db.num("SELECT COUNT(*) FROM " + Journals.TABLE), jw = Journals.newThisWeek(db);
     m.add(new Module("Latest journals", jw > 0 ? jw + " new this week" : jn === 0 ? "Share articles" : jn + " articles", R.drawable.ic_book, Journals.COLOR, this.opener(JournalsActivity)));
     if (Cloud.isOwner(this)) {
@@ -49846,24 +54618,27 @@ class MainActivity extends Base {
     m.add(new Module("Reports", "Statistics", R.drawable.ic_chart, Ui.SKY, this.opener(ReportActivity)));
     if (Cloud.canSeeFaculty(this)) m.add(new Module("Faculty", db.num("SELECT COUNT(*) FROM staff WHERE role IN ('Professor','Associate Professor','Assistant Professor') AND " + Approvals.APPROVED_SQL) + " of 31 · docs", R.drawable.ic_badge, Ui.PRIMARY_DARK, this.opener(FacultyActivity)));
     m.add(new Module("Students", db.num("SELECT COUNT(*) FROM staff WHERE (role IN ('Postgraduate','CRMI') OR role LIKE 'MBBS%') AND " + Approvals.APPROVED_SQL) + " · PG, CRMI, MBBS", R.drawable.ic_group, Ui.SLATE, this.opener(StaffActivity)));
-    return m;
+    return this.adminHidden(m);
   }
+
+  /** Every home section's label and screen, for the admin's "Hide sections" list in Settings (9.71). */
+  static CATALOG = new JMap();
 
   /** Home sections, grouped like an iPhone home screen: four glass icons to a row inside frosted panels. */
   static GROUPS = [
     ["AI assistant", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped"],
-    ["Wards & critical care", "Search", "Protocol timers", "Infusion calculator", "DAMA forms", "Death certificate", "Live census", "Wall screen", "Census", "Bed board", "Tasks", "Pending results", "Antibiogram", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
-    ["Duty & coordination", "PG Connect", "PG questions", "Intercom", "Handover", "Faculty chat", "DAP register", "Call duty", "Call over", "VIP cases"],
+    ["Wards & critical care", "Ward round", "Search", "Critical labs", "Clinical scores", "ABG interpreter", "Outbreak watch", "Protocol timers", "Infusion calculator", "DAMA forms", "Death certificate", "Live census", "Wall screen", "Census", "Bed board", "Tasks", "Pending results", "Antibiogram", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
+    ["Duty & coordination", "Duty hours", "PG Connect", "PG questions", "Intercom", "Handover", "Faculty chat", "DAP register", "Call duty", "Call over", "VIP cases"],
     ["Approvals & leave", "Approvals", "Sign-off queue", "CMCHIS", "Attendance", "PG leave", "Duty swaps", "Faculty leave"],
-    ["Academics, people & tools", "University questions", "Presentations", "Latest journals", "Verify a document", "Conduct reports", "Memo", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
+    ["Academics, people & tools", "Harrison's topic", "Flashcards", "Competency map", "Library", "University questions", "Presentations", "Latest journals", "Verify a document", "Conduct reports", "Memo", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
 
   /** Bright, distinct colours for the home icons, so neighbours in a row never share a colour. */
   static TILE_COLORS = (() => {
     const m = new JMap();
     const k = ["Fever ward", "Critical care", "IMCU", "Kandiyaperi", "DAP register", "Call duty", "Call over", "VIP cases",
-      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Faculty leave", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports", "DAMA forms", "Sign-off queue", "University questions"];
+      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Faculty leave", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports", "DAMA forms", "Sign-off queue", "University questions", "Library", "Critical labs", "Clinical scores", "Outbreak watch", "ABG interpreter", "Flashcards", "Ward round", "Duty hours", "Competency map", "Harrison's topic"];
     const c = [0xFFF97316, 0xFFEC4899, 0xFFEF4444, 0xFF10B981, 0xFF6366F1, 0xFF8B5CF6, 0xFF14B8A6, 0xFFF59E0B,
-      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C, 0xFFB7372B, 0xFF0F766E, 0xFF7C2D12];
+      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C, 0xFFB7372B, 0xFF0F766E, 0xFF7C2D12, 0xFF8B5E34, 0xFFDC2626, 0xFF0E7490, 0xFFB45309, 0xFF0369A1, 0xFF6D28D9, 0xFF0E7490, 0xFF9333EA, 0xFF4338CA, 0xFF9F1239];
     for (let i = 0; i < k.length; i++) m.put(k[i], c[i]);
     return m;
   })();
@@ -50283,6 +55058,7 @@ class MainActivity extends Base {
   // ================= MENU =================
 
   menuItem(page, icon, title, sub, color, l) {
+    if (AdminControl.screenOff(this, this.db, Base.Opener.screenOf(l))) return;   // 9.71: a section the admin hid
     const card = Ui.card(this);
     card.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
     const row = Ui.h(this);
@@ -54305,6 +59081,454 @@ class Opinions {
   }
 }
 ;
+/* ---- app/Outbreak.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Outbreak early warning (9.60): admissions with an epidemic-prone diagnosis are grouped by disease and by the village or
+ * town in the address. Several from one place within a week is a cluster; a disease rising across the district is a
+ * rise. Faculty and the HOD are told, and the department can share a summary (no names) with public health.
+ */
+class Outbreak {
+  static COLOR = 0xFFB45309;
+  static WINDOW_DAYS = 7;
+
+  static $clinit() {
+    const D = Outbreak.Disease;
+    Outbreak.DISEASES = [
+      new D("dengue", "Dengue", "டெங்கு", "dengue|\\bdhf\\b|\\bdss\\b|\\bns1\\b", 3, 0xFFDC2626),
+      new D("scrub", "Scrub typhus", "ஸ்க்ரப் டைபஸ்", "scrub|rickettsi|orientia|tsutsugamushi|eschar", 3, 0xFF7C3AED),
+      new D("lepto", "Leptospirosis", "எலிக் காய்ச்சல்", "lepto|weil", 2, 0xFF0891B2),
+      new D("cholera", "Cholera", "காலரா", "cholera|rice.?water", 2, 0xFF1D4ED8),
+      new D("age", "Acute gastroenteritis / diarrhoea", "வயிற்றுப்போக்கு", "gastroenteritis|\\bage\\b|\\badd\\b|diarrh|dysentery|food poison", 4, 0xFF0F766E),
+      new D("malaria", "Malaria", "மலேரியா", "malaria|falciparum|vivax|\\bpf\\b|\\bpv\\b", 2, 0xFF15803D),
+      new D("chik", "Chikungunya", "சிக்குன்குனியா", "chikungunya|chikun", 3, 0xFFDB2777),
+      new D("typhoid", "Typhoid", "டைபாய்டு", "typhoid|enteric fever|salmonella", 3, 0xFFEA580C),
+      new D("hepatitis", "Hepatitis A / E", "மஞ்சள் காமாலை", "hepatitis ?[ae]\\b|\\bhav\\b|\\bhev\\b|acute viral hepatitis|\\bavh\\b", 3, 0xFFCA8A04),
+      new D("flu", "Influenza / H1N1", "இன்ஃப்ளூயன்ஸா", "h1n1|h3n2|influenza|swine flu", 3, 0xFF475569),
+      new D("aes", "Encephalitis (AES / JE)", "மூளைக் காய்ச்சல்", "\\baes\\b|encephalitis|\\bje\\b|japanese", 2, 0xFF9333EA)];
+  }
+
+  static disease(key) {
+    for (const d of Outbreak.DISEASES) if (d.key === key) return d;
+    return null;
+  }
+
+  /** The diseases this admission's diagnosis names (working diagnosis, final diagnosis, ID ward disease, dengue entry). */
+  static diseasesOf(db, p) {
+    const t = new StringBuilder(Ui.nz(p.get("diagnosis"))).append(' ').append(Ui.nz(p.get("id_disease")));
+    if (!Ui.nz(p.get("dengue")).isEmpty() && !"No".equalsIgnoreCase(p.get("dengue"))) t.append(" dengue");
+    const o = CaseSheet.load(db, Long.parseLong(p.get("id")));
+    t.append(' ').append(CaseSheet.s(o, "final_dx"));
+    const s = t.toString().toLowerCase();
+    const out = [];
+    for (const d of Outbreak.DISEASES) if (d.pattern.matcher(s).find()) out.add(d);
+    return out;
+  }
+
+  /** Admissions since the date (yyyy-MM-dd) with an epidemic-prone diagnosis, newest first. */
+  static cases(db, since) {
+    const out = [];
+    for (const p of db.rows("SELECT * FROM patients WHERE admit_date>=? ORDER BY admit_date DESC, id DESC", since)) {
+      const ds = Outbreak.diseasesOf(db, p);
+      if (ds.isEmpty()) continue;
+      const place = Places.label(p.get("address"));
+      for (const d of ds) out.add(new Outbreak.Case(p, d, place, Ui.nz(p.get("admit_date"))));
+    }
+    return out;
+  }
+
+  /** Clusters in the last 7 days, biggest first (or the clusters among a list of cases). */
+  static clusters(x) {
+    if (!Array.isArray(x)) return Outbreak.clusters(Outbreak.cases(x, Dates.today().minusDays(Outbreak.WINDOW_DAYS - 1).toString()));
+    const recent = x;
+    const m = new JMap();
+    for (const c of recent) {
+      if (c.place.isEmpty()) continue;
+      const k = c.disease.key + "|" + c.place;
+      let cl = m.get(k);
+      if (cl == null) m.put(k, cl = new Outbreak.Cluster(c.disease, c.place));
+      cl.cases.add(c);
+    }
+    const out = [];
+    for (const cl of m.values()) if (cl.cases.size() >= cl.disease.threshold) out.add(cl);
+    Collections.sort(out, { compare: (a, b) => b.cases.size() - a.cases.size() });
+    return out;
+  }
+
+  /** A disease rising across the district: this week at least 5 and at least twice the weekly average of the 4 weeks before. */
+  static rising(db) {
+    const today = Dates.today();
+    const all = Outbreak.cases(db, today.minusDays(35 - 1).toString());
+    const weekStart = today.minusDays(Outbreak.WINDOW_DAYS - 1).toString();
+    const out = [];
+    for (const d of Outbreak.DISEASES) {
+      let now = 0, before = 0;
+      for (const c of all) {
+        if (c.disease !== d) continue;
+        if (c.date.compareTo(weekStart) >= 0) now++;
+        else before++;
+      }
+      const avg = before / 4.0;
+      if (now >= 5 && now >= 2 * Math.max(avg, 1)) out.add([d.key, String(now), jfmt("%.1f", avg)]);
+    }
+    return out;
+  }
+
+  // ---------- who is told ----------
+
+  /** Faculty, the HOD, the registrar and the admin are told of clusters (everyone on a phone not shared online). */
+  static alerted(c) {
+    return SignOff.faculty(c);
+  }
+
+  static prefs(c) {
+    return c.getSharedPreferences("outbreak", Context.MODE_PRIVATE);
+  }
+
+  /** Clusters bigger than when this person last looked or was told. */
+  static fresh(c, db, prefKey) {
+    const out = [];
+    const sp = Outbreak.prefs(c);
+    for (const cl of Outbreak.clusters(db)) if (cl.cases.size() > sp.getInt(prefKey + ":" + cl.key(), 0)) out.add(cl);
+    return out;
+  }
+
+  static mark(c, list, prefKey) {
+    const e = Outbreak.prefs(c).edit();
+    for (const cl of list) e.putInt(prefKey + ":" + cl.key(), cl.cases.size());
+    e.apply();
+  }
+
+  static line(cl) {
+    return cl.cases.size() + " " + cl.disease.label.toLowerCase() + " admissions from " + cl.place + " (" + Dates.nice(cl.first())
+      + (cl.first() === cl.last() ? "" : " to " + Dates.nice(cl.last())) + ")";
+  }
+
+  /** For the District Health Officer / public health: places, numbers, ages and sex, never names, numbers or addresses. */
+  static shareText(db, list, rise) {
+    const b = new StringBuilder("Outbreak alert: Department of Medicine, " + db.setting("college", "Tirunelveli Medical College Hospital"))
+      .append("\n").append(Dates.nice(Dates.todayIso())).append("\n");
+    for (const cl of list) {
+      const pl = Places.byName(cl.place);
+      b.append("\n• ").append(cl.disease.label).append(": ").append(cl.cases.size()).append(" admissions from ").append(cl.place)
+        .append(pl == null ? "" : " (" + pl.taluk + " taluk, " + pl.district + " district)")
+        .append(", ").append(Dates.nice(cl.first())).append(cl.first() === cl.last() ? "" : " to " + Dates.nice(cl.last())).append("\n  ");
+      const who = [];
+      for (const c of cl.cases) who.add(Ui.nz(c.patient.get("age")) + Ui.nz(c.patient.get("sex")));
+      b.append("Age/sex: ").append(TextUtils.join(", ", who));
+    }
+    for (const r of rise) {
+      const d = Outbreak.disease(r[0]);
+      b.append("\n• ").append(d.label).append(" rising: ").append(r[1]).append(" admissions this week (about ").append(r[2]).append(" a week before)");
+    }
+    b.append("\n\nFrom hospital admissions only; diagnoses may be provisional.");
+    return b.toString();
+  }
+
+  // ---------- on screen ----------
+
+  static homeCard(a, db) {
+    if (!Outbreak.alerted(a)) return null;
+    const list = Outbreak.fresh(a, db, "home");
+    if (list.isEmpty()) return null;
+    const card = Ui.card(a);
+    card.setBackground(Ui.outline(a, 0xFFFFF7ED, Outbreak.COLOR, 18));
+    card.addView(Ui.softPill(a, "OUTBREAK EARLY WARNING", Outbreak.COLOR));
+    const t = Ui.tv(a, "🦠 " + (list.size() === 1 ? "A cluster of cases" : list.size() + " clusters of cases") + " from one place this week", 16, Ui.TEXT, true);
+    card.addView(t);
+    Ui.margins(t, 0, 6, 0, 0);
+    for (let i = 0; i < Math.min(3, list.size()); i++) {
+      const r = Ui.tv(a, "• " + Outbreak.line(list.get(i)), 13, Ui.TEXT, false);
+      r.setPadding(0, Ui.dp(a, 4), 0, 0);
+      card.addView(r);
+    }
+    const open = Ui.button(a, "Open the outbreak map", Outbreak.COLOR, a.opener(OutbreakActivity));
+    card.addView(open);
+    Ui.margins(open, 0, 10, 0, 0);
+    return card;
+  }
+
+  static homeLine(db) {
+    const n = Outbreak.clusters(db).size();
+    return n > 0 ? n + (n === 1 ? " cluster this week" : " clusters this week") : "Clusters by village";
+  }
+}
+
+Outbreak.Disease = class {
+  constructor(key, label, tamil, regex, threshold, color) {
+    this.key = key;
+    this.label = label;
+    this.tamil = tamil;
+    this.pattern = Pattern.compile(regex);
+    /** Admissions from one place within a week that make a cluster. */
+    this.threshold = threshold;
+    this.color = color;
+  }
+};
+
+/** One admission with an epidemic-prone diagnosis. */
+Outbreak.Case = class {
+  constructor(patient, disease, place, date) {
+    this.patient = patient;
+    this.disease = disease;
+    this.place = place;
+    this.date = date;
+  }
+};
+
+/** Several admissions with one disease from one place within a week. */
+Outbreak.Cluster = class {
+  constructor(disease, place) {
+    this.disease = disease;
+    this.place = place;
+    this.cases = [];
+  }
+
+  key() {
+    return this.disease.key + "|" + this.place;
+  }
+
+  first() {
+    return this.cases.get(this.cases.size() - 1).date;
+  }
+
+  last() {
+    return this.cases.get(0).date;
+  }
+};
+;
+/* ---- app/OutbreakActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Outbreak early warning: clusters this week, a map of where the cases come from, and the places with the most cases. */
+class OutbreakActivity extends Base {
+  static PERIODS = [7, 30, 90];
+
+  constructor() {
+    super();
+    this.days = 30;
+    this.only = "";
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Outbreak early warning");
+    this.subtitle = "Epidemic-prone admissions by village and town";
+    this.headerColor(Outbreak.COLOR);
+  }
+
+  render() {
+    const db = this.db;
+    const cls = Outbreak.clusters(db);
+    const rise = Outbreak.rising(db);
+    Outbreak.mark(this, cls, "home");
+    Outbreak.mark(this, cls, "bg");
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Outbreak.COLOR), 20));
+    hero.addView(Ui.tv(this, cls.isEmpty() && rise.isEmpty() ? "🦠 No clusters this week" : "🦠 " + (cls.size() + rise.size())
+      + ((cls.size() + rise.size()) === 1 ? " warning this week" : " warnings this week"), 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Dengue, scrub typhus, leptospirosis, cholera, diarrhoea, malaria, chikungunya, typhoid, hepatitis A/E, influenza and "
+      + "encephalitis admissions are grouped by the village or town in the address. A few from one place within a week is a cluster.",
+      12, 0xE6FFFFFF, false));
+    if (!cls.isEmpty() || !rise.isEmpty()) {
+      const text = Outbreak.shareText(db, cls, rise);
+      const share = Ui.button(this, "Share with public health (no names)", 0x33FFFFFF, {
+        onClick: (v) => {
+          const i = new Intent(Intent.ACTION_SEND);
+          i.setType("text/plain");
+          i.putExtra(Intent.EXTRA_TEXT, text);
+          try {
+            this.startActivity(Intent.createChooser(i, "Share the outbreak alert"));
+          } catch (e) {
+            Ui.toast(this, "No app to share with");
+          }
+        }
+      });
+      share.setTextColor(0xFFFFFFFF);
+      share.setBackground(Ui.outline(this, 0x2EFFFFFF, 0x99FFFFFF, 12));
+      hero.addView(share);
+      Ui.margins(share, 0, 10, 0, 0);
+    }
+    page.addView(hero);
+
+    if (!cls.isEmpty()) page.addView(Ui.heading(this, "Clusters this week", Outbreak.COLOR));
+    for (const cl of cls) {
+      const pl = Places.byName(cl.place);
+      const b = new StringBuilder();
+      for (const c of cl.cases)
+        b.append(b.length() === 0 ? "" : "\n").append(Dates.nice(c.date)).append("  ·  ").append(Ui.nz(c.patient.get("name"))).append(", ")
+          .append(Ui.nz(c.patient.get("age"))).append(Ui.nz(c.patient.get("sex"))).append("  ·  ").append(Db.shortName(Ui.nz(c.patient.get("home_unit"))));
+      page.addView(this.entryCard(cl.disease.label.toUpperCase(), cl.disease.color, cl.cases.size() + " from " + cl.place
+        + (pl == null ? "" : "  ·  " + pl.taluk + " taluk"), b.toString(), Dates.nice(cl.last()),
+        this.opener(PatientActivity, "id", cl.cases.get(0).patient.get("id")), 12));
+    }
+    for (const r of rise) {
+      const d = Outbreak.disease(r[0]);
+      page.addView(this.entryCard("RISING", d.color, d.label + " rising across the district", r[1] + " admissions this week; about " + r[2]
+        + " a week in the 4 weeks before.", null, null));
+    }
+
+    // period and disease filters
+    const chips = Ui.h(this);
+    for (const p of OutbreakActivity.PERIODS) {
+      const ch = Ui.chip(this, p + " days", p === this.days, Outbreak.COLOR);
+      ch.setOnClickListener({ onClick: (v) => { this.days = p; this.render(); } });
+      chips.addView(ch);
+    }
+    page.addView(Ui.heading(this, "Where the cases come from", Outbreak.COLOR));
+    page.addView(chips);
+    Ui.margins(chips, 14, 0, 14, 6);
+    const all = Outbreak.cases(db, Dates.today().minusDays(this.days - 1).toString());
+    const perDisease = new JMap();
+    for (const d of Outbreak.DISEASES) perDisease.put(d.key, 0);
+    for (const c of all) perDisease.put(c.disease.key, perDisease.get(c.disease.key) + 1);
+    const dchips = Ui.h(this);
+    const any = Ui.chip(this, "All " + all.size(), this.only.isEmpty(), Outbreak.COLOR);
+    any.setOnClickListener({ onClick: (v) => { this.only = ""; this.render(); } });
+    dchips.addView(any);
+    for (const d of Outbreak.DISEASES) {
+      if (perDisease.get(d.key) === 0) continue;
+      const ch = Ui.chip(this, d.label + " " + perDisease.get(d.key), d.key === this.only, d.color);
+      ch.setOnClickListener({ onClick: (v) => { this.only = d.key; this.render(); } });
+      dchips.addView(ch);
+    }
+    const hs = new HorizontalScrollView(this);
+    hs.setHorizontalScrollBarEnabled(false);
+    hs.addView(dchips);
+    page.addView(hs);
+    Ui.margins(hs, 14, 0, 14, 8);
+    const shown = [];
+    for (const c of all) if (this.only.isEmpty() || c.disease.key === this.only) shown.add(c);
+
+    const mapCard = Ui.card(this);
+    const map = new OutbreakActivity.MapView(this, shown);
+    mapCard.addView(map, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 380)));
+    mapCard.addView(Ui.muted(this, "Approximate positions. Places not on the map are listed below."));
+    page.addView(mapCard);
+
+    // places with the most cases
+    const byPlace = new JMap();
+    for (const c of shown) {
+      const k = c.place.isEmpty() ? "(no address)" : c.place;
+      if (!byPlace.containsKey(k)) byPlace.put(k, []);
+      byPlace.get(k).add(c);
+    }
+    const rows = ArrayList(byPlace.entrySet());
+    Collections.sort(rows, { compare: (a, b) => b.getValue().size() - a.getValue().size() });
+    const tc = Ui.card(this);
+    if (rows.isEmpty()) tc.addView(Ui.muted(this, "No epidemic-prone admissions in the last " + this.days + " days."));
+    for (let i = 0; i < Math.min(20, rows.size()); i++) {
+      const n = new JMap();
+      for (const c of rows.get(i).getValue()) n.put(c.disease.label, n.containsKey(c.disease.label) ? n.get(c.disease.label) + 1 : 1);
+      const bits = [];
+      for (const e of n.entrySet()) bits.add(e.getKey() + " " + e.getValue());
+      const pl = Places.byName(rows.get(i).getKey());
+      tc.addView(Ui.kv(this, rows.get(i).getKey() + (pl == null ? "" : "  (" + pl.taluk + ")"), TextUtils.join(", ", bits)));
+    }
+    page.addView(tc);
+    const note = Ui.muted(this, "From this department's admissions only, by the address written at admission. Diagnoses may be provisional.");
+    Ui.margins(note, 16, 8, 16, 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+}
+
+/** The places around Tirunelveli with a bubble for the cases from each (sized by the number, coloured by the commonest disease). */
+OutbreakActivity.MapView = class extends View {
+  static LAT_MIN = 8.05;
+  static LAT_MAX = 9.62;
+  static LON_MIN = 77.18;
+  static LON_MAX = 78.28;
+
+  constructor(c, cases) {
+    super(c);
+    this.cases = cases;
+    this.pDot = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.pText = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.pFill = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.pRing = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.pBg = new Paint();
+    this.pSea = new Paint();
+    this.pDot.setColor(0xFFCBD5E1);
+    this.pText.setColor(0xFF475569);
+    this.pText.setTextSize(Ui.dp(c, 9));
+    this.pRing.setStyle(Paint.Style.STROKE);
+    this.pRing.setStrokeWidth(Ui.dp(c, 1.5));
+    this.pRing.setColor(0xFFFFFFFF);
+    this.pBg.setColor(0xFFF1F5EE);
+    this.pSea.setColor(0xFFDBEAFE);
+  }
+
+  x(lon) {
+    const M = OutbreakActivity.MapView;
+    return (lon - M.LON_MIN) / (M.LON_MAX - M.LON_MIN) * this.getWidth();
+  }
+
+  y(lat) {
+    const M = OutbreakActivity.MapView;
+    return (M.LAT_MAX - lat) / (M.LAT_MAX - M.LAT_MIN) * this.getHeight();
+  }
+
+  onDraw(cv) {
+    const text = this.pText;
+    const w = this.getWidth(), h = this.getHeight();
+    cv.drawRect(0, 0, w, h, this.pBg);
+    // the Gulf of Mannar and the sea south of the cape, roughly
+    const s = new Path();
+    s.moveTo(this.x(78.28), this.y(9.62));
+    s.lineTo(this.x(78.20), this.y(9.25));
+    s.lineTo(this.x(78.16), this.y(8.80));
+    s.lineTo(this.x(78.12), this.y(8.45));
+    s.lineTo(this.x(77.90), this.y(8.26));
+    s.lineTo(this.x(77.70), this.y(8.15));
+    s.lineTo(this.x(77.55), this.y(8.07));
+    s.lineTo(this.x(77.18), this.y(8.05));
+    s.lineTo(this.x(78.28), this.y(8.05));
+    s.close();
+    cv.drawPath(s, this.pSea);
+    text.setColor(0xFF93C5FD);
+    text.setTextSize(Ui.dp(this.getContext(), 10));
+    cv.drawText("Gulf of Mannar", this.x(78.02), this.y(8.20), text);
+    text.setColor(0xFF64748B);
+    text.setTextSize(Ui.dp(this.getContext(), 9));
+
+    const at = new JMap();
+    for (const c of this.cases) {
+      if (Places.byName(c.place) == null) continue;
+      if (!at.containsKey(c.place)) at.put(c.place, []);
+      at.get(c.place).add(c);
+    }
+    const r0 = Ui.dp(this.getContext(), 2.5);
+    for (const p of Places.ALL) {
+      cv.drawCircle(this.x(p.lon), this.y(p.lat), r0, this.pDot);
+      if (p.big || at.containsKey(p.name)) cv.drawText(p.name, this.x(p.lon) + r0 * 2, this.y(p.lat) + r0, text);
+    }
+    for (const e of at.entrySet()) {
+      const p = Places.byName(e.getKey());
+      const n = e.getValue().size();
+      const cnt = new JMap();
+      let top = e.getValue().get(0).disease;
+      for (const c of e.getValue()) {
+        const k = (cnt.containsKey(c.disease.key) ? cnt.get(c.disease.key) : 0) + 1;
+        cnt.put(c.disease.key, k);
+        if (k > cnt.get(top.key)) top = c.disease;
+      }
+      const r = Ui.dp(this.getContext(), 6) + Ui.dp(this.getContext(), 4) * Math.sqrt(n);
+      this.pFill.setColor(Ui.alpha(top.color, 0xB0));
+      cv.drawCircle(this.x(p.lon), this.y(p.lat), r, this.pFill);
+      cv.drawCircle(this.x(p.lon), this.y(p.lat), r, this.pRing);
+      const num = new Paint(Paint.ANTI_ALIAS_FLAG);
+      num.setColor(0xFFFFFFFF);
+      num.setFakeBoldText(true);
+      num.setTextSize(Ui.dp(this.getContext(), 10));
+      num.setTextAlign(Paint.Align.CENTER);
+      cv.drawText(String(n), this.x(p.lon), this.y(p.lat) + Ui.dp(this.getContext(), 3.5), num);
+    }
+  }
+};
+;
 /* ---- app/PageJudge.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -54874,6 +60098,8 @@ class PatientActivity extends Base {
       const news = Ews.patientLine(this, this.db, id);
       if (news != null) page.addView(news);
     }
+    const crit = CriticalLabs.patientCard(this, db, id);
+    if (crit != null) page.addView(crit);
     if (inn) {
       const watch = Watch.patientCard(this, db, id);
       if (watch != null) page.addView(watch);
@@ -54891,7 +60117,11 @@ class PatientActivity extends Base {
     if (inn || !Antibiogram.forPatient(db, id).isEmpty()) page.addView(CultureActivity.patientCard(this, db, id));
     page.addView(Labs.section(this, db, id));
     page.addView(Imaging.section(this, db, id));
+    page.addView(ScoresActivity.patientCard(this, db, id));
+    page.addView(AbgActivity.patientCard(this, db, id));
+    page.addView(PillCardActivity.patientButton(this, db, id));
     page.addView(CasePresentationActivity.patientButton(this, db, id));
+    page.addView(CaseReportActivity.patientButton(this, db, p));
     if (inn) {
       const gl = Guidelines.section(this, db, id, p);
       if (gl != null) page.addView(gl);
@@ -55580,6 +60810,7 @@ class People {
       note = "In charge this month: " + Db.unitName(teamOf);
     }
     const people = People.team(db, teamOf);
+    Away.mirror(a, db);
     const th = People.theme(code);
     const color = th.c[0];
     const outer = Ui.card(a);
@@ -55617,6 +60848,11 @@ class People {
       card.addView(ch);
       Ui.margins(ch, 0, 8, 0, 0);
     }
+    const away = People.awayCard(a, db, people);
+    if (away != null) {
+      card.addView(away);
+      Ui.margins(away, 0, 10, 0, 0);
+    }
     if (people.isEmpty()) {
       const e = Ui.muted(a, "No team members listed for " + Db.unitName(teamOf) + " yet. Add them in Faculty or Students with the unit set to "
         + Db.shortName(teamOf) + ", and they appear here with their photos.");
@@ -55644,6 +60880,47 @@ class People {
     card.addView(hint);
     Ui.margins(hint, 0, 10, 0, 0);
     return outer;
+  }
+
+  /**
+   * 9.72: "Who's in today" on the board: the faculty away today (leave, week off or on duty elsewhere) with the day they
+   * are back, who of the faculty is in, and leave coming within a week, so the professor, the other APs and the PGs know.
+   */
+  static awayCard(a, db, people) {
+    const today = Dates.today();
+    const out = [], inn = [], soon = [];
+    for (const s of people) {
+      const g = People.group(s.get("role"));
+      if (g < 0 || g > 3) continue;   // the faculty: HOD, Professor, Associate and Assistant Professors
+      const k = Away.on(db, s.get("id"), today.toString());
+      if (!k.isEmpty()) {
+        out.push(Away.icon(k) + "  " + s.get("name") + "  ·  " + (k.equals("On duty") ? "on duty elsewhere" : k.equals("Week off") ? "week off" : "on leave")
+          + ", back " + Away.day(Away.backOn(db, s.get("id"), today)));
+        continue;
+      }
+      inn.push(s.get("name"));
+      const d = Away.soon(db, s.get("id"), today);
+      if (d != null) soon.push(s.get("name") + " from " + Away.day(d));
+    }
+    if (out.length === 0 && soon.length === 0) return null;
+    const c = Ui.v(a);
+    c.setPadding(Ui.dp(a, 12), Ui.dp(a, 10), Ui.dp(a, 12), Ui.dp(a, 10));
+    const edge = out.length === 0 ? Away.DUTY : Away.LEAVE;
+    c.setBackground(Ui.outline(a, Ui.mix(edge, Color.WHITE, 0.9), edge, 16));
+    if (out.length > 0) {
+      c.addView(Ui.tv(a, "🌴  Away today", 15, Ui.mix(Away.LEAVE, Color.BLACK, 0.45), true));
+      for (const l of out) c.addView(Ui.tv(a, l, 14, Ui.TEXT, true));
+      const t = inn.length > 0 ? Ui.tv(a, "✅  In today: " + TextUtils.join(", ", inn), 13, Ui.mix(Ui.GREEN, Color.BLACK, 0.2), true)
+        : Ui.tv(a, "⚠️  No faculty of this unit in today: call the professor or the HOD for decisions", 13, Ui.RED, true);
+      c.addView(t);
+      Ui.margins(t, 0, 6, 0, 0);
+    }
+    if (soon.length > 0) {
+      const t = Ui.tv(a, "🗓️  Leave coming: " + TextUtils.join("; ", soon), 13, Ui.mix(Away.DUTY, Color.BLACK, 0.3), true);
+      c.addView(t);
+      if (out.length > 0) Ui.margins(t, 0, 6, 0, 0);
+    }
+    return c;
   }
 
   /** A unit's board theme: a name, three colours for the band, and a motif. */
@@ -55676,15 +60953,33 @@ class People {
   static chip(a, s, color) {
     const c = Ui.h(a);
     c.setGravity(Gravity.CENTER_VERTICAL);
-    c.setBackground(Ui.outline(a, Color.WHITE, Ui.mix(color, Color.WHITE, 0.55), 24));
+    // 9.72: someone away today: a sunny dashed card, a faded photo with a 🌴 / ✈️ badge and the day they are back
+    const away = Away.on(a.db, s.get("id"), Dates.todayIso());
+    if (away.isEmpty()) c.setBackground(Ui.outline(a, Color.WHITE, Ui.mix(color, Color.WHITE, 0.55), 24));
+    else {
+      const d = Ui.round(a, Ui.mix(Away.LEAVE, Color.WHITE, 0.86), 24);
+      d.setStroke(Ui.dp(a, 2), Away.LEAVE, Ui.dp(a, 5), Ui.dp(a, 3));
+      c.setBackground(d);
+    }
     c.setPadding(Ui.dp(a, 4), Ui.dp(a, 4), Ui.dp(a, 12), Ui.dp(a, 4));
-    c.addView(People.avatar(a, s, 38, color));
+    const av = People.avatar(a, s, 38, color);
+    if (away.isEmpty()) c.addView(av);
+    else {
+      const f = new FrameLayout(a);
+      av.setAlpha(0.45);
+      f.addView(av);
+      const badge = Ui.tv(a, Away.icon(away), 15, Ui.TEXT, false);
+      f.addView(badge, new FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.END | Gravity.BOTTOM));
+      c.addView(f, Ui.lp(Ui.dp(a, 42), Ui.dp(a, 42)));
+    }
     const t = Ui.v(a);
     t.setPadding(Ui.dp(a, 8), 0, 0, 0);
     t.addView(Ui.tv(a, s.get("name"), 14, Ui.TEXT, true));
     const y = "Postgraduate" === s.get("role") ? CaseSheet.pgYear(s.get("batch"), Dates.today()) : 0;
     const sub = y > 0 ? (y === 3 ? "Final year" : y === 2 ? "2nd year" : "1st year") : Ui.nz(s.get("role")).startsWith("MBBS") ? s.get("role").split("MBBS ").join("") : "";
     if (!sub.isEmpty()) t.addView(Ui.tv(a, sub, 11, color, true));
+    if (!away.isEmpty()) t.addView(Ui.tv(a, (away.equals("On duty") ? "On duty elsewhere" : away.equals("Week off") ? "Week off" : "On leave") + " · back "
+      + Away.day(Away.backOn(a.db, s.get("id"), Dates.today())), 11, Ui.mix(Away.LEAVE, Color.BLACK, 0.4), true));
     c.addView(t);
     return c;
   }
@@ -55812,7 +61107,7 @@ class PgChatActivity extends Base {
     const box = Ui.v(this);
     box.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
     const note = Ui.tv(this, "🔒 Messages and patient details are end-to-end encrypted. Only the PGs and the admin can open them; "
-        + "the server never sees them.\n🚫 Screenshots, copying and forwarding are blocked.\n🗑 Messages are deleted automatically after one month.\n" + Conduct.ruleLine(), 12, 0xFF54656F, false);
+        + "the server never sees them.\n🚫 Screenshots, copying and forwarding are blocked.\n🗑 Messages are deleted automatically after one month.", 12, 0xFF54656F, false);
     note.setGravity(Gravity.CENTER);
     note.setBackground(Ui.round(this, 0xFFFFF5C4, 10));
     note.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
@@ -57262,6 +62557,697 @@ PhoneDirectoryActivity.Entry = class {
   constructor() { this.name = null; this.post = ""; this.phone = ""; this.group = null; this.src = ""; this.id = ""; }
 };
 ;
+/* ---- app/PillCard.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Picture pill card in Tamil (9.60): the discharge medicines drawn as a chart a patient who cannot read can follow —
+ * a pill in the tablet's colour, a sunrise, sun and moon for morning, noon and night, before or after food, how many days,
+ * and what each medicine is for, in Tamil with the English name. Printed (PDF) or sent as a picture on WhatsApp.
+ */
+class PillCard {
+  static KEY = "pill_card";
+  static COLOR = 0xFF0F766E;
+  static DIR = "notices";
+  /** Pill colours: name, Tamil, colour. What a medicine is for, by name: pattern, Tamil, English. */
+  static COLOURS = [["White", "வெள்ளை", "FFFFFFFF"], ["Yellow", "மஞ்சள்", "FFFACC15"], ["Orange", "ஆரஞ்சு", "FFFB923C"],
+            ["Pink", "இளஞ்சிவப்பு", "FFF9A8D4"], ["Red", "சிவப்பு", "FFEF4444"], ["Brown", "பழுப்பு", "FFA16207"], ["Blue", "நீலம்", "FF60A5FA"],
+            ["Green", "பச்சை", "FF4ADE80"], ["Purple", "ஊதா", "FFC084FC"], ["Capsule", "கேப்சூல்", "FFEF4444|FFFACC15"]];
+  static PURPOSE = [
+            ["metformin|glimepiride|gliclazide|glipizide|sitagliptin|vildagliptin|teneligliptin|dapagliflozin|empagliflozin|voglibose|pioglitazone|insulin|mixtard|glargine|actrapid", "சர்க்கரை நோய்க்கு", "for sugar (diabetes)"],
+            ["amlodipine|telmisartan|losartan|enalapril|ramipril|atenolol|metoprolol|cilnidipine|nifedipine|olmesartan|prazosin|hydrochlorothiazide|chlorthalidone|labetalol", "ரத்த அழுத்தத்திற்கு", "for blood pressure"],
+            ["atorvastatin|rosuvastatin|simvastatin|fenofibrate", "கொழுப்பு குறைய", "for cholesterol"],
+            ["aspirin|ecosprin|clopidogrel|prasugrel|ticagrelor", "இதயம் / ரத்தம் உறையாமல் இருக்க", "for the heart, thins the blood"],
+            ["warfarin|acitrom|acenocoumarol|apixaban|rivaroxaban|dabigatran", "ரத்தம் உறையாமல் இருக்க (INR பரிசோதனை அவசியம்)", "blood thinner"],
+            ["furosemide|frusemide|lasix|torsemide|spironolactone", "வீக்கம், நீர் வெளியேற", "for swelling (water tablet)"],
+            ["digoxin|ivabradine|isosorbide|nitroglycerin|sacubitril|carvedilol|bisoprolol", "இதயத்திற்கு", "for the heart"],
+            ["pantoprazole|omeprazole|rabeprazole|esomeprazole|ranitidine|famotidine|sucralfate", "வயிற்றுப் புண் / அமிலத்திற்கு", "for acidity, stomach ulcer"],
+            ["paracetamol|dolo|crocin", "காய்ச்சல் / வலிக்கு", "for fever and pain"],
+            ["diclofenac|ibuprofen|aceclofenac|tramadol|etoricoxib", "வலிக்கு", "for pain"],
+            ["doxycycline|azithromycin|amoxicillin|augmentin|cefixime|cefuroxime|cefpodoxime|ciprofloxacin|levofloxacin|ofloxacin|metronidazole|linezolid|nitrofurantoin|cotrimoxazole|clarithromycin|cephalexin|faropenem", "கிருமித் தொற்றுக்கு (முழு நாட்களும் சாப்பிடவும்)", "antibiotic: finish the full course"],
+            ["isoniazid|rifampicin|pyrazinamide|ethambutol|akt|\\bhrze?\\b", "காசநோய்க்கு (ஒரு நாளும் விடாமல்)", "for TB: never miss a day"],
+            ["thyroxine|levothyroxine|eltroxin|thyronorm", "தைராய்டுக்கு (வெறும் வயிற்றில்)", "for thyroid"],
+            ["carbimazole|methimazole|propylthiouracil", "தைராய்டுக்கு", "for thyroid"],
+            ["levetiracetam|phenytoin|valproate|valproic|carbamazepine|clobazam|lacosamide|phenobarbitone", "வலிப்பு வராமல் இருக்க", "to prevent fits"],
+            ["prednisolone|methylprednisolone|dexamethasone|deflazacort|hydrocortisone", "ஸ்டீராய்டு (திடீரென நிறுத்த வேண்டாம்)", "steroid: do not stop suddenly"],
+            ["salbutamol|levosalbutamol|budesonide|formoterol|tiotropium|ipratropium|montelukast|doxofylline|theophylline|deriphyllin", "மூச்சுத் திணறலுக்கு", "for breathing"],
+            ["ondansetron|domperidone|metoclopramide", "வாந்திக்கு", "for vomiting"],
+            ["lactulose|bisacodyl|isabgol", "மலச்சிக்கலுக்கு", "for constipation"],
+            ["ferrous|iron|folic|vitamin b12|methylcobalamin|calcium|vitamin d|cholecalciferol|b complex|becosules|zinc", "சத்துக்கு", "vitamin / supplement"],
+            ["potassium chloride|kcl", "பொட்டாசியம் சத்துக்கு", "potassium"],
+            ["rifaximin|propranolol", "கல்லீரலுக்கு", "for the liver"],
+            ["artesunate|artemether|lumefantrine|chloroquine|primaquine", "மலேரியாவுக்கு", "for malaria"],
+            ["acyclovir|valacyclovir|oseltamivir|tenofovir|entecavir", "வைரஸ் தொற்றுக்கு", "antiviral"],
+            ["fluconazole|itraconazole|voriconazole", "பூஞ்சைத் தொற்றுக்கு", "antifungal"],
+            ["amitriptyline|clonazepam|alprazolam|escitalopram|sertraline|olanzapine|quetiapine", "தூக்கம் / மனநலத்திற்கு", "for sleep or mood"],
+            ["allopurinol|febuxostat|colchicine", "யூரிக் அமிலம் / மூட்டு வலிக்கு", "for gout"],
+            ["hydroxychloroquine|methotrexate|sulfasalazine", "மூட்டு / நோய் எதிர்ப்பு நோய்க்கு", "for arthritis / immune disease"],
+            ["sodium bicarbonate|sevelamer|calcium acetate|erythropoietin", "சிறுநீரகத்திற்கு", "for the kidneys"]];
+  static FOOD_TA = [["Before food", "உணவுக்கு முன்"], ["After food", "உணவுக்குப் பின்"], ["With food", "உணவுடன்"],
+            ["Empty stomach", "வெறும் வயிற்றில்"], ["At bedtime", "தூங்கும் முன்"]];
+  static TYPE_TA = [["Tablet", "மாத்திரை"], ["Capsule", "கேப்சூல்"], ["Syrup", "சிரப் (டானிக்)"], ["Injection", "ஊசி"],
+            ["Nebulisation", "நெபுலைசர்"], ["ORS", "ORS கரைசல்"], ["Other", ""], ["Inhaler", "இன்ஹேலர்"]];
+  static WARN_TA = [["w_breath", "மூச்சுத் திணறல்"], ["w_chest", "நெஞ்சு வலி"], ["w_fever", "அதிக காய்ச்சல்"], ["w_drowsy", "மயக்கம் / வலிப்பு"],
+            ["w_bleed", "ரத்தப்போக்கு"], ["w_urine", "சிறுநீர் குறைவு"], ["w_vomit", "தொடர் வாந்தி"]];
+  static SLOT_EN = ["Morning", "Noon", "Night"];
+  static SLOT_TA = ["காலை", "மதியம்", "இரவு"];
+
+  static lookup(table, key) {
+    for (const r of table) if (r[0].equalsIgnoreCase(key)) return r[1];
+    return "";
+  }
+
+  static purpose(name) {
+    const n = Ui.nz(name).toLowerCase();
+    for (const r of PillCard.PURPOSE) if (Pattern.compile(r[0]).matcher(n).find()) return [r[1], r[2]];
+    return ["", ""];
+  }
+
+  static nightOnly(name) {
+    return Pattern.compile("statin|montelukast|amitript|clonazepam|alprazolam|zolpidem|bisacodyl|isabgol|lactulose").matcher(Ui.nz(name).toLowerCase()).find();
+  }
+
+  /** Fills the three times of day from the frequency (OD, BD, TDS, 1-0-1 …). */
+  static times(m, freq) {
+    const f = Ui.nz(freq).toUpperCase().split(" ").join("");
+    const q = m.type === "Syrup" ? (m.dose.isEmpty() ? "1" : m.dose) : "1";
+    const x = Pattern.compile("([0-9½]+(?:/2)?)-([0-9½]+(?:/2)?)-([0-9½]+(?:/2)?)").matcher(f);
+    if (x.find()) {
+      for (let i = 0; i < 3; i++) {
+        const v = x.group(i + 1).split("1/2").join("½");
+        m.at[i] = v === "0" ? "" : v;
+      }
+      return;
+    }
+    if (f.startsWith("SOS") || f.contains("PRN")) { m.whenNeeded = true; return; }
+    if (f.contains("WEEK")) { m.weekly = true; m.at[0] = q; return; }
+    if (f.startsWith("QID") || f.startsWith("Q6H") || f.startsWith("Q4H")) { m.at[0] = q; m.at[1] = q; m.at[2] = q; m.note = "4 முறை / 4 times a day"; return; }
+    if (f.startsWith("TDS") || f.startsWith("TID") || f.startsWith("Q8H")) { m.at[0] = q; m.at[1] = q; m.at[2] = q; return; }
+    if (f.startsWith("BD") || f.startsWith("BID") || f.startsWith("Q12H")) { m.at[0] = q; m.at[2] = q; return; }
+    if (f.startsWith("HS")) { m.at[2] = q; return; }
+    if (f.startsWith("OD") || f.isEmpty() || f.startsWith("Q24H")) {
+      if (PillCard.nightOnly(m.name) || "At bedtime" === m.food) m.at[2] = q;
+      else m.at[0] = q;
+    }
+  }
+
+  /** The card's medicines: the discharge medicines with the doctor's changes (colour, times, what for) from the case sheet. */
+  static meds(db, pid) {
+    const o = CaseSheet.load(db, pid);
+    const edits = o.optJSONObject(PillCard.KEY);
+    const out = [];
+    for (const d of CaseSheet.dischargeMeds(o)) {
+      const type = d.optString("type");
+      if (type === "IV fluid") continue;
+      const m = new PillCard.Med();
+      m.name = d.optString("name").trim();
+      m.dose = d.optString("dose").trim();
+      m.type = type;
+      m.food = d.optString("food");
+      if (m.food.isEmpty() && m.name.toLowerCase().matches(".*(prazole|thyrox|eltroxin|thyronorm).*")) m.food = "Before food";
+      m.days = d.optString("days").trim();
+      const pu = PillCard.purpose(m.name);
+      m.purposeTa = pu[0];
+      m.purposeEn = pu[1];
+      PillCard.times(m, d.optString("freq"));
+      if (type === "Capsule") m.colour = "Capsule";
+      const e = edits == null ? null : edits.optJSONObject(m.name.toLowerCase());
+      if (e != null) {
+        if (e.has("colour")) m.colour = e.optString("colour");
+        if (e.has("purpose")) m.purposeTa = e.optString("purpose");
+        if (e.has("m")) { m.at[0] = e.optString("m"); m.at[1] = e.optString("n"); m.at[2] = e.optString("e"); m.whenNeeded = false; }
+      }
+      out.add(m);
+    }
+    return out;
+  }
+
+  static saveEdit(db, pid, m) {
+    const o = CaseSheet.load(db, pid);
+    try {
+      let edits = o.optJSONObject(PillCard.KEY);
+      if (edits == null) edits = new JSONObject();
+      edits.put(m.name.toLowerCase(), new JSONObject().put("colour", m.colour).put("purpose", m.purposeTa)
+        .put("m", m.at[0]).put("n", m.at[1]).put("e", m.at[2]));
+      o.put(PillCard.KEY, edits);
+    } catch (ignored) {
+    }
+    CaseSheet.save(db, pid, o);
+  }
+
+  // ---------- drawing ----------
+
+  static W = 1240;
+  static H = 1754;
+  static ROW = 190;
+  static TOP = 400;
+  static BOTTOM = 330;
+  static PER_PAGE = Math.trunc((1754 - 400 - 330) / 190);
+
+  static pages(meds) {
+    return Math.max(1, Math.trunc((meds.size() + PillCard.PER_PAGE - 1) / PillCard.PER_PAGE));
+  }
+
+  static paint(color, size, bold) {
+    const p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    p.setColor(color);
+    p.setTextSize(size);
+    p.setTypeface(Typeface.create(Typeface.SANS_SERIF, bold ? Typeface.BOLD : Typeface.NORMAL));
+    return p;
+  }
+
+  static colourOf(name, part) {
+    for (const c of PillCard.COLOURS) if (c[0] === name) {
+      const v = c[2].jsplit("\\|");
+      return parseInt(v[Math.min(part, v.length - 1)], 16) | 0;
+    }
+    return 0xFFFFFFFF;
+  }
+
+  static drawPill(cv, cx, cy, m) {
+    const paint = PillCard.paint;
+    const out = paint(0xFF475569, 0, false);
+    out.setStyle(Paint.Style.STROKE);
+    out.setStrokeWidth(3);
+    if (m.type === "Syrup") {
+      // a bottle
+      const body = new RectF(cx - 26, cy - 22, cx + 26, cy + 44);
+      cv.drawRoundRect(body, 10, 10, paint(0xFFB45309, 0, false));
+      cv.drawRect(cx - 12, cy - 44, cx + 12, cy - 22, paint(0xFF78350F, 0, false));
+      cv.drawRoundRect(new RectF(cx - 20, cy, cx + 20, cy + 26), 4, 4, paint(0xFFFFFFFF, 0, false));
+      return;
+    }
+    if (m.type === "Injection") {
+      const p = paint(0xFF94A3B8, 0, false);
+      cv.drawRoundRect(new RectF(cx - 46, cy - 10, cx + 26, cy + 10), 4, 4, p);
+      cv.drawRect(cx + 26, cy - 3, cx + 52, cy + 3, paint(0xFF475569, 0, false));
+      cv.drawRect(cx - 60, cy - 16, cx - 46, cy + 16, paint(0xFF475569, 0, false));
+      return;
+    }
+    const caps = m.colour === "Capsule" || m.type === "Capsule";
+    if (caps) {
+      const r = new RectF(cx - 50, cy - 22, cx + 50, cy + 22);
+      cv.save();
+      cv.clipRect(cx - 50, cy - 22, cx, cy + 22);
+      cv.drawRoundRect(r, 22, 22, paint(PillCard.colourOf(m.colour === "Capsule" ? "Capsule" : m.colour, 0), 0, false));
+      cv.restore();
+      cv.save();
+      cv.clipRect(cx, cy - 22, cx + 50, cy + 22);
+      cv.drawRoundRect(r, 22, 22, paint(PillCard.colourOf(m.colour === "Capsule" ? "Capsule" : m.colour, 1), 0, false));
+      cv.restore();
+      cv.drawRoundRect(r, 22, 22, out);
+    } else {
+      const r = new RectF(cx - 40, cy - 30, cx + 40, cy + 30);
+      cv.drawOval(r, paint(PillCard.colourOf(m.colour, 0), 0, false));
+      cv.drawOval(r, out);
+      const line = paint(0x55475569, 0, false);
+      line.setStrokeWidth(3);
+      cv.drawLine(cx - 30, cy, cx + 30, cy, line);
+    }
+  }
+
+  /** Sunrise (morning), sun (noon), moon (night). */
+  static drawTime(cv, slot, cx, cy, r) {
+    const paint = PillCard.paint;
+    const sun = paint(0xFFF59E0B, 0, false), ray = paint(0xFFF59E0B, 0, false);
+    ray.setStrokeWidth(r * 0.14);
+    ray.setStrokeCap(Paint.Cap.ROUND);
+    if (slot === 2) {
+      // a crescent: the moon with a white disc over one side (the header is on white)
+      cv.drawCircle(cx, cy, r * 0.8, paint(0xFF1E3A8A, 0, false));
+      cv.drawCircle(cx + r * 0.42, cy - r * 0.28, r * 0.72, paint(0xFFFFFFFF, 0, false));
+      const star = paint(0xFFFACC15, 0, false);
+      cv.drawCircle(cx + r * 0.7, cy + r * 0.25, r * 0.1, star);
+      cv.drawCircle(cx + r * 0.45, cy + r * 0.7, r * 0.07, star);
+      return;
+    }
+    const sy = slot === 0 ? cy + r * 0.25 : cy;
+    for (let i = 0; i < 8; i++) {
+      const a = Math.PI * 2 * i / 8;
+      if (slot === 0 && Math.sin(a) > 0.1) continue;   // only the rays above the horizon
+      cv.drawLine(cx + Math.cos(a) * r * 0.62, sy + Math.sin(a) * r * 0.62, cx + Math.cos(a) * r * 0.95,
+        sy + Math.sin(a) * r * 0.95, ray);
+    }
+    if (slot === 0) {
+      cv.save();
+      cv.clipRect(cx - r, sy - r, cx + r, sy);
+      cv.drawCircle(cx, sy, r * 0.48, paint(0xFFFB923C, 0, false));
+      cv.restore();
+      const ground = paint(0xFF15803D, 0, false);
+      ground.setStrokeWidth(r * 0.12);
+      cv.drawLine(cx - r, sy + 2, cx + r, sy + 2, ground);
+    } else cv.drawCircle(cx, sy, r * 0.48, sun);
+  }
+
+  static centred(cv, s, cx, y, p) {
+    cv.drawText(s, cx - p.measureText(s) / 2, y, p);
+  }
+
+  /** Draws page n (0-based) of the card. */
+  static draw(cv, n, meds, p, cs, hospital) {
+    const paint = PillCard.paint, centred = PillCard.centred, W = PillCard.W, H = PillCard.H, ROW = PillCard.ROW, TOP = PillCard.TOP,
+      BOTTOM = PillCard.BOTTOM, PER_PAGE = PillCard.PER_PAGE, COLOR = PillCard.COLOR;
+    cv.drawColor(0xFFFFFFFF);
+    const band = paint(COLOR, 0, false);
+    cv.drawRect(0, 0, W, 150, band);
+    cv.drawText("மருந்து அட்டவணை", 50, 80, paint(0xFFFFFFFF, 58, true));
+    cv.drawText("Medicine chart  ·  " + hospital, 52, 128, paint(0xDDFFFFFF, 28, false));
+    const who = Ui.nz(p.get("name")) + "   " + Ui.nz(p.get("age")) + " / " + Ui.nz(p.get("sex"));
+    cv.drawText(who, 50, 205, paint(0xFF0F172A, 38, true));
+    const dt = Db.IN === p.get("status") ? Dates.nice(Dates.todayIso()) : Dates.nice(Ui.nz(p.get("outcome_date")).length >= 10 ? p.get("outcome_date").substring(0, 10) : Dates.todayIso());
+    cv.drawText("தேதி / Date: " + dt + (PillCard.pages(meds) > 1 ? "     பக்கம் " + (n + 1) + " / " + PillCard.pages(meds) : ""), 50, 250, paint(0xFF475569, 26, false));
+
+    // the times-of-day header
+    const c0 = 660, cw = 150;
+    const hdr = paint(0xFF334155, 30, true), hdrEn = paint(0xFF64748B, 20, false);
+    for (let i = 0; i < 3; i++) {
+      const cx = c0 + cw * i + cw / 2;
+      PillCard.drawTime(cv, i, cx, 300, 34);
+      centred(cv, PillCard.SLOT_TA[i], cx, 368, hdr);
+      centred(cv, PillCard.SLOT_EN[i], cx, 392, hdrEn);
+    }
+    centred(cv, "நாட்கள்", 1150, 368, hdr);
+    centred(cv, "Days", 1150, 392, hdrEn);
+
+    const name = paint(0xFF0F172A, 36, true), small = paint(0xFF475569, 24, false), ta = paint(COLOR, 26, true), big = paint(0xFF0F172A, 54, true),
+      none = paint(0xFFCBD5E1, 40, false), foodP = paint(0xFF9A3412, 22, true);
+    const line = paint(0xFFE2E8F0, 0, false);
+    line.setStrokeWidth(2);
+    const from = n * PER_PAGE;
+    for (let i = from; i < Math.min(meds.size(), from + PER_PAGE); i++) {
+      const m = meds.get(i);
+      const y = TOP + (i - from) * ROW;
+      if ((i - from) % 2 === 0) cv.drawRect(0, y, W, y + ROW, paint(0xFFF8FAFC, 0, false));
+      cv.drawLine(30, y + ROW, W - 30, y + ROW, line);
+      PillCard.drawPill(cv, 95, y + ROW / 2 - 6, m);
+      const nm = m.name.length > 22 ? m.name.substring(0, 22) + "…" : m.name;
+      cv.drawText(nm, 170, y + 56, name);
+      const typ = PillCard.lookup(PillCard.TYPE_TA, m.type);
+      cv.drawText((m.dose + "  " + typ).trim(), 170, y + 92, small);
+      if (!m.purposeTa.isEmpty()) {
+        const pu = m.purposeTa.length > 30 ? m.purposeTa.substring(0, 30) + "…" : m.purposeTa;
+        cv.drawText(pu, 170, y + 130, ta);
+      }
+      const food = PillCard.lookup(PillCard.FOOD_TA, m.food);
+      const extra = (food.isEmpty() ? "" : food) + (m.note.isEmpty() ? "" : (food.isEmpty() ? "" : "  ·  ") + m.note);
+      if (!extra.isEmpty()) cv.drawText(extra, 170, y + 166, foodP);
+      if (m.whenNeeded) {
+        const wn = paint(0xFF9A3412, 30, true);
+        centred(cv, "தேவைப்படும் போது மட்டும்", c0 + cw * 1.5, y + ROW / 2, wn);
+        centred(cv, "only when needed", c0 + cw * 1.5, y + ROW / 2 + 34, small);
+      } else for (let k = 0; k < 3; k++) {
+        const cx = c0 + cw * k + cw / 2;
+        const v = m.at[k];
+        if (v.isEmpty()) centred(cv, "—", cx, y + ROW / 2 + 14, none);
+        else {
+          cv.drawCircle(cx, y + ROW / 2 - 4, 46, paint(k === 2 ? 0xFFE0E7FF : 0xFFFEF3C7, 0, false));
+          const b = v.length > 2 ? paint(0xFF0F172A, 26, true) : big;
+          centred(cv, v, cx, y + ROW / 2 + (v.length > 2 ? 6 : 16), b);
+        }
+      }
+      let days = m.days.isEmpty() ? "" : m.days.toLowerCase().startsWith("cont") || m.days.toLowerCase().contains("long") ? "தொடர்ந்து" : m.days;
+      if (m.weekly) days = "வாரம் 1 முறை";
+      centred(cv, days, 1150, y + ROW / 2 + 12, days.length > 3 ? paint(0xFF0F172A, 24, true) : paint(0xFF0F172A, 44, true));
+    }
+
+    // the bottom: review, danger signs, keep taking them
+    const fy = H - BOTTOM + 20;
+    cv.drawRect(0, fy - 20, W, H, paint(0xFFF0FDFA, 0, false));
+    const t1 = paint(0xFF0F172A, 28, true), t2 = paint(0xFF334155, 24, false), red = paint(0xFFB91C1C, 28, true);
+    const fu = CaseSheet.s(cs, "fu_date");
+    cv.drawText("மருத்துவர் சொல்லாமல் மருந்துகளை நிறுத்த வேண்டாம்.", 50, fy + 30, t1);
+    cv.drawText("Do not stop any medicine unless the doctor says so.", 50, fy + 62, t2);
+    if (!fu.isEmpty()) {
+      cv.drawText("மீண்டும் பார்க்க வர வேண்டிய தேதி: " + Dates.nice(fu) + "  (Review)", 50, fy + 110, t1);
+    }
+    const warn = [];
+    for (const w of PillCard.WARN_TA) if (!CaseSheet.s(cs, w[0]).isEmpty() && "0" !== CaseSheet.s(cs, w[0])) warn.add(w[1]);
+    if (warn.isEmpty()) for (let i = 0; i < 4; i++) warn.add(PillCard.WARN_TA[i][1]);
+    cv.drawText("இவை இருந்தால் உடனே அவசர சிகிச்சைப் பிரிவுக்கு வரவும்:", 50, fy + 165, red);
+    const ws = TextUtils.join(",  ", warn);
+    if (ws.length > 60) {
+      const cut = ws.lastIndexOf(",", 60);
+      cv.drawText(ws.substring(0, cut + 1), 50, fy + 205, t2);
+      cv.drawText(ws.substring(cut + 1).trim(), 50, fy + 240, t2);
+    } else cv.drawText(ws, 50, fy + 205, t2);
+    cv.drawText("Come to casualty at once with any of these.  ·  108 ambulance", 50, fy + 285, paint(0xFF64748B, 22, false));
+  }
+
+  static hospital(db) {
+    return db.setting("college", "Tirunelveli Medical College Hospital");
+  }
+
+  static bitmap(db, pid, page, scale) {
+    const meds = PillCard.meds(db, pid);
+    const p = db.row("SELECT * FROM patients WHERE id=?", String(pid));
+    const b = Bitmap.createBitmap(Math.round(PillCard.W * scale), Math.round(PillCard.H * scale), Bitmap.Config.ARGB_8888);
+    const cv = new Canvas(b);
+    cv.scale(scale, scale);
+    PillCard.draw(cv, page, meds, p, CaseSheet.load(db, pid), PillCard.hospital(db));
+    return b;
+  }
+
+  /** The card as a PDF under notices/ (relative path). */
+  static pdf(c, db, pid) {
+    const meds = PillCard.meds(db, pid);
+    const p = db.row("SELECT * FROM patients WHERE id=?", String(pid));
+    const cs = CaseSheet.load(db, pid);
+    const doc = new PdfDocument();
+    const rel = PillCard.DIR + "/pillcard_" + pid + ".pdf";
+    try {
+      for (let i = 0; i < PillCard.pages(meds); i++) {
+        // A4 at 72 points per inch; the 1240 x 1754 drawing scaled to fit
+        const pg = doc.startPage(new PdfDocument.PageInfo.Builder(595, 842, i + 1).create());
+        const cv = pg.getCanvas();
+        cv.scale(595 / PillCard.W, 842 / PillCard.H);
+        PillCard.draw(cv, i, meds, p, cs, PillCard.hospital(db));
+        doc.finishPage(pg);
+      }
+      const f = db.file(rel);
+      f.getParentFile().mkdirs();
+      const out = new FileOutputStream(f);
+      try {
+        doc.writeTo(out);
+      } finally {
+        out.close();
+      }
+    } finally {
+      doc.close();
+    }
+    return rel;
+  }
+
+  /** Page n as a JPEG picture for WhatsApp (relative path). */
+  static picture(db, pid, page) {
+    const b = PillCard.bitmap(db, pid, page, 1);
+    const rel = PillCard.DIR + "/pillcard_" + pid + "_" + (page + 1) + ".jpg";
+    const f = db.file(rel);
+    f.getParentFile().mkdirs();
+    const out = new FileOutputStream(f);
+    try {
+      b.compress(Bitmap.CompressFormat.JPEG, 90, out);
+    } finally {
+      out.close();
+    }
+    return rel;
+  }
+}
+
+/** One medicine on the card. */
+PillCard.Med = class {
+  constructor() {
+    this.name = ""; this.dose = ""; this.type = ""; this.food = ""; this.days = ""; this.purposeTa = ""; this.purposeEn = ""; this.colour = "White"; this.note = "";
+    /** Morning, noon, night: how much ("1", "½", "10 ml") or "" for none. */
+    this.at = ["", "", ""];
+    this.whenNeeded = false;
+    this.weekly = false;
+  }
+};
+;
+/* ---- app/PillCardActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** The Tamil picture pill card for one patient: preview, change a pill's colour, times or what it is for, then print or send. */
+class PillCardActivity extends Base {
+  constructor() {
+    super();
+    this.id = 0;
+    this.p = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.id = Long.parseLong(this.getIntent().getStringExtra("id"));
+    this.p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.id));
+    this.setTitle("Tamil pill card");
+    this.subtitle = this.p == null ? "" : Ui.nz(this.p.get("name"));
+    this.headerColor(PillCard.COLOR);
+  }
+
+  render() {
+    const db = this.db, id = this.id;
+    const page = Ui.v(this);
+    const meds = PillCard.meds(db, id);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(PillCard.COLOR), 20));
+    hero.addView(Ui.tv(this, "💊  மருந்து அட்டவணை · " + meds.size() + (meds.size() === 1 ? " medicine" : " medicines"), 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "From the discharge medicines in the case sheet: each pill in its colour, with a sunrise, sun and moon for morning, noon and "
+      + "night, before or after food, days, and what it is for in Tamil. Tap a medicine below to change it.", 12, 0xE6FFFFFF, false));
+    if (!meds.isEmpty()) {
+      const send = this.white("Send as picture (WhatsApp)", { onClick: (v) => { this.sendPicture(); } }),
+        print = this.white("PDF to print", { onClick: (v) => { this.printPdf(); } });
+      const row = Ui.buttonRow(this, send, print);
+      hero.addView(row);
+      Ui.margins(row, 0, 10, 0, 0);
+    }
+    page.addView(hero);
+    if (meds.isEmpty()) {
+      page.addView(this.emptyNote("No discharge medicines yet. Add them in the case sheet (Discharge medicines), or tick \"Continue on discharge\" in the treatment chart."));
+      const w = Ui.v(this);
+      w.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+      w.addView(Ui.button(this, "Open the case sheet", PillCard.COLOR, this.opener(CaseSheetActivity, "id", String(id))));
+      page.addView(w);
+      this.setPage(page);
+      return;
+    }
+    for (let i = 0; i < PillCard.pages(meds); i++) {
+      const iv = new ImageView(this);
+      const bm = PillCard.bitmap(db, id, i, 0.5);
+      iv.setImageBitmap(bm);
+      iv.setAdjustViewBounds(true);
+      iv.setBackground(Ui.outline(this, 0xFFFFFFFF, 0xFFE2E8F0, 8));
+      const lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+      lp.setMargins(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+      page.addView(iv, lp);
+    }
+    page.addView(Ui.heading(this, "Medicines on the card", PillCard.COLOR));
+    const edit = CaseSheet.canEdit(this, db, this.p);
+    const dash = PillCardActivity.dash;
+    for (const m of meds) {
+      const times = m.whenNeeded ? "only when needed" : "Morning " + dash(m.at[0]) + " · Noon " + dash(m.at[1]) + " · Night " + dash(m.at[2]);
+      page.addView(this.entryCard(m.colour.toUpperCase(), (PillCard.colourOf(m.colour, 0) | 0) === (0xFFFFFFFF | 0) ? Ui.SLATE : PillCard.colourOf(m.colour, 0),
+        m.name + (m.dose.isEmpty() ? "" : "  " + m.dose), times + "\n" + (m.purposeTa.isEmpty() ? "(what it is for: add in Tamil)" : m.purposeTa)
+          + (m.food.isEmpty() ? "" : "  ·  " + m.food), m.days, edit ? { onClick: (v) => { this.change(m); } } : null));
+    }
+    const note = Ui.muted(this, "Check every line before giving it to the patient. The times come from the frequency (OD, BD, TDS, 1-0-1); a once-daily statin or sleeping tablet goes at night.");
+    Ui.margins(note, 16, 10, 16, 0);
+    page.addView(note);
+    this.setPage(page);
+  }
+
+  static dash(s) {
+    return s.isEmpty() ? "–" : s;
+  }
+
+  white(s, l) {
+    const t = Ui.button(this, s, PillCard.COLOR, l);
+    t.setTextColor(0xFFFFFFFF);
+    t.setBackground(Ui.outline(this, 0x2EFFFFFF, 0x99FFFFFF, 12));
+    return t;
+  }
+
+  change(m) {
+    const f = new Form(this);
+    const names = new Array(PillCard.COLOURS.length).fill(null), labels = new Array(PillCard.COLOURS.length).fill(null);
+    for (let i = 0; i < names.length; i++) {
+      names[i] = PillCard.COLOURS[i][0];
+      labels[i] = PillCard.COLOURS[i][0] + " · " + PillCard.COLOURS[i][1];
+    }
+    f.choice("colour", "Pill colour", labels, names, m.colour, null);
+    f.text("purpose", "What it is for (Tamil)", m.purposeTa, Form.PLAIN);
+    f.beginRow();
+    f.text("m", "காலை Morning", m.at[0], Form.PLAIN);
+    f.text("n", "மதியம் Noon", m.at[1], Form.PLAIN);
+    f.text("e", "இரவு Night", m.at[2], Form.PLAIN);
+    f.endRow();
+    f.view.addView(Ui.muted(this, "Times: 1, ½, 2 or 10 ml; leave blank for none."));
+    Ui.formDialog(this, m.name, f, "Save", {
+      run: () => {
+        m.colour = f.get("colour");
+        m.purposeTa = f.get("purpose").trim();
+        m.at[0] = f.get("m").trim();
+        m.at[1] = f.get("n").trim();
+        m.at[2] = f.get("e").trim();
+        PillCard.saveEdit(this.db, this.id, m);
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  sendPicture() {
+    try {
+      const meds = PillCard.meds(this.db, this.id);
+      const rel = PillCard.picture(this.db, this.id, 0);
+      for (let i = 1; i < PillCard.pages(meds); i++) PillCard.picture(this.db, this.id, i);
+      Store.share(this, rel, "மருந்து அட்டவணை - Medicine chart");
+      if (PillCard.pages(meds) > 1) Ui.toast(this, "The card has " + PillCard.pages(meds) + " pages: send the PDF for all of them");
+    } catch (e) {
+      Ui.toast(this, "Could not make the picture: " + e.getMessage());
+    }
+  }
+
+  printPdf() {
+    try {
+      Store.openWith(this, PillCard.pdf(this, this.db, this.id));
+    } catch (e) {
+      Ui.toast(this, "Could not make the PDF: " + e.getMessage());
+    }
+  }
+
+  /** The patient page button. */
+  static patientButton(a, db, pid) {
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), 0);
+    box.addView(Ui.outlineButton(a, "💊  Tamil pill card (மருந்து அட்டவணை)", PillCard.COLOR, a.opener(PillCardActivity, "id", String(pid))));
+    return box;
+  }
+}
+;
+/* ---- app/Places.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Towns and villages around Tirunelveli with their taluk, district and approximate position (9.60), so admissions can be
+ * grouped by where the patients come from and shown on a map. A place not in the list is taken from the address as written.
+ */
+class Places {
+  static p(name, aliases, taluk, district, lat, lon) {
+    return new Places.Place(name, aliases, taluk, district, lat, lon, false);
+  }
+
+  static big(name, aliases, district, lat, lon) {
+    return new Places.Place(name, aliases, name, district, lat, lon, true);
+  }
+
+  static TVL = "Tirunelveli";
+  static TKS = "Tenkasi";
+  static TUT = "Thoothukudi";
+  static KK = "Kanyakumari";
+  static VNR = "Virudhunagar";
+
+  static $clinit() {
+    const p = Places.p, big = Places.big, TVL = Places.TVL, TKS = Places.TKS, TUT = Places.TUT, KK = Places.KK, VNR = Places.VNR;
+    /** Approximate positions (to about 2 km), for the map only. */
+    Places.ALL = [
+      p("Palayamkottai", "palayamkottai|palayankottai|palai|palayamkotai", "Palayamkottai", TVL, 8.722, 77.737),
+      p("Melapalayam", "melapalayam|mela palayam", "Tirunelveli", TVL, 8.700, 77.712),
+      p("Pettai", "pettai", "Tirunelveli", TVL, 8.737, 77.683),
+      p("Thachanallur", "thachanallur|thatchanallur", "Tirunelveli", TVL, 8.753, 77.720),
+      p("Tirunelveli Junction", "junction|tvl jn|nellai junction", "Tirunelveli", TVL, 8.731, 77.708),
+      p("Perumalpuram", "perumalpuram", "Palayamkottai", TVL, 8.735, 77.750),
+      p("KTC Nagar", "ktc nagar", "Palayamkottai", TVL, 8.722, 77.770),
+      p("Sivanthipatti", "sivanthipatti", "Palayamkottai", TVL, 8.700, 77.785),
+      p("Munneerpallam", "munneerpallam|munnerpallam", "Palayamkottai", TVL, 8.668, 77.735),
+      p("Seydunganallur", "seydunganallur|seidunganallur|seydungnallur", "Palayamkottai", TVL, 8.665, 77.830),
+      p("Gangaikondan", "gangaikondan", "Tirunelveli", TVL, 8.850, 77.780),
+      p("Manur", "manur", "Manur", TVL, 8.866, 77.648),
+      p("Thalaiyuthu", "thalaiyuthu|thalayuthu", "Manur", TVL, 8.790, 77.700),
+      p("Ambasamudram", "ambasamudram|ambai", "Ambasamudram", TVL, 8.710, 77.455),
+      p("Vikramasingapuram", "vikramasingapuram|vikramasinghapuram|vk puram", "Ambasamudram", TVL, 8.670, 77.400),
+      p("Papanasam", "papanasam", "Ambasamudram", TVL, 8.712, 77.370),
+      p("Kallidaikurichi", "kallidaikurichi|kallidaikurichy", "Ambasamudram", TVL, 8.685, 77.465),
+      p("Cheranmahadevi", "cheranmahadevi|cheranmadevi|cheranmahadevai", "Cheranmahadevi", TVL, 8.685, 77.565),
+      p("Veeravanallur", "veeravanallur", "Cheranmahadevi", TVL, 8.695, 77.520),
+      p("Pattamadai", "pattamadai", "Cheranmahadevi", TVL, 8.670, 77.585),
+      p("Mukkudal", "mukkudal|mukkoodal", "Cheranmahadevi", TVL, 8.745, 77.520),
+      p("Kalakad", "kalakad|kalakadu", "Kalakad", TVL, 8.512, 77.552),
+      p("Nanguneri", "nanguneri|nanguneri|naanguneri", "Nanguneri", TVL, 8.490, 77.660),
+      p("Moolaikaraipatti", "moolaikaraipatti|moolakaraipatti", "Nanguneri", TVL, 8.548, 77.770),
+      p("Eruvadi", "eruvadi", "Nanguneri", TVL, 8.465, 77.560),
+      p("Thirukkurungudi", "thirukkurungudi|thirukurungudi", "Nanguneri", TVL, 8.433, 77.570),
+      p("Valliyur", "valliyur|valliyoor", "Radhapuram", TVL, 8.385, 77.610),
+      p("Panagudi", "panagudi", "Radhapuram", TVL, 8.330, 77.580),
+      p("Vadakkankulam", "vadakkankulam|vadakankulam", "Radhapuram", TVL, 8.265, 77.620),
+      p("Radhapuram", "radhapuram|radapuram", "Radhapuram", TVL, 8.262, 77.690),
+      p("Koodankulam", "koodankulam|kudankulam", "Radhapuram", TVL, 8.180, 77.700),
+      p("Tisaiyanvilai", "tisaiyanvilai|thisayanvilai|thisaiyanvilai", "Tisaiyanvilai", TVL, 8.335, 77.870),
+      p("Uvari", "uvari", "Tisaiyanvilai", TVL, 8.280, 77.890),
+      p("Alangulam", "alangulam", "Alangulam", TKS, 8.865, 77.500),
+      p("Pavoorchatram", "pavoorchatram|pavoorchathiram", "Tenkasi", TKS, 8.920, 77.385),
+      p("Keelapavoor", "keelapavoor|keezhapavoor", "Tenkasi", TKS, 8.905, 77.420),
+      p("Surandai", "surandai", "Veerakeralampudur", TKS, 8.980, 77.420),
+      p("Veerakeralampudur", "veerakeralampudur", "Veerakeralampudur", TKS, 8.950, 77.480),
+      p("Courtallam", "courtallam|kutralam|kuttalam", "Tenkasi", TKS, 8.935, 77.275),
+      p("Sengottai", "sengottai|shencottah|senkottai", "Sengottai", TKS, 8.975, 77.250),
+      p("Kadayanallur", "kadayanallur", "Kadayanallur", TKS, 9.075, 77.340),
+      p("Puliyangudi", "puliyangudi", "Kadayanallur", TKS, 9.170, 77.400),
+      p("Sivagiri", "sivagiri|shivagiri", "Sivagiri", TKS, 9.335, 77.430),
+      p("Sankarankovil", "sankarankovil|sankarankoil|sankaran kovil", "Sankarankovil", TKS, 9.170, 77.545),
+      p("Thiruvenkadam", "thiruvenkadam|tiruvenkadam", "Thiruvenkadam", TKS, 9.205, 77.680),
+      p("Kayathar", "kayathar|kayatharu", "Kayathar", TUT, 8.950, 77.775),
+      p("Kovilpatti", "kovilpatti|kovilpatty", "Kovilpatti", TUT, 9.175, 77.870),
+      p("Ettayapuram", "ettayapuram", "Ettayapuram", TUT, 9.150, 77.990),
+      p("Ottapidaram", "ottapidaram", "Ottapidaram", TUT, 8.915, 78.020),
+      p("Vilathikulam", "vilathikulam|vilathikulamu", "Vilathikulam", TUT, 9.130, 78.170),
+      p("Srivaikuntam", "srivaikuntam|srivaikundam|sri vaikuntam", "Srivaikuntam", TUT, 8.630, 77.910),
+      p("Alwarthirunagari", "alwarthirunagari|alwar thirunagari|azhwarthirunagari", "Srivaikuntam", TUT, 8.610, 77.940),
+      p("Eral", "eral", "Eral", TUT, 8.625, 78.025),
+      p("Nazareth", "nazareth", "Srivaikuntam", TUT, 8.560, 77.970),
+      p("Sathankulam", "sathankulam|sattankulam|sathankulamu", "Sathankulam", TUT, 8.440, 77.915),
+      p("Tiruchendur", "tiruchendur|thiruchendur|thiruchendhur", "Tiruchendur", TUT, 8.495, 78.120),
+      p("Kayalpatnam", "kayalpatnam|kayalpattinam", "Tiruchendur", TUT, 8.570, 78.120),
+      p("Udangudi", "udangudi", "Tiruchendur", TUT, 8.430, 78.030),
+      p("Kulasekarapatnam", "kulasekarapatnam|kulasekarapattinam", "Tiruchendur", TUT, 8.400, 78.050),
+      p("Rajapalayam", "rajapalayam", "Rajapalayam", VNR, 9.450, 77.555),
+      p("Srivilliputhur", "srivilliputhur|srivilliputtur", "Srivilliputhur", VNR, 9.510, 77.630),
+      p("Sivakasi", "sivakasi", "Sivakasi", VNR, 9.450, 77.800),
+      p("Kanyakumari", "kanyakumari town|cape comorin", "Agastheeswaram", KK, 8.080, 77.550),
+      big("Nagercoil", "nagercoil|nagarcoil", KK, 8.180, 77.410),
+      big("Thoothukudi", "thoothukudi|tuticorin|thoothukkudi|tuty", TUT, 8.790, 78.135),
+      big("Tenkasi", "tenkasi|thenkasi", TKS, 8.960, 77.300),
+      big("Virudhunagar", "virudhunagar|virudunagar", VNR, 9.580, 77.960),
+      big("Madurai", "madurai", "Madurai", 9.925, 78.120),
+      big("Tirunelveli", "tirunelveli|thirunelveli|nellai|tvl|tirunelvely", TVL, 8.714, 77.757)];
+  }
+
+  /** The place an address names (the first small place written, else a town or district name), or null. */
+  static find(address) {
+    const a = " " + Ui.nz(address).toLowerCase().replaceAllRx("[^a-z ]", " ").replaceAllRx("\\s+", " ") + " ";
+    let best = null;
+    let at = Integer.MAX_VALUE;
+    for (let pass = 0; pass < 2 && best == null; pass++)
+      for (const p of Places.ALL) {
+        if (p.big !== (pass === 1)) continue;
+        const m = p.pattern.matcher(a);
+        if (m.find() && m.start() < at) {
+          best = p;
+          at = m.start();
+        }
+      }
+    return best;
+  }
+
+  /** The place name to group by: from the list, else the first part of the address as written ("Kumaranagar"). */
+  static label(address) {
+    const p = Places.find(address);
+    if (p != null) return p.name;
+    for (const part of Ui.nz(address).jsplit("[,\\n/]")) {
+      const t = part.replaceAllRx("(?i)\\b(no|door|d\\.?no|post|po|via|dist|district|tk|taluk|st|street|road|rd|tamil ?nadu|tn|india|pin)\\b\\.?", " ")
+        .replaceAllRx("[0-9.#:-]", " ").replaceAllRx("\\s+", " ").trim();
+      if (t.length >= 3) return Character.toUpperCase(t.charAt(0)) + t.substring(1).toLowerCase();
+    }
+    return "";
+  }
+
+  static byName(name) {
+    for (const p of Places.ALL) if (p.name === name) return p;
+    return null;
+  }
+}
+
+Places.Place = class {
+  constructor(name, aliases, taluk, district, lat, lon, big) {
+    this.name = name;
+    this.taluk = taluk;
+    this.district = district;
+    this.lat = lat;
+    this.lon = lon;
+    this.big = big;   // a district or city name: used only when the address names no smaller place
+    this.pattern = Pattern.compile("(?<![a-z])(" + aliases + ")(?![a-z])");
+  }
+};
+;
 /* ---- app/Pptx.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -57386,7 +63372,7 @@ class Pptx {
     if (pg.cover) {
       sp += Pptx.rect(2, "Accent", 0, CY - 260000, CX, 260000, Pptx.ACCENT);
       if (logo) sp += Pptx.pic(3, "rId3", idiv(CX - 1100000, 2), 380000, 1100000, 1100000);
-      sp += Pptx.box(4, "Kicker", 600000, 1600000, CX - 1200000, 420000, "ctr", Pptx.para("CASE PRESENTATION", 16, Pptx.ACCENT, true, "ctr", false));
+      sp += Pptx.box(4, "Kicker", 600000, 1600000, CX - 1200000, 420000, "ctr", Pptx.para(pg.kicker, 16, Pptx.ACCENT, true, "ctr", false));
       sp += Pptx.box(5, "Title", 600000, 2050000, CX - 1200000, 1300000, "ctr", Pptx.para(pg.title, 36, "FFFFFF", true, "ctr", false));
       let ps = "";
       for (const l of Pptx.lines(pg.body)) ps += Pptx.para(l, 18, "DCE6F2", false, "ctr", false);
@@ -57513,6 +63499,8 @@ Pptx.Page = class {
     /** A picture slide: its bytes, "jpeg" or "png", and its size in pixels. */
     this.img = null; this.ext = "jpeg"; this.w = 0; this.h = 0;
     this.cover = false;
+    /** The small line above the cover title. */
+    this.kicker = "CASE PRESENTATION";
   }
 };
 ;
@@ -57668,9 +63656,6 @@ class PresentationsActivity extends Base {
     });
     page.addView(search);
     Ui.margins(search, 12, 6, 12, 2);
-    const rule = Ui.muted(this, Conduct.ruleLine());
-    page.addView(rule);
-    Ui.margins(rule, 16, 4, 16, 0);
     this.list = Ui.v(this);
     page.addView(this.list);
     this.fillList();
@@ -59479,6 +65464,9 @@ class QuestionBankActivity extends Base {
     this._view = QuestionBankActivity.MOST; this.topic = ""; this.query = "";
     this.notDone = false;
     this.scan = null;
+    this.attach = null;
+    /** This render's attachments by question id. */
+    this.files = new JMap();
     /** The exam details typed before a paper is scanned. */
     this.pending = ["", "", ""];
     this.shownGroups = [];
@@ -59487,6 +65475,7 @@ class QuestionBankActivity extends Base {
   static TOPIC = "By topic";
   static YEAR = "By paper";
   static REQ_SCAN = 9310;   // 9310 live, 9311 camera, 9312 gallery / file
+  static REQ_ATTACH = 9320;   // 9320 camera, 9321 file
   static WAIT = "uq_wait";
 
   onCreate(b) {
@@ -59499,6 +65488,8 @@ class QuestionBankActivity extends Base {
       read: (text) => { this.preview(QuestionBank.parse(text)); }
     });
     this.scan.restore(b);
+    this.attach = new Attach(this, QuestionBankActivity.REQ_ATTACH);
+    this.attach.restore(b);
     if (b != null && b.getStringArray("uq_pending") != null) this.pending = b.getStringArray("uq_pending");
     const added = QuestionBank.seed(this, this.db);
     if (added > 0) Ui.toast(this, added + " MGR University questions (MD General Medicine) added");
@@ -59507,18 +65498,20 @@ class QuestionBankActivity extends Base {
   onSaveInstanceState(out) {
     super.onSaveInstanceState(out);
     this.scan.save(out);
+    this.attach.save(out);
     out.putStringArray("uq_pending", this.pending);
   }
 
   onActivityResult(req, res, data) {
     super.onActivityResult(req, res, data);
-    this.scan.result(req, res, data);
+    if (!this.attach.result(req, res, data)) this.scan.result(req, res, data);
   }
 
   render() {
     const db = this.db;
     const Q = QuestionBank, A = QuestionBankActivity;
     const page = Ui.v(this);
+    this.files = Attach.byRef(db, QuestionBank.TABLE);
     const gs = Q.groups(db);
     const marks = Q.myMarks(this, db);
     let done = 0, revise = 0, total = 0;
@@ -59684,7 +65677,7 @@ class QuestionBankActivity extends Base {
       marks = q;
       q = g.latest();
     }
-    const Q = QuestionBank;
+    const Q = QuestionBank, db = this.db;
     const c = Ui.card(this);
     const st = Q.status(g, marks);
     const top = Ui.h(this);
@@ -59711,9 +65704,26 @@ class QuestionBankActivity extends Base {
       c.addView(m);
       Ui.margins(m, 0, 4, 0, 0);
     }
+    // 9.70: the answer as a PDF or picture next to the question, for revision
+    const mine = [];
+    for (const id of QuestionBankActivity.ids(g)) if (this.files.containsKey(id)) mine.addAll(this.files.get(id));
+    const strip = Attach.strip(this, db, mine, QuestionBank.COLOR, { onClick: (v) => { this.attachTo(q); } });
+    c.addView(strip);
+    Ui.margins(strip, 0, 8, 0, 0);
     c.setOnClickListener({ onClick: (v) => { this.detail(g, q); } });
     Ui.ripple(c, 0x22000000);
     return c;
+  }
+
+  /** The ids of a group's questions (the same question asked in several years shares its attachments). */
+  static ids(g) {
+    const out = [];
+    for (const x of g.qs) out.push(x.get("id"));
+    return out;
+  }
+
+  attachTo(q) {
+    this.attach.choose(QuestionBank.TABLE, q.get("id"), null);
   }
 
   detail(g, q) {
@@ -59729,6 +65739,7 @@ class QuestionBankActivity extends Base {
     items.add("★  Mark to revise");
     items.add("Clear my mark");
     items.add("✨  Answer outline (AI)");
+    items.add("📎  Attach the answer (PDF or picture)");
     items.add("Copy the question");
     if (QuestionBank.canChange(this, q)) {
       items.add("Edit");
@@ -59758,6 +65769,10 @@ class QuestionBankActivity extends Base {
     if (what.startsWith("✓")) QuestionBank.mark(this, db, g, QuestionBank.ST_DONE);
     else if (what.startsWith("★")) QuestionBank.mark(this, db, g, QuestionBank.ST_REVISE);
     else if (what.startsWith("Clear")) QuestionBank.mark(this, db, g, "");
+    else if (what.startsWith("📎")) {
+      this.attachTo(q);
+      return;
+    }
     else if (what.startsWith("✨")) {
       Ai.prefs(this).edit().putString(QuestionBankActivity.WAIT + "_q", Ui.nz(q.get("text"))).apply();
       AiRun.ask(this, "Answer outline", QuestionBank.outlineSystem(), QuestionBank.outlineUser(q), 2000, QuestionBankActivity.WAIT, null, {
@@ -62665,6 +68680,549 @@ class RosterFormActivity extends Base {
   }
 }
 ;
+/* ---- app/Scores.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Clinical score calculators (9.50): qSOFA, CURB-65, GCS, Child-Pugh, MELD-Na, Wells (PE), CHA₂DS₂-VASc and HAS-BLED, filled in from the
+ * patient's own data where the app has it (age, sex, the newest vitals and labs, the past history), and saved into the case
+ * sheet. The published scoring rules; decision support only.
+ */
+class Scores {
+  static COLOR = 0xFF0E7490;
+  static KEY = "scores";
+  static CHECK = 0;
+  static NUM = 1;
+  static CHOICE = 2;
+
+  static check(key, label, points) {
+    return new Scores.Field(key, label, Scores.CHECK, points, "", null, null);
+  }
+
+  static num(key, label, unit) {
+    return new Scores.Field(key, label, Scores.NUM, 0, unit, null, null);
+  }
+
+  static choice(key, label, options, points) {
+    return new Scores.Field(key, label, Scores.CHOICE, 0, "", options, points);
+  }
+
+  static $clinit() {
+    const check = Scores.check, num = Scores.num, choice = Scores.choice, Calc = Scores.Calc;
+    Scores.ALL = [
+      new Calc("QSOFA", "qSOFA", "Sepsis: risk of a poor outcome outside the ICU", "Seymour et al., JAMA 2016 (Sepsis-3)",
+        num("rr", "Respiratory rate", "/min"), num("sbp", "Systolic BP", "mmHg"), check("mental", "Altered mentation (GCS below 15)", 1)),
+      new Calc("CURB65", "CURB-65", "Community-acquired pneumonia: severity and where to treat", "Lim et al., Thorax 2003; BTS",
+        check("confusion", "Confusion (new)", 1), num("urea", "Blood urea", "mg/dL"), num("rr", "Respiratory rate", "/min"),
+        num("sbp", "Systolic BP", "mmHg"), num("dbp", "Diastolic BP", "mmHg"), num("age", "Age", "years")),
+      new Calc("GCS", "Glasgow Coma Scale", "Level of consciousness", "Teasdale & Jennett, Lancet 1974",
+        choice("e", "Eye opening", ["None", "To pain", "To voice", "Spontaneous"], [1, 2, 3, 4]),
+        choice("v", "Verbal", ["None", "Sounds", "Words", "Confused", "Oriented"], [1, 2, 3, 4, 5]),
+        choice("m", "Motor", ["None", "Extension", "Abnormal flexion", "Withdraws", "Localises", "Obeys"], [1, 2, 3, 4, 5, 6])),
+      new Calc("CHILD", "Child-Pugh", "Cirrhosis: severity and prognosis", "Pugh et al., Br J Surg 1973",
+        num("bili", "Bilirubin", "mg/dL"), num("alb", "Albumin", "g/dL"), num("inr", "INR", ""),
+        choice("ascites", "Ascites", ["None", "Mild / controlled", "Moderate-severe"], [1, 2, 3]),
+        choice("he", "Encephalopathy", ["None", "Grade 1-2", "Grade 3-4"], [1, 2, 3])),
+      new Calc("MELD", "MELD-Na", "End-stage liver disease: 90-day mortality", "Kim et al., NEJM 2008; UNOS 2016",
+        num("creat", "Creatinine", "mg/dL"), num("bili", "Bilirubin", "mg/dL"), num("inr", "INR", ""), num("na", "Sodium", "mEq/L"),
+        check("dialysis", "Dialysis twice in the past week (or CRRT)", 0)),
+      new Calc("WELLS", "Wells score (PE)", "Pulmonary embolism: clinical probability", "Wells et al., Thromb Haemost 2000",
+        check("dvt", "Clinical signs of DVT", 3), check("likely", "PE the most likely diagnosis", 3), check("hr", "Heart rate above 100", 1.5),
+        check("immob", "Immobilised 3+ days or surgery in 4 weeks", 1.5), check("prev", "Previous DVT or PE", 1.5),
+        check("haemoptysis", "Haemoptysis", 1), check("cancer", "Cancer (treated in 6 months or palliative)", 1)),
+      new Calc("CHADS", "CHA₂DS₂-VASc", "Atrial fibrillation: stroke risk", "Lip et al., Chest 2010; ESC",
+        check("chf", "Heart failure / LV dysfunction", 1), check("htn", "Hypertension", 1), num("age", "Age", "years"),
+        check("dm", "Diabetes", 1), check("stroke", "Stroke, TIA or thromboembolism", 2), check("vasc", "Vascular disease (MI, PAD, aortic plaque)", 1),
+        check("female", "Female", 1)),
+      new Calc("HASBLED", "HAS-BLED", "Anticoagulation: bleeding risk", "Pisters et al., Chest 2010",
+        check("htn_unc", "Uncontrolled hypertension (SBP above 160)", 1), check("renal", "Abnormal renal function (dialysis, transplant, creatinine 2.26+)", 1),
+        check("liver", "Abnormal liver function (cirrhosis, bilirubin 2x, enzymes 3x)", 1), check("stroke", "Previous stroke", 1),
+        check("bleed", "Bleeding history or tendency", 1), check("inr", "Labile INR", 1), check("elderly", "Age above 65", 1),
+        check("drugs", "Antiplatelets or NSAIDs", 1), check("alcohol", "Alcohol (8+ drinks a week)", 1))];
+  }
+
+  static calc(code) {
+    for (const c of Scores.ALL) if (c.code === code) return c;
+    return null;
+  }
+
+  static d(inp, k) {
+    return Labs.num(inp.get(k));
+  }
+
+  static on(inp, k) {
+    return "1" === inp.get(k);
+  }
+
+  /** The score from the answers (CHECK "1"/"0", NUM text, CHOICE the option's label). */
+  static compute(code, inp) {
+    const c = Scores.calc(code);
+    const r = new Scores.Result();
+    const d = (k) => Scores.d(inp, k), on = (k) => Scores.on(inp, k);
+    let s = 0;
+    for (const f of c.fields) {
+      if (f.type === Scores.CHECK && on(f.key)) s += f.points;
+      if (f.type === Scores.CHOICE) {
+        let i = -1;
+        for (let k = 0; k < f.options.length; k++) if (f.options[k] === inp.get(f.key)) i = k;
+        if (i < 0) r.missing.add(f.label);
+        else s += f.optionPoints[i];
+      }
+    }
+    switch (code) {
+      case "QSOFA": {
+        const rr = d("rr"), sbp = d("sbp");
+        if (rr == null) r.missing.add("Respiratory rate");
+        if (sbp == null) r.missing.add("Systolic BP");
+        if (rr != null && rr >= 22) s += 1;
+        if (sbp != null && sbp <= 100) s += 1;
+        r.value = s;
+        r.shown = toInt(s) + " / 3";
+        if (s >= 2) Scores.bad(r, "High risk", "2 or more: higher risk of death or a long ICU stay. Look for organ dysfunction (SOFA), take cultures, give antibiotics within the hour and consider the ICU.");
+        else Scores.ok(r, "Low risk", "Below 2 does not rule out sepsis; keep reassessing.");
+        break;
+      }
+      case "CURB65": {
+        const urea = d("urea"), rr = d("rr"), sbp = d("sbp"), dbp = d("dbp"), age = d("age");
+        if (urea == null) r.missing.add("Blood urea");
+        if (rr == null) r.missing.add("Respiratory rate");
+        if (sbp == null && dbp == null) r.missing.add("Blood pressure");
+        if (age == null) r.missing.add("Age");
+        if (urea != null && urea > 42) s += 1;   // urea above 7 mmol/L
+        if (rr != null && rr >= 30) s += 1;
+        if ((sbp != null && sbp < 90) || (dbp != null && dbp <= 60)) s += 1;
+        if (age != null && age >= 65) s += 1;
+        r.value = s;
+        r.shown = toInt(s) + " / 5";
+        if (s >= 3) Scores.bad(r, "Severe", "3 to 5: severe pneumonia; treat in hospital and assess for the ICU, especially at 4 or 5. 30-day mortality about 15-40%.");
+        else if (s === 2) Scores.mid(r, "Moderate", "2: moderate; short hospital stay or closely supervised outpatient care. Mortality about 9%.");
+        else Scores.ok(r, "Low", "0 to 1: low risk; home treatment may suit if otherwise well. Mortality under 3%.");
+        break;
+      }
+      case "GCS": {
+        r.value = s;
+        r.shown = r.missing.isEmpty() ? toInt(s) + " / 15  (E" + Scores.idx(c, inp, "e") + " V" + Scores.idx(c, inp, "v") + " M" + Scores.idx(c, inp, "m") + ")" : "–";
+        if (!r.missing.isEmpty()) break;
+        if (s <= 8) Scores.bad(r, "Severe (coma)", "8 or less: protect the airway; consider intubation.");
+        else if (s <= 12) Scores.mid(r, "Moderate", "9 to 12: moderate impairment; close neuro observation.");
+        else Scores.ok(r, "Mild", "13 to 15: mild impairment or normal.");
+        break;
+      }
+      case "CHILD": {
+        const bili = d("bili"), alb = d("alb"), inr = d("inr");
+        if (bili == null) r.missing.add("Bilirubin");
+        else s += bili < 2 ? 1 : bili <= 3 ? 2 : 3;
+        if (alb == null) r.missing.add("Albumin");
+        else s += alb > 3.5 ? 1 : alb >= 2.8 ? 2 : 3;
+        if (inr == null) r.missing.add("INR");
+        else s += inr < 1.7 ? 1 : inr <= 2.3 ? 2 : 3;
+        r.value = s;
+        r.shown = r.missing.isEmpty() ? toInt(s) + " points" : "–";
+        if (!r.missing.isEmpty()) break;
+        if (s >= 10) Scores.bad(r, "Class C", "10 to 15: decompensated. 1-year survival about 45%; consider transplant referral.");
+        else if (s >= 7) Scores.mid(r, "Class B", "7 to 9: significant functional compromise. 1-year survival about 80%.");
+        else Scores.ok(r, "Class A", "5 to 6: well compensated. 1-year survival about 100%.");
+        break;
+      }
+      case "MELD": {
+        const cr = d("creat"), bili = d("bili"), inr = d("inr"), na = d("na");
+        if (cr == null) r.missing.add("Creatinine");
+        if (bili == null) r.missing.add("Bilirubin");
+        if (inr == null) r.missing.add("INR");
+        if (na == null) r.missing.add("Sodium");
+        if (!r.missing.isEmpty()) {
+          r.shown = "–";
+          break;
+        }
+        const crv = on("dialysis") ? 4 : Math.min(4, Math.max(1, cr));
+        const meldI = 0.957 * Math.log(crv) + 0.378 * Math.log(Math.max(1, bili)) + 1.120 * Math.log(Math.max(1, inr)) + 0.643;
+        let meld = Math.round(meldI * 10);   // rounded to the tenth, times 10 (UNOS)
+        if (meld > 11) {
+          const n = Math.min(137, Math.max(125, na));
+          meld = meld + 1.32 * (137 - n) - 0.033 * meld * (137 - n);
+        }
+        const m = Math.round(Math.min(40, Math.max(6, meld)));
+        r.value = m;
+        r.shown = String(m);
+        if (m >= 30) Scores.bad(r, "Very high", "30 or more: 90-day mortality about 50-70%. Urgent transplant evaluation.");
+        else if (m >= 20) Scores.bad(r, "High", "20 to 29: 90-day mortality about 20%.");
+        else if (m >= 10) Scores.mid(r, "Moderate", "10 to 19: 90-day mortality about 6%.");
+        else Scores.ok(r, "Low", "Below 10: 90-day mortality about 2%.");
+        break;
+      }
+      case "WELLS": {
+        r.value = s;
+        r.shown = Scores.fmt(s);
+        if (s > 6) Scores.bad(r, "High probability (PE likely)", "Above 4: PE likely. Go to CT pulmonary angiography (or V/Q); start anticoagulation if no contraindication while waiting.");
+        else if (s > 4) Scores.mid(r, "PE likely", "Above 4: PE likely. CT pulmonary angiography.");
+        else Scores.ok(r, "PE unlikely", "4 or less: PE unlikely. Check D-dimer; a normal D-dimer excludes PE.");
+        break;
+      }
+      case "CHADS": {
+        const age = d("age");
+        if (age == null) r.missing.add("Age");
+        else if (age >= 75) s += 2;
+        else if (age >= 65) s += 1;
+        r.value = s;
+        r.shown = toInt(s) + " / 9";
+        const f = on("female");
+        const male = f ? s - 1 : s;   // the sex point alone does not add risk
+        if (male >= 2) Scores.bad(r, "High stroke risk", "Oral anticoagulation is recommended (a DOAC first, or warfarin).");
+        else if (male >= 1) Scores.mid(r, "Moderate", "Consider oral anticoagulation, weighing bleeding risk and the patient's wishes.");
+        else Scores.ok(r, "Low", "No antithrombotic therapy needed for stroke prevention.");
+        break;
+      }
+      case "HASBLED": {
+        r.value = s;
+        r.shown = toInt(s) + " / 9";
+        if (s >= 3) Scores.bad(r, "High bleeding risk", "3 or more: correct what can be corrected (BP, labile INR, NSAIDs, alcohol) and review often. Not by itself a reason to withhold anticoagulation.");
+        else Scores.ok(r, "Low to moderate", "0 to 2: lower bleeding risk.");
+        break;
+      }
+      default:
+        break;
+    }
+    return r;
+  }
+
+  static idx(c, inp, key) {
+    for (const f of c.fields)
+      if (f.key === key)
+        for (let k = 0; k < f.options.length; k++) if (f.options[k] === inp.get(key)) return f.optionPoints[k];
+    return 0;
+  }
+
+  static bad(r, band, advice) {
+    r.band = band;
+    r.advice = advice;
+    r.color = Ui.RED;
+  }
+
+  static mid(r, band, advice) {
+    r.band = band;
+    r.advice = advice;
+    r.color = Ui.AMBER;
+  }
+
+  static ok(r, band, advice) {
+    r.band = band;
+    r.advice = advice;
+    r.color = Ui.GREEN;
+  }
+
+  static fmt(v) {
+    return v === Math.rint(v) ? String(toInt(v)) : jfmt("%.1f", v);
+  }
+
+  // ---------- from the patient's data ----------
+
+  /** Answers the app already knows for this patient: key -> value, with where each came from in "src:key". */
+  static prefill(db, p) {
+    const out = new JMap();
+    if (p == null) return out;
+    const put = Scores.put;
+    const pid = Long.parseLong(p.get("id"));
+    const age = Ui.nz(p.get("age")).replaceAllRx("[^0-9]", "");
+    if (!age.isEmpty()) put(out, "age", age, "patient details");
+    if ("F" === p.get("sex")) put(out, "female", "1", "patient details");
+    if (Ui.nz(p.get("dialysis")).toLowerCase().startsWith("y")) put(out, "dialysis", "1", "patient details");
+
+    // the newest chart readings in the last 48 hours (vitals, BP, poison or other charts)
+    const since = LocalDateTime.of(Dates.today(), Dates.time()).minusHours(48);
+    for (const row of db.rows("SELECT * FROM charts WHERE patient_id=? ORDER BY date DESC, time DESC, id DESC LIMIT 40", String(pid))) {
+      const at = CriticalLabs.at(Ui.nz(row.get("date")) + " " + Ui.nz(row.get("time")));
+      if (at == null || at.isBefore(since)) break;
+      const o = Charts.data(row);
+      const when = "chart " + Dates.nice(row.get("date")) + " " + Ui.nz(row.get("time"));
+      for (const k of ["rr", "sbp", "dbp"]) {
+        const v = o.optString(k, "").trim();
+        if (!v.isEmpty() && Labs.num(v) != null && !out.containsKey(k)) put(out, k, v, when);
+      }
+      const hr = Labs.num(o.optString("hr", ""));
+      if (hr != null && !out.containsKey("hr")) put(out, "hr", hr > 100 ? "1" : "0", when + " (pulse " + Scores.fmt(hr) + ")");
+      const avpu = o.optString("avpu", "");
+      if (!avpu.isEmpty() && !out.containsKey("mental")) put(out, "mental", "Alert" === avpu ? "0" : "1", when);
+      const gcs = o.optString("gcs", "").trim();
+      if (!gcs.isEmpty() && !out.containsKey("mental") && Labs.num(gcs) != null) put(out, "mental", Labs.num(gcs) < 15 ? "1" : "0", when);
+    }
+    if (out.containsKey("mental")) put(out, "confusion", out.get("mental"), out.get("src:mental"));
+    const sbp = Labs.num(out.get("sbp"));
+    if (sbp != null) put(out, "htn_unc", sbp > 160 ? "1" : "0", out.get("src:sbp"));
+    const ag = Labs.num(out.get("age"));
+    if (ag != null) put(out, "elderly", ag > 65 ? "1" : "0", "patient details");
+
+    // the newest lab value of each test
+    const labs = Labs.rows(db, pid);
+    for (let i = labs.size() - 1; i >= 0; i--) {
+      const l = labs.get(i);
+      for (const k of ["urea", "creat", "na", "bili"]) {
+        const v = Ui.nz(l.get(k)).trim();
+        if (!v.isEmpty() && !out.containsKey(k)) put(out, k, v, "labs " + Dates.nice(l.get("date")));
+      }
+    }
+
+    const cr = Labs.num(out.get("creat"));
+    if ((cr != null && cr >= 2.26) || "1" === out.get("dialysis")) put(out, "renal", "1", "1" === out.get("dialysis") ? "patient details" : out.get("src:creat"));
+
+    // the past history ticks and notes in the case sheet
+    const cs = CaseSheet.load(db, pid);
+    const ticks = [["ph_dm", "dm"], ["ph_sht", "htn"], ["ph_cad", "vasc"], ["ph_hfpef", "chf"], ["ph_hfref", "chf"], ["ph_dcld", "liver"]];
+    for (const k of ticks) if (Scores.yes(CaseSheet.s(cs, k[0])) && !out.containsKey(k[1])) put(out, k[1], "1", "case sheet past history");
+    if ("Yes" === CaseSheet.s(cs, "alcohol")) put(out, "alcohol", "1", "case sheet personal history");
+    const hist = (CaseSheet.s(cs, "ph_others") + " " + CaseSheet.s(cs, "ph_notes") + " " + Ui.nz(p.get("diagnosis"))).toLowerCase();
+    const words = [["htn", "\\b(htn|sht|hypertensi)"], ["dm", "\\b(dm|t2dm|t1dm|diabet)"], ["stroke", "\\b(cva|stroke|tia)\\b"],
+      ["chf", "(heart failure|\\bccf\\b|\\bchf\\b|\\bhfref|\\blvd\\b|cardiomyopathy)"], ["vasc", "\\b(cad|ihd|mi|nstemi|stemi|pad|pvd)\\b"],
+      ["cancer", "(carcinoma|malignan|cancer|lymphoma|\\bca )"], ["prev", "\\b(dvt|pulmonary embol|\\bpe\\b)"]];
+    for (const w of words)
+      if (new RegExp(w[1]).test(hist) && !out.containsKey(w[0])) put(out, w[0], "1", "case sheet history");
+    return out;
+  }
+
+  static yes(v) {
+    const s = Ui.nz(v).trim();
+    return !s.isEmpty() && s !== "0" && !s.equalsIgnoreCase("false") && !s.equalsIgnoreCase("no");
+  }
+
+  static put(m, k, v, src) {
+    m.put(k, v);
+    m.put("src:" + k, src);
+  }
+
+  // ---------- saved in the case sheet ----------
+
+  static save(db, pid, c, r, inp, by) {
+    const data = CaseSheet.load(db, pid);
+    let arr = data.optJSONArray(Scores.KEY);
+    if (arr == null) arr = new JSONArray();
+    try {
+      const o = new JSONObject().put("code", c.code).put("name", c.name).put("value", r.shown).put("band", r.band)
+        .put("date", Dates.todayIso()).put("time", Dates.now()).put("by", by);
+      const inputs = new JSONObject();
+      for (const f of c.fields) if (!Ui.nz(inp.get(f.key)).isEmpty() && "0" !== inp.get(f.key)) inputs.put(f.label, inp.get(f.key));
+      o.put("inputs", inputs);
+      arr.put(o);
+      data.put(Scores.KEY, arr);
+    } catch (ignored) {
+    }
+    CaseSheet.save(db, pid, data);
+  }
+
+  /** The saved scores, newest first. */
+  static saved(db, pid) {
+    const out = [];
+    const arr = CaseSheet.load(db, pid).optJSONArray(Scores.KEY);
+    if (arr == null) return out;
+    for (let i = arr.length() - 1; i >= 0; i--) {
+      const o = arr.optJSONObject(i);
+      if (o != null) out.add(o);
+    }
+    return out;
+  }
+
+  /** The newest saved result of each score, for the patient page. */
+  static latest(db, pid) {
+    const out = new JMap();
+    for (const o of Scores.saved(db, pid)) if (!out.containsKey(o.optString("code"))) out.put(o.optString("code"), o);
+    return out;
+  }
+}
+Scores.Field = class {
+  constructor(key, label, type, points, unit, options, optionPoints) {
+    this.key = key;
+    this.label = label;
+    this.type = type;
+    this.points = points;
+    this.unit = unit;
+    this.options = options;
+    this.optionPoints = optionPoints;
+  }
+};
+Scores.Calc = class {
+  constructor(code, name, about, source, ...fields) {
+    this.code = code;
+    this.name = name;
+    this.about = about;
+    this.source = source;
+    this.fields = fields;
+  }
+};
+Scores.Result = class {
+  constructor() {
+    this.value = 0;
+    this.shown = ""; this.band = ""; this.advice = "";
+    this.color = Ui.GREEN;
+    /** Fields the score needs that are still empty. */
+    this.missing = [];
+  }
+};
+;
+/* ---- app/ScoresActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Clinical score calculators, for a patient (filled in from the patient's data, saved in the case sheet) or on their own. */
+class ScoresActivity extends Base {
+  constructor() {
+    super();
+    this.p = null; this.pid = -1; this.code = null; this.form = null;
+    this.pre = new JMap(); this.last = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const id = this.getIntent().getStringExtra("id");
+    if (id != null) {
+      this.pid = Long.parseLong(id);
+      this.p = this.db.row("SELECT * FROM patients WHERE id=?", id);
+    }
+    this.code = b != null ? b.getString("code") : this.getIntent().getStringExtra("calc");
+    this.setTitle("Clinical scores");
+    this.subtitle = this.p == null ? "qSOFA, CURB-65, GCS, Child-Pugh, MELD, Wells, CHA₂DS₂-VASc, HAS-BLED" : Ui.nz(this.p.get("name"));
+    this.headerColor(Scores.COLOR);
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    if (this.code != null) out.putString("code", this.code);
+  }
+
+  liveRefresh() {
+    return false;   // keep what is being typed
+  }
+
+  render() {
+    const db = this.db;
+    if (this.code != null && Scores.calc(this.code) != null) {
+      this.renderCalc(Scores.calc(this.code));
+      return;
+    }
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Scores.COLOR), 20));
+    hero.addView(Ui.tv(this, "🧮  Clinical scores", 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, this.p == null ? "Pick a score. Open it from a patient's page and it fills in from that patient's vitals, labs and history."
+      : "Pick a score. It fills in from this patient's newest vitals, labs and past history; check each answer, then save it to the case sheet.",
+      13, 0xEFFFFFFF, false));
+    page.addView(hero);
+    const latest = this.pid > 0 ? Scores.latest(db, this.pid) : new JMap();
+    for (const c of Scores.ALL) {
+      const l = latest.get(c.code);
+      const right = l == null ? null : l.optString("value");
+      const sub = c.about + (l == null ? "" : "\nLast: " + l.optString("value") + " · " + l.optString("band") + " · " + Dates.nice(l.optString("date")));
+      page.addView(this.entryCard(null, Scores.COLOR, c.name, sub, right, { onClick: (v) => { this.code = c.code; this.last = null; this.form = null; this.render(); } }));
+    }
+    if (this.pid > 0) {
+      const all = Scores.saved(db, this.pid);
+      if (!all.isEmpty()) {
+        page.addView(Ui.heading(this, "Saved for this patient", Scores.COLOR));
+        const card = Ui.card(this);
+        for (const o of all)
+          card.addView(Ui.body(this, Dates.nice(o.optString("date")) + " " + o.optString("time") + "  ·  " + o.optString("name") + " " + o.optString("value")
+            + " (" + o.optString("band") + ")" + (o.optString("by").isEmpty() ? "" : "  ·  " + o.optString("by"))));
+        page.addView(card);
+      }
+    }
+    page.addView(this.note());
+    this.setPage(page);
+  }
+
+  note() {
+    const t = Ui.muted(this, "Decision support only: published scoring rules; the doctor decides.");
+    Ui.margins(t, 16, 10, 16, 0);
+    return t;
+  }
+
+  renderCalc(c) {
+    const page = Ui.v(this);
+    const back = Ui.chip(this, "‹ All scores", false, Scores.COLOR);
+    back.setOnClickListener({ onClick: (v) => { this.code = null; this.form = null; this.last = null; this.render(); } });
+    page.addView(back);
+    Ui.margins(back, 14, 8, 0, 0);
+    const head = Ui.card(this);
+    head.addView(Ui.tv(this, c.name, 18, Ui.TEXT, true));
+    head.addView(Ui.muted(this, c.about + "\n" + c.source));
+    page.addView(head);
+
+    const keep = new JMap();
+    if (this.form != null) for (const fd of c.fields) keep.put(fd.key, this.form.get(fd.key));
+    else if (this.p != null) this.pre = Scores.prefill(this.db, this.p);
+    const form = this.form = new Form(this);
+    const pre = this.pre;
+    const from = [];
+    for (const fd of c.fields) {
+      const v = keep.containsKey(fd.key) ? keep.get(fd.key) : Ui.nz(pre.get(fd.key));
+      if (!keep.containsKey(fd.key) && pre.containsKey("src:" + fd.key) && !v.isEmpty() && "0" !== v)
+        from.add(fd.label + (fd.type === Scores.NUM ? " " + v : "") + ": " + pre.get("src:" + fd.key));
+      if (fd.type === Scores.NUM) form.text(fd.key, fd.label + (fd.unit.isEmpty() ? "" : " (" + fd.unit + ")"), v, Form.DECIMAL);
+      else if (fd.type === Scores.CHECK) form.check(fd.key, fd.label + (fd.points > 0 ? "  +" + Scores.fmt(fd.points) : ""), "1" === v);
+      else form.segment(fd.key, fd.label, fd.options, v);
+    }
+    const fc = Ui.card(this);
+    fc.addView(form.view);
+    if (!from.isEmpty()) {
+      const src = Ui.muted(this, "Filled in from the patient's data (check them):\n• " + TextUtils.join("\n• ", from));
+      fc.addView(src);
+      Ui.margins(src, 0, 8, 0, 0);
+    }
+    const calc = Ui.button(this, "Calculate", Scores.COLOR, { onClick: (v) => { this.last = Scores.compute(c.code, this.answers(c)); this.render(); } });
+    fc.addView(calc);
+    Ui.margins(calc, 0, 12, 0, 0);
+    page.addView(fc);
+
+    if (this.last == null && this.p != null && !pre.isEmpty()) this.last = Scores.compute(c.code, this.answers(c));
+    if (this.last != null) page.addView(this.resultCard(c, this.last));
+    page.addView(this.note());
+    this.setPage(page);
+  }
+
+  answers(c) {
+    const inp = new JMap();
+    for (const fd of c.fields) inp.put(fd.key, this.form.get(fd.key));
+    return inp;
+  }
+
+  resultCard(c, r) {
+    const card = Ui.card(this);
+    card.setBackground(Ui.outline(this, Ui.alpha(r.color, 0x14), r.color, 16));
+    card.addView(Ui.tv(this, c.name + "  " + r.shown, 22, r.color, true));
+    if (!r.band.isEmpty()) card.addView(Ui.tv(this, r.band, 15, Ui.TEXT, true));
+    if (!r.advice.isEmpty()) card.addView(Ui.body(this, r.advice));
+    if (!r.missing.isEmpty()) card.addView(Ui.muted(this, "Still needed: " + TextUtils.join(", ", r.missing)));
+    if (this.p != null && r.missing.isEmpty()) {
+      if (CaseSheet.canEdit(this, this.db, this.p)) {
+        const save = Ui.button(this, "Save to the case sheet", r.color, {
+          onClick: (v) => {
+            Scores.save(this.db, this.pid, c, r, this.answers(c), Reminders.myName(this, this.db));
+            Ui.toast(this, c.name + " " + r.shown + " saved in the case sheet");
+            this.code = null;
+            this.form = null;
+            this.last = null;
+            this.render();
+          }
+        });
+        card.addView(save);
+        Ui.margins(save, 0, 10, 0, 0);
+      } else card.addView(Ui.muted(this, "Only " + CaseSheet.ownerLabel(this.p) + " can save to this case sheet."));
+    }
+    return card;
+  }
+
+  /** The patient page: the newest saved scores and the button. */
+  static patientCard(a, db, pid) {
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), 0);
+    const l = Scores.latest(db, pid);
+    if (!l.isEmpty()) {
+      const bits = [];
+      for (const o of l.values()) bits.add(o.optString("name") + " " + o.optString("value") + " (" + o.optString("band") + ")");
+      const t = Ui.muted(a, "🧮 " + TextUtils.join("  ·  ", bits));
+      box.addView(t);
+      Ui.margins(t, 4, 0, 4, 6);
+    }
+    box.addView(Ui.outlineButton(a, "🧮  Clinical scores (qSOFA, CURB-65, MELD…)", Scores.COLOR, a.opener(ScoresActivity, "id", String(pid))));
+    return box;
+  }
+}
+;
 /* ---- app/SearchActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -63081,6 +69639,18 @@ class SettingsActivity extends Base {
           this.fillAdmin();
         }
       }));
+    // 9.71: any home section hidden for everyone
+    const hid = AdminControl.hidden(this.db);
+    const hs = Ui.v(this);
+    hs.addView(Ui.tv(this, "Home page sections", 15, Ui.TEXT, true));
+    hs.addView(Ui.tv(this, hid.isEmpty() ? "All shown" : hid.size() + " hidden on every phone: " + TextUtils.join(", ", hid.keySet()),
+      13, hid.isEmpty() ? Ui.GREEN : Ui.RED, true));
+    hs.addView(Ui.muted(this, "A hidden section goes from everyone's home page and its screen will not open for anyone. You still see it, marked hidden."));
+    const pick = Ui.outlineButton(this, "Choose sections to hide", 0xFFB91C1C, { onClick: (v) => { this.chooseHidden(); } });
+    hs.addView(pick);
+    Ui.margins(pick, 0, 8, 0, 0);
+    c.addView(hs);
+    Ui.margins(hs, 0, 14, 0, 0);
     this.adminBox.addView(c);
     const bk = Ui.card(this);
     bk.addView(Ui.tv(this, "Nightly backup", 15, Ui.TEXT, true));
@@ -63096,6 +69666,35 @@ class SettingsActivity extends Base {
     bk.addView(now);
     Ui.margins(now, 0, 8, 0, 0);
     this.adminBox.addView(bk);
+  }
+
+  /** Ticks for every home section; ticked ones are hidden for everyone. */
+  chooseHidden() {
+    const hid = AdminControl.hidden(this.db);
+    const labels = ArrayList(MainActivity.CATALOG.keySet());
+    for (const l of hid.keySet()) if (!labels.contains(l)) labels.push(l);
+    if (labels.length === 0) {
+      Ui.toast(this, "Open the home page once, then come back here");
+      return;
+    }
+    const on = new Array(labels.length).fill(false);
+    for (let i = 0; i < on.length; i++) on[i] = hid.containsKey(labels[i]);
+    new AlertDialog.Builder(this).setTitle("Hide for everyone")
+      .setMultiChoiceItems(labels, on, { onClick: (d, w, c) => { on[w] = c; } })
+      .setPositiveButton("Save", {
+        onClick: (d, w) => {
+          const out = new JMap();
+          for (let i = 0; i < on.length; i++) {
+            if (!on[i]) continue;
+            const l = labels[i];
+            const scr = MainActivity.CATALOG.containsKey(l) ? MainActivity.CATALOG.get(l) : hid.get(l);
+            out.put(l, scr == null || AdminControl.NEVER.contains(scr) ? "" : scr);
+          }
+          AdminControl.setHidden(this.db, out);
+          Ui.toast(this, out.isEmpty() ? "Every section is shown again" : out.size() + " hidden for everyone");
+          this.fillAdmin();
+        }
+      }).setNegativeButton("Cancel", null).show();
   }
 
   // ---------- app lock ----------
@@ -68091,7 +74690,15 @@ class TopicNoteActivity extends Base {
     this.draftTitle = null;
     this.draftSubject = null;
     this.draft = null;
+    this.attach = null;
+    this.scan = null;
+    /** Files attached while writing a new topic, added to it when it is saved: path and name. */
+    this.pendingFiles = [];
+    this.pendingNames = [];
   }
+
+  static REQ_ATTACH = 9330;   // camera, file
+  static REQ_SCAN = 9340;   // live, camera, file
 
   onCreate(b) {
     super.onCreate(b);
@@ -68111,11 +74718,31 @@ class TopicNoteActivity extends Base {
       }
     }
     this.headerColors = TopicNotes.HERO;
+    this.attach = new Attach(this, TopicNoteActivity.REQ_ATTACH);
+    this.scan = new PageScan(this, "lbscan", "Notes page", TopicNotes.READ_PROMPT, TopicNotes.READ_MARK, 6, TopicNoteActivity.REQ_SCAN, {
+      read: (text) => { this.gotPoints(text); }
+    });
+    this.attach.restore(b);
+    this.attach.onAdded(this.added());
+    this.scan.restore(b);
+    if (b != null && b.getStringArrayList("pending_files") != null) {
+      this.pendingFiles = ArrayList(b.getStringArrayList("pending_files"));
+      this.pendingNames = ArrayList(b.getStringArrayList("pending_names"));
+    }
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (!this.attach.result(req, res, data)) this.scan.result(req, res, data);
   }
 
   onSaveInstanceState(out) {
     super.onSaveInstanceState(out);
     out.putBoolean("editing", this.editing);
+    this.attach.save(out);
+    this.scan.save(out);
+    out.putStringArrayList("pending_files", this.pendingFiles);
+    out.putStringArrayList("pending_names", this.pendingNames);
     if (this.editing && this.titleBox != null) {
       this.keep();
       out.putString("title", this.draftTitle);
@@ -68189,6 +74816,7 @@ class TopicNoteActivity extends Base {
     const date = when.length >= 10 ? Dates.nice(when.substring(0, 10)) : "";
     card.addView(Ui.muted(this, (by.isEmpty() ? "" : "By " + by) + (by.isEmpty() || date.isEmpty() ? "" : "  ·  ") + date));
     page.addView(card);
+    page.addView(this.filesCard(n));
     const share = Ui.v(this);
     share.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
     share.addView(Ui.buttonRow(this, Ui.button(this, "PDF", Ui.RED, {
@@ -68282,12 +74910,134 @@ class TopicNoteActivity extends Base {
         if (this.boxes.length > 0) this.boxes[this.boxes.length - 1].requestFocus();
       }
     }), Ui.outlineButton(this, "Paste points", TopicNotes.COLOR, { onClick: (v) => { this.paste(); } })));
+    const att = Ui.buttonRow(this, Ui.outlineButton(this, "📷  Snap a page", TopicNotes.COLOR, {
+      onClick: (v) => {
+        this.keep();
+        this.attach.target(TopicNotes.TABLE, this.id >= 0 ? String(this.id) : null, this.added());
+        this.attach.camera();
+      }
+    }), Ui.outlineButton(this, "📎  PDF / picture", TopicNotes.COLOR, {
+      onClick: (v) => {
+        this.keep();
+        this.attach.choose(TopicNotes.TABLE, this.id >= 0 ? String(this.id) : null, this.added());
+      }
+    }));
+    btns.addView(att);
+    Ui.margins(att, 0, 8, 0, 0);
+    if (!this.pendingFiles.isEmpty() || this.id >= 0) {
+      const names = ArrayList(this.pendingNames);
+      if (this.id >= 0) for (const r of Attach.of(this.db, TopicNotes.TABLE, String(this.id))) names.push(r.get("name"));
+      if (!names.isEmpty()) {
+        const fl = Ui.muted(this, "📎 Attached: " + TextUtils.join(", ", names));
+        btns.addView(fl);
+        Ui.margins(fl, 4, 6, 4, 0);
+      }
+    }
+    const app = this.scan.waiting();
+    if (!app.isEmpty()) {
+      const paste = Ui.outlineButton(this, "📋  Paste " + app + "'s points", Ui.AMBER, {
+        onClick: (v) => {
+          this.keep();
+          this.scan.paste();
+        }
+      });
+      btns.addView(paste);
+      Ui.margins(paste, 0, 8, 0, 0);
+    }
     const save = Ui.button(this, "Save topic", TopicNotes.COLOR, { onClick: (v) => { this.save(); } });
     btns.addView(save);
     Ui.margins(save, 0, 14, 0, 0);
     btns.addView(Ui.muted(this, "Everyone in the department can read it and download it as PDF or Word."));
     page.addView(btns);
     this.setPage(page);
+  }
+
+  // ---------- 9.70: attached pages, and points read from them ----------
+
+  /** After a file is attached: kept for a new topic, then the offer to read its points. */
+  added() {
+    return {
+      added: (rel, name, pdf) => {
+        if (this.id < 0) {
+          this.pendingFiles.push(rel);
+          this.pendingNames.push(name);
+        }
+        this.render();
+        if (this.editing || TopicNotes.canEdit(this, this.note())) this.offerRead([rel]);
+      }
+    };
+  }
+
+  offerRead(rels) {
+    new AlertDialog.Builder(this).setTitle("Read the points from it?")
+      .setMessage("The AI reads the page and adds its main points as numbered points, for you to check.")
+      .setPositiveButton("Read the points", { onClick: (d, w) => { this.readPoints(rels); } })
+      .setNegativeButton("Just attach", null).show();
+  }
+
+  readPoints(rels) {
+    Attach.ready(this, this.db, rels, {
+      run: () => {
+        this.scan.pages.clear();
+        this.scan.pages.addAll(rels);
+        this.scan.read();
+      }
+    });
+  }
+
+  /** The AI's points: added after those already written (in the editor, or saved straight into the topic). */
+  gotPoints(text) {
+    const got = TopicNotes.split(text);
+    if (got.length === 0) {
+      Ui.toast(this, "No points found in the answer");
+      return;
+    }
+    if (this.editing) {
+      this.keep();
+      const keepPts = [];
+      if (this.draft != null) for (const p of this.draft) if (!p.trim().isEmpty()) keepPts.push(p);
+      for (const p of got) keepPts.push(p);
+      this.draft = keepPts;
+    } else {
+      const n = this.note();
+      if (n == null) return;
+      const pts = TopicNotes.points(n);
+      for (const p of got) pts.push(p);
+      TopicNotes.save(this, this.db, this.id, Ui.nz(n.get("title")), Ui.nz(n.get("subject")), pts);
+    }
+    Ui.toast(this, got.length + " points added: check each one");
+    this.render();
+  }
+
+  /** The topic's attached PDFs and pictures, with attach and read buttons. */
+  filesCard(n) {
+    const files = Attach.of(this.db, TopicNotes.TABLE, String(this.id));
+    const c = Ui.card(this);
+    c.addView(Ui.tv(this, "📎  Attached pages" + (files.isEmpty() ? "" : "  ·  " + files.length), 15, TopicNotes.COLOR, true));
+    if (files.isEmpty()) c.addView(Ui.muted(this, "Attach the textbook page, class notes or a handwritten answer (PDF, JPEG, PNG or a camera photo)."));
+    const strip = Attach.strip(this, this.db, files, TopicNotes.COLOR, {
+      onClick: (v) => { this.attach.choose(TopicNotes.TABLE, String(this.id), this.added()); }
+    });
+    c.addView(strip);
+    Ui.margins(strip, 0, 8, 0, 0);
+    if (!files.isEmpty() && TopicNotes.canEdit(this, n)) {
+      const read = Ui.outlineButton(this, "✨  Read the points from the attached pages", TopicNotes.COLOR, {
+        onClick: (v) => {
+          const rels = [];
+          for (const r of files) if (rels.length < 6) rels.push(r.get("file"));
+          this.readPoints(rels);
+        }
+      });
+      c.addView(read);
+      Ui.margins(read, 0, 10, 0, 0);
+    }
+    const app = this.scan.waiting();
+    if (!app.isEmpty() && TopicNotes.canEdit(this, n)) {
+      const paste = Ui.outlineButton(this, "📋  Paste " + app + "'s points", Ui.AMBER, { onClick: (v) => { this.scan.paste(); } });
+      c.addView(paste);
+      Ui.margins(paste, 0, 8, 0, 0);
+    }
+    return c;
   }
 
   box(hint, text, multi) {
@@ -68336,6 +75086,9 @@ class TopicNoteActivity extends Base {
       return;
     }
     this.id = TopicNotes.save(this, this.db, this.id, this.draftTitle, this.draftSubject, pts);
+    for (let i = 0; i < this.pendingFiles.length; i++) Attach.add(this, this.db, TopicNotes.TABLE, String(this.id), this.pendingFiles[i], this.pendingNames[i]);
+    this.pendingFiles = [];
+    this.pendingNames = [];
     this.editing = false;
     this.draft = null;
     this.titleBox = null;
@@ -68368,6 +75121,11 @@ class TopicNotes {
   static TABLE = "learn_notes";
   static COLOR = 0xFF7C3AED;
   static HERO = [0xFF4C1D95, 0xFF7C3AED, 0xFFDB2777];
+  /** 9.70: the AI reads attached pages (photo or PDF) into numbered points. */
+  static READ_MARK = "write the main points for revision as a numbered list";
+  static READ_PROMPT = "Read these pages (class notes, a textbook page or a handwritten answer) and write the main points for revision as a numbered list: 1. 2. 3., "
+    + "one point per line, each short and exact. Keep drug doses, numbers, criteria and classifications as written. Leave out page headers, "
+    + "page numbers and anything not about the topic. Reply with the numbered list only.";
 
   static points(n) {
     const out = [];
@@ -71895,6 +78653,352 @@ WardDuty.Parsed = class {
   constructor() { this.date = null; this.units = new JMap(); }
 };
 ;
+/* ---- app/WardRoundActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Ward round mode (9.70): one bed at a time in bed order, with what matters on the round (NEWS2, the newest abnormal labs,
+ * results awaited, pending tasks, yesterday's plan), then today's status and plan ticked or spoken, saved as the day's
+ * progress note, and on to the next bed.
+ */
+class WardRoundActivity extends Base {
+  constructor() {
+    super();
+    this.ward = null;
+    this.at = 0;
+    this.status = "";
+    this.ticks = [];
+    this.planBox = null;
+    this.planText = "";
+  }
+
+  static COLOR = 0xFF0E7490;
+  static QUICK = ["Continue same treatment", "Repeat labs", "Review by Assistant Professor", "Plan discharge tomorrow",
+    "Discharge today", "Shift to IMCU", "Opinion from another department", "Switch IV to oral", "Stop antibiotics", "Imaging today"];
+  /** The browser's speech dialog for the plan (VoiceInput on the phone). */
+  static REQ_SPEAK = 9350;
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Ward round");
+    this.subtitle = "One bed at a time";
+    this.headerColor(WardRoundActivity.COLOR);
+    this.ward = this.getIntent().getStringExtra("ward");
+    if (this.ward == null) this.ward = this.prefs().getString("ward", this.defaultWard());
+    this.at = this.prefs().getInt("at:" + this.ward + ":" + Dates.todayIso(), 0);
+  }
+
+  liveRefresh() {
+    return false;
+  }
+
+  prefs() {
+    return this.getSharedPreferences("wardround", Context.MODE_PRIVATE);
+  }
+
+  /** This member's unit ward, else the unit admitting today, else M1. */
+  defaultWard() {
+    const me = Cloud.myStaff(this);
+    if (me > 0) {
+      const s = this.db.row("SELECT unit FROM staff WHERE id=?", String(me));
+      const u = s == null ? "" : Ui.nz(s.get("unit"));
+      for (const w of Db.CENSUS_WARDS) if (w.equals(u)) return u;
+    }
+    const t = this.db.todaysUnit();
+    return t == null || t.isEmpty() ? "M1" : t;
+  }
+
+  /** In-patients of the ward in bed order (numbered beds first, then the rest by name). */
+  static beds(db, ward) {
+    const l = db.rows("SELECT * FROM patients WHERE status=? AND location=? ORDER BY name", Db.IN, ward);
+    Collections.sort(l, {
+      compare: (a, b) => {
+        const x = WardRoundActivity.bedNo(a.get("bed")), y = WardRoundActivity.bedNo(b.get("bed"));
+        if (x !== y) return x - y;
+        return BedBoardActivity.norm(a.get("bed")).compareTo(BedBoardActivity.norm(b.get("bed")));
+      }
+    });
+    return l;
+  }
+
+  static bedNo(bed) {
+    const m = /(\d+)/.exec(Ui.nz(bed));
+    return m ? Integer.parseInt(m[1]) : 100000;
+  }
+
+  /** Today's progress note, if one was written. */
+  static todaysNote(db, pid) {
+    let last = null;
+    for (const n of CaseSheet.notesByTime(CaseSheet.load(db, pid))) if (CaseSheet.s(n, "date").equals(Dates.todayIso())) last = n;
+    return last;
+  }
+
+  static lastNoteBefore(db, pid, date) {
+    let last = null;
+    for (const n of CaseSheet.notesByTime(CaseSheet.load(db, pid))) if (CaseSheet.s(n, "date").compareTo(date) < 0) last = n;
+    return last;
+  }
+
+  /** "Na 128 ↓, K 6.1 ↑" from the newest lab entry. */
+  static abnormalLabs(db, pid) {
+    const rows = Labs.rows(db, pid);
+    if (rows.isEmpty()) return "";
+    const r = rows.get(rows.size() - 1);
+    const out = [];
+    for (const p of Labs.PARAMS) {
+      const v = Labs.num(r.get(p.key));
+      if (v == null || !Labs.abnormal(p, v)) continue;
+      out.push(p.name + " " + Labs.fmt(v) + (v < p.lo ? " ↓" : " ↑"));
+    }
+    const when = Dates.nice(Ui.nz(r.get("date")));
+    return out.length === 0 ? "Newest labs (" + when + ") within range" : TextUtils.join(", ", out) + "  (" + when + ")";
+  }
+
+  keepPlan() {
+    if (this.planBox != null) this.planText = this.planBox.getText().toString();
+  }
+
+  go(to) {
+    this.keepPlan();
+    this.at = to;
+    this.status = "";
+    this.ticks.clear();
+    this.planText = "";
+    this.planBox = null;
+    this.prefs().edit().putInt("at:" + this.ward + ":" + Dates.todayIso(), this.at).apply();
+    this.render();
+  }
+
+  render() {
+    const COLOR = WardRoundActivity.COLOR;
+    const db = this.db;
+    this.keepPlan();
+    const page = Ui.v(this);
+    // the wards, with how many beds each has
+    const chips = Ui.h(this);
+    for (const w of Db.CENSUS_WARDS) {
+      const n = db.num("SELECT COUNT(*) FROM patients WHERE status=? AND location=?", Db.IN, w);
+      if (n === 0 && !w.equals(this.ward)) continue;
+      const ch = Ui.chip(this, Db.shortName(w) + " " + n, w.equals(this.ward), COLOR);
+      ch.setOnClickListener({
+        onClick: (v) => {
+          this.ward = w;
+          this.prefs().edit().putString("ward", w).apply();
+          this.go(this.prefs().getInt("at:" + w + ":" + Dates.todayIso(), 0));
+        }
+      });
+      chips.addView(ch);
+      Ui.margins(ch, 0, 0, 6, 0);
+    }
+    const hs = new HorizontalScrollView(this);
+    hs.setHorizontalScrollBarEnabled(false);
+    hs.addView(chips);
+    page.addView(hs);
+    Ui.margins(hs, 14, 10, 14, 4);
+
+    const beds = WardRoundActivity.beds(db, this.ward);
+    let seen = 0;
+    for (const p of beds) if (WardRoundActivity.todaysNote(db, Long.parseLong(p.get("id"))) != null) seen++;
+    const prog = Ui.muted(this, Db.unitName(this.ward) + "  ·  " + beds.size() + (beds.size() === 1 ? " patient" : " patients") + "  ·  " + seen + " seen today");
+    Ui.margins(prog, 16, 4, 16, 0);
+    page.addView(prog);
+    page.addView(Ui.bar(this, seen, Math.max(1, beds.size()), COLOR));
+    if (beds.isEmpty()) {
+      page.addView(this.emptyNote("No patients in " + Db.unitName(this.ward) + "."));
+      this.setPage(page);
+      return;
+    }
+    if (this.at >= beds.size()) {
+      const done = Ui.card(this);
+      done.addView(Ui.tv(this, "✓  Round finished: " + seen + " of " + beds.size() + " seen", 18, COLOR, true));
+      for (const p of beds) {
+        if (WardRoundActivity.todaysNote(db, Long.parseLong(p.get("id"))) != null) continue;
+        done.addView(Ui.body(this, "• Bed " + Ui.nz(p.get("bed")) + "  " + Ui.nz(p.get("name")) + ": no note today"));
+      }
+      done.addView(Ui.button(this, "Start again from the first bed", COLOR, { onClick: (v) => { this.go(0); } }));
+      page.addView(done);
+      this.setPage(page);
+      return;
+    }
+    const p = beds.get(this.at);
+    const pid = Long.parseLong(p.get("id"));
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(COLOR), 20));
+    const top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.addView(Ui.tv(this, "Bed " + (Ui.nz(p.get("bed")).isEmpty() ? "–" : p.get("bed")), 22, 0xFFFFFFFF, true));
+    top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+    top.addView(Ui.tv(this, (this.at + 1) + " of " + beds.size(), 13, 0xE6FFFFFF, true));
+    hero.addView(top);
+    hero.addView(Ui.tv(this, Ui.nz(p.get("name")) + ", " + Ui.nz(p.get("age")) + Ui.nz(p.get("sex")), 17, 0xFFFFFFFF, true));
+    const day = CaseSheet.hospitalDay(p.get("admit_date"), Dates.todayIso());
+    hero.addView(Ui.tv(this, Ui.nz(p.get("diagnosis")) + (day.isEmpty() ? "" : "\n" + day + " of stay") + "  ·  " + Db.shortName(Ui.nz(p.get("home_unit"))), 13, 0xEFFFFFFF, false));
+    const today = WardRoundActivity.todaysNote(db, pid);
+    if (today != null) {
+      const s = Ui.tv(this, "✓ Seen today" + (CaseSheet.s(today, "by").isEmpty() ? "" : " by " + CaseSheet.s(today, "by")), 12, 0xFFFFFFFF, true);
+      s.setBackground(Ui.round(this, 0x33FFFFFF, 12));
+      s.setPadding(Ui.dp(this, 10), Ui.dp(this, 4), Ui.dp(this, 10), Ui.dp(this, 4));
+      hero.addView(s);
+      Ui.margins(s, 0, 8, 0, 0);
+    }
+    page.addView(hero);
+
+    // what matters at the bedside
+    const facts = Ui.card(this);
+    const ews = Ews.latest(db, pid);
+    if (ews != null && ews.count > 0)
+      facts.addView(this.line("NEWS2 " + ews.total + "  ·  " + ews.band, ews.detail, ews.color === 0 ? Ui.SLATE : ews.color));
+    else facts.addView(this.line("NEWS2", "No vitals charted in the last day", Ui.SLATE));
+    const labs = WardRoundActivity.abnormalLabs(db, pid);
+    if (!labs.isEmpty()) facts.addView(this.line("Labs", labs, labs.contains("within range") ? Ui.GREEN : Ui.RED));
+    const crit = db.num("SELECT COUNT(*) FROM " + CriticalLabs.TABLE + " WHERE patient_id=? AND status=?", String(pid), CriticalLabs.OPEN);
+    if (crit > 0) facts.addView(this.line("Critical value", crit + " not yet acknowledged", Ui.RED));
+    const waiting = Results.waitingFor(db, pid);
+    if (waiting > 0) facts.addView(this.line("Results awaited", String(waiting), Ui.AMBER));
+    const tasks = db.rows("SELECT * FROM tasks WHERE patient_id=? AND done='' ORDER BY CASE WHEN due='' THEN 1 ELSE 0 END, due, id", String(pid));
+    if (!tasks.isEmpty()) {
+      const t = [];
+      for (let i = 0; i < Math.min(3, tasks.size()); i++) t.push(Ui.nz(tasks.get(i).get("text")));
+      facts.addView(this.line("Pending tasks · " + tasks.size(), TextUtils.join("; ", t), Tasks.COLOR));
+    }
+    const prev = WardRoundActivity.lastNoteBefore(db, pid, Dates.todayIso());
+    if (prev != null) facts.addView(this.line("Last note · " + CaseSheet.noteHead(prev, p.get("admit_date")),
+      (CaseSheet.s(prev, "status").isEmpty() ? "" : CaseSheet.s(prev, "status") + ". ") + (CaseSheet.s(prev, "plan").isEmpty() ? CaseSheet.noteBody(prev) : "Plan: " + CaseSheet.s(prev, "plan")), Ui.SLATE));
+    page.addView(facts);
+
+    // today's status and plan
+    page.addView(Ui.heading(this, "Today", COLOR));
+    const plan = Ui.card(this);
+    const st = Ui.h(this);
+    for (const s of ["Better", "Same", "Worse", "Critical"]) {
+      const ch = Ui.chip(this, s, s.equals(this.status), CaseSheetActivity.statusColor(s));
+      ch.setOnClickListener({
+        onClick: (v) => {
+          this.status = s.equals(this.status) ? "" : s;
+          this.render();
+        }
+      });
+      st.addView(ch);
+      Ui.margins(ch, 0, 0, 6, 0);
+    }
+    plan.addView(st);
+    const quick = new Bands.Flow(this);
+    for (const q of WardRoundActivity.QUICK) {
+      const on = this.ticks.contains(q);
+      const ch = Ui.chip(this, (on ? "✓ " : "") + q, on, COLOR);
+      ch.setOnClickListener({
+        onClick: (v) => {
+          this.keepPlan();
+          if (on) this.ticks.removeObj(q);
+          else this.ticks.add(q);
+          this.render();
+        }
+      });
+      quick.addView(ch);
+    }
+    plan.addView(quick);
+    Ui.margins(quick, 0, 10, 0, 0);
+    this.planBox = new EditText(this);
+    this.planBox.setHint("Plan, changes in treatment (or tap 🎤 and speak)");
+    this.planBox.setText(this.planText);
+    this.planBox.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+    this.planBox.setMinLines(2);
+    const pr = Ui.h(this);
+    pr.setGravity(Gravity.CENTER_VERTICAL);
+    pr.addView(this.planBox, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    const mic = Ui.tv(this, "🎤", 24, COLOR, false);
+    mic.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 4), Ui.dp(this, 6));
+    mic.setOnClickListener({ onClick: (v) => { this.keepPlan(); this.speak(); } });
+    pr.addView(mic);
+    plan.addView(pr);
+    Ui.margins(pr, 0, 8, 0, 0);
+    page.addView(plan);
+
+    const editable = CaseSheet.canEdit(this, db, p);
+    const btns = Ui.v(this);
+    btns.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    if (editable) btns.addView(Ui.button(this, "Save and next bed  ›", COLOR, {
+      onClick: (v) => {
+        this.keepPlan();
+        if (this.save(pid)) this.go(this.at + 1);
+      }
+    }));
+    const prevB = Ui.outlineButton(this, "‹  Previous", COLOR, { onClick: (v) => { this.go(Math.max(0, this.at - 1)); } }),
+      skip = Ui.outlineButton(this, "Skip  ›", COLOR, { onClick: (v) => { this.go(this.at + 1); } });
+    const nav = Ui.buttonRow(this, prevB, skip);
+    btns.addView(nav);
+    Ui.margins(nav, 0, 8, 0, 0);
+    const more = Ui.buttonRow(this, Ui.outlineButton(this, "Open patient", Ui.SLATE, this.opener(PatientActivity, "id", String(pid))),
+      Ui.outlineButton(this, "+ Task", Tasks.COLOR, { onClick: (v) => { Tasks.addDialog(this, db, pid, null); } }));
+    btns.addView(more);
+    Ui.margins(more, 0, 8, 0, 0);
+    if (!editable) btns.addView(Ui.muted(this, "Only this patient's unit team writes the progress note."));
+    page.addView(btns);
+    this.setPage(page);
+  }
+
+  /** The browser's speech dialog (as the case sheet's dictation); the words are added to the plan. */
+  speak() {
+    const i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+    i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Dictation.EN);
+    i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak the plan");
+    i.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+    try {
+      this.startActivityForResult(i, WardRoundActivity.REQ_SPEAK);
+    } catch (e) {
+      if (!(e instanceof ActivityNotFoundException)) throw e;
+      Ui.toast(this, "Voice is not available in this browser: type instead");
+    }
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req !== WardRoundActivity.REQ_SPEAK || res !== RESULT_OK || data == null) return;
+    const r = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+    const text = r == null || r.isEmpty() ? "" : String(r.get(0)).trim();
+    if (text.isEmpty()) return;
+    this.planText = (this.planText.trim().isEmpty() ? "" : this.planText.trim() + ". ") + text;
+    if (this.planBox != null) this.planBox.setText(this.planText);
+  }
+
+  line(title, text, color) {
+    const l = Ui.v(this);
+    l.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 6));
+    l.addView(Ui.tv(this, title, 13, color, true));
+    if (!Ui.nz(text).isEmpty()) l.addView(Ui.tv(this, text, 14, Ui.TEXT, false));
+    return l;
+  }
+
+  /** Today's status, ticks and plan as a progress note (added to today's note if one was written on this round). */
+  save(pid) {
+    let b = "";
+    for (const t of this.ticks) b += (b.length === 0 ? "" : ". ") + t;
+    if (!this.planText.trim().isEmpty()) b += (b.length === 0 ? "" : ". ") + this.planText.trim();
+    const planAll = b;
+    if (this.status.isEmpty() && planAll.isEmpty()) return true;   // nothing new: just the next bed
+    const data = CaseSheet.load(this.db, pid);
+    const all = CaseSheet.notes(data);
+    try {
+      const o = new JSONObject();
+      o.put("date", Dates.todayIso());
+      o.put("time", Dates.now());
+      if (!this.status.isEmpty()) o.put("status", this.status);
+      if (!planAll.isEmpty()) o.put("plan", planAll);
+      o.put("by", CallDutyActivity.myName(this));
+      o.put("round", "1");
+      all.put(o);
+      data.put(CaseSheet.PROGRESS, all);
+    } catch (e) {
+      return false;
+    }
+    CaseSheet.save(this.db, pid, data);
+    Ui.toast(this, "Saved in the progress notes");
+    return true;
+  }
+}
+;
 /* ---- app/Watch.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -73193,7 +80297,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Ask, AskActivity, AttendanceActivity, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, Conduct, ConductActivity, ConvictActivity, Copilot, Crashes, CrashesActivity, CultureActivity, Dama, DamaActivity, DapActivity, Dashboard, DashboardActivity, Diagnoses, Dictation, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, Extract, FacultyActivity, FacultyLeaveActivity, FacultyProfileActivity, FormActivity, FormDoc, Gold, Guidelines, HandoverActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, Notify, ObstetricActivity, Opinions, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, SearchActivity, SessionAttendance, SettingsActivity, SignOff, SignOffActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WaAdmit, Wall, WallActivity, WardDuty, Watch, WatchActivity, WeekAcademicsActivity, Wrapped, WrappedActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, CompetencyActivity, Conduct, ConductActivity, ConvictActivity, Copilot, Crashes, CrashesActivity, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, Dashboard, DashboardActivity, Diagnoses, Dictation, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, Extract, FacultyActivity, FacultyLeaveActivity, FacultyProfileActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, Guidelines, HandoverActivity, Harrison, HarrisonActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, Library, LibraryActivity, LibraryService, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, Notify, ObstetricActivity, Opinions, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, Scores, ScoresActivity, SearchActivity, SessionAttendance, SettingsActivity, SignOff, SignOffActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WaAdmit, Wall, WallActivity, WardDuty, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
