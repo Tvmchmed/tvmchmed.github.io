@@ -1883,6 +1883,8 @@ class View {
     const out = [];
     const e = this.shadows.elev;
     if (e) {
+      // a rounded background drawn on a canvas: round the element too, or its shadow shows square corners
+      if (!this.el.style.borderRadius && this.bg && this.bg.radius) this.el.style.borderRadius = this.bg.radius + 'px';
       const col = this.shadows.color != null ? this.shadows.color : 0xFF000000;
       const a = Math.min(0.32, 0.10 + e * 0.012);
       out.push('0 ' + (e * 0.55).toFixed(1) + 'px ' + (e * 1.6).toFixed(1) + 'px ' + css(Color.withAlpha(col | 0xFF000000, a)));
@@ -4680,7 +4682,7 @@ Object.assign(window, {
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary. See LICENSE.txt. */
 // Generated from app/src/main/res: the vector icons and other resources, as R.drawable / R.raw.
 var R = { drawable: {}, raw: { icd11: "icd11.txt", uq_seed: "uq_seed.txt" }, id: { tag_state: "tag_state" }, layout: {} };
-R.VECTORS = {"ic_doubt":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2C6.5,2 2,6 2,11c0,2.5 1.1,4.7 2.9,6.3L4,22l4.6,-2.4C9.6,19.8 10.8,20 12,20c5.5,0 10,-4 10,-9S17.5,2 12,2zM11,14h2v2h-2zM12,5.8c-1.8,0 -3.1,1.1 -3.1,2.9h1.9c0,-0.6 0.5,-1 1.2,-1s1.2,0.4 1.2,0.9c0,1.3 -2.2,1.2 -2.2,3.5h1.9c0,-1.5 2.3,-1.6 2.3,-3.6c0,-1.7 -1.3,-2.7 -3.2,-2.7z","fill":"#FF000000","rule":"evenOdd"}]},"ic_approve":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM9,14c-2.67,0 -8,1.34 -8,4v2h11.5c-0.32,-0.62 -0.5,-1.29 -0.5,-2 0,-1.5 0.66,-2.84 1.7,-3.76C12.15,14.08 10.4,14 9,14zM17.5,13.5l-1.06,1.06 -0,0 1.06,-1.06zM21.59,13.59L17,18.17l-2.09,-2.08L13.5,17.5 17,21l6,-6z","fill":"#FF000000"}]},"ic_attach":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_back":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z","fill":"#FF000000"}]},"ic_badge":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.11,0 -2,0.9 -2,2v14c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,6c1.93,0 3.5,1.57 3.5,3.5S13.93,13 12,13s-3.5,-1.57 -3.5,-3.5S10.07,6 12,6zM19,19H5v-0.23c0,-0.62 0.28,-1.2 0.76,-1.58C7.47,15.82 9.64,15 12,15s4.53,0.82 6.24,2.19c0.48,0.38 0.76,0.97 0.76,1.58V19z","fill":"#FF000000"}]},"ic_bed":{"vw":24.0,"vh":24.0,"p":[{"d":"M7,13c1.66,0 3,-1.34 3,-3S8.66,7 7,7s-3,1.34 -3,3 1.34,3 3,3zM19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0,-2.21 -1.79,-4 -4,-4z","fill":"#FF000000"}]},"ic_bone":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.2,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M2.2,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M4.8,9.8h14.4v4.4h-14.4z","fill":"#FF000000"}]},"ic_book":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_building":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,7V3H2v18h20V7H12zM6,19H4v-2h2v2zM6,15H4v-2h2v2zM6,11H4V9h2v2zM6,7H4V5h2v2zM10,19H8v-2h2v2zM10,15H8v-2h2v2zM10,11H8V9h2v2zM10,7H8V5h2v2zM20,19h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zM18,11h-2v2h2v-2zM18,15h-2v2h2v-2z","fill":"#FF000000"}]},"ic_bulb":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1H9v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74V17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_calendar":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,4h-1V2h-2v2H8V2H6v2H5C3.89,4 3.01,4.9 3.01,6L3,20c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM19,20H5V10h14v10zM19,8H5V6h14v2zM7,12h5v5H7z","fill":"#FF000000"}]},"ic_camera":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,2L7.17,4H4c-1.1,0 -2,0.9 -2,2v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2h-3.17L15,2H9zM12,17c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5 5,2.24 5,5 -2.24,5 -5,5zM12,8.8c-1.77,0 -3.2,1.43 -3.2,3.2s1.43,3.2 3.2,3.2 3.2,-1.43 3.2,-3.2 -1.43,-3.2 -3.2,-3.2z","fill":"#FF000000"}]},"ic_cane":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,4a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z","fill":"#FF000000"},{"d":"M9.6,7.2h4.2c0.9,0 1.6,0.6 1.7,1.5l0.6,4.8h-2l-0.3,-2.4l-0.4,10.9h-2.2l-0.3,-6h-0.6l-0.4,6h-2.1l0.2,-8.6l-1.6,1.9l-1.5,-1.2l2.9,-5.2c0.3,-1 0.9,-1.7 1.8,-1.7z","fill":"#FF000000"},{"d":"M17,12.5h1.3v9.5h-1.3z M16.6,12.5c0,-1.6 2.9,-1.6 2.9,0h-1.2c0,-0.5 -0.5,-0.5 -0.5,0z","fill":"#FF000000"}]},"ic_census":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1S9.6,1.84 9.18,3H5C3.9,3 3,3.9 3,5v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5C21,3.9 20.1,3 19,3zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1S11.45,3 12,3zM9,17H7v-5h2V17zM13,17h-2V9h2V17zM17,17h-2v-3h2V17z","fill":"#FF000000"}]},"ic_chart":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM9,17H7v-7h2v7zM13,17h-2V7h2v10zM17,17h-2v-4h2v4z","fill":"#FF000000"}]},"ic_chat":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1.5C6.2,1.5 1.5,5.9 1.5,11.3c0,1.9 0.6,3.7 1.6,5.2L1.8,22.2l5.9,-1.6c1.3,0.6 2.8,0.9 4.3,0.9c5.8,0 10.5,-4.4 10.5,-9.8S17.8,1.5 12,1.5zM10.6,6.4h2.8v3.5h3.5v2.8h-3.5v3.5h-2.8v-3.5H7.1v-2.8h3.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_clipboard":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1c-1.3,0 -2.4,0.84 -2.82,2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1 0.45,-1 1,-1zM14,17H7v-2h7v2zM17,13H7v-2h10v2zM17,9H7V7h10v2z","fill":"#FF000000"}]},"ic_cloud":{"vw":24.0,"vh":24.0,"p":[{"d":"M19.35,10.04C18.67,6.59 15.64,4 12,4 9.11,4 6.6,5.64 5.35,8.04 2.34,8.36 0,10.91 0,14c0,3.31 2.69,6 6,6h13c2.76,0 5,-2.24 5,-5 0,-2.64 -2.05,-4.78 -4.65,-4.96zM14,13v4h-4v-4H7l5,-5 5,5h-3z","fill":"#FF000000"}]},"ic_contacts":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,0H4v2h16V0zM4,24h16v-2H4v2zM20,4H4C2.9,4 2,4.9 2,6v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM12,6.75c1.24,0 2.25,1.01 2.25,2.25s-1.01,2.25 -2.25,2.25S9.75,10.24 9.75,9 10.76,6.75 12,6.75zM17,17H7v-1.5c0,-1.67 3.33,-2.5 5,-2.5s5,0.83 5,2.5V17z","fill":"#FF000000"}]},"ic_doc":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,2H6c-1.1,0 -1.99,0.9 -1.99,2L4,20c0,1.1 0.89,2 1.99,2H18c1.1,0 2,-0.9 2,-2V8l-6,-6zM16,18H8v-2h8v2zM16,14H8v-2h8v2zM13,9V3.5L18.5,9H13z","fill":"#FF000000"}]},"ic_drop":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2c-5.33,4.55 -8,8.48 -8,11.8c0,4.98 3.8,8.2 8,8.2s8,-3.22 8,-8.2c0,-3.32 -2.67,-7.25 -8,-11.8zM10.8,11.5h2.4v2.3h2.3v2.4h-2.3v2.3h-2.4v-2.3H8.5v-2.4h2.3z","fill":"#FF000000","rule":"evenOdd"}]},"ic_event":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.53,11.06L15.47,10l-4.88,4.88 -2.12,-2.12 -1.06,1.06L10.59,17l5.94,-5.94zM19,3h-1V1h-2v2H8V1H6v2H5c-1.11,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM19,19H5V8h14v11z","fill":"#FF000000"}]},"ic_fever":{"vw":24.0,"vh":24.0,"p":[{"d":"M15,13V5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v8c-1.21,0.91 -2,2.37 -2,4 0,2.76 2.24,5 5,5s5,-2.24 5,-5c0,-1.63 -0.79,-3.09 -2,-4zM11,5c0,-0.55 0.45,-1 1,-1s1,0.45 1,1h-1v1h1v2h-1v1h1v2h-2V5z","fill":"#FF000000"}]},"ic_flight":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,16v-2l-8,-5V3.5c0,-0.83 -0.67,-1.5 -1.5,-1.5S10,2.67 10,3.5V9l-8,5v2l8,-2.5V19l-2,1.5V22l3.5,-1 3.5,1v-1.5L13,19v-5.5l8,2.5z","fill":"#FF000000"}]},"ic_group":{"vw":24.0,"vh":24.0,"p":[{"d":"M16,11c1.66,0 2.99,-1.34 2.99,-3S17.66,5 16,5c-1.66,0 -3,1.34 -3,3s1.34,3 3,3zM8,11c1.66,0 2.99,-1.34 2.99,-3S9.66,5 8,5C6.34,5 5,6.34 5,8s1.34,3 3,3zM8,13c-2.33,0 -7,1.17 -7,3.5V19h14v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5zM16,13c-0.29,0 -0.62,0.02 -0.97,0.05 1.16,0.84 1.97,1.97 1.97,3.45V19h6v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5z","fill":"#FF000000"}]},"ic_heart":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z","fill":"#FF000000"}]},"ic_home":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z","fill":"#FF000000"}]},"ic_hospital":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM18,14h-4v4h-4v-4H6v-4h4V6h4v4h4v4z","fill":"#FF000000"}]},"ic_lock":{"vw":24.0,"vh":24.0,"p":[{"d":"M18,8h-1V6c0,-2.76 -2.24,-5 -5,-5S7,3.24 7,6v2H6c-1.1,0 -2,0.9 -2,2v10c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2V10c0,-1.1 -0.9,-2 -2,-2zM12,17c-1.1,0 -2,-0.9 -2,-2s0.9,-2 2,-2 2,0.9 2,2 -0.9,2 -2,2zM15.1,8H8.9V6c0,-1.71 1.39,-3.1 3.1,-3.1 1.71,0 3.1,1.39 3.1,3.1v2z","fill":"#FF000000"}]},"ic_mail":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,4H4c-1.1,0 -1.99,0.9 -1.99,2L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z","fill":"#FF000000"}]},"ic_menu":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,18h18v-2H3v2zM3,13h18v-2H3v2zM3,6v2h18V6H3z","fill":"#FF000000"}]},"ic_mic":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11H5c0,3.41 2.72,6.23 6,6.72V21h2v-3.28c3.28,-0.48 6,-3.3 6,-6.72h-1.7z","fill":"#FF000000"}]},"ic_moon":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,3c-4.97,0 -9,4.03 -9,9s4.03,9 9,9 9,-4.03 9,-9c0,-0.46 -0.04,-0.92 -0.1,-1.36 -0.98,1.37 -2.58,2.26 -4.4,2.26 -2.98,0 -5.4,-2.42 -5.4,-5.4 0,-1.81 0.89,-3.42 2.26,-4.4C12.92,3.04 12.46,3 12,3z","fill":"#FF000000"}]},"ic_notice":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,2H4c-1.1,0 -1.99,0.9 -1.99,2L2,22l4,-4h14c1.1,0 2,-0.9 2,-2V4c0,-1.1 -0.9,-2 -2,-2zM13,11h-2V5h2v6zM13,15h-2v-2h2v2z","fill":"#FF000000"}]},"ic_people":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM12,14c-2.67,0 -8,1.34 -8,4v2h16v-2c0,-2.66 -5.33,-4 -8,-4z","fill":"#FF000000"}]},"ic_phone":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z","fill":"#FF000000"}]},"ic_plus":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z","fill":"#FF000000"}]},"ic_quiz":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1L9,20v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74L8,17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_school":{"vw":24.0,"vh":24.0,"p":[{"d":"M5,13.18v4L12,21l7,-3.82v-4L12,17l-7,-3.82zM12,3L1,9l11,6 9,-4.91V17h2V9L12,3z","fill":"#FF000000"}]},"ic_send":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.01,21L23,12 2.01,3 2,10l15,2 -15,2z","fill":"#FF000000","rule":"evenOdd"}]},"ic_shield":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2L4,5v6.09c0,5.05 3.41,9.76 8,10.91c4.59,-1.15 8,-5.86 8,-10.91V5L12,2zM10.5,13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13z","fill":"#FF000000","rule":"evenOdd"}]},"ic_snake":{"vw":24.0,"vh":24.0,"p":[{"d":"M4.5,20.5c3,0 5.5,-0.8 8.5,-0.8c2.8,0 4.6,-1.6 4.6,-3.6c0,-2.2 -2,-3.2 -4.6,-3.6c-2.5,-0.4 -4.5,-1.4 -4.5,-3.6c0,-2 1.8,-3.6 4.3,-3.6","fill":"#00000000","stroke":"#FF000000","sw":"2.6","cap":"round"},{"d":"M12.6,3.1h3.6c1.6,0 2.6,0.9 2.6,2.2s-1,2.2 -2.6,2.2h-3.6z","fill":"#FF000000"},{"d":"M18.8,5.3h2.2l0.9,-0.9M21,5.3l0.9,0.9","fill":"#00000000","stroke":"#FF000000","sw":"0.9","cap":"round"}]},"ic_star":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z","fill":"#FF000000"}]},"ic_swap":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.99,11L3,15l3.99,4v-3H14v-2H6.99v-3zM21,9l-3.99,-4v3H10v2h7.01v3L21,9z","fill":"#FF000000"}]},"ic_task":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,10H2v2h12v-2zM14,6H2v2h12V6zM2,16h8v-2H2v2zM21.5,11.5L23,13l-6.99,7 -4.51,-4.5L13,14l3.01,3 5.49,-5.5z","fill":"#FF000000"}]},"ic_thesis":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_trend":{"vw":24.0,"vh":24.0,"p":[{"d":"M3.5,18.49l6,-6.01 4,4L22,6.92l-1.41,-1.41 -7.09,7.97 -4,-4L2,16.99z","fill":"#FF000000"}]},"ic_trophy":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,5h-2V3H7v2H5C3.9,5 3,5.9 3,7v1c0,2.55 1.92,4.63 4.39,4.94c0.63,1.5 1.98,2.63 3.61,2.96V19H7v2h10v-2h-4v-3.1c1.63,-0.33 2.98,-1.46 3.61,-2.96C19.08,12.63 21,10.55 21,8V7C21,5.9 20.1,5 19,5zM5,8V7h2v3.82C5.84,10.4 5,9.3 5,8zM19,8c0,1.3 -0.84,2.4 -2,2.82V7h2V8z","fill":"#FF000000"}]},"ic_tune":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,17v2h6v-2H3zM3,5v2h10V5H3zM13,21v-2h8v-2h-8v-2h-2v6h2zM7,9v2H3v2h4v2h2V9H7zM21,13v-2H11v2h10zM15,9h2V7h4V5h-4V3h-2v6z","fill":"#FF000000"}]},"ic_upload":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,16h6v-6h4l-7,-7 -7,7h4zM5,18h14v2H5z","fill":"#FF000000"}]},"ic_verified":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM10,17l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z","fill":"#FF000000"}]},"ic_warn":{"vw":24.0,"vh":24.0,"p":[{"d":"M1,21h22L12,2 1,21zM13,18h-2v-2h2v2zM13,14h-2v-4h2v4z","fill":"#FF000000","rule":"evenOdd"}]}};
+R.VECTORS = {"ic_search":{"vw":24.0,"vh":24.0,"p":[{"d":"M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z","fill":"#FF000000"}]},"ic_doubt":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2C6.5,2 2,6 2,11c0,2.5 1.1,4.7 2.9,6.3L4,22l4.6,-2.4C9.6,19.8 10.8,20 12,20c5.5,0 10,-4 10,-9S17.5,2 12,2zM11,14h2v2h-2zM12,5.8c-1.8,0 -3.1,1.1 -3.1,2.9h1.9c0,-0.6 0.5,-1 1.2,-1s1.2,0.4 1.2,0.9c0,1.3 -2.2,1.2 -2.2,3.5h1.9c0,-1.5 2.3,-1.6 2.3,-3.6c0,-1.7 -1.3,-2.7 -3.2,-2.7z","fill":"#FF000000","rule":"evenOdd"}]},"ic_approve":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM9,14c-2.67,0 -8,1.34 -8,4v2h11.5c-0.32,-0.62 -0.5,-1.29 -0.5,-2 0,-1.5 0.66,-2.84 1.7,-3.76C12.15,14.08 10.4,14 9,14zM17.5,13.5l-1.06,1.06 -0,0 1.06,-1.06zM21.59,13.59L17,18.17l-2.09,-2.08L13.5,17.5 17,21l6,-6z","fill":"#FF000000"}]},"ic_attach":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_back":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z","fill":"#FF000000"}]},"ic_badge":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.11,0 -2,0.9 -2,2v14c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,6c1.93,0 3.5,1.57 3.5,3.5S13.93,13 12,13s-3.5,-1.57 -3.5,-3.5S10.07,6 12,6zM19,19H5v-0.23c0,-0.62 0.28,-1.2 0.76,-1.58C7.47,15.82 9.64,15 12,15s4.53,0.82 6.24,2.19c0.48,0.38 0.76,0.97 0.76,1.58V19z","fill":"#FF000000"}]},"ic_bed":{"vw":24.0,"vh":24.0,"p":[{"d":"M7,13c1.66,0 3,-1.34 3,-3S8.66,7 7,7s-3,1.34 -3,3 1.34,3 3,3zM19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0,-2.21 -1.79,-4 -4,-4z","fill":"#FF000000"}]},"ic_bone":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.2,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M2.2,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M4.8,9.8h14.4v4.4h-14.4z","fill":"#FF000000"}]},"ic_book":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_building":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,7V3H2v18h20V7H12zM6,19H4v-2h2v2zM6,15H4v-2h2v2zM6,11H4V9h2v2zM6,7H4V5h2v2zM10,19H8v-2h2v2zM10,15H8v-2h2v2zM10,11H8V9h2v2zM10,7H8V5h2v2zM20,19h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zM18,11h-2v2h2v-2zM18,15h-2v2h2v-2z","fill":"#FF000000"}]},"ic_bulb":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1H9v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74V17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_calendar":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,4h-1V2h-2v2H8V2H6v2H5C3.89,4 3.01,4.9 3.01,6L3,20c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM19,20H5V10h14v10zM19,8H5V6h14v2zM7,12h5v5H7z","fill":"#FF000000"}]},"ic_camera":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,2L7.17,4H4c-1.1,0 -2,0.9 -2,2v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2h-3.17L15,2H9zM12,17c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5 5,2.24 5,5 -2.24,5 -5,5zM12,8.8c-1.77,0 -3.2,1.43 -3.2,3.2s1.43,3.2 3.2,3.2 3.2,-1.43 3.2,-3.2 -1.43,-3.2 -3.2,-3.2z","fill":"#FF000000"}]},"ic_cane":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,4a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z","fill":"#FF000000"},{"d":"M9.6,7.2h4.2c0.9,0 1.6,0.6 1.7,1.5l0.6,4.8h-2l-0.3,-2.4l-0.4,10.9h-2.2l-0.3,-6h-0.6l-0.4,6h-2.1l0.2,-8.6l-1.6,1.9l-1.5,-1.2l2.9,-5.2c0.3,-1 0.9,-1.7 1.8,-1.7z","fill":"#FF000000"},{"d":"M17,12.5h1.3v9.5h-1.3z M16.6,12.5c0,-1.6 2.9,-1.6 2.9,0h-1.2c0,-0.5 -0.5,-0.5 -0.5,0z","fill":"#FF000000"}]},"ic_census":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1S9.6,1.84 9.18,3H5C3.9,3 3,3.9 3,5v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5C21,3.9 20.1,3 19,3zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1S11.45,3 12,3zM9,17H7v-5h2V17zM13,17h-2V9h2V17zM17,17h-2v-3h2V17z","fill":"#FF000000"}]},"ic_chart":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM9,17H7v-7h2v7zM13,17h-2V7h2v10zM17,17h-2v-4h2v4z","fill":"#FF000000"}]},"ic_chat":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1.5C6.2,1.5 1.5,5.9 1.5,11.3c0,1.9 0.6,3.7 1.6,5.2L1.8,22.2l5.9,-1.6c1.3,0.6 2.8,0.9 4.3,0.9c5.8,0 10.5,-4.4 10.5,-9.8S17.8,1.5 12,1.5zM10.6,6.4h2.8v3.5h3.5v2.8h-3.5v3.5h-2.8v-3.5H7.1v-2.8h3.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_clipboard":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1c-1.3,0 -2.4,0.84 -2.82,2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1 0.45,-1 1,-1zM14,17H7v-2h7v2zM17,13H7v-2h10v2zM17,9H7V7h10v2z","fill":"#FF000000"}]},"ic_cloud":{"vw":24.0,"vh":24.0,"p":[{"d":"M19.35,10.04C18.67,6.59 15.64,4 12,4 9.11,4 6.6,5.64 5.35,8.04 2.34,8.36 0,10.91 0,14c0,3.31 2.69,6 6,6h13c2.76,0 5,-2.24 5,-5 0,-2.64 -2.05,-4.78 -4.65,-4.96zM14,13v4h-4v-4H7l5,-5 5,5h-3z","fill":"#FF000000"}]},"ic_contacts":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,0H4v2h16V0zM4,24h16v-2H4v2zM20,4H4C2.9,4 2,4.9 2,6v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM12,6.75c1.24,0 2.25,1.01 2.25,2.25s-1.01,2.25 -2.25,2.25S9.75,10.24 9.75,9 10.76,6.75 12,6.75zM17,17H7v-1.5c0,-1.67 3.33,-2.5 5,-2.5s5,0.83 5,2.5V17z","fill":"#FF000000"}]},"ic_doc":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,2H6c-1.1,0 -1.99,0.9 -1.99,2L4,20c0,1.1 0.89,2 1.99,2H18c1.1,0 2,-0.9 2,-2V8l-6,-6zM16,18H8v-2h8v2zM16,14H8v-2h8v2zM13,9V3.5L18.5,9H13z","fill":"#FF000000"}]},"ic_drop":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2c-5.33,4.55 -8,8.48 -8,11.8c0,4.98 3.8,8.2 8,8.2s8,-3.22 8,-8.2c0,-3.32 -2.67,-7.25 -8,-11.8zM10.8,11.5h2.4v2.3h2.3v2.4h-2.3v2.3h-2.4v-2.3H8.5v-2.4h2.3z","fill":"#FF000000","rule":"evenOdd"}]},"ic_event":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.53,11.06L15.47,10l-4.88,4.88 -2.12,-2.12 -1.06,1.06L10.59,17l5.94,-5.94zM19,3h-1V1h-2v2H8V1H6v2H5c-1.11,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM19,19H5V8h14v11z","fill":"#FF000000"}]},"ic_fever":{"vw":24.0,"vh":24.0,"p":[{"d":"M15,13V5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v8c-1.21,0.91 -2,2.37 -2,4 0,2.76 2.24,5 5,5s5,-2.24 5,-5c0,-1.63 -0.79,-3.09 -2,-4zM11,5c0,-0.55 0.45,-1 1,-1s1,0.45 1,1h-1v1h1v2h-1v1h1v2h-2V5z","fill":"#FF000000"}]},"ic_flight":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,16v-2l-8,-5V3.5c0,-0.83 -0.67,-1.5 -1.5,-1.5S10,2.67 10,3.5V9l-8,5v2l8,-2.5V19l-2,1.5V22l3.5,-1 3.5,1v-1.5L13,19v-5.5l8,2.5z","fill":"#FF000000"}]},"ic_group":{"vw":24.0,"vh":24.0,"p":[{"d":"M16,11c1.66,0 2.99,-1.34 2.99,-3S17.66,5 16,5c-1.66,0 -3,1.34 -3,3s1.34,3 3,3zM8,11c1.66,0 2.99,-1.34 2.99,-3S9.66,5 8,5C6.34,5 5,6.34 5,8s1.34,3 3,3zM8,13c-2.33,0 -7,1.17 -7,3.5V19h14v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5zM16,13c-0.29,0 -0.62,0.02 -0.97,0.05 1.16,0.84 1.97,1.97 1.97,3.45V19h6v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5z","fill":"#FF000000"}]},"ic_heart":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z","fill":"#FF000000"}]},"ic_home":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z","fill":"#FF000000"}]},"ic_hospital":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM18,14h-4v4h-4v-4H6v-4h4V6h4v4h4v4z","fill":"#FF000000"}]},"ic_lock":{"vw":24.0,"vh":24.0,"p":[{"d":"M18,8h-1V6c0,-2.76 -2.24,-5 -5,-5S7,3.24 7,6v2H6c-1.1,0 -2,0.9 -2,2v10c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2V10c0,-1.1 -0.9,-2 -2,-2zM12,17c-1.1,0 -2,-0.9 -2,-2s0.9,-2 2,-2 2,0.9 2,2 -0.9,2 -2,2zM15.1,8H8.9V6c0,-1.71 1.39,-3.1 3.1,-3.1 1.71,0 3.1,1.39 3.1,3.1v2z","fill":"#FF000000"}]},"ic_mail":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,4H4c-1.1,0 -1.99,0.9 -1.99,2L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z","fill":"#FF000000"}]},"ic_menu":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,18h18v-2H3v2zM3,13h18v-2H3v2zM3,6v2h18V6H3z","fill":"#FF000000"}]},"ic_mic":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11H5c0,3.41 2.72,6.23 6,6.72V21h2v-3.28c3.28,-0.48 6,-3.3 6,-6.72h-1.7z","fill":"#FF000000"}]},"ic_moon":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,3c-4.97,0 -9,4.03 -9,9s4.03,9 9,9 9,-4.03 9,-9c0,-0.46 -0.04,-0.92 -0.1,-1.36 -0.98,1.37 -2.58,2.26 -4.4,2.26 -2.98,0 -5.4,-2.42 -5.4,-5.4 0,-1.81 0.89,-3.42 2.26,-4.4C12.92,3.04 12.46,3 12,3z","fill":"#FF000000"}]},"ic_notice":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,2H4c-1.1,0 -1.99,0.9 -1.99,2L2,22l4,-4h14c1.1,0 2,-0.9 2,-2V4c0,-1.1 -0.9,-2 -2,-2zM13,11h-2V5h2v6zM13,15h-2v-2h2v2z","fill":"#FF000000"}]},"ic_people":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM12,14c-2.67,0 -8,1.34 -8,4v2h16v-2c0,-2.66 -5.33,-4 -8,-4z","fill":"#FF000000"}]},"ic_phone":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z","fill":"#FF000000"}]},"ic_plus":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z","fill":"#FF000000"}]},"ic_quiz":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1L9,20v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74L8,17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_school":{"vw":24.0,"vh":24.0,"p":[{"d":"M5,13.18v4L12,21l7,-3.82v-4L12,17l-7,-3.82zM12,3L1,9l11,6 9,-4.91V17h2V9L12,3z","fill":"#FF000000"}]},"ic_send":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.01,21L23,12 2.01,3 2,10l15,2 -15,2z","fill":"#FF000000","rule":"evenOdd"}]},"ic_shield":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2L4,5v6.09c0,5.05 3.41,9.76 8,10.91c4.59,-1.15 8,-5.86 8,-10.91V5L12,2zM10.5,13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13z","fill":"#FF000000","rule":"evenOdd"}]},"ic_snake":{"vw":24.0,"vh":24.0,"p":[{"d":"M4.5,20.5c3,0 5.5,-0.8 8.5,-0.8c2.8,0 4.6,-1.6 4.6,-3.6c0,-2.2 -2,-3.2 -4.6,-3.6c-2.5,-0.4 -4.5,-1.4 -4.5,-3.6c0,-2 1.8,-3.6 4.3,-3.6","fill":"#00000000","stroke":"#FF000000","sw":"2.6","cap":"round"},{"d":"M12.6,3.1h3.6c1.6,0 2.6,0.9 2.6,2.2s-1,2.2 -2.6,2.2h-3.6z","fill":"#FF000000"},{"d":"M18.8,5.3h2.2l0.9,-0.9M21,5.3l0.9,0.9","fill":"#00000000","stroke":"#FF000000","sw":"0.9","cap":"round"}]},"ic_star":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z","fill":"#FF000000"}]},"ic_swap":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.99,11L3,15l3.99,4v-3H14v-2H6.99v-3zM21,9l-3.99,-4v3H10v2h7.01v3L21,9z","fill":"#FF000000"}]},"ic_task":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,10H2v2h12v-2zM14,6H2v2h12V6zM2,16h8v-2H2v2zM21.5,11.5L23,13l-6.99,7 -4.51,-4.5L13,14l3.01,3 5.49,-5.5z","fill":"#FF000000"}]},"ic_thesis":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_trend":{"vw":24.0,"vh":24.0,"p":[{"d":"M3.5,18.49l6,-6.01 4,4L22,6.92l-1.41,-1.41 -7.09,7.97 -4,-4L2,16.99z","fill":"#FF000000"}]},"ic_trophy":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,5h-2V3H7v2H5C3.9,5 3,5.9 3,7v1c0,2.55 1.92,4.63 4.39,4.94c0.63,1.5 1.98,2.63 3.61,2.96V19H7v2h10v-2h-4v-3.1c1.63,-0.33 2.98,-1.46 3.61,-2.96C19.08,12.63 21,10.55 21,8V7C21,5.9 20.1,5 19,5zM5,8V7h2v3.82C5.84,10.4 5,9.3 5,8zM19,8c0,1.3 -0.84,2.4 -2,2.82V7h2V8z","fill":"#FF000000"}]},"ic_tune":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,17v2h6v-2H3zM3,5v2h10V5H3zM13,21v-2h8v-2h-8v-2h-2v6h2zM7,9v2H3v2h4v2h2V9H7zM21,13v-2H11v2h10zM15,9h2V7h4V5h-4V3h-2v6z","fill":"#FF000000"}]},"ic_upload":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,16h6v-6h4l-7,-7 -7,7h4zM5,18h14v2H5z","fill":"#FF000000"}]},"ic_verified":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM10,17l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z","fill":"#FF000000"}]},"ic_warn":{"vw":24.0,"vh":24.0,"p":[{"d":"M1,21h22L12,2 1,21zM13,18h-2v-2h2v2zM13,14h-2v-4h2v4z","fill":"#FF000000","rule":"evenOdd"}]}};
 Object.keys(R.VECTORS).forEach(function (k) { R.drawable[k] = { name: k, vector: R.VECTORS[k] }; });
 R.drawable.dept_logo = { name: "dept_logo", src: "dept_logo.png", w: 0, h: 0 };
 R.string = { app_name: 'TVMCHMED', cloud_url: 'https://dgxifayxugbprykzrnpj.supabase.co', cloud_key: 'sb_publishable_ibmSKedCcdJLB4505Tdyxg_25B3qViz' };
@@ -5918,7 +5920,6 @@ class Db extends SQLiteOpenHelper {
   static ATT_CODES = ["P", "A", "L", "OD", "PDO", "WO"];
   static ATT_LABELS = ["Present", "Absent", "Leave", "On duty", "Post-duty off", "Week off"];
   /** Faculty leave, in the department's own abbreviations. */
-  static FACULTY_LEAVE = ["Week off", "CL", "COL", "PL"];
   static APPROVAL = ["Pending", "Approved", "Not approved"];
   /** Wards that put up CMCHIS cases. */
   static CMCHIS_UNITS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "IMCU"];
@@ -5929,7 +5930,7 @@ class Db extends SQLiteOpenHelper {
     "ENT", "Ophthalmology", "Neurosurgery", "Urology", "Cardiothoracic", "Emergency / casualty", "Dermatology", "Other"];
 
   static TABLES = ["units", "staff", "patients", "events", "classes", "academics", "cmchis", "settings",
-    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison"];
+    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison", "death_reviews", "issues"];
   /** Tables kept on this phone only (in the backup file, never synced online). Case sheets are shared since 7.62. */
   static LOCAL_TABLES = [];
 
@@ -5941,7 +5942,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 66);
+    super(c, "tvmchmed.db", null, 69);
     this.ctx = c;
   }
 
@@ -6425,6 +6426,27 @@ class Db extends SQLiteOpenHelper {
       Db.addColumn(db, "harrison", "file", "TEXT DEFAULT ''");
       Db.addColumn(db, "harrison", "file_name", "TEXT DEFAULT ''");
     }
+    if (oldV < 67) {
+      // 9.94: leave register: each faculty leave type's approval steps (Professor, HOD, Dean) and the ML certificate
+      for (const l of ["prof", "hod", "dean"])
+        for (const c of ["_status", "_by", "_date"]) Db.addColumn(db, "faculty_leaves", l + c, "TEXT DEFAULT ''");
+      Db.addColumn(db, "faculty_leaves", "cert", "TEXT DEFAULT ''");
+      Db.addColumn(db, "faculty_leaves", "cert_date", "TEXT DEFAULT ''");
+    }
+    if (oldV < 68) {
+      // 9.96: the TN HMIS PIN number, which the government lab reports are found by
+      Db.addColumn(db, "patients", "pin_no", "TEXT DEFAULT ''");
+    }
+    if (oldV < 69) {
+      // 9.98: the HOD's mortality review, the incident / complaint and shortage boards, and the HOD's voice message
+      db.execSQL("CREATE TABLE IF NOT EXISTS death_reviews(id INTEGER PRIMARY KEY, patient_id TEXT, event_id TEXT DEFAULT '', unit TEXT DEFAULT '', "
+          + "death_date TEXT DEFAULT '', cause TEXT DEFAULT '', category TEXT DEFAULT '', factors TEXT DEFAULT '', lessons TEXT DEFAULT '', "
+          + "reviewed_by TEXT DEFAULT '', reviewed_on TEXT DEFAULT '', meeting TEXT DEFAULT '')");
+      db.execSQL("CREATE TABLE IF NOT EXISTS issues(id INTEGER PRIMARY KEY, board TEXT, kind TEXT DEFAULT '', title TEXT DEFAULT '', ward TEXT DEFAULT '', "
+          + "details TEXT DEFAULT '', reported_by TEXT DEFAULT '', reported_on TEXT DEFAULT '', owner TEXT DEFAULT '', due TEXT DEFAULT '', "
+          + "status TEXT DEFAULT 'Open', action TEXT DEFAULT '', closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '')");
+      Db.addColumn(db, "alerts", "audio", "TEXT DEFAULT ''");
+    }
     // Every synced table notes its changes for upload (IF NOT EXISTS, so new tables get theirs too).
     {
       for (const t of Db.TABLES) {
@@ -6903,7 +6925,7 @@ class Db extends SQLiteOpenHelper {
     if (r != null) return r.get("status");
     const l = this.row("SELECT type FROM leaves WHERE staff_id=? AND status='Approved' AND ? BETWEEN from_date AND to_date", String(staffId), date);
     if (l != null) return l.get("type").startsWith("On duty") ? "OD" : l.get("type").equals("Week off") ? "WO" : "L";
-    const fl = this.row("SELECT type FROM faculty_leaves WHERE staff_id=? AND status='Approved' AND ? BETWEEN from_date AND to_date", String(staffId), date);
+    const fl = this.row("SELECT type FROM faculty_leaves WHERE staff_id=? AND status='Approved' AND type<>'COL credit' AND ? BETWEEN from_date AND to_date", String(staffId), date);
     if (fl != null) return fl.get("type").equals("Week off") ? "WO" : "L";
     if (this.num("SELECT COUNT(*) FROM pg_leaves WHERE staff_id=? AND ? BETWEEN from_date AND to_date AND ap_status='Approved' AND prof_status='Approved' AND IFNULL(nodal_status,'') IN ('','Approved') AND hod_status='Approved'",
       String(staffId), date) > 0) return "L";
@@ -10500,7 +10522,7 @@ class Sync {
   static fileOf(t, data) {
     if (t.equals("ebooks.cover")) return data.isNull("cover") ? "" : data.optString("cover", "");   // a Library book's front page
     if (t.equals("settings")) return "hod_photo".equals(data.optString("k")) && !data.isNull("v") ? data.optString("v", "") : "";
-    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : t.equals("ebooks") ? "file" : t.equals("attach") ? "file" : t.equals("harrison") ? "file" : null;
+    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : t.equals("ebooks") ? "file" : t.equals("attach") ? "file" : t.equals("harrison") ? "file" : t.equals("faculty_leaves") ? "cert" : t.equals("alerts") ? "audio" : null;
     return col == null || data.isNull(col) ? "" : data.optString(col, "");
   }
 
@@ -11163,7 +11185,7 @@ class Background extends JobService {
   static JOB = 7300;
   static CHANNEL = "alerts";
   static PERIOD_MS = 15 * 60 * 1000;
-  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215;
+  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215; static N_ESCALATE = 7216; static N_BEDS = 7217; static N_DAPREPORT = 7218; static N_ISSUE = 7219;
   /** Web: the repeating timer, started once. */
   static timer = null;
 
@@ -11296,13 +11318,58 @@ class Background extends JobService {
 
     // critical lab values (9.50): a new one for this person's unit (no names or values on the lock screen)
     try {
+      const esc = new Set();
+      if (DapDuty.iAmDap(c, db)) for (const a of DapDuty.overdue(db)) esc.add(a.get("id"));
       const open = new TreeSet();
-      for (const a of CriticalLabs.openForMe(c, db)) open.add(a.get("id"));
+      for (const a of CriticalLabs.openForMe(c, db)) if (!esc.has(a.get("id"))) open.add(a.get("id"));
       const prev = p.getString("crit_open", "");
       let fresh = 0;
       for (const id of open) if (!(("," + prev + ",").contains("," + id + ","))) fresh++;
       e.putString("crit_open", TextUtils.join(",", [...open]));
       if (fresh > 0 && p.contains("crit_open")) Background.show(c, Background.N_CRIT, "🚨 Critical lab value", fresh === 1 ? "A critical result in your unit needs acknowledgement" : fresh + " critical results in your unit need acknowledgement", CriticalLabs.COLOR, CriticalLabsActivity);
+    } catch (ignored) {
+      // the alert is optional
+    }
+
+    // 9.97: DAP duty. Alerts nobody acknowledged in 15 minutes, wards that just became full, and the report after 7:30 AM
+    try {
+      if (DapDuty.iAmDap(c, db)) {
+        const esc = [];
+        for (const a of DapDuty.overdue(db)) esc.push(a.get("id"));
+        const prev = p.getString("esc_open", "");
+        let fresh = 0;
+        for (const id of esc) if (!(("," + prev + ",").includes("," + id + ","))) fresh++;
+        e.putString("esc_open", esc.join(","));
+        if (fresh > 0) Background.show(c, Background.N_ESCALATE, "⏫ Not acknowledged in 15 min", fresh === 1 ? "An alert in a ward needs the DAP" : fresh + " alerts in the wards need the DAP", Ui.RED, DapActivity);
+        const full = DapDuty.full(db).map((w) => w.code);
+        const prevF = p.getString("beds_full", "");
+        const nowFull = [];
+        for (const w of full) if (!(("," + prevF + ",").includes("," + w + ","))) nowFull.push(Db.shortName(w));
+        e.putString("beds_full", full.join(","));
+        if (nowFull.length > 0 && p.contains("beds_full_seen")) Background.show(c, Background.N_BEDS, "🛏 Ward full", nowFull.join(", ") + (nowFull.length === 1 ? " is" : " are") + " full. Tap to see where a patient can go.", DapDuty.COLOR, DapActivity);
+        e.putBoolean("beds_full_seen", true);
+      }
+      const ended = Dates.admitDay().minusDays(1);
+      if (ended.toString() !== p.getString("dap_report_day", "") && (Cloud.isOwner(c) || DapDuty.isMe(c, db, DapDuty.dapOf(db, ended)))) {
+        e.putString("dap_report_day", ended.toString());
+        if (p.contains("dap_report_seen")) Background.show(c, Background.N_DAPREPORT, "📋 DAP report ready", "Last night's report is made from the records. Check, add issues and send.",
+            DapDuty.COLOR, new Intent(c, DapReportActivity).putExtra("day", ended.toString()));
+        e.putBoolean("dap_report_seen", true);
+      }
+    } catch (ignored) {
+      // the alert is optional
+    }
+
+    // 9.98: a new incident, complaint or shortage, for the HOD's office (no details on the lock screen)
+    try {
+      if (Cloud.isAdmin(c)) {
+        const open = db.rows("SELECT id FROM issues WHERE status='Open'").map((r) => r.get("id"));
+        const prev = p.getString("issues_open", "");
+        let fresh = 0;
+        for (const id of open) if (!(("," + prev + ",").includes("," + id + ","))) fresh++;
+        e.putString("issues_open", open.join(","));
+        if (fresh > 0 && p.contains("issues_open")) Background.show(c, Background.N_ISSUE, "📝 New report", fresh === 1 ? "An incident or shortage was reported" : fresh + " incidents or shortages were reported", Issues.INCIDENT_COLOR, HodDeskActivity);
+      }
     } catch (ignored) {
       // the alert is optional
     }
@@ -11479,6 +11546,15 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["9.98", "HOD desk: the department this morning on one page (last night's DAP report, deaths, full wards, alerts, signatures waiting, who is away, open issues). Mortality review of every death with PDF for the death audit. Unit scorecard M1-M7. Faculty teaching register. NMC inspection pack (PDF/Word). Leave approvals now warn about clashes (others away, admission day, roster duty). Pending work by person with WhatsApp reminders. Incidents and complaints register. Shortage board. The HOD's urgent message can be a voice recording."],
+    ["9.97", "MD exam planner: set your exam date and the university questions are shared out day by day, most asked first, with the last two weeks for revision. DAP report made automatically from the night's records at 7:30 AM (check, add issues, send, save in the register). Ward full alert and 'Where can a patient go now?'. Critical lab values and NEWS2 of 7 or more not acknowledged in 15 minutes go to the DAP on duty."],
+    ["9.96", "PIN number on every admission (TN HMIS finds lab reports by PIN); the HMIS button now copies the PIN. Scan the diet sheet on the admit form: a photo fills name, PIN, IP number, age, sex, mobile, address, bed and diagnosis. Clinical findings photos on each patient (camera or gallery). Eight new clinical scores: eGFR (CKD-EPI 2021), NEWS2, SOFA, NIHSS, Framingham heart failure criteria, ABCD2 for TIA, Hunt & Hess and WFNS for subarachnoid haemorrhage."],
+    ["9.95", "Lab reports from TN HMIS: on each patient's Lab trends, the new button copies the IP number and opens the government HMIS site (tnhmis.dmer.tn.gov.in) in the browser. Sign in with your own HMIS login, open the lab report search and paste the IP number."],
+    ["9.94", "New Leave register (Attendance, home and menu). Faculty: CL 12 a year, COL credited automatically for work on a government holiday or second Saturday, COL taken, PL on holidays with the superior's permission (Assistant Professor: Professor then HOD; Professor and Associate Professor: HOD), RH 3 a year on government RH days, EL with HOD and Dean, ML 90 days in 5 years with the medical certificate within a week. Holidays and RH days are kept in the register. PGs: 20 CL and 5 academic leave a year and week off with prior permission, with what is left."],
+    ["9.93", "PG leave: choose One day or More than one day. One day asks for a single date; the leave form then says one day leave on that date (no From and To), and more than one day says N days, from and to, both days inclusive, in the table, letter and HOD sanction line."],
+    ["9.92", "This week's academics on phones: every name now shows in full, even with large text. The search box and filter sit on their own line under the title, the done and missed counts sit under Weekly Progress, and each card shows its icon above the full name, with all cards in a row the same height."],
+    ["9.91", "This week's academics has a new look (the admin's design): a bigger title with a search box and a filter button (show only what is due or missed), a dark Weekly Progress bar with the week number, done and missed counts, and larger glass cards for each section (MBBS teal, Physicon blue, the rest soft pastel) with a Done badge once a session is held."],
+    ["9.90", "A tidier home page: the day's work is grouped under On duty today (admission day, Admit a patient, today's DAP and any alerts) and the day's teaching under Teaching today (PG question corner, daily MCQ, ECG and image, Learning board). On a tablet the two groups sit side by side, so you see both at once without scrolling. On the website, rounded cards no longer show square shadow corners."],
     ["9.87", "Tablets: every page now fills the whole screen instead of a narrow column in the middle; the home sections show more tiles in a row (up to 8) and the ward census up to 4 cards in a row on a wide screen. The website fills the screen too."],
     ["9.86", "Harrison's topic of the day is now the admin's: only the admin makes, uploads, edits, moves or removes decks (the server refuses anyone else; faculty can still tick a deck checked). Decks are copyright of the department: members view them only inside the app, with no PowerPoint download, no WhatsApp sharing and no screenshots. The admin can upload the PDF Claude makes; members see it page by page inside the Android app."],
     ["9.84", "Harrison's topic of the day: the deck requests no longer limit slides to 6 points, 15 words a point or the heading-as-title rule (admin's request), so the AI can put in as much as each slide needs."],
@@ -12066,6 +12142,12 @@ class Base extends Activity {
   static DUE = 2;
   static MISSED = 3;
 
+  /** A phone-width screen (9.92): cards stack and the academics header wraps so names are never cut off. */
+  static narrow(c) {
+    const el = document.getElementById('app');
+    return (el && el.clientWidth ? el.clientWidth : c.getResources().getConfiguration().screenWidthDp) < 600;
+  }
+
   static stateColor(state) {
     return state === Base.DONE ? Ui.GREEN : state === Base.DUE ? Ui.AMBER : state === Base.MISSED ? Ui.RED : 0xFF64748B;
   }
@@ -12092,44 +12174,106 @@ class Base extends Activity {
     const stateLabel = state === DONE ? "Done" : state === DUE ? "Due" : state === MISSED ? "Missed" : "Not this week";
     const ink = Ui.mix(color, Color.BLACK, 0.6);
 
-    // a small rectangle: sphere icon, name, status with done/target, and a round "+" to log it
+    // 9.91 (the admin's design): a larger glass card per section; two are solid (MBBS teal, Physicon blue), the rest soft pastel
+    let face, solid = false, ink2 = ink;
+    switch (key) {
+      case "MBBS": face = [0xFF4CC3BE, 0xFF2A9BA0, 0xFF1D7F88]; solid = true; break;
+      case "PG": face = [0xFFEDF5F1, 0xFFDCE9E3, 0xFFC8DBD2]; ink2 = 0xFF1F3B33; break;
+      case "CONF": face = [0xFF3F7BDB, 0xFF2557B0, 0xFF183F86]; solid = true; break;
+      case "JC": face = [0xFFFFF0E8, 0xFFFFDCCB, 0xFFFFC9B0]; ink2 = 0xFF7C2D12; break;
+      case "TOPIC": face = [0xFFF1F3FF, 0xFFE0E5FD, 0xFFCED6F8]; ink2 = 0xFF1E2A5A; break;
+      case "SYMP": face = [0xFFFFF8E6, 0xFFF8EBC8, 0xFFEFDBA6]; ink2 = 0xFF5B4210; break;
+      default: face = [Ui.mix(color, Color.WHITE, 0.9), Ui.mix(color, Color.WHITE, 0.8), Ui.mix(color, Color.WHITE, 0.7)]; break;
+    }
+    if (solid) ink2 = Color.WHITE;
+    const sub = solid ? 0xE6FFFFFF : Ui.mix(ink2, Color.WHITE, 0.25);
+    const sc = !solid ? stateCol : state === MISSED ? 0xFFFECACA : state === DUE ? 0xFFFDE68A : state === DONE ? 0xFFBBF7D0 : 0xD9FFFFFF;
+
     const tile = Ui.v(this);
-    const depth = 3;
-    tile.setBackground(new Glass.Block(this, color, 14, depth));
-    tile.setPadding(Ui.dp(this, 9), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8 + depth));
-    tile.setElevation(Ui.dp(this, 2));
+    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, face);
+    bg.setCornerRadius(Ui.dp(this, 18));
+    bg.setStroke(Ui.dp(this, 1), solid ? 0x59FFFFFF : Ui.mix(face[2], Color.BLACK, 0.08));
+    tile.setBackground(bg);
+    tile.setPadding(Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10));
+    tile.setElevation(Ui.dp(this, 3));
+    Glass.softShadow(tile, solid ? face[1] : face[2]);
     tile.setTag(wide ? "wide" : "tile");
     tile.setTag(R.id.tag_state, state);
+    tile._title = title;
 
-    const tt = Ui.tv(this, title, 13, ink, true);
-    tt.setSingleLine(true);
-    tt.setEllipsize(TextUtils.TruncateAt.END);
-    const dt = Ui.tv(this, wide ? when + " · " + detail : detail, 11, state === MISSED ? Ui.RED : 0xFF475569, false);
-    dt.setSingleLine(true);
-    dt.setEllipsize(TextUtils.TruncateAt.END);
+    // 9.92: on a phone the card stacks (icon above the name) so every name shows in full, even with large text
+    const stack = Base.narrow(this) && !wide;
+    const tt = Ui.tv(this, title, 16, ink2, true);
+    if (stack) tt.setMaxLines(2);
+    else {
+      tt.setSingleLine(true);
+      tt.setEllipsize(TextUtils.TruncateAt.END);
+    }
+    const head = Ui.h(this);
+    head.setGravity(Gravity.CENTER_VERTICAL);
+    head.addView(tt, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    if (state === DONE) {
+      const pill = Ui.tv(this, "Done", 11, solid ? Color.WHITE : 0xFF15803D, true);
+      pill.setBackground(Ui.round(this, solid ? 0x40FFFFFF : 0xFFDCFCE7, 10));
+      pill.setPadding(Ui.dp(this, 8), Ui.dp(this, 2), Ui.dp(this, 8), Ui.dp(this, 2));
+      head.addView(pill);
+    }
 
     const status = Ui.h(this);
     status.setGravity(Gravity.CENTER_VERTICAL);
-    const dot = state === DUE ? Slab.pulse(this, stateCol) : new View(this);
-    if (state !== DUE) dot.setBackground(Ui.round(this, stateCol, 4));
+    const dot = state === DUE ? Slab.pulse(this, sc) : new View(this);
+    if (state !== DUE) dot.setBackground(Ui.round(this, sc, 4));
     status.addView(dot, Ui.lp(Ui.dp(this, 7), Ui.dp(this, 7)));
-    const sl = Ui.tv(this, stateLabel + (target > 0 ? "  ·  " + done + "/" + target : ""), 11, stateCol, true);
+    const sl = Ui.tv(this, stateLabel + (target > 0 ? "  ·  " + done + "/" + target : ""), 12, sc, true);
     sl.setPadding(Ui.dp(this, 5), 0, 0, 0);
-    sl.setSingleLine(true);
-    status.addView(sl);
+    if (!stack) sl.setSingleLine(true);
+    status.addView(sl, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
+    const foot = Ui.h(this);
+    foot.setGravity(Gravity.CENTER_VERTICAL);
+    const dt = Ui.tv(this, wide ? when + " · " + detail : detail, 12, !solid && state === MISSED ? Ui.RED : sub, false);
+    if (stack) dt.setMaxLines(2);
+    else dt.setSingleLine(true);
+    dt.setEllipsize(TextUtils.TruncateAt.END);
+    foot.addView(dt, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    foot.addView(Ui.tv(this, " ›", 16, sub, true));
+
+    if (stack) {
+      const top = Ui.h(this);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      const g = new View(this);
+      g.setBackground(new Glass.Crystal(this, icon, color));
+      top.addView(g, Ui.lp(Ui.dp(this, 46), Ui.dp(this, 46)));
+      top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+      if (state === DONE) {
+        head.removeViewAt(head.getChildCount() - 1);
+        const pill = Ui.tv(this, "Done", 11, solid ? Color.WHITE : 0xFF15803D, true);
+        pill.setBackground(Ui.round(this, solid ? 0x40FFFFFF : 0xFFDCFCE7, 10));
+        pill.setPadding(Ui.dp(this, 8), Ui.dp(this, 2), Ui.dp(this, 8), Ui.dp(this, 2));
+        top.addView(pill);
+      }
+      tile.addView(top);
+      tile.addView(head);
+      Ui.margins(head, 0, 8, 0, 2);
+      if (state !== DONE) tile.addView(status);
+      tile.addView(foot);
+      Ui.margins(foot, 0, 3, 0, 0);
+    }
     const row = Ui.h(this);
     row.setGravity(Gravity.CENTER_VERTICAL);
     const gem = new View(this);
     gem.setBackground(new Glass.Crystal(this, icon, color));
-    row.addView(gem, Ui.lp(Ui.dp(this, wide ? 52 : 48), Ui.dp(this, wide ? 52 : 48)));
+    if (!stack) row.addView(gem, Ui.lp(Ui.dp(this, wide ? 60 : 56), Ui.dp(this, wide ? 60 : 56)));
     const mid = Ui.v(this);
-    mid.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 4), 0);
-    mid.addView(tt);
-    mid.addView(status);
-    mid.addView(dt);
-    row.addView(mid, Ui.weight(1));
-    tile.addView(row);
+    mid.setPadding(Ui.dp(this, 10), 0, 0, 0);
+    if (!stack) {
+      mid.addView(head);
+      if (state !== DONE) mid.addView(status);
+      mid.addView(foot);
+      Ui.margins(foot, 0, 2, 0, 0);
+      row.addView(mid, Ui.weight(1));
+      tile.addView(row);
+    }
     if (wide) {
       const bar = new Slab.Progress(this, target <= 0 ? 0 : done / target, done >= target ? Ui.GREEN : color);
       tile.addView(bar, Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 5)));
@@ -12143,7 +12287,7 @@ class Base extends Activity {
       }
     };
     Ui.ripple(tile, Ui.alpha(color, 0x22));
-    Slab.pressable(tile, depth);
+    Slab.pressable(tile, 2);
     tile.setOnClickListener(go);
     card.addView(tile);
   }
@@ -12165,43 +12309,125 @@ class Base extends Activity {
       if (st === DONE) done++;
       if (st === MISSED) missed++;
     }
+    // 9.91 (the admin's design): title with a search box and a filter, then a dark "Weekly Progress" bar
+    const titleRow = Ui.h(this);
+    titleRow.setGravity(Gravity.CENTER_VERTICAL);
+    titleRow.setPadding(Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 4), Ui.dp(this, 8));
+    const bar = new View(this);
+    bar.setBackground(Ui.round(this, 0xFF8B5CF6, 2));
+    titleRow.addView(bar, Ui.lp(Ui.dp(this, 4), Ui.dp(this, 22)));
+    const ttl = Ui.tv(this, "This week's academics", 19, Ui.TEXT, true);
+    ttl.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 6), 0);
+    titleRow.addView(ttl, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    // 9.92: on a phone the search and filter go on their own line under the full title
+    const small = Base.narrow(this);
+    let tools = titleRow;
+    if (small) {
+      out.addView(titleRow);
+      tools = Ui.h(this);
+      tools.setGravity(Gravity.CENTER_VERTICAL);
+      tools.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), Ui.dp(this, 8));
+    }
+    const search = Ui.h(this);
+    search.setGravity(Gravity.CENTER_VERTICAL);
+    search.setBackground(Ui.outline(this, 0xF2FFFFFF, 0xFFDDE3EA, 12));
+    search.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 6), 0);
+    const lens = new ImageView(this);
+    lens.setImageResource(R.drawable.ic_search);
+    lens.setColorFilter(0xFF94A3B8);
+    search.addView(lens, Ui.lp(Ui.dp(this, 16), Ui.dp(this, 16)));
+    const q = new EditText(this);
+    q.setHint("Search");
+    q.setSingleLine(true);
+    q.setTextSize(13);
+    q.setBackground(Ui.round(this, 0x00000000, 0));
+    q.setText(this.acadQuery || "");
+    q.setPadding(Ui.dp(this, 6), Ui.dp(this, 6), 0, Ui.dp(this, 6));
+    if (small) search.addView(q, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    else search.addView(q, Ui.lp(Ui.dp(this, 92), LinearLayout.LayoutParams.WRAP_CONTENT));
+    if (small) tools.addView(search, new LinearLayout.LayoutParams(0, Ui.dp(this, 40), 1));
+    else tools.addView(search, Ui.lp(LinearLayout.LayoutParams.WRAP_CONTENT, Ui.dp(this, 36)));
+    const tune = new ImageView(this);
+    tune.setImageResource(R.drawable.ic_tune);
+    tune.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+    const tp = Ui.lp(Ui.dp(this, small ? 40 : 36), Ui.dp(this, small ? 40 : 36));
+    tp.leftMargin = Ui.dp(this, 8);
+    tools.addView(tune, tp);
+    out.addView(tools);
+
     const head = Ui.h(this);
     head.setGravity(Gravity.CENTER_VERTICAL);
-    const depth = 4;
-    // 9.22: back to the 9.12 dark header (the user's choice); tap opens the six sections
-    head.setBackground(new Slab.Face(this, [0xFF334155, 0xFF0F172A], 18, depth));
-    head.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10 + depth));
-    head.setElevation(Ui.dp(this, 3));
+    const hb = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFF3B4656, 0xFF1E2633, 0xFF0F141C]);
+    hb.setCornerRadius(Ui.dp(this, 18));
+    hb.setStroke(Ui.dp(this, 1), 0x33FFFFFF);
+    head.setBackground(hb);
+    head.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+    head.setElevation(Ui.dp(this, 4));
     const wkNo = Ui.tv(this, "WK\n" + weekStart.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR), 13, 0xFFFBBF24, true);
     wkNo.setGravity(Gravity.CENTER);
     wkNo.setLineSpacing(0, 0.9);
-    wkNo.setBackground(Ui.round(this, 0x26FFFFFF, 12));
-    head.addView(wkNo, Ui.lp(Ui.dp(this, 46), Ui.dp(this, 46)));
-    const txt = Ui.v(this);
-    txt.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 8), 0);
-    const range = Ui.tv(this, Dates.shortFmt(weekStart) + " – " + Dates.shortFmt(weekStart.plusDays(6)) + "  ›", 15, Color.WHITE, true);
-    txt.addView(range);
+    wkNo.setBackground(Ui.outline(this, 0xFF2A2416, 0xFFD4A72C, 10));
+    head.addView(wkNo, Ui.lp(Ui.dp(this, 44), Ui.dp(this, 44)));
+    const wp = Ui.tv(this, "Weekly Progress", 17, Color.WHITE, true);
+    wp.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 8), 0);
+    const right = Ui.v(this);
+    right.setGravity(small ? Gravity.START : Gravity.END);
+    if (small) {
+      // 9.92: on a phone the counts and dashes sit under the title, so nothing is cut off
+      right.setPadding(Ui.dp(this, 12), 0, 0, 0);
+      right.addView(wp);
+      wp.setPadding(0, 0, 0, Ui.dp(this, 2));
+      head.addView(right, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    } else {
+      wp.setSingleLine(true);
+      head.addView(wp, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    }
+    const sumRow = Ui.h(this);
+    sumRow.setGravity((small ? Gravity.START : Gravity.END) | Gravity.CENTER_VERTICAL);
+    sumRow.addView(Ui.tv(this, done + " of " + counted + " done", 13, 0xFFE2E8F0, true));
+    if (missed > 0) {
+      sumRow.addView(Ui.tv(this, "  •  ", 13, 0xFFE2E8F0, true));
+      sumRow.addView(Ui.tv(this, missed + " missed", 13, 0xFFF87171, true));
+    }
+    right.addView(sumRow);
     const dots = Ui.h(this);
-    dots.setGravity(Gravity.CENTER_VERTICAL);
+    dots.setGravity((small ? Gravity.START : Gravity.END) | Gravity.CENTER_VERTICAL);
     for (const t of tiles) {
       const st = t.getTag(R.id.tag_state);
       const d = new View(this);
-      d.setBackground(Ui.round(this, st === INFO ? 0x55FFFFFF : Base.stateColor(st), 5));
-      const p = Ui.lp(Ui.dp(this, 18), Ui.dp(this, 6));
-      p.setMargins(0, Ui.dp(this, 6), Ui.dp(this, 4), 0);
+      d.setBackground(Ui.round(this, st === INFO ? 0x55FFFFFF : Base.stateColor(st), 3));
+      const p = Ui.lp(Ui.dp(this, 20), Ui.dp(this, 4));
+      p.setMargins(small ? 0 : Ui.dp(this, 4), Ui.dp(this, 7), small ? Ui.dp(this, 4) : 0, 0);
       dots.addView(d, p);
     }
-    txt.addView(dots);
-    head.addView(txt, Ui.weight(1));
-    const pill = Ui.tv(this, done + " of " + counted + " done" + (missed > 0 ? "\n" + missed + " missed" : ""), 12,
-      missed > 0 ? 0xFFFCA5A5 : done === counted ? 0xFF86EFAC : 0xFFE2E8F0, true);
-    pill.setGravity(Gravity.CENTER);
-    pill.setBackground(Ui.round(this, 0x1FFFFFFF, 14));
-    pill.setPadding(Ui.dp(this, 10), Ui.dp(this, 5), Ui.dp(this, 10), Ui.dp(this, 5));
-    head.addView(pill);
+    right.addView(dots);
+    if (!small) head.addView(right);
     const hp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    hp.setMargins(Ui.dp(this, 5), Ui.dp(this, 2), Ui.dp(this, 5), Ui.dp(this, 4));
+    hp.setMargins(Ui.dp(this, 4), Ui.dp(this, 2), Ui.dp(this, 4), Ui.dp(this, 6));
     out.addView(head, hp);
+
+    const filter = () => {
+      const f = (this.acadQuery || "").trim().toLowerCase();
+      for (const t of tiles) {
+        const st = t.getTag(R.id.tag_state);
+        const show = (f === "" || String(t._title).toLowerCase().indexOf(f) >= 0) && (!this.acadOpenOnly || st === Base.DUE || st === MISSED);
+        t.setVisibility(show ? View.VISIBLE : View.GONE);
+      }
+      tune.setColorFilter(this.acadOpenOnly ? Color.WHITE : 0xFF64748B);
+      tune.setBackground(Ui.round(this, this.acadOpenOnly ? 0xFF8B5CF6 : 0xFFE2E8F0, 10));
+    };
+    q.addTextChangedListener({
+      beforeTextChanged: () => {}, onTextChanged: () => {},
+      afterTextChanged: (e) => { this.acadQuery = e.toString(); filter(); }
+    });
+    tune.setOnClickListener({
+      onClick: (v) => {
+        this.acadOpenOnly = !this.acadOpenOnly;
+        filter();
+        Ui.toast(this, this.acadOpenOnly ? "Showing only what is due or missed" : "Showing all sections");
+      }
+    });
+    wp.post(filter);
 
     let row = null;
     for (const t of tiles) {
@@ -12210,7 +12436,7 @@ class Base extends Activity {
         row = Ui.h(this);
         out.addView(row);
       }
-      const p = Ui.weight(1);
+      const p = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
       p.setMargins(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
       row.addView(t, p);
       if (wide) row = null;
@@ -12853,7 +13079,6 @@ class AcademicActivity extends Base {
     const db = this.db;
     const page = Ui.v(this);
     for (const s of SessionAttendance.open(db)) page.addView(AcademicActivity.attendanceBanner(this, db, s));
-    page.addView(Ui.heading(this, "This week", Ui.PURPLE));
     page.addView(this.scheduleCard());
     const btns = Ui.card(this);
     btns.addView(Ui.buttonRow(this,
@@ -14052,7 +14277,7 @@ class Ai {
   /** The text with the patient's name, IP number, phone, address and CMCHIS number replaced. Age, sex and dates stay. */
   static deidentify(text, p) {
     let t = Ui.nz(text);
-    for (const k of ['ip_no', 'cmchis_no', 'phone', 'address']) {
+    for (const k of ['ip_no', 'pin_no', 'cmchis_no', 'phone', 'address']) {
       const v = Ui.nz(p.get(k)).trim();
       if (v.length >= 3) t = Pattern.compile(Pattern.quote(v), Pattern.CASE_INSENSITIVE).matcher(t).replaceAll('[removed]');
     }
@@ -14905,6 +15130,15 @@ class Alerts {
     const msg = Ui.tv(a, r.get("message"), 17, Color.WHITE, true);
     msg.setPadding(0, Ui.dp(a, 8), 0, Ui.dp(a, 6));
     card.addView(msg);
+    if (!Ui.nz(r.get("audio")).isEmpty()) {
+      const play = Ui.tv(a, "▶  Play the HOD's voice message", 14, 0xFFB91C1C, true);
+      play.setGravity(Gravity.CENTER);
+      play.setBackground(Ui.round(a, 0xFFFEF3C7, 10));
+      play.setPadding(0, Ui.dp(a, 9), 0, Ui.dp(a, 9));
+      play.setOnClickListener({ onClick: (v) => { Alerts.play(a, r.get("audio")); } });
+      card.addView(play);
+      Ui.margins(play, 0, 4, 0, 8);
+    }
     card.addView(Ui.tv(a, Ui.nz(r.get("posted_by")) + "  ·  " + Alerts.show(r.get("posted_at")) + "  ·  until " + Alerts.show(r.get("until")), 11, 0xD9FFFFFF, false));
     if (Alerts.canPost(a)) {
       const w = Ui.tv(a, "Withdraw", 13, 0xFFDC2626, true);
@@ -14945,25 +15179,110 @@ class Alerts {
       const key = "a" + r.get("id");
       if (Alerts.seen(a).getBoolean(key, false)) continue;
       Alerts.seen(a).edit().putBoolean(key, true).apply();
-      new AlertDialog.Builder(a)
+      const d = new AlertDialog.Builder(a)
         .setTitle("⚠  Urgent message from the HOD")
         .setMessage(r.get("message") + "\n\n— " + Ui.nz(r.get("posted_by")) + ", " + Alerts.show(r.get("posted_at")))
-        .setPositiveButton("Noted", null)
-        .show();
+        .setPositiveButton("Noted", null);
+      if (!Ui.nz(r.get("audio")).isEmpty()) d.setNeutralButton("▶ Play voice", { onClick: (x, w) => { Alerts.play(a, r.get("audio")); } });
+      d.show();
       return;
+    }
+  }
+
+  // ---------- 9.98: the HOD's voice message (browser microphone) ----------
+
+  static MAX_SECONDS = 120;
+  static recorder = null;
+  static audioEl = null;
+
+  /** Plays a voice message (downloaded with the message); asks for patience while it is still coming. */
+  static play(a, rel) {
+    const b = VFS.readSync(a.db.file(rel).rel());
+    if (!b || b.length === 0) {
+      Sync.kick(a);
+      Ui.toast(a, "The voice message is still downloading. Try again in a minute.");
+      return;
+    }
+    try {
+      if (Alerts.audioEl) Alerts.audioEl.pause();
+      const type = rel.endsWith(".webm") ? "audio/webm" : rel.endsWith(".ogg") ? "audio/ogg" : "audio/mp4";
+      Alerts.audioEl = new Audio(URL.createObjectURL(new Blob([b], { type: type })));
+      Alerts.audioEl.play().catch((e) => Ui.toast(a, "This device could not play it"));
+      Ui.toast(a, "Playing…");
+    } catch (e) {
+      Ui.toast(a, "This device could not play it");
+    }
+  }
+
+  static async startRecording(a, done) {
+    if (!navigator.mediaDevices || typeof MediaRecorder === 'undefined') {
+      Ui.toast(a, "This browser cannot record. Use the Android app or type the message.");
+      return false;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm"].find((m) => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || "";
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 48000 } : {});
+      const chunks = [];
+      const start = Date.now();
+      rec.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const secs = Math.min(Alerts.MAX_SECONDS, Math.round((Date.now() - start) / 1000));
+        const type = rec.mimeType || mime || "audio/webm";
+        const ext = type.includes("mp4") ? ".m4a" : type.includes("ogg") ? ".ogg" : ".webm";
+        const rel = "notices/voice_" + Date.now() + ext;
+        const bytes = new Uint8Array(await new Blob(chunks, { type: type }).arrayBuffer());
+        VFS.write(a.db.file(rel).rel(), bytes);
+        Alerts.recorder = null;
+        done(secs < 1 || bytes.length === 0 ? "" : rel, secs);
+      };
+      rec.start();
+      Alerts.recorder = rec;
+      setTimeout(() => { if (Alerts.recorder === rec && rec.state === "recording") rec.stop(); }, Alerts.MAX_SECONDS * 1000);
+      return true;
+    } catch (e) {
+      Ui.toast(a, "Allow the microphone to record");
+      return false;
     }
   }
 
   static postDialog(a) {
     const f = new Form(a);
-    f.multi("message", "Urgent message *", "");
+    f.multi("message", "Urgent message (or record your voice below)", "");
+    const voice = [""];
+    const rec = Ui.outlineButton(a, "🎤  Record a voice message", 0xFFB91C1C, null);
+    rec.setOnClickListener({
+      onClick: (v) => {
+        if (Alerts.recorder != null) {
+          Alerts.recorder.stop();
+          return;
+        }
+        Alerts.startRecording(a, (rel, secs) => {
+          if (rel === "") {
+            rec.setText("🎤  Too short. Record again");
+            return;
+          }
+          if (voice[0] !== "") a.db.file(voice[0]).delete();
+          voice[0] = rel;
+          rec.setText("✓  Voice message " + secs + " s  ·  ▶ tap to record again");
+        }).then((ok) => { if (ok) rec.setText("■  Stop recording (up to " + Alerts.MAX_SECONDS / 60 + " min)"); });
+      }
+    });
+    f.view.addView(rec);
+    Ui.margins(rec, 0, 8, 0, 8);
     f.choice("hours", "Show on every phone for", Alerts.DURATIONS, ["2", "6", "12", "24", "72", "168"], "24", null);
     f.text("posted_by", "From", a.db.setting("hod", ""), Form.PLAIN);
     Ui.formDialog(a, "Urgent message to all", f, "Send to all", {
       run: () => {
-        if (!f.require("message", "Type the message")) return false;
+        if (Alerts.recorder != null) {
+          Ui.toast(a, "Stop the recording first");
+          return false;
+        }
+        if (voice[0] === "" && !f.require("message", "Type the message or record your voice")) return false;
         const cv = new ContentValues();
-        cv.put("message", f.get("message"));
+        cv.put("message", f.get("message").isEmpty() ? "🎤 Voice message from the HOD" : f.get("message"));
+        cv.put("audio", voice[0]);
         cv.put("posted_by", f.get("posted_by"));
         cv.put("posted_at", Alerts.now());
         cv.put("until", LocalDateTime.now().plusHours(Long.parseLong(f.get("hours"))).format(Alerts.STAMP));
@@ -16644,8 +16963,8 @@ class AttendanceActivity extends Base {
     sum.addView(add);
     Ui.margins(add, 0, 10, 0, 0);
     page.addView(sum);
-    if (Cloud.canSeeFacultyLeave(this)) page.addView(this.entryCard("Open", Ui.PRIMARY_DARK, "Faculty leave",
-      "Week off, CL, COL, PL for Professors, Associate and Assistant Professors. Only faculty can see it.", "🔒", this.opener(FacultyLeaveActivity)));
+    page.addView(this.entryCard("Open", Ui.PRIMARY_DARK, "Leave register",
+      (Cloud.canSeeFacultyLeave(this) ? "Faculty CL, COL, PL, RH, EL, ML (faculty only) and " : "") + "PG CL, academic leave and week off, with what is left", "📒", this.opener(LeaveRegisterActivity)));
     page.addView(this.entryCard("Open", Ui.PURPLE, "PG leave",
       "Leave letters, approved by the unit Assistant Professor, Professor and HOD", "PG", this.opener(PgLeaveActivity)));
     page.addView(Ui.heading(this, "Leave register (other staff)", Ui.GREEN));
@@ -16806,7 +17125,7 @@ class Away {
   static mirror(c, db) {
     if (!Cloud.canSeeFacultyLeave(c)) return;
     const keep = new Set();
-    for (const l of db.rows("SELECT * FROM faculty_leaves WHERE status='Approved' AND to_date>=?", Dates.today().minusDays(7).toString())) {
+    for (const l of db.rows("SELECT * FROM faculty_leaves WHERE status='Approved' AND type<>'COL credit' AND to_date>=?", Dates.today().minusDays(7).toString())) {
       const src = "fl:" + l.get("id");
       keep.add(src);
       const kind = Ui.nz(l.get("type")).equals("Week off") ? "Week off" : "Leave";
@@ -17588,8 +17907,8 @@ BedBoardActivity.Section = class {
  */
 class CalendarActivity extends Base {
   static COLOR = 0xFF0891B2;
-  static KINDS = ["EVENT", "EXAM", "CLASS", "DUTY", "MEETING", "CME", "HOLIDAY", "DEADLINE"];
-  static KIND_LABELS = ["Event", "Exam", "Class", "Duty", "Meeting", "CME / conference", "Holiday", "Deadline"];
+  static KINDS = ["EVENT", "EXAM", "CLASS", "DUTY", "MEETING", "CME", "HOLIDAY", "RH", "DEADLINE"];
+  static KIND_LABELS = ["Event", "Exam", "Class", "Duty", "Meeting", "CME / conference", "Holiday", "RH day (regional holiday)", "Deadline"];
   static AUDIENCE = ["ALL", "FAC", "PG", "CRMI", "MBBS"];
   static AUDIENCE_LABELS = ["Everyone", "Faculty", "PGs", "CRMIs", "MBBS students"];
 
@@ -17610,7 +17929,7 @@ class CalendarActivity extends Base {
   static groupOf(kind) {
     if ("CLASS".equals(kind)) return CalendarActivity.CLASSES;
     if ("DUTY".equals(kind)) return CalendarActivity.DUTIES;
-    if ("HOLIDAY".equals(kind)) return CalendarActivity.HOLIDAYS;
+    if ("HOLIDAY".equals(kind) || "RH".equals(kind)) return CalendarActivity.HOLIDAYS;
     return CalendarActivity.EVENTS;
   }
 
@@ -26124,7 +26443,8 @@ class ChartActivity extends Base {
           return false;
         }
         const t = f.get("time").isEmpty() ? Dates.now() : f.get("time");
-        Charts.save(db, e == null ? 0 : Long.parseLong(e.get("id")), this.pid, this.code, f.get("date"), t, n, f.get("by").trim());
+        const cid = Charts.save(db, e == null ? 0 : Long.parseLong(e.get("id")), this.pid, this.code, f.get("date"), t, n, f.get("by").trim());
+        if (this.code === Charts.VITALS) DapDuty.raiseNews(this, db, this.pid, cid, n);
         CallDutyActivity.rememberName(this, f.get("by"));
         this.render();
         return true;
@@ -31037,7 +31357,7 @@ class Copilot {
 }
 
 /** Form fields that say who the patient is: their values are never sent. */
-Copilot.IDENTITY = ["name", "ip_no", "phone", "address", "cmchis_no", "ar_no", "attender", "attender_phone", "mobile", "aadhaar"];
+Copilot.IDENTITY = ["name", "ip_no", "pin_no", "phone", "address", "cmchis_no", "ar_no", "attender", "attender_phone", "mobile", "aadhaar"];
 Copilot.NOTE = Pattern.compile("\\[\\[\\s*NOTE\\s+(P\\d+)\\s*\\]\\]([\\s\\S]*?)(?:\\[\\[\\s*/\\s*NOTE\\s*\\]\\]|$)", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 Copilot.TAG = Pattern.compile("\\[\\[\\s*(FILL|OPEN|TASK)\\s+(.*?)\\]\\]", Pattern.CASE_INSENSITIVE);
 
@@ -31701,9 +32021,11 @@ class CriticalLabs {
   /** Open alerts this person should act on, oldest first. */
   static openForMe(c, db) {
     const out = [];
+    const dap = DapDuty.iAmDap(c, db);
     for (const a of db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE status=? ORDER BY raised_on, id", CriticalLabs.OPEN)) {
       const p = db.row("SELECT * FROM patients WHERE id=?", a.get("patient_id"));
-      if (p != null && CriticalLabs.forMe(c, db, p)) out.add(a);
+      // 9.97: not acknowledged in 15 minutes -> the DAP on duty gets it too
+      if (p != null && (CriticalLabs.forMe(c, db, p) || dap && Db.IN === p.get("status") && CriticalLabs.minutes(a) >= DapDuty.ESCALATE_MIN)) out.add(a);
     }
     return out;
   }
@@ -32948,6 +33270,15 @@ class DapActivity extends Base {
     }
     page.addView(hero);
 
+    // 9.97: escalated alerts first, then the report made from the records and the beds
+    const esc = DapReportActivity.escalationCard(this, db);
+    if (esc != null) page.addView(esc);
+    const rb = Ui.v(this);
+    rb.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    rb.addView(Ui.button(this, "📋 DAP report (made automatically)", DapDuty.COLOR, this.opener(DapReportActivity)));
+    page.addView(rb);
+    page.addView(DapReportActivity.bedsCard(this, db));
+
     const t = Dates.today();
     const m0 = Dates.monthStart(t).toString();
     page.addView(Ui.heading(this, Dates.month(t) + " totals", Ui.PRIMARY));
@@ -33111,6 +33442,453 @@ class DapActivity extends Base {
       row.addView(call);
     }
     return row;
+  }
+}
+;
+/* ---- app/DapDuty.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The Duty Assistant Professor's 24 hours (9.97): the duty report that makes itself from the night's records, the bed-full
+ * warning with where a patient can still go, and escalation to the DAP of a critical lab or a high NEWS2 left unacknowledged
+ * for 15 minutes. Plain logic here; the screens are DapActivity and DapReportActivity.
+ */
+class DapDuty {
+  static COLOR = 0xFF1D4ED8;
+  static ESCALATE_MIN = 15;
+  static NEWS = "NEWS2";
+
+  // ---------- who is on duty ----------
+
+  /** The DAP of a duty day (7:30 AM to 7:30 AM), from the roster or the register; "" when not known. */
+  static dapOf(db, day) {
+    return Ui.nz(Census.dapOf(db, day.toString())).trim();
+  }
+
+  /** Whether this member is the DAP now (the duty day that is running). */
+  static iAmDap(c, db) {
+    return DapDuty.isMe(c, db, DapDuty.dapOf(db, Dates.admitDay()));
+  }
+
+  static isMe(c, db, name) {
+    const me = Wrapped.norm(Reminders.myName(c, db));
+    const n = Wrapped.norm(name);
+    if (me.length < 4 || n.length < 4) return false;
+    return Wrapped.names(name, me) || Wrapped.names(Reminders.myName(c, db), n);
+  }
+
+  // ---------- 24: escalation ----------
+
+  /** A high NEWS2 (7 or more) on a vitals entry becomes an alert like a critical lab value, so it is acknowledged and escalated the same way. */
+  static raiseNews(c, db, pid, chartId, o) {
+    const r = Ews.score(o);
+    if (!r.red() || r.total < 7 || chartId <= 0) return;
+    if (db.num("SELECT COUNT(*) FROM " + CriticalLabs.TABLE + " WHERE patient_id=? AND test=? AND status=?", String(pid), DapDuty.NEWS, CriticalLabs.OPEN) > 0) return;
+    const p = db.row("SELECT * FROM patients WHERE id=?", String(pid));
+    if (p == null || Db.IN !== p.get("status")) return;
+    const cv = new ContentValues();
+    cv.put("patient_id", String(pid));
+    cv.put("lab_id", "chart:" + chartId);
+    cv.put("test", DapDuty.NEWS);
+    cv.put("value", String(r.total));
+    cv.put("why", "7 or more");
+    cv.put("unit", CaseSheet.owner(p));
+    cv.put("lab_date", Dates.todayIso() + " " + Dates.now());
+    cv.put("raised_on", Dates.todayIso() + " " + Dates.now());
+    cv.put("raised_by", Reminders.myName(c, db));
+    cv.put("status", CriticalLabs.OPEN);
+    db.insert(CriticalLabs.TABLE, cv);
+    Sync.kick(c);
+  }
+
+  /** Open alerts (critical labs and high NEWS2) not acknowledged for 15 minutes or more, oldest first. */
+  static overdue(db) {
+    const out = [];
+    for (const a of db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE status=? ORDER BY raised_on, id", CriticalLabs.OPEN)) {
+      const p = db.row("SELECT status FROM patients WHERE id=?", a.get("patient_id"));
+      if (p == null || Db.IN !== p.get("status")) continue;
+      if (CriticalLabs.minutes(a) >= DapDuty.ESCALATE_MIN) out.add(a);
+    }
+    return out;
+  }
+
+  // ---------- 22: beds ----------
+
+  /** Every ward with a known number of beds, with how many patients are in it now. */
+  static wards(db) {
+    const out = [];
+    for (const code of Db.CENSUS_WARDS) {
+      const w = new DapDuty.Ward();
+      w.code = code;
+      const u = db.unit(code);
+      w.capM = u == null ? 0 : Ui.toInt(u.get("male_cap"), 0);
+      w.capF = u == null ? 0 : Ui.toInt(u.get("female_cap"), 0);
+      w.cap = Db.CCB === code ? 12 : Db.IMCU === code ? Db.TOX_BEDS + Db.NONTOX_BEDS : w.capM + w.capF;
+      if (Db.CCB === code || Db.IMCU === code) w.capM = w.capF = 0;
+      if (w.cap <= 0) continue;
+      w.in = db.census(code, null);
+      w.inM = db.census(code, "M");
+      w.inF = db.census(code, "F");
+      out.add(w);
+    }
+    return out;
+  }
+
+  static full(db) {
+    const out = [];
+    for (const w of DapDuty.wards(db)) if (w.full()) out.add(w);
+    return out;
+  }
+
+  /** Where a patient of this sex can go now: triage, step-down, the admitting unit's ward, then the most free. IMCU and CCB left out. */
+  static placeFor(db, sex) {
+    const all = [];
+    for (const w of DapDuty.wards(db)) if (Db.IMCU !== w.code && Db.CCB !== w.code && w.freeFor(sex) > 0) all.add(w);
+    const unit = Census.unitOf(db, Dates.admitDay());
+    const rank = (w) => Db.TRIAGE === w.code ? 0 : Db.STEPDOWN === w.code ? 1 : w.code === unit ? 2 : 3;
+    all.sort((a, b) => {
+      const d = rank(a) - rank(b);
+      return d !== 0 ? d : b.freeFor(sex) - a.freeFor(sex);
+    });
+    return all;
+  }
+
+  // ---------- 19: the duty report ----------
+
+  /** "((e.date=? AND time from 7:30) OR (e.date=next day AND time before 7:30))": the args are day, day + 1. */
+  static window(alias) {
+    const d = alias + ".date", t = "IFNULL(" + alias + ".time,'')";
+    return "((" + d + "=? AND (" + t + "='' OR " + t + ">='07:30')) OR (" + d + "=? AND " + t + "<>'' AND " + t + "<'07:30'))";
+  }
+
+  /** The report of the duty starting at 7:30 AM on day; complete once that duty has ended. */
+  static build(db, day) {
+    const r = new DapDuty.Report();
+    r.day = day;
+    r.dap = DapDuty.dapOf(db, day);
+    r.unit = Census.unitOf(db, day);
+    r.complete = Dates.admitDay().isAfter(day);
+    const a = day.toString(), b = day.plusDays(1).toString();
+    for (const e of db.rows("SELECT e.*, p.name, p.age, p.sex, p.mlc FROM events e JOIN patients p ON p.id=e.patient_id WHERE " + DapDuty.window("e") + " ORDER BY e.date, IFNULL(e.time,''), e.id", a, b)) {
+      const type = Ui.nz(e.get("type")), note = Ui.nz(e.get("note"));
+      if (type === Db.ADMIT) {
+        r.admitted++;
+        if ("MLC" === e.get("mlc")) r.mlc++;
+        const to = Db.shortName(Ui.nz(e.get("to_loc")));
+        r.admittedTo.set(to, (r.admittedTo.get(to) || 0) + 1);
+      } else if (type === Db.DISCHARGE) {
+        r.discharged++;
+        if (note.startsWith("Against medical advice")) r.dama++;
+        if (note.startsWith("Absconded")) r.absconded++;
+      } else if (type === Db.DEATH) {
+        r.died++;
+        r.deaths.add((Ui.nz(e.get("name")) + " " + Census.ageSex(e)).trim() + ", " + Db.shortName(Ui.nz(e.get("from_loc")))
+            + (Ui.nz(e.get("time")).isEmpty() ? "" : " at " + e.get("time")) + (note.isEmpty() ? "" : ": " + note));
+      } else if (type === Db.TRANSFER) {
+        if (Db.IMCU === e.get("to_loc")) r.toImcu++;
+        if (Db.CCB === e.get("to_loc")) r.toCcb++;
+      }
+    }
+    r.callovers = db.num("SELECT COUNT(*) FROM callover c WHERE " + DapDuty.window("c"), a, b);
+    const from = LocalDateTime.of(day, Dates.CHANGEOVER), until = from.plusDays(1);
+    for (const c of db.rows("SELECT * FROM " + CriticalLabs.TABLE)) {
+      const t = CriticalLabs.at(c.get("raised_on"));
+      if (t == null) continue;
+      if (t.isBefore(from) || !t.isBefore(until)) continue;
+      r.crit++;
+      if (CriticalLabs.SEEN === c.get("status")) r.critAcked++;
+      else r.critOpen++;
+    }
+    for (const f of Ews.flagged(db)) if (f.result.red()) r.newsHigh++;
+    r.census = db.totalInpatients();
+    r.imcu = db.census(Db.IMCU, null);
+    r.vent = db.num("SELECT COUNT(*) FROM patients WHERE status='IN' AND location=? AND vent='1'", Db.IMCU);
+    for (const w of DapDuty.full(db)) r.full.add(w);
+    return r;
+  }
+
+  static when(r) {
+    return Dates.nice(r.day.toString()) + " 7:30 AM to " + Dates.nice(r.day.plusDays(1).toString()) + " 7:30 AM";
+  }
+
+  /** The report as a WhatsApp message. */
+  static text(r, issues) {
+    let s = "*DAP report* · " + DapDuty.when(r) + "\n";
+    s += "DAP: " + (r.dap.isEmpty() ? "–" : r.dap) + " · Admitting unit: " + (r.unit.isEmpty() ? "–" : r.unit) + "\n";
+    s += "\n*Admissions: " + r.admitted + "*";
+    if (r.admittedTo.size > 0) {
+      const l = [];
+      for (const [k, v] of r.admittedTo) l.push(k + " " + v);
+      s += " (" + l.join(", ") + ")";
+    }
+    if (r.mlc > 0) s += " · MLC " + r.mlc;
+    s += "\n*Deaths: " + r.died + "*";
+    for (let i = 0; i < r.deaths.length; i++) s += "\n  " + (i + 1) + ". " + r.deaths[i];
+    s += "\nDischarged: " + r.discharged + " · DAMA: " + r.dama + " · Absconded: " + r.absconded;
+    s += "\nShifted to IMCU: " + r.toImcu + " · to CCB: " + r.toCcb;
+    s += "\nCall overs: " + r.callovers;
+    s += "\nCritical alerts: " + r.crit;
+    if (r.crit > 0) s += r.critOpen === 0 ? " (all acknowledged)" : " (" + r.critOpen + " still open)";
+    s += "\nHigh NEWS2 now: " + r.newsHigh;
+    s += "\n\n*Census now: " + r.census + "* · IMCU " + r.imcu + (r.vent > 0 ? " (ventilator " + r.vent + ")" : "");
+    if (r.full.length > 0) s += "\nBeds full: " + r.full.map((w) => w.line()).join(", ");
+    if (!Ui.nz(issues).trim().isEmpty()) s += "\n\n*Issues / handover:*\n" + issues.trim();
+    if (!r.complete) s += "\n\n(Duty still running: counts so far.)";
+    return s;
+  }
+
+  /** Saves the report as that day's DAP register entry (updating the entry when one exists). Returns its id. */
+  static saveEntry(db, r, issues, handover) {
+    const cv = new ContentValues();
+    cv.put("date", r.day.toString());
+    cv.put("dap_name", r.dap);
+    cv.put("unit", r.unit);
+    cv.put("admissions", r.admitted);
+    cv.put("abscond", r.absconded);
+    cv.put("ama", r.dama);
+    cv.put("deaths", r.died);
+    cv.put("imcu", r.toImcu);
+    cv.put("census", r.census);
+    cv.put("issues", Ui.nz(issues).trim());
+    cv.put("handover", Ui.nz(handover).trim());
+    const old = db.row("SELECT id, pgs FROM dap WHERE date=? ORDER BY id DESC LIMIT 1", r.day.toString());
+    if (old != null) {
+      const id = Long.parseLong(old.get("id"));
+      db.update("dap", cv, id);
+      return id;
+    }
+    return db.insert("dap", cv);
+  }
+}
+
+DapDuty.Ward = class {
+  constructor() {
+    this.code = "";
+    this.cap = 0; this.capM = 0; this.capF = 0; this.in = 0; this.inM = 0; this.inF = 0;
+  }
+
+  full() { return this.cap > 0 && this.in >= this.cap; }
+
+  free() { return Math.max(0, this.cap - this.in); }
+
+  /** Free beds for a sex: the male / female split when the ward has one, else any bed. */
+  freeFor(sex) {
+    if (this.capM + this.capF === 0 || sex == null || sex === "") return this.free();
+    return "F" === sex ? Math.max(0, this.capF - this.inF) : Math.max(0, this.capM - this.inM);
+  }
+
+  line() {
+    return Db.shortName(this.code) + " " + this.in + "/" + this.cap + (this.in > this.cap ? " (+" + (this.in - this.cap) + " extra)" : "");
+  }
+};
+
+DapDuty.Report = class {
+  constructor() {
+    this.day = null;
+    this.dap = ""; this.unit = "";
+    this.admitted = 0; this.mlc = 0; this.discharged = 0; this.dama = 0; this.absconded = 0; this.died = 0; this.toImcu = 0; this.toCcb = 0;
+    this.callovers = 0; this.crit = 0; this.critAcked = 0; this.critOpen = 0; this.newsHigh = 0; this.census = 0; this.imcu = 0; this.vent = 0;
+    this.admittedTo = new Map();
+    this.deaths = [];
+    this.full = [];
+    this.complete = false;
+  }
+};
+;
+/* ---- app/DapReportActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** The DAP report of one duty (9.97), made from the records: check, add the issues, send to the HOD and save in the register. */
+class DapReportActivity extends Base {
+  constructor() {
+    super();
+    this.day = null;
+    this.notes = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const d = Dates.parse(this.getIntent().getStringExtra("day"));
+    this.day = d != null ? d : Dates.admitDay().minusDays(1);
+    if (b != null && Dates.parse(b.getString("day")) != null) this.day = Dates.parse(b.getString("day"));
+    this.setTitle("DAP report");
+    this.subtitle = "Made from the records · check and send";
+    this.headerColor(DapDuty.COLOR);
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("day", this.day.toString());
+  }
+
+  liveRefresh() {
+    return false;
+  }
+
+  render() {
+    const db = this.db;
+    const r = DapDuty.build(db, this.day);
+    const page = Ui.v(this);
+
+    const nav = Ui.h(this);
+    nav.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    nav.setGravity(Gravity.CENTER_VERTICAL);
+    nav.addView(this.navChip("‹ Earlier", -1));
+    const mid = Ui.tv(this, r.complete ? "" : "Duty running", 13, Ui.MUTED, true);
+    mid.setGravity(Gravity.CENTER);
+    nav.addView(mid, Ui.weight(1));
+    if (this.day.isBefore(Dates.admitDay())) nav.addView(this.navChip("Later ›", 1));
+    page.addView(nav);
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(DapDuty.COLOR), 20));
+    hero.addView(Ui.tv(this, DapDuty.when(r), 13, 0xD9FFFFFF, true));
+    hero.addView(Ui.tv(this, r.dap.isEmpty() ? "DAP not in the roster" : r.dap, 20, Color.WHITE, true));
+    hero.addView(Ui.tv(this, "Admitting unit: " + (r.unit.isEmpty() ? "–" : Db.unitName(r.unit)), 13, 0xD9FFFFFF, false));
+    const s = Ui.statRow(this, this.ws(r.admitted, "Admitted"), this.ws(r.died, "Deaths"), this.ws(r.dama, "DAMA"), this.ws(r.absconded, "Abscond"), this.ws(r.census, "Census"));
+    s.setBackground(Glass.frost(this, 14));
+    s.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 10));
+    hero.addView(s);
+    Ui.margins(s, 0, 12, 0, 0);
+    page.addView(hero);
+
+    page.addView(Ui.heading(this, "During the duty", DapDuty.COLOR));
+    const c = Ui.card(this);
+    const to = [];
+    for (const [k, v] of r.admittedTo) to.push(k + " " + v);
+    c.addView(Ui.kv(this, "Admissions", r.admitted + (to.length === 0 ? "" : " (" + to.join(", ") + ")")));
+    c.addView(Ui.kv(this, "MLC admissions", String(r.mlc)));
+    c.addView(Ui.kv(this, "Discharged", r.discharged + " · DAMA " + r.dama + " · absconded " + r.absconded));
+    c.addView(Ui.kv(this, "Shifted to IMCU / CCB", r.toImcu + " / " + r.toCcb));
+    c.addView(Ui.kv(this, "Call overs", String(r.callovers)));
+    c.addView(Ui.kv(this, "Critical alerts", r.crit + (r.crit === 0 ? "" : r.critOpen === 0 ? " (all acknowledged)" : " (" + r.critOpen + " still open)")));
+    c.addView(Ui.kv(this, "High NEWS2 now", String(r.newsHigh)));
+    c.addView(Ui.kv(this, "IMCU now", r.imcu + (r.vent > 0 ? " (ventilator " + r.vent + ")" : "")));
+    page.addView(c);
+
+    page.addView(Ui.heading(this, "Deaths · " + r.died, Ui.SLATE));
+    const dc = Ui.card(this);
+    if (r.deaths.length === 0) dc.addView(Ui.muted(this, "No deaths during this duty."));
+    for (let i = 0; i < r.deaths.length; i++) dc.addView(Ui.tv(this, (i + 1) + ". " + r.deaths[i], 14, Ui.TEXT, false));
+    page.addView(dc);
+
+    page.addView(DapReportActivity.bedsCard(this, db));
+
+    page.addView(Ui.heading(this, "Issues and handover", DapDuty.COLOR));
+    const old = db.row("SELECT * FROM dap WHERE date=? ORDER BY id DESC LIMIT 1", this.day.toString());
+    const keepI = this.notes != null ? this.notes.get("issues") : old == null ? "" : Ui.nz(old.get("issues"));
+    const keepH = this.notes != null ? this.notes.get("handover") : old == null ? "" : Ui.nz(old.get("handover"));
+    this.notes = new Form(this);
+    this.notes.multi("issues", "Important issues during the duty", keepI);
+    this.notes.multi("handover", "Handover / pending work", keepH);
+    const nc = Ui.card(this);
+    nc.addView(this.notes.view);
+    page.addView(nc);
+
+    const act = Ui.v(this);
+    act.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    act.addView(Ui.buttonRow(this,
+        Ui.button(this, "Share (WhatsApp)", Chat.GREEN, { onClick: (v) => { ReportActivity.shareText(this, DapDuty.text(r, this.joined())); } }),
+        Ui.outlineButton(this, "Copy", DapDuty.COLOR, {
+          onClick: (v) => {
+            const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("DAP report", DapDuty.text(r, this.joined())));
+            Ui.toast(this, "Copied");
+          }
+        })));
+    const save = Ui.button(this, old == null ? "Save as the DAP register entry" : "Update the DAP register entry", DapDuty.COLOR, {
+      onClick: (v) => {
+        DapDuty.saveEntry(db, r, this.notes.get("issues"), this.notes.get("handover"));
+        Ui.toast(this, "Saved in the DAP register");
+        this.render();
+      }
+    });
+    act.addView(save);
+    Ui.margins(save, 0, 8, 0, 0);
+    page.addView(act);
+    page.addView(Ui.muted(this, "  Counts come from the admissions, transfers, discharges and deaths entered in the app. Anything not entered is not counted."));
+    this.setPage(page);
+  }
+
+  navChip(label, step) {
+    const t = Ui.chip(this, label, false, DapDuty.COLOR);
+    t.setOnClickListener({ onClick: (v) => { this.day = this.day.plusDays(step); this.notes = null; this.render(); } });
+    return t;
+  }
+
+  joined() {
+    const i = this.notes == null ? "" : this.notes.get("issues").trim(), h = this.notes == null ? "" : this.notes.get("handover").trim();
+    return i + (i.isEmpty() || h.isEmpty() ? "" : "\n") + (h.isEmpty() ? "" : "Handover: " + h);
+  }
+
+  ws(n, label) {
+    const l = Ui.v(this);
+    l.setGravity(Gravity.CENTER);
+    const v = Ui.tv(this, String(n), 20, Color.WHITE, true);
+    v.setGravity(Gravity.CENTER);
+    const t = Ui.tv(this, label, 11, 0xD9FFFFFF, false);
+    t.setGravity(Gravity.CENTER);
+    l.addView(v);
+    l.addView(t);
+    return l;
+  }
+
+  // ---------- shared cards for the DAP register screen ----------
+
+  /** Beds now: wards full (red) and the button to find where a patient can go. */
+  static bedsCard(a, db) {
+    const box = Ui.v(a);
+    const full = DapDuty.full(db);
+    box.addView(Ui.heading(a, full.length === 0 ? "Beds" : "Beds · " + full.length + " full", full.length === 0 ? Ui.GREEN : Ui.RED));
+    const c = Ui.card(a);
+    if (full.length === 0) c.addView(Ui.muted(a, "No ward is full now."));
+    for (const w of full) c.addView(Ui.tv(a, "🔴 " + w.line(), 14, Ui.RED, true));
+    const where = Ui.outlineButton(a, "Where can a patient go now?", DapDuty.COLOR, { onClick: (v) => { DapReportActivity.placeDialog(a, db); } });
+    c.addView(where);
+    Ui.margins(where, 0, 8, 0, 0);
+    box.addView(c);
+    return box;
+  }
+
+  static placeDialog(a, db) {
+    new AlertDialog.Builder(a).setTitle("Patient is").setItems(["Male", "Female"], {
+      onClick: (d, w) => {
+        const sex = w === 0 ? "M" : "F";
+        const l = DapDuty.placeFor(db, sex);
+        let s = "";
+        if (l.length === 0) s = "No free bed for a " + (w === 0 ? "male" : "female") + " patient in any ward. Use extra beds in the triage ward and tell the HOD.";
+        else {
+          s = "Free " + (w === 0 ? "male" : "female") + " beds, in the department's order (triage, step-down, the admitting unit, then the most free):\n";
+          for (const x of l) s += "\n• " + Db.shortName(x.code) + ": " + x.freeFor(sex) + (x.freeFor(sex) === 1 ? " bed" : " beds");
+          s += "\n\nIMCU and CCB are left out: only when the patient needs them.";
+        }
+        new AlertDialog.Builder(a).setTitle("Where to place").setMessage(s).setPositiveButton("OK", null).show();
+      }
+    }).show();
+  }
+
+  /** Alerts left unacknowledged for 15 minutes or more, escalated to the DAP. Null when there are none. */
+  static escalationCard(a, db) {
+    const l = DapDuty.overdue(db);
+    if (l.length === 0) return null;
+    const box = Ui.v(a);
+    box.addView(Ui.heading(a, "⏫ Not acknowledged in 15 min · " + l.length, Ui.RED));
+    const c = Ui.card(a);
+    c.setBackground(Ui.round(a, Ui.alpha(Ui.RED, 0x14), 16));
+    for (const x of l) {
+      const p = db.row("SELECT * FROM patients WHERE id=?", x.get("patient_id"));
+      if (p == null) continue;
+      const row = Ui.v(a);
+      row.setPadding(0, Ui.dp(a, 6), 0, Ui.dp(a, 6));
+      row.addView(Ui.tv(a, Ui.nz(p.get("name")) + " · " + MorningBrief.where(p), 14, Ui.TEXT, true));
+      row.addView(Ui.tv(a, CriticalLabs.describe(x) + "  ·  waiting " + CriticalLabs.ago(CriticalLabs.minutes(x)), 13, Ui.RED, false));
+      Ui.ripple(row, Ui.alpha(Ui.RED, 0x22));
+      row.setOnClickListener(a.opener(PatientActivity, "id", p.get("id")));
+      c.addView(row);
+    }
+    c.addView(Ui.muted(a, "Tap a patient to see and acknowledge. The unit's PG was alerted first."));
+    box.addView(c);
+    return box;
   }
 }
 ;
@@ -34107,6 +34885,215 @@ DashboardActivity.Trend = class extends View {
   }
 };
 ;
+/* ---- app/DeathReview.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Mortality review (9.98): every death of the month on one list for the death audit meeting. The unit's faculty write the
+ * cause, whether it was preventable, the contributing factors and the lesson; the HOD takes the list as a PDF to the meeting.
+ */
+class DeathReview {
+  static TABLE = "death_reviews";
+  static COLOR = 0xFF334155;
+  static CATEGORIES = ["Not preventable", "Possibly preventable", "Preventable"];
+  static FACTORS = ["Late arrival / referred late", "Delay in diagnosis", "Delay in treatment", "Drug / blood not available",
+    "Bed or ICU / ventilator not available", "Investigation delayed", "Procedure complication", "Advanced disease on arrival", "Other"];
+  static PENDING_DAYS = 60;
+
+  /** Deaths from..to, newest first, each with its review's fields when reviewed (review_id "" when not). */
+  static deaths(db, fromIso, toIso) {
+    const out = [];
+    for (const e of db.rows("SELECT e.id AS event_id, e.date, e.time, e.from_loc, e.note, p.id AS patient_id, p.name, p.age, p.sex, p.home_unit, "
+        + "p.diagnosis, p.ip_no, p.admit_date FROM events e JOIN patients p ON p.id=e.patient_id WHERE e.type=? AND e.date BETWEEN ? AND ? ORDER BY e.date DESC, e.time DESC",
+        Db.DEATH, fromIso, toIso)) {
+      e.put("unit", Ui.nz(e.get("home_unit")));
+      const r = DeathReview.review(db, e.get("patient_id"));
+      e.put("review_id", r == null ? "" : r.get("id"));
+      for (const k of ["cause", "category", "factors", "lessons", "reviewed_by", "reviewed_on", "meeting"]) e.put(k, r == null ? "" : Ui.nz(r.get(k)));
+      out.push(e);
+    }
+    return out;
+  }
+
+  static reviewed(d) {
+    return Ui.nz(d.get("review_id")) !== "";
+  }
+
+  static review(db, patientId) {
+    return db.row("SELECT * FROM " + DeathReview.TABLE + " WHERE patient_id=? ORDER BY id DESC LIMIT 1", Ui.nz(patientId));
+  }
+
+  static pendingList(db) {
+    return DeathReview.deaths(db, Dates.today().minusDays(DeathReview.PENDING_DAYS).toString(), Dates.todayIso()).filter((d) => !DeathReview.reviewed(d));
+  }
+
+  static canReview(c) {
+    if (!Cloud.active(c)) return true;
+    const r = Cloud.role(c);
+    return Cloud.isManager(r) || "professor" === r || "faculty" === r;
+  }
+
+  static save(c, db, death, cause, category, factors, lessons, meeting) {
+    const cv = new ContentValues();
+    cv.put("patient_id", death.get("patient_id"));
+    cv.put("event_id", Ui.nz(death.get("event_id")));
+    cv.put("unit", Ui.nz(death.get("unit")));
+    cv.put("death_date", Ui.nz(death.get("date")));
+    cv.put("cause", cause.trim());
+    cv.put("category", category);
+    cv.put("factors", factors);
+    cv.put("lessons", lessons.trim());
+    cv.put("meeting", Ui.nz(meeting));
+    cv.put("reviewed_by", Reminders.myName(c, db));
+    cv.put("reviewed_on", Dates.todayIso());
+    const old = DeathReview.review(db, death.get("patient_id"));
+    if (old != null) db.update(DeathReview.TABLE, cv, Long.parseLong(old.get("id")));
+    else db.insert(DeathReview.TABLE, cv);
+    Sync.kick(c);
+  }
+
+  static days(d) {
+    const a = Dates.parse(d.get("admit_date")), b = Dates.parse(d.get("date"));
+    if (a == null || b == null) return "";
+    const n = ChronoUnit.DAYS.between(a, b);
+    return n <= 0 ? "same day" : n === 1 ? "day 2" : "day " + (n + 1);
+  }
+
+  static doc(db, m, names) {
+    const a = m.atDay(1).toString(), b = m.atEndOfMonth().toString();
+    const f = Hod.doc(db, "MORTALITY REVIEW · " + Dates.month(m.atDay(1)).toUpperCase(), "Mortality_review_" + m);
+    f.footer = Dates.month(m.atDay(1)) + "  •  " + f.dept + ", " + f.college;
+    const l = DeathReview.deaths(db, a, b);
+    const cat = [0, 0, 0];
+    let reviewed = 0;
+    for (const d of l) {
+      if (!DeathReview.reviewed(d)) continue;
+      reviewed++;
+      const i = DeathReview.CATEGORIES.indexOf(d.get("category"));
+      if (i >= 0) cat[i]++;
+    }
+    const s = f.block("SUMMARY", FormDoc.NAVY, 0.2, 0.2, 0.2, 0.2, 0.2);
+    s.row(15, Hod.h("Deaths"), Hod.h("Reviewed"), Hod.h(DeathReview.CATEGORIES[0]), Hod.h(DeathReview.CATEGORIES[1]), Hod.h(DeathReview.CATEGORIES[2]));
+    s.row(15, Hod.c(String(l.length)).b().center(), Hod.c(String(reviewed)).b().center(), Hod.c(String(cat[0])).center(), Hod.c(String(cat[1])).center(), Hod.c(String(cat[2])).center());
+    let i = 1;
+    for (const d of l) {
+      const c = f.block((i++) + ". " + (names ? Ui.nz(d.get("name")) + ", " : "") + Census.ageSex(d) + " · " + Db.shortName(Ui.nz(d.get("unit")))
+          + " · DIED " + Dates.nice(d.get("date")) + (DeathReview.days(d) === "" ? "" : " (" + DeathReview.days(d) + ")"), DeathReview.COLOR, 0.28, 0.72);
+      c.row(13, Hod.c("Diagnosis").b(), Hod.c(Ui.nz(d.get("diagnosis"))));
+      c.row(13, Hod.c("Ward at death").b(), Hod.c(Db.shortName(Ui.nz(d.get("from_loc"))) + (Ui.nz(d.get("note")) === "" ? "" : " · " + d.get("note"))));
+      if (!DeathReview.reviewed(d)) {
+        c.row(13, Hod.c("Review").b(), Hod.c("Not yet reviewed").color(0xFFB91C1C));
+        continue;
+      }
+      c.row(13, Hod.c("Cause of death").b(), Hod.c(d.get("cause")));
+      c.row(13, Hod.c("Preventable?").b(), Hod.c(d.get("category")).b());
+      if (Ui.nz(d.get("factors")) !== "") c.row(13, Hod.c("Contributing factors").b(), Hod.c(d.get("factors")));
+      if (Ui.nz(d.get("lessons")) !== "") c.row(13, Hod.c("Lesson / action").b(), Hod.c(d.get("lessons")));
+      c.row(13, Hod.c("Reviewed by").b(), Hod.c(Ui.nz(d.get("reviewed_by")) + " · " + Dates.nice(Ui.nz(d.get("reviewed_on")))));
+    }
+    return f;
+  }
+}
+;
+/* ---- app/DeathReviewActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Mortality review (9.98): the month's deaths, each reviewed by the unit's faculty, and the list for the death audit meeting. */
+class DeathReviewActivity extends Base {
+  constructor() {
+    super();
+    this.back = 0;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Mortality review");
+    this.subtitle = "Every death, reviewed for the death audit";
+    this.headerColor(DeathReview.COLOR);
+    this.headerAction("PDF / Word", {
+      onClick: (v) => {
+        const m = this.month();
+        Hod.export(this, "Mortality review " + Dates.month(m.atDay(1)), { make: () => DeathReview.doc(this.db, m, false) });
+      }
+    });
+  }
+
+  month() {
+    return YearMonth.from(Dates.today()).minusMonths(this.back);
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const tabs = Ui.h(this);
+    tabs.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    for (let i = 0; i < 3; i++) {
+      const k = i;
+      const t = Ui.chip(this, Dates.month(YearMonth.from(Dates.today()).minusMonths(i).atDay(1)), this.back === i, DeathReview.COLOR);
+      t.setOnClickListener({ onClick: (v) => { this.back = k; this.render(); } });
+      tabs.addView(t);
+      if (i > 0) Ui.margins(t, 8, 0, 0, 0);
+    }
+    page.addView(tabs);
+
+    const m = this.month();
+    const l = DeathReview.deaths(db, m.atDay(1).toString(), m.atEndOfMonth().toString());
+    let reviewed = 0, prev = 0;
+    for (const d of l) {
+      if (!DeathReview.reviewed(d)) continue;
+      reviewed++;
+      if (DeathReview.CATEGORIES[0] !== d.get("category")) prev++;
+    }
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(DeathReview.COLOR), 20));
+    hero.addView(Ui.tv(this, Dates.month(m.atDay(1)), 13, 0xD9FFFFFF, true));
+    hero.addView(Ui.tv(this, l.length + (l.length === 1 ? " death" : " deaths") + " · " + reviewed + " reviewed", 20, Color.WHITE, true));
+    hero.addView(Ui.tv(this, prev === 0 ? "None marked preventable so far." : prev + " preventable or possibly preventable.", 13, 0xD9FFFFFF, false));
+    page.addView(hero);
+
+    if (l.length === 0) page.addView(this.emptyNote("No deaths entered for this month."));
+    for (const d of l) {
+      const done = DeathReview.reviewed(d);
+      let sub = Census.ageSex(d) + " · " + Db.shortName(Ui.nz(d.get("unit"))) + " · " + Ui.nz(d.get("diagnosis"));
+      if (DeathReview.days(d) !== "") sub += "\nDied " + DeathReview.days(d) + " of stay in " + Db.shortName(Ui.nz(d.get("from_loc")));
+      if (done) {
+        sub += "\nCause: " + Ui.nz(d.get("cause"));
+        if (Ui.nz(d.get("factors")) !== "") sub += "\nFactors: " + d.get("factors");
+        if (Ui.nz(d.get("lessons")) !== "") sub += "\nLesson: " + d.get("lessons");
+      }
+      const col = !done ? Ui.ORANGE : DeathReview.CATEGORIES[0] === d.get("category") ? Ui.GREEN : Ui.RED;
+      page.addView(this.entryCard(done ? d.get("category") : "Review pending", col, Ui.nz(d.get("name")), sub, Dates.nice(d.get("date")),
+          { onClick: (v) => { this.review(d); } }, 8));
+    }
+    page.addView(Ui.muted(this, "  The PDF leaves out names (the meeting discusses the case). Deaths come from the death entries in the app."));
+    this.setPage(page);
+  }
+
+  review(d) {
+    if (!DeathReview.canReview(this)) {
+      this.startActivity(new Intent(this, PatientActivity).putExtra("id", d.get("patient_id")));
+      return;
+    }
+    const f = new Form(this);
+    f.heading(Ui.nz(d.get("name")) + " · " + Census.ageSex(d) + " · " + Ui.nz(d.get("diagnosis")));
+    f.multi("cause", "Cause of death (as on MCCD: immediate, antecedent, underlying)", Ui.nz(d.get("cause")));
+    f.choice("category", "Was it preventable?", DeathReview.CATEGORIES, DeathReview.CATEGORIES,
+        Ui.nz(d.get("category")) === "" ? DeathReview.CATEGORIES[0] : d.get("category"), null);
+    const old = Ui.nz(d.get("factors"));
+    DeathReview.FACTORS.forEach((x, i) => f.check("f" + i, x, old.includes(x)));
+    f.multi("lessons", "Lesson / action for the department", Ui.nz(d.get("lessons")));
+    Ui.formDialog(this, "Death review", f, "Save", {
+      run: () => {
+        if (!f.require("cause", "Write the cause of death")) return false;
+        const fs = DeathReview.FACTORS.filter((x, i) => "1" === f.get("f" + i));
+        DeathReview.save(this, this.db, d, f.get("cause"), f.get("category"), fs.join(", "), f.get("lessons"), "");
+        this.render();
+        return true;
+      }
+    });
+  }
+}
+;
 /* ---- app/Diagnoses.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -34617,6 +35604,43 @@ Dictation.Head = class {
 Dictation.Hit = class {
   constructor(head, start, end) { this.head = head; this.start = start; this.end = end; }
 };
+;
+/* ---- app/DietScan.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Diet sheet photo to the admission form (9.96). The AI copies the patient's details off the sheet as labelled lines
+ * ("Name: …", "PIN no: …"), which WaAdmit reads exactly like a pasted WhatsApp admission message. Unlike the lab report
+ * scan the picture holds the patient's name, address and phone: that is what the form needs, and the doctor is told so.
+ */
+class DietScan {
+  constructor() {}
+
+  static FILE_PREFIX = "dietscan_";
+
+  /** The same text goes to Gemini and, for the free route, to the AI chat app with the picture. */
+  static prompt() {
+    return "This is a photo of a patient's diet sheet from a Tamil Nadu government hospital. Copy the patient's details exactly as "
+      + "written, one per line, in this format and nothing else:\n"
+      + "Name: \nPIN no: \nIP no: \nAge: \nSex: \nMobile: \nAddress: \nBed no: \nDiagnosis: \nDate of admission: DD/MM/YYYY\n"
+      + "Leave out a line that is not on the sheet; never guess. Write Tamil names and addresses in English letters. "
+      + "Age in years as a number. Sex as Male or Female. Mobile as the 10-digit number. No other words, no notes.";
+  }
+
+  /** Gemini reads the photo with the doctor's own key; plain text answer. */
+  static read(c, jpeg) {
+    return Ai.visionPages(c, [jpeg], DietScan.prompt(), null, false);
+  }
+
+  /** Removes the photo copies left in the imaging folder (they are never synced or kept). */
+  static clean(db) {
+    try {
+      const fs = db.file(Imaging.DIR).listFiles();
+      if (fs != null) for (const f of fs) if (f.getName().startsWith(DietScan.FILE_PREFIX)) f.delete();
+    } catch (ignored) {
+    }
+  }
+}
 ;
 /* ---- app/DischargeActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -39569,6 +40593,242 @@ class ExamCasesActivity extends Base {
   }
 }
 ;
+/* ---- app/ExamPlan.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * MD exam countdown planner (9.97). The PG sets the exam date; the university questions not yet done are spread over the days
+ * left, most asked first, with the last two weeks kept for revision. The day's target is worked out again each day from what is
+ * left, so a missed day is caught up over the remaining days without the PG redoing the plan.
+ */
+class ExamPlan {
+  static COLOR = 0xFF9333EA;
+  static REVISION_DAYS = 14;
+  static PREFS = "exam_plan";
+
+  static examDate(c) {
+    return Dates.parse(ExamPlan.prefs(c).getString("date", ""));
+  }
+
+  static setExamDate(c, d) {
+    ExamPlan.prefs(c).edit().putString("date", d == null ? "" : d.toString()).apply();
+  }
+
+  static prefs(c) {
+    return c.getSharedPreferences(ExamPlan.PREFS, Context.MODE_PRIVATE);
+  }
+
+  static build(c, db) {
+    const p = new ExamPlan.Plan();
+    p.exam = ExamPlan.examDate(c);
+    const gs = QuestionBank.groups(db);
+    QuestionBank.sortMostAsked(gs);
+    p.all = gs;
+    p.marks = QuestionBank.myMarks(c, db);
+    const todayIds = new Set();
+    for (const r of db.rows("SELECT question_id FROM " + QuestionBank.DONE + " WHERE staff_id=? AND status=? AND date=?",
+        QuestionBank.me(c), QuestionBank.ST_DONE, Dates.todayIso()))
+      todayIds.add(r.get("question_id"));
+    const notDone = [], doneToday = [];
+    for (const g of gs) {
+      const st = QuestionBank.status(g, p.marks);
+      p.total++;
+      if (st === QuestionBank.ST_DONE) {
+        p.done++;
+        for (const q of g.qs) if (todayIds.has(q.get("id"))) { doneToday.push(g); break; }
+      } else notDone.push(g);
+      if (st === QuestionBank.ST_REVISE) p.revise.push(g);
+    }
+    p.left = notDone.length;
+    p.doneToday = doneToday.length;
+    if (p.exam == null) return p;
+    p.daysLeft = ChronoUnit.DAYS.between(Dates.today(), p.exam);
+    const study = p.daysLeft > ExamPlan.REVISION_DAYS ? p.daysLeft - ExamPlan.REVISION_DAYS : Math.max(1, p.daysLeft);
+    p.revision = p.daysLeft <= ExamPlan.REVISION_DAYS;
+    // today's share is counted from the morning, so ticking a question off does not shrink the list
+    const startOfDay = p.left + p.doneToday;
+    p.target = startOfDay === 0 ? 0 : Math.ceil(startOfDay / study);
+    for (const g of doneToday) p.today.push(g);
+    for (const g of notDone) {
+      if (p.today.length >= Math.max(p.target, p.doneToday)) break;
+      p.today.push(g);
+    }
+    return p;
+  }
+
+  static homeLine(c, db) {
+    const d = ExamPlan.examDate(c);
+    if (d == null) return "Set your exam date";
+    const n = ChronoUnit.DAYS.between(Dates.today(), d);
+    if (n < 0) return "Exam over · set the next date";
+    return n === 0 ? "Exam today · all the best" : n + (n === 1 ? " day" : " days") + " to the exam";
+  }
+
+  /** The day's list as text, to keep or send to the unit's PG group. */
+  static text(p) {
+    let b = "*MD exam plan · " + Dates.longFmt(Dates.today()) + "*\n";
+    if (p.exam != null) b += p.daysLeft + " days to the exam (" + Dates.longFmt(p.exam) + ")\n";
+    b += "Done " + p.done + " of " + p.total + "\n\nToday:\n";
+    let i = 1;
+    for (const g of p.today) {
+      b += (i++) + ". " + Ui.nz(g.latest().get("text")).split("\n").join(" ");
+      if (g.times() > 1) b += " (asked " + g.times() + "×)";
+      b += "\n";
+    }
+    return b.trim();
+  }
+}
+
+ExamPlan.Plan = class {
+  constructor() {
+    this.exam = null;
+    this.daysLeft = 0;
+    this.revision = false;
+    this.total = 0; this.done = 0; this.left = 0; this.target = 0; this.doneToday = 0;
+    this.today = [];
+    this.revise = [];
+    this.all = null;
+    this.marks = null;
+  }
+};
+;
+/* ---- app/ExamPlanActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** MD exam countdown planner (9.97): days to the exam, today's university questions, revision list and topics. */
+class ExamPlanActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("MD exam planner");
+    this.subtitle = "University questions spread over the days left";
+    this.headerColor(ExamPlan.COLOR);
+    this.headerAction("Exam date", { onClick: (v) => { this.pickDate(); } });
+    QuestionBank.seed(this, this.db);
+  }
+
+  render() {
+    const db = this.db;
+    const p = ExamPlan.build(this, db);
+    const page = Ui.v(this);
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(ExamPlan.COLOR), 20));
+    if (p.exam == null) {
+      hero.addView(Ui.tv(this, "When is your MD exam?", 20, Color.WHITE, true));
+      hero.addView(Ui.tv(this, "Set the date and the app shares out the " + p.total + " university questions, most asked first, keeping the last "
+          + ExamPlan.REVISION_DAYS + " days for revision.", 13, 0xD9FFFFFF, false));
+      const set = Ui.tv(this, "Set the exam date", 15, ExamPlan.COLOR, true);
+      set.setGravity(Gravity.CENTER);
+      set.setBackground(Ui.round(this, Color.WHITE, 12));
+      set.setPadding(0, Ui.dp(this, 11), 0, Ui.dp(this, 11));
+      set.setOnClickListener({ onClick: (v) => { this.pickDate(); } });
+      hero.addView(set);
+      Ui.margins(set, 0, 12, 0, 0);
+      page.addView(hero);
+      this.setPage(page);
+      return;
+    }
+    hero.addView(Ui.tv(this, "Exam · " + Dates.longFmt(p.exam), 13, 0xD9FFFFFF, true));
+    hero.addView(Ui.tv(this, p.daysLeft < 0 ? "Exam over" : p.daysLeft === 0 ? "Exam today · all the best" : p.daysLeft + (p.daysLeft === 1 ? " day to go" : " days to go"), 26, Color.WHITE, true));
+    hero.addView(Ui.tv(this, p.revision ? "Revision time: the questions marked Revise and the most asked."
+        : p.left === 0 ? "Every question done. Keep revising." : p.target + " a day until " + Dates.longFmt(p.exam.minusDays(ExamPlan.REVISION_DAYS)) + ", then revision.",
+        13, 0xD9FFFFFF, false));
+    const s = Ui.statRow(this, this.ws(p.done, "Done"), this.ws(p.left, "Left"), this.ws(p.revise.length, "Revise"), this.ws(p.doneToday, "Today"));
+    s.setBackground(Glass.frost(this, 14));
+    s.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 10));
+    hero.addView(s);
+    Ui.margins(s, 0, 12, 0, 0);
+    hero.addView(Ui.bar(this, p.done, Math.max(1, p.total), Color.WHITE));
+    page.addView(hero);
+
+    if (p.today.length > 0) {
+      page.addView(Ui.heading(this, "Today · " + p.doneToday + " of " + p.today.length + " done", ExamPlan.COLOR));
+      for (const g of p.today) page.addView(this.row(g, p.marks));
+    }
+    if (p.revise.length > 0) {
+      page.addView(Ui.heading(this, "Marked to revise · " + p.revise.length, Ui.AMBER));
+      let n = 0;
+      for (const g of p.revise) {
+        if (n++ >= (p.revision ? 50 : 10)) break;
+        page.addView(this.row(g, p.marks));
+      }
+    }
+
+    page.addView(Ui.heading(this, "Topics (most asked first)", QuestionBank.COLOR));
+    const tc = Ui.card(this);
+    for (const e of QuestionBank.topicStats(p.all, p.marks).entrySet()) {
+      const v = e.getValue();
+      tc.addView(Ui.kv(this, e.getKey(), v[2] + " / " + v[0]));
+      tc.addView(Ui.bar(this, v[2], Math.max(1, v[0]), v[2] >= v[0] ? Ui.GREEN : ExamPlan.COLOR));
+    }
+    page.addView(tc);
+
+    const act = Ui.v(this);
+    act.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    act.addView(Ui.buttonRow(this,
+        Ui.button(this, "Share today's list", Chat.GREEN, { onClick: (v) => { ReportActivity.shareText(this, ExamPlan.text(p)); } }),
+        Ui.outlineButton(this, "All questions", QuestionBank.COLOR, this.opener(QuestionBankActivity))));
+    page.addView(act);
+    page.addView(Ui.muted(this, "  Your marks (Done / Revise) are the same as in University questions. The plan is only on this device."));
+    this.setPage(page);
+  }
+
+  row(g, marks) {
+    const c = Ui.card(this);
+    const st = QuestionBank.status(g, marks);
+    const top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    if (g.times() > 1) {
+      const t = Ui.softPill(this, "Asked " + g.times() + "×", Ui.RED);
+      top.addView(t);
+      Ui.margins(t, 0, 0, 6, 0);
+    }
+    top.addView(Ui.softPill(this, g.topic, QuestionBank.COLOR));
+    top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+    if (st !== "") top.addView(Ui.softPill(this, st === QuestionBank.ST_DONE ? "✓ Done" : "★ Revise", st === QuestionBank.ST_DONE ? Ui.GREEN : Ui.AMBER));
+    c.addView(top);
+    const t = Ui.tv(this, Ui.nz(g.latest().get("text")), 15, Ui.TEXT, false);
+    c.addView(t);
+    Ui.margins(t, 0, 8, 0, 0);
+    if (g.when() !== "") c.addView(Ui.muted(this, g.when()));
+    const done = st === QuestionBank.ST_DONE, rev = st === QuestionBank.ST_REVISE;
+    const d = Ui.chip(this, done ? "✓ Done" : "Mark done", done, Ui.GREEN);
+    d.setOnClickListener({ onClick: (v) => { QuestionBank.mark(this, this.db, g, done ? "" : QuestionBank.ST_DONE); this.render(); } });
+    const r = Ui.chip(this, rev ? "★ Revise" : "Revise later", rev, Ui.AMBER);
+    r.setOnClickListener({ onClick: (v) => { QuestionBank.mark(this, this.db, g, rev ? "" : QuestionBank.ST_REVISE); this.render(); } });
+    const btns = Ui.h(this);
+    btns.addView(d);
+    btns.addView(r);
+    Ui.margins(r, 8, 0, 0, 0);
+    c.addView(btns);
+    Ui.margins(btns, 0, 8, 0, 0);
+    return c;
+  }
+
+  pickDate() {
+    let d = ExamPlan.examDate(this);
+    if (d == null) d = Dates.today().plusMonths(3);
+    new DatePickerDialog(this, {
+      onDateSet: (v, y, m, day) => {
+        ExamPlan.setExamDate(this, LocalDate.of(y, m + 1, day));
+        this.render();
+      }
+    }, d.getYear(), d.getMonthValue() - 1, d.getDayOfMonth()).show();
+  }
+
+  ws(n, label) {
+    const l = Ui.v(this);
+    l.setGravity(Gravity.CENTER);
+    const v = Ui.tv(this, String(n), 20, Color.WHITE, true);
+    v.setGravity(Gravity.CENTER);
+    const t = Ui.tv(this, label, 11, 0xD9FFFFFF, false);
+    t.setGravity(Gravity.CENTER);
+    l.addView(v);
+    l.addView(t);
+    return l;
+  }
+}
+;
 /* ---- app/Extract.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -40783,240 +42043,6 @@ class FacultyActivity extends Base {
   }
 }
 ;
-/* ---- app/FacultyLeaveActivity.js ---- */
-/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
-'use strict';
-/** Faculty leave (week off, CL, COL, PL). Only faculty can open it. */
-class FacultyLeaveActivity extends Base {
-  constructor() { super(); this.view = 0; this.year = 0; }
-
-  static $clinit() {
-    FacultyLeaveActivity.TYPE_COLORS = [Ui.SLATE, Ui.AMBER, Ui.TEAL, Ui.PURPLE];
-  }
-
-  onCreate(b) {
-    super.onCreate(b);
-    this.year = Dates.today().getYear();
-    this.setTitle("Faculty leave");
-    this.subtitle = "Week off · CL · COL · PL";
-    this.headerColor(Ui.PRIMARY_DARK);
-  }
-
-  /** HOD and Professors approve faculty leave in the shared database; anyone on a phone that isn't shared. */
-  approver() {
-    return !Cloud.active(this) || Cloud.isAdmin(this) || "professor" === Cloud.role(this);
-  }
-
-  render() {
-    if (!Cloud.canSeeFacultyLeave(this)) {
-      Ui.toast(this, "Faculty leave is only for faculty members");
-      this.finish();
-      return;
-    }
-    this.headerAction("+ Apply", {
-      onClick: (v) => { this.leaveDialog(null); }
-    });
-    const page = Ui.v(this);
-    const iso = Dates.todayIso();
-    const hero = Ui.card(this);
-    hero.setBackground(Glass.hero(this, [Ui.PRIMARY_DARK, Ui.PRIMARY], 20));
-    hero.addView(Ui.statRow(this,
-      this.white(String(this.db.num("SELECT COUNT(DISTINCT staff_id) FROM faculty_leaves WHERE status='Approved' AND ? BETWEEN from_date AND to_date", iso)), "On leave today"),
-      this.white(String(this.db.num("SELECT COUNT(*) FROM faculty_leaves WHERE status='Applied'")), "Awaiting approval"),
-      this.white(String(this.db.num("SELECT COUNT(*) FROM faculty_leaves WHERE status='Approved' AND from_date>?", iso)), "Upcoming")));
-    const lock = Ui.tv(this, "🔒  Visible only to the HOD, Professors, Associate and Assistant Professors", 12, 0xE6FFFFFF, false);
-    lock.setGravity(Gravity.CENTER);
-    hero.addView(lock);
-    Ui.margins(lock, 0, 10, 0, 0);
-    page.addView(hero);
-
-    const seg = Ui.h(this);
-    seg.setBackground(Ui.round(this, 0xFFE2E8F0, 14));
-    seg.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
-    const labels = ["Leave register", this.year + " summary"];
-    for (let i = 0; i < 2; i++) {
-      const idx = i;
-      const t = Ui.tv(this, labels[i], 14, i === this.view ? Ui.PRIMARY : Ui.MUTED, true);
-      t.setGravity(Gravity.CENTER);
-      t.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
-      if (i === this.view) t.setBackground(Ui.round(this, Color.WHITE, 11));
-      t.setOnClickListener({
-        onClick: (v) => { this.view = idx; this.render(); }
-      });
-      seg.addView(t, Ui.weight(1));
-    }
-    page.addView(seg);
-    Ui.margins(seg, 12, 8, 12, 4);
-    if (this.view === 0) this.register(page);
-    else this.summary(page);
-    this.setPage(page);
-  }
-
-  register(page) {
-    const rows = this.db.rows("SELECT l.*, s.name, s.role, s.unit FROM faculty_leaves l LEFT JOIN staff s ON s.id=l.staff_id "
-      + "ORDER BY CASE l.status WHEN 'Applied' THEN 0 ELSE 1 END, l.from_date DESC LIMIT 300");
-    if (rows.isEmpty()) page.addView(this.emptyNote("No faculty leave recorded yet. Tap “+ Apply”."));
-    for (const r of rows) {
-      const st = r.get("status");
-      const col = "Approved" === st ? Ui.GREEN : "Rejected" === st ? Ui.RED : Ui.ORANGE;
-      const range = Dates.nice(r.get("from_date")) + (r.get("to_date").equals(r.get("from_date")) ? "" : " to " + Dates.nice(r.get("to_date")));
-      const sub = r.get("type") + "  ·  " + range + "  ·  " + FacultyLeaveActivity.days(r.get("days"))
-        + (Ui.nz(r.get("approved_by")).isEmpty() ? "" : "\n" + st + " by " + r.get("approved_by"))
-        + (r.get("reason").isEmpty() ? "" : "\n" + r.get("reason"));
-      const card = this.entryCard(st, col, Ui.nz(r.get("name")).isEmpty() ? "(removed)" : r.get("name"), sub,
-        Db.shortName(Ui.nz(r.get("unit"))), {
-          onClick: (v) => { this.leaveDialog(r); }
-        });
-      if ("Applied" === st && this.approver()) {
-        const b = Ui.buttonRow(this,
-          Ui.outlineButton(this, "Approve", Ui.GREEN, {
-            onClick: (v) => { this.setStatus(r, "Approved"); }
-          }),
-          Ui.outlineButton(this, "Reject", Ui.RED, {
-            onClick: (v) => { this.setStatus(r, "Rejected"); }
-          }));
-        card.addView(b);
-        Ui.margins(b, 0, 8, 0, 0);
-      }
-      page.addView(card);
-    }
-  }
-
-  summary(page) {
-    const nav = Ui.h(this);
-    nav.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), 0);
-    nav.addView(Ui.outlineButton(this, "‹ " + (this.year - 1), Ui.PRIMARY, {
-      onClick: (v) => { this.year--; this.render(); }
-    }));
-    const y = Ui.tv(this, "Approved days in " + this.year, 15, Ui.TEXT, true);
-    y.setGravity(Gravity.CENTER);
-    nav.addView(y, Ui.weight(1));
-    const nx = Ui.outlineButton(this, (this.year + 1) + " ›", Ui.PRIMARY, {
-      onClick: (v) => { this.year++; this.render(); }
-    });
-    if (this.year >= Dates.today().getYear()) nx.setVisibility(View.INVISIBLE);
-    nav.addView(nx);
-    page.addView(nav);
-    const y0 = this.year + "-01-01", y1 = this.year + "-12-31";
-    for (let r = 0; r < Db.FACULTY_ROLES.length; r++) {
-      const staff = this.db.rows("SELECT id, name, unit FROM staff WHERE role=? AND " + Approvals.APPROVED_SQL + " ORDER BY name", Db.FACULTY_ROLES[r]);
-      if (staff.isEmpty()) continue;
-      page.addView(Ui.heading(this, r === 1 ? "Associate Professor" : Db.FACULTY_ROLES[r] + "s", Store.roleColor(Db.FACULTY_ROLES[r])));
-      const card = Ui.card(this);
-      const head = Ui.h(this);
-      head.addView(Ui.muted(this, "Name"), Ui.weight(2));
-      for (const t of Db.FACULTY_LEAVE) {
-        const h = Ui.tv(this, t, 12, Ui.MUTED, true);
-        h.setGravity(Gravity.CENTER);
-        head.addView(h, Ui.weight(0.8));
-      }
-      card.addView(head);
-      for (const s of staff) {
-        const row = Ui.h(this);
-        row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
-        const nm = Ui.v(this);
-        nm.addView(Ui.tv(this, s.get("name"), 14, Ui.TEXT, true));
-        nm.addView(Ui.muted(this, Db.shortName(s.get("unit"))));
-        row.addView(nm, Ui.weight(2));
-        for (let i = 0; i < Db.FACULTY_LEAVE.length; i++) {
-          const d = this.db.dbl("SELECT SUM(days) FROM faculty_leaves WHERE staff_id=? AND type=? AND status='Approved' AND from_date BETWEEN ? AND ?",
-            s.get("id"), Db.FACULTY_LEAVE[i], y0, y1);
-          const t = Ui.tv(this, d === 0 ? "–" : FacultyLeaveActivity.days(String(d)).split(" days").join("").split(" day").join(""), 15, d === 0 ? 0xFFCBD5E1 : FacultyLeaveActivity.TYPE_COLORS[i], true);
-          t.setGravity(Gravity.CENTER);
-          row.addView(t, Ui.weight(0.8));
-        }
-        card.addView(row);
-      }
-      page.addView(card);
-    }
-  }
-
-  static days(d) {
-    let v;
-    try { v = Double.parseDouble(d); } catch (e) { return d; }
-    return (v === Math.floor(v) ? String(Math.trunc(v)) : String(v)) + (v === 1 ? " day" : " days");
-  }
-
-  setStatus(r, st) {
-    const cv = new ContentValues();
-    cv.put("status", st);
-    cv.put("approved_by", Cloud.active(this) ? Cloud.prefs(this).getString("name", "") : this.db.setting("hod", ""));
-    this.db.update("faculty_leaves", cv, Long.parseLong(r.get("id")));
-    this.render();
-  }
-
-  leaveDialog(r) {
-    const staff = this.db.rows("SELECT id, name, role FROM staff WHERE role IN ('Professor','Associate Professor','Assistant Professor') AND " + Approvals.APPROVED_SQL + " "
-      + "ORDER BY CASE role WHEN 'Professor' THEN 0 WHEN 'Associate Professor' THEN 1 ELSE 2 END, name");
-    if (staff.isEmpty()) {
-      Ui.toast(this, "Add faculty members first");
-      return;
-    }
-    const ids = new Array(staff.size()).fill(null), names = new Array(staff.size()).fill(null);
-    for (let i = 0; i < staff.size(); i++) {
-      ids[i] = staff.get(i).get("id");
-      names[i] = staff.get(i).get("name");
-    }
-    const me = Cloud.myStaff(this) > 0 ? String(Cloud.myStaff(this)) : ids[0];
-    const f = new Form(this);
-    f.choice("staff_id", "Faculty member", names, ids, r == null ? me : r.get("staff_id"), null);
-    f.choice("type", "Leave type", Db.FACULTY_LEAVE, Db.FACULTY_LEAVE, r == null ? "CL" : r.get("type"), null);
-    f.date("from_date", "From", r == null ? Dates.todayIso() : r.get("from_date"));
-    f.date("to_date", "To", r == null ? Dates.todayIso() : r.get("to_date"));
-    f.check("half", "Half day", r != null && "0.5" === r.get("days"));
-    f.multi("reason", "Reason / remarks", r == null ? "" : r.get("reason"));
-    if (this.approver()) f.choice("status", "Status", Db.LEAVE_STATUS, Db.LEAVE_STATUS, r == null ? "Applied" : r.get("status"), null);
-    if (r != null) {
-      const del = Ui.outlineButton(this, "Delete this leave", Ui.RED, {
-        onClick: (v) => {
-          this.db.delete("faculty_leaves", Long.parseLong(r.get("id")));
-          this.render();
-        }
-      });
-      f.view.addView(del);
-      Ui.margins(del, 0, 14, 0, 0);
-    }
-    Ui.formDialog(this, r == null ? "Apply for leave" : "Edit leave", f, "Save", {
-      run: () => {
-        const a = Dates.parse(f.get("from_date")), b = Dates.parse(f.get("to_date"));
-        if (a == null || b == null || b.isBefore(a)) {
-          Ui.toast(this, "“To” date must be on or after “From”");
-          return false;
-        }
-        const cv = new ContentValues();
-        cv.put("staff_id", f.get("staff_id"));
-        cv.put("type", f.get("type"));
-        cv.put("from_date", a.toString());
-        cv.put("to_date", b.toString());
-        cv.put("days", "1" === f.get("half") ? 0.5 : ChronoUnit.DAYS.between(a, b) + 1);
-        cv.put("reason", f.get("reason"));
-        const st = this.approver() ? f.get("status") : (r == null ? "Applied" : r.get("status"));
-        cv.put("status", st);
-        if (this.approver() && !st.equals("Applied") && (r == null || !st.equals(r.get("status"))))
-          cv.put("approved_by", Cloud.active(this) ? Cloud.prefs(this).getString("name", "") : this.db.setting("hod", ""));
-        if (r == null) {
-          cv.put("applied", Dates.todayIso());
-          this.db.insert("faculty_leaves", cv);
-        } else this.db.update("faculty_leaves", cv, Long.parseLong(r.get("id")));
-        this.render();
-        return true;
-      }
-    });
-  }
-
-  white(v, label) {
-    const l = Ui.v(this);
-    l.setGravity(Gravity.CENTER_HORIZONTAL);
-    const n = Ui.tv(this, v, 22, Color.WHITE, true);
-    n.setGravity(Gravity.CENTER);
-    l.addView(n);
-    const t = Ui.tv(this, label, 11, 0xD9FFFFFF, false);
-    t.setGravity(Gravity.CENTER);
-    l.addView(t);
-    return l;
-  }
-}
-;
 /* ---- app/FacultyProfileActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -42060,16 +43086,21 @@ class FormActivity extends Base {
     this.parentDefault = "";
     this.callUnitDefault = "";
     this.sendAfter = false;
+    this.dietCamera = null;
+    this.dietPaste = null;
   }
 
   static UNIT_LABELS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "IMCU", "Fever ward", "CCB", "Geriatric ward", "Rheumatology ward", "Kandiyaperi", "Department (common)"];
   static REQ_IMAGE = 31;
+  static REQ_DIET_CAMERA = 32;
+  static REQ_DIET_PICK = 33;
   static $clinit() {
     FormActivity.UNIT_VALUES = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", Db.IMCU, Db.FEVER, Db.CCB, Db.GERI, Db.RHEUM, Db.KDP, Db.DEPT];
   }
 
   onCreate(b) {
     super.onCreate(b);
+    if (b != null) this.dietCamera = b.getString("diet_camera");
     this.kind = this.getIntent().getStringExtra("kind");
     if (this.kind == null) this.kind = "patient";
     const sid = this.getIntent().getStringExtra("id");
@@ -42232,10 +43263,18 @@ class FormActivity extends Base {
       const wa = Ui.button(this, "💬  Paste the WhatsApp admission message", Chat.GREEN, { onClick: (v) => { this.pasteWhatsApp(); } });
       form.view.addView(wa);
       Ui.margins(wa, 0, 4, 0, 4);
+      const diet = Ui.button(this, "📷  Scan the diet sheet (fills name, PIN, age…)", Labs.HMIS_COLOR, { onClick: (v) => { this.dietScan(); } });
+      form.view.addView(diet);
+      Ui.margins(diet, 0, 0, 0, 4);
+      this.dietPaste = Ui.outlineButton(this, "📋  Paste the AI's answer (diet sheet)", CaseSheetActivity.AI_COLOR, { onClick: (v) => { this.dietPasteAnswer(); } });
+      this.dietPaste.setVisibility(View.GONE);
+      form.view.addView(this.dietPaste);
+      Ui.margins(this.dietPaste, 0, 0, 0, 4);
     }
     form.heading("Patient");
     form.text("name", "Name *", v(p, "name", Ui.nz(this.getIntent().getStringExtra("name"))), Form.TEXT);
     form.text("ip_no", "IP number", v(p, "ip_no", Ui.nz(this.getIntent().getStringExtra("ip_no"))), Form.TEXT);
+    form.text("pin_no", "PIN number (TN HMIS, for lab reports)", v(p, "pin_no", ""), Form.TEXT);
     form.text("age", "Age (years)", v(p, "age", ""), Form.NUMBER);
     form.choice("sex", "Sex (decides male / female ward)", ["Male", "Female"], ["M", "F"], v(p, "sex", "M"), null);
     form.text("phone", "Phone", v(p, "phone", ""), Form.PHONE);
@@ -42313,19 +43352,165 @@ class FormActivity extends Base {
   }
 
   useWhatsApp(text) {
+    this.useText(text, "From WhatsApp");
+  }
+
+  /** Fills the form from labelled lines (a WhatsApp message or the AI's copy of the diet sheet). */
+  useText(text, title) {
     const r = WaAdmit.parse(text);
     for (const e of r.fields.entrySet()) this.form.set(e.getKey(), e.getValue());
     if (r.fields.containsKey("mlc")) this.form.show("ar_no", "MLC".equals(r.fields.get("mlc")));
     this.waClinical = r.clinical;
     const got = WaAdmit.summary(r);
-    const msg = new StringBuilder(got.isEmpty() ? "Nothing in the message matched the form. Type the details." : "Filled: " + got + ".");
+    const msg = new StringBuilder(got.isEmpty() ? "Nothing read matched the form. Type the details." : "Filled: " + got + ".");
     if (!r.clinical.isEmpty()) msg.append("\n\nThe clinical notes (complaints, history, examination, treatment) open in the case sheet after you save, to check and add.");
     if (!r.unplaced.isEmpty()) {
       msg.append("\n\nNot placed:");
       for (const l of r.unplaced) msg.append("\n• ").append(l);
     }
     msg.append("\n\nCheck every field before saving.");
-    new AlertDialog.Builder(this).setTitle("From WhatsApp").setMessage(msg.toString()).setPositiveButton("OK", null).show();
+    new AlertDialog.Builder(this).setTitle(title).setMessage(msg.toString()).setPositiveButton("OK", null).show();
+  }
+
+  // ---------- diet sheet photo (9.96) ----------
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    if (this.dietCamera != null) out.putString("diet_camera", this.dietCamera);
+  }
+
+  /** Camera or gallery; the picture is read by Gemini (own key) or a free AI app, then filled in like a WhatsApp message. */
+  dietScan() {
+    const how = Ai.geminiKey(this).isEmpty() ? "No Gemini key is saved, so the picture goes to the free AI app you choose (ChatGPT, Claude or Gemini)."
+      : "The picture is read by Google Gemini with your own key.";
+    new AlertDialog.Builder(this).setTitle("Scan the diet sheet")
+      .setMessage("Photograph the top of the diet sheet with the patient's details. The picture, with the name, address and phone on it, "
+        + "is sent to an AI to read. " + how + " The photo is deleted after reading. Check every field before saving.")
+      .setPositiveButton("Camera", {
+        onClick: (d, w) => {
+          this.dietCamera = Imaging.DIR + "/" + DietScan.FILE_PREFIX + System.currentTimeMillis() + ".jpg";
+          if (!Store.capture(this, this.dietCamera, FormActivity.REQ_DIET_CAMERA)) this.dietCamera = null;
+        }
+      })
+      .setNeutralButton("Gallery", { onClick: (d, w) => { Store.pick(this, ["image/*"], FormActivity.REQ_DIET_PICK); } })
+      .setNegativeButton("Cancel", null).show();
+  }
+
+  dietPicture(req, data) {
+    const db = this.db;
+    try {
+      let rel = null;
+      if (req === FormActivity.REQ_DIET_CAMERA && this.dietCamera != null) {
+        rel = this.dietCamera;
+        this.dietCamera = null;
+      } else if (req === FormActivity.REQ_DIET_PICK && data != null && data.getData() != null) rel = Store.importUri(this, data.getData(), Imaging.DIR, "dietscan");
+      if (rel == null) return;
+      const f = db.file(rel);
+      const jpg = f.exists() ? LabScan.jpeg(f) : null;
+      if (jpg == null) {
+        f.delete();
+        Ui.toast(this, "Pick or take a photo (JPG or PNG)");
+        return;
+      }
+      const out = new FileOutputStream(f);
+      try { out.write(jpg); } finally { out.close(); }
+      if (Ai.geminiKey(this).isEmpty()) {
+        this.dietChooseApp(rel);
+        return;
+      }
+      const wait = new AlertDialog.Builder(this).setTitle("Gemini is reading the diet sheet…")
+        .setMessage("Keep the app open.").setCancelable(false).show();
+      new Thread({
+        run: () => {
+          let got = null, err = null;
+          try {
+            got = DietScan.read(this, jpg);
+          } catch (e) {
+            if (e instanceof Ai.Failure) err = e.getMessage();
+            else err = "Could not read it: " + e.getMessage();
+          }
+          const res = got, error = err;
+          this.runOnUiThread({
+            run: () => {
+              DietScan.clean(db);
+              if (this.isFinishing()) return;
+              try { wait.dismiss(); } catch (ignored) { }
+              if (error != null) {
+                new AlertDialog.Builder(this).setTitle("Diet sheet not read").setMessage(error).setPositiveButton("OK", null).show();
+                return;
+              }
+              this.useText(res, "From the diet sheet");
+            }
+          });
+        }
+      }).start();
+    } catch (e) {
+      DietScan.clean(db);
+      Ui.toast(this, "Could not use the picture: " + e.getMessage());
+    }
+  }
+
+  dietChooseApp(rel) {
+    const apps = DischargeActivity.CHAT_APPS;
+    const items = [];
+    for (const a of apps) items.add("Free: " + a[0] + " app");
+    items.add("Use Gemini inside the app: add a free key");
+    new AlertDialog.Builder(this).setTitle("Which AI app reads it?")
+      .setItems(items, {
+        onClick: (d, w) => {
+          if (w < apps.length) this.dietShareTo(apps[w], rel);
+          else {
+            DietScan.clean(this.db);
+            this.open(SettingsActivity);
+          }
+        }
+      }).setNegativeButton("Cancel", { onClick: (d, w) => { DietScan.clean(this.db); } }).show();
+  }
+
+  dietShareTo(app, rel) {
+    const prompt = DietScan.prompt();
+    const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Diet sheet question", prompt));
+    const u = DocProvider.uri(rel);
+    const i = new Intent(Intent.ACTION_SEND);
+    i.setType("image/jpeg");
+    i.putExtra(Intent.EXTRA_STREAM, u);
+    i.putExtra(Intent.EXTRA_TEXT, prompt);
+    i.setClipData(ClipData.newRawUri("diet sheet", u));
+    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+    i.setPackage(app[1]);
+    if (this.dietPaste != null) this.dietPaste.setVisibility(View.VISIBLE);
+    try {
+      this.startActivity(i);
+      Ui.toast(this, "In " + app[0] + " send the picture with the question (it is copied too), copy the answer, come back and tap Paste");
+    } catch (noApp) {
+      try {
+        i.setPackage(null);
+        this.startActivity(Intent.createChooser(i, "Send the diet sheet to " + app[0]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        Ui.toast(this, "Choose " + app[0] + ", send the picture, copy the answer, then come back and tap Paste");
+      } catch (e) {
+        if (this.dietPaste != null) this.dietPaste.setVisibility(View.GONE);
+        DietScan.clean(this.db);
+        Ui.toast(this, app[0] + " is not installed on this phone");
+      }
+    }
+  }
+
+  dietPasteAnswer() {
+    let text = "";
+    try {
+      const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+      if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0)
+        text = String(cm.getPrimaryClip().getItemAt(0).coerceToText(this));
+    } catch (ignored) {
+    }
+    if (text.trim().isEmpty() || text.trim() === DietScan.prompt().trim()) {
+      Ui.toast(this, "Copy the AI's answer first (tap Copy under its answer), then tap Paste");
+      return;
+    }
+    DietScan.clean(this.db);
+    this.dietPaste.setVisibility(View.GONE);
+    this.useText(text, "From the diet sheet");
   }
 
   static SB_PARTS = ["Hand", "Leg", "Body"];
@@ -42421,7 +43606,7 @@ class FormActivity extends Base {
       return false;
     }
     const cv = new ContentValues();
-    for (const k of ["name", "ip_no", "age", "sex", "phone", "address", "diagnosis", "bed", "cmchis", "cmchis_no", "category", "mlc", "ar_no"])
+    for (const k of ["name", "ip_no", "pin_no", "age", "sex", "phone", "address", "diagnosis", "bed", "cmchis", "cmchis_no", "category", "mlc", "ar_no"])
       cv.put(k, form.get(k));
     this.putCensus(cv);
     if (!"MLC".equals(form.get("mlc"))) cv.put("ar_no", "");
@@ -42541,6 +43726,11 @@ class FormActivity extends Base {
 
   onActivityResult(req, res, data) {
     super.onActivityResult(req, res, data);
+    if (req === FormActivity.REQ_DIET_CAMERA || req === FormActivity.REQ_DIET_PICK) {
+      if (res === RESULT_OK) this.dietPicture(req, data);
+      else DietScan.clean(this.db);
+      return;
+    }
     if (req !== FormActivity.REQ_IMAGE || res !== RESULT_OK || data == null || data.getData() == null) return;
     try {
       const uri = data.getData();
@@ -45057,6 +46247,548 @@ class HarrisonActivity extends Base {
   }
 }
 ;
+/* ---- app/Hod.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The HOD's desk (9.98): the one-page morning view, the leave and duty clash check, pending work by person, the unit
+ * scorecard, the faculty teaching register and the NMC inspection pack. Plain logic; the screens are HodDeskActivity,
+ * ScorecardActivity, TeachingActivity and PendingWorkActivity.
+ */
+class Hod {
+  static COLOR = 0xFF7F1D1D;
+  static HERO = [0xFFB91C1C, 0xFF7F1D1D, 0xFF450A0A];
+  static SCORE_COLS = ["Unit", "Adm", "Deaths", "Mort.", "Stay", "DAMA", "Crit. ack", "Death rev.", "Sign-off wait", "Teaching", "Logbook"];
+  static FACULTY_SQL = "role IN ('Professor','Associate Professor','Assistant Professor')";
+  static FACULTY_ORDER = " ORDER BY CASE role WHEN 'Professor' THEN 0 WHEN 'Associate Professor' THEN 1 ELSE 2 END, unit, name";
+
+  static canUse(c) {
+    return ClinicalAudit.canUse(c);
+  }
+
+  // ---------- 25: morning ----------
+
+  static seenToday(c) {
+    return Dates.todayIso() === c.getSharedPreferences("hod", Context.MODE_PRIVATE).getString("seen", "");
+  }
+
+  static markSeen(c) {
+    c.getSharedPreferences("hod", Context.MODE_PRIVATE).edit().putString("seen", Dates.todayIso()).apply();
+  }
+
+  static awayToday(db) {
+    const iso = Dates.todayIso();
+    const out = [];
+    for (const r of db.rows("SELECT s.name, s.unit, f.type FROM faculty_leaves f JOIN staff s ON s.id=f.staff_id WHERE f.status='Approved' AND ? BETWEEN f.from_date AND f.to_date ORDER BY s.unit, s.name", iso))
+      out.push(Ui.nz(r.get("name")) + " (" + Db.shortName(Ui.nz(r.get("unit"))) + ", " + Ui.nz(r.get("type")) + ")");
+    for (const r of db.rows("SELECT p.*, s.name, s.unit FROM pg_leaves p JOIN staff s ON s.id=p.staff_id WHERE ? BETWEEN p.from_date AND p.to_date ORDER BY s.unit, s.name", iso))
+      if ("Approved" === PgLeaveActivity.overall(r)) out.push(Ui.nz(r.get("name")) + " (" + Db.shortName(Ui.nz(r.get("unit"))) + ", PG leave)");
+    return out;
+  }
+
+  /** [pg leaves waiting for the HOD, faculty leaves waiting, sign-offs waiting]. */
+  static waiting(db) {
+    let pg = 0;
+    for (const r of db.rows("SELECT * FROM pg_leaves")) {
+      if ("Awaiting approval" !== PgLeaveActivity.overall(r)) continue;
+      let before = true;
+      for (let i = 0; i < PgLeaveActivity.HOD; i++) if ("Approved" !== PgLeaveActivity.status(r, i)) before = false;
+      if (before) pg++;
+    }
+    const fac = db.num("SELECT COUNT(*) FROM faculty_leaves WHERE status='Applied'");
+    const so = db.num("SELECT COUNT(*) FROM " + SignOff.TABLE + " WHERE status=?", SignOff.WAITING);
+    return [pg, fac, so];
+  }
+
+  // ---------- 30: leave and duty clash ----------
+
+  static clash(db, staffId, fromIso, toIso) {
+    const out = [];
+    const from = Dates.parse(fromIso), to = Dates.parse(toIso);
+    const s = db.row("SELECT * FROM staff WHERE id=?", Ui.nz(staffId));
+    if (from == null || to == null || s == null || to.isBefore(from)) return out;
+    const unit = Ui.nz(s.get("unit")), name = Ui.nz(s.get("name"));
+    const faculty = Db.isFaculty(s.get("role"));
+    const others = [];
+    for (const r of db.rows("SELECT s.name, s.role, f.from_date, f.to_date FROM faculty_leaves f JOIN staff s ON s.id=f.staff_id "
+        + "WHERE s.unit=? AND f.staff_id<>? AND f.status IN ('Approved','Applied') AND f.from_date<=? AND f.to_date>=?", unit, staffId, toIso, fromIso))
+      others.push(r.get("name") + " " + Dates.nice(r.get("from_date")) + "–" + Dates.nice(r.get("to_date")));
+    for (const r of db.rows("SELECT p.*, s.name FROM pg_leaves p JOIN staff s ON s.id=p.staff_id WHERE s.unit=? AND p.staff_id<>? AND p.from_date<=? AND p.to_date>=?", unit, staffId, toIso, fromIso))
+      if ("Not approved" !== PgLeaveActivity.overall(r)) others.push(r.get("name") + " (PG) " + Dates.nice(r.get("from_date")) + "–" + Dates.nice(r.get("to_date")));
+    if (others.length > 0) out.push("Also away from " + Db.shortName(unit) + ": " + others.join(", "));
+    if (faculty && unit !== "") {
+      const total = db.num("SELECT COUNT(*) FROM staff WHERE unit=? AND " + Hod.FACULTY_SQL, unit);
+      const away = db.num("SELECT COUNT(DISTINCT f.staff_id) FROM faculty_leaves f JOIN staff s ON s.id=f.staff_id WHERE s.unit=? AND f.staff_id<>? AND f.status IN ('Approved','Applied') AND f.from_date<=? AND f.to_date>=?",
+          unit, staffId, toIso, fromIso);
+      if (total > 0 && total - away - 1 <= 0) out.push("No other faculty of " + Db.shortName(unit) + " would be present on some of these days");
+    }
+    const u = db.unit(unit);
+    const ad = u == null ? 0 : Ui.toInt(u.get("admit_day"), 0);
+    if (ad > 0) {
+      const days = [];
+      for (let d = from; !d.isAfter(to) && days.length < 5; d = d.plusDays(1))
+        if (d.getDayOfWeek().getValue() === ad) days.push(Dates.nice(d.toString()));
+      if (days.length > 0) out.push(Db.shortName(unit) + " admission day: " + days.join(", "));
+    }
+    const n = Wrapped.norm(name);
+    const duties = [];
+    if (n.length >= 4) {
+      const keys = Roster.keys();
+      for (const r of db.rows("SELECT * FROM duty_roster WHERE date BETWEEN ? AND ? ORDER BY date", fromIso, toIso)) {
+        for (const k of keys) {
+          if (Wrapped.names(Ui.nz(r.get(k)), n)) {
+            duties.push(Dates.nice(r.get("date")) + (k === "dap" ? " DAP" : ""));
+            break;
+          }
+        }
+      }
+      for (const r of db.rows("SELECT date, dap_name FROM dap WHERE date BETWEEN ? AND ?", fromIso, toIso)) {
+        const d = Dates.nice(r.get("date")) + " DAP";
+        if (Wrapped.names(Ui.nz(r.get("dap_name")), n) && !duties.includes(d)) duties.push(d);
+      }
+    }
+    if (duties.length > 0) out.push("On duty in the roster: " + duties.join(", ") + " (arrange a swap)");
+    return out;
+  }
+
+  static clashText(db, staffId, fromIso, toIso) {
+    const l = Hod.clash(db, staffId, fromIso, toIso);
+    if (l.length === 0) return "";
+    return "⚠ Check before approving" + l.map((x) => "\n• " + x).join("");
+  }
+
+  // ---------- 31: pending work by person ----------
+
+  static pending(db) {
+    const m = new Map();
+    const get = (who) => {
+      let p = m.get(who);
+      if (p == null) {
+        p = { who: who, items: [], phone: "" };
+        m.set(who, p);
+      }
+      return p;
+    };
+    const today = Dates.todayIso();
+    for (const r of db.rows("SELECT * FROM " + SignOff.TABLE + " WHERE status=? ORDER BY sent_on", SignOff.WAITING)) {
+      const p = db.row("SELECT name FROM patients WHERE id=?", r.get("patient_id"));
+      get(Db.shortName(Ui.nz(r.get("unit"))) + " faculty").items.push("Sign off " + Hod.docLabel(r.get("doc")) + (p == null ? "" : " of " + p.get("name")) + " (sent " + Dates.nice(Ui.nz(r.get("sent_on")).split(" ")[0]) + ")");
+    }
+    for (const r of db.rows("SELECT * FROM " + SignOff.TABLE + " WHERE status=? ORDER BY checked_on", SignOff.RETURNED)) {
+      const p = db.row("SELECT name FROM patients WHERE id=?", r.get("patient_id"));
+      get(Ui.nz(r.get("sent_by")) === "" ? Db.shortName(Ui.nz(r.get("unit"))) + " PGs" : r.get("sent_by")).items.push("Correct the " + Hod.docLabel(r.get("doc")) + (p == null ? "" : " of " + p.get("name")) + " sent back");
+    }
+    for (const r of db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE status=? ORDER BY raised_on", CriticalLabs.OPEN)) {
+      const p = db.row("SELECT name, status FROM patients WHERE id=?", r.get("patient_id"));
+      if (p == null || Db.IN !== p.get("status")) continue;
+      get(Db.shortName(Ui.nz(r.get("unit"))) + " PGs").items.push("Acknowledge " + CriticalLabs.describe(r) + " of " + p.get("name") + " (" + CriticalLabs.ago(CriticalLabs.minutes(r)) + ")");
+    }
+    for (const r of db.rows("SELECT * FROM logbook WHERE status=? ORDER BY date", Logbook.PENDING)) {
+      const sup = Ui.nz(r.get("supervisor")).trim();
+      get(sup === "" ? "Logbook (no supervisor named)" : sup).items.push("Sign logbook: " + Ui.nz(r.get("procedure")) + " by " + Ui.nz(r.get("pg")) + " (" + Dates.nice(Ui.nz(r.get("date"))) + ")");
+    }
+    for (const r of db.rows("SELECT p.*, s.name, s.unit FROM pg_leaves p JOIN staff s ON s.id=p.staff_id ORDER BY p.from_date")) {
+      if ("Awaiting approval" !== PgLeaveActivity.overall(r)) continue;
+      for (let i = 0; i < PgLeaveActivity.LEVEL_NAMES.length; i++) {
+        if ("Approved" === PgLeaveActivity.status(r, i)) continue;
+        const who = i <= 1 ? Db.shortName(Ui.nz(r.get("unit"))) + " " + (i === 0 ? "Assistant Professor" : "Professor") : PgLeaveActivity.LEVEL_NAMES[i];
+        get(who).items.push("Approve PG leave of " + r.get("name") + " from " + Dates.nice(r.get("from_date")));
+        break;
+      }
+    }
+    for (const r of db.rows("SELECT f.*, s.name FROM faculty_leaves f JOIN staff s ON s.id=f.staff_id WHERE f.status='Applied' ORDER BY f.from_date"))
+      get("HOD").items.push("Faculty leave of " + r.get("name") + " (" + Ui.nz(r.get("type")) + ") from " + Dates.nice(r.get("from_date")));
+    for (const d of DeathReview.pendingList(db))
+      get(Db.shortName(Ui.nz(d.get("unit"))) + " faculty").items.push("Death review of " + Ui.nz(d.get("name")) + " (died " + Dates.nice(Ui.nz(d.get("date"))) + ")");
+    for (const r of db.rows("SELECT * FROM issues WHERE status='Open' AND due<>'' AND due<? ORDER BY due", today))
+      get(Ui.nz(r.get("owner")) === "" ? "Not given to anyone" : r.get("owner")).items.push("Overdue: " + Ui.nz(r.get("title")) + " (due " + Dates.nice(r.get("due")) + ")");
+    const out = [...m.values()];
+    for (const p of out) {
+      const s = db.row("SELECT phone FROM staff WHERE name=? AND IFNULL(phone,'')<>'' LIMIT 1", p.who);
+      if (s != null) p.phone = s.get("phone");
+    }
+    out.sort((a, b) => b.items.length - a.items.length);
+    return out;
+  }
+
+  static docLabel(doc) {
+    const i = SignOff.DOCS.indexOf(Ui.nz(doc));
+    return i < 0 ? "document" : SignOff.DOC_LABELS[i].toLowerCase();
+  }
+
+  static reminder(p) {
+    let b = "Dear " + p.who + ", pending in TVMCHMED:";
+    p.items.forEach((x, i) => { b += "\n" + (i + 1) + ". " + x; });
+    return b + "\nPlease complete. – HOD, Department of Medicine";
+  }
+
+  // ---------- 27: unit scorecard ----------
+
+  static scorecard(db, m) {
+    const d = Dashboard.load(db, m);
+    const a = m.atDay(1).toString(), b = m.atEndOfMonth().toString();
+    const out = [];
+    for (const u of Db.WARD_UNITS) {
+      const s = { unit: u, adm: 0, deaths: 0, lama: 0, signWaiting: 0, critN: 0, reviews: 0, reviewed: 0, teaching: 0, logSigned: 0, mort: -1, alos: 0, critMedian: -1 };
+      const st = Dashboard.stats(d, u, m);
+      s.adm = st.admissions;
+      s.deaths = st.deaths;
+      s.lama = st.lama;
+      s.alos = st.alos;
+      s.mort = st.deaths + st.discharges === 0 ? -1 : st.deaths * 100.0 / (st.deaths + st.discharges);
+      const mins = [];
+      for (const c of db.rows("SELECT * FROM " + CriticalLabs.TABLE + " WHERE unit=? AND substr(raised_on,1,10) BETWEEN ? AND ?", u, a, b)) {
+        s.critN++;
+        if (CriticalLabs.SEEN === c.get("status")) {
+          const x = CriticalLabs.minutes(c);
+          if (x >= 0) mins.push(x);
+        }
+      }
+      if (mins.length > 0) {
+        mins.sort((x, y) => x - y);
+        s.critMedian = mins[Math.floor(mins.length / 2)];
+      }
+      s.signWaiting = db.num("SELECT COUNT(*) FROM " + SignOff.TABLE + " WHERE unit=? AND status=?", u, SignOff.WAITING);
+      for (const x of DeathReview.deaths(db, a, b)) {
+        if (u !== x.get("unit")) continue;
+        s.reviews++;
+        if (DeathReview.reviewed(x)) s.reviewed++;
+      }
+      s.teaching = db.num("SELECT COUNT(*) FROM academics WHERE unit=? AND date BETWEEN ? AND ?", u, a, b)
+          + db.num("SELECT COUNT(*) FROM classes WHERE unit=? AND date BETWEEN ? AND ?", u, a, b);
+      s.logSigned = db.num("SELECT COUNT(*) FROM logbook l JOIN staff s ON s.id=l.staff_id WHERE s.unit=? AND l.status=? AND l.date BETWEEN ? AND ?", u, Logbook.SIGNED, a, b);
+      out.push(s);
+    }
+    return out;
+  }
+
+  static cells(s) {
+    return [Db.shortName(s.unit), String(s.adm), String(s.deaths),
+      s.mort < 0 ? "–" : s.mort.toFixed(1) + "%", s.adm === 0 && s.alos === 0 ? "–" : s.alos.toFixed(1) + " d",
+      String(s.lama), s.critMedian < 0 ? (s.critN === 0 ? "–" : "open") : Math.round(s.critMedian) + " min",
+      s.reviews === 0 ? "–" : s.reviewed + "/" + s.reviews, String(s.signWaiting), String(s.teaching), String(s.logSigned)];
+  }
+
+  static mark(all, s, col) {
+    const v = Hod.value(s, col);
+    if (Number.isNaN(v)) return 0;
+    let best = NaN, worst = NaN;
+    for (const o of all) {
+      const x = Hod.value(o, col);
+      if (Number.isNaN(x)) continue;
+      if (Number.isNaN(best) || x < best) best = x;
+      if (Number.isNaN(worst) || x > worst) worst = x;
+    }
+    if (best === worst) return 0;
+    const higherBetter = col === 7 || col === 9 || col === 10;
+    if (v === (higherBetter ? worst : best)) return 1;
+    if (v === (higherBetter ? best : worst)) return -1;
+    return 0;
+  }
+
+  static value(s, col) {
+    switch (col) {
+      case 3: return s.mort < 0 ? NaN : s.mort;
+      case 4: return s.adm === 0 ? NaN : s.alos;
+      case 5: return s.lama;
+      case 6: return s.critMedian < 0 ? NaN : s.critMedian;
+      case 7: return s.reviews === 0 ? NaN : s.reviewed / s.reviews;
+      case 8: return s.signWaiting;
+      case 9: return s.teaching;
+      case 10: return s.logSigned;
+      default: return NaN;
+    }
+  }
+
+  // ---------- 28: faculty teaching register ----------
+
+  static teaching(db, fromIso, toIso) {
+    const out = [];
+    const cls = db.rows("SELECT * FROM classes WHERE date BETWEEN ? AND ? ORDER BY date", fromIso, toIso);
+    const acad = db.rows("SELECT * FROM academics WHERE date BETWEEN ? AND ? ORDER BY date", fromIso, toIso);
+    for (const s of db.rows("SELECT * FROM staff WHERE " + Hod.FACULTY_SQL + " AND " + Db.NOT_STUDENT + Hod.FACULTY_ORDER)) {
+      const t = { id: s.get("id"), name: Ui.nz(s.get("name")), role: Ui.nz(s.get("role")), unit: Ui.nz(s.get("unit")), items: [], classes: 0, sessions: 0, attendance: 0 };
+      const n = Wrapped.norm(t.name);
+      for (const c of cls) {
+        if (!Wrapped.names(Ui.nz(c.get("taken_by")), n)) continue;
+        t.classes++;
+        const att = Ui.toInt(c.get("attendance"), 0);
+        t.attendance += att;
+        t.items.push([c.get("date"), Ui.nz(c.get("kind")) === "" ? "Class" : c.get("kind"), Ui.nz(c.get("topic")), att > 0 ? String(att) : ""]);
+      }
+      for (const c of acad) {
+        if (!Wrapped.names(Ui.nz(c.get("moderator")), n) && !Wrapped.names(Ui.nz(c.get("presenter")), n)) continue;
+        t.sessions++;
+        let att = db.num("SELECT COUNT(*) FROM acad_attendance WHERE academic_id=? AND IFNULL(status,'Present')='Present'", c.get("id"));
+        if (att === 0) att = Ui.toInt(c.get("attendance"), 0);
+        t.attendance += att;
+        t.items.push([c.get("date"), Ui.nz(c.get("kind")), Ui.nz(c.get("topic")), att > 0 ? String(att) : ""]);
+      }
+      t.items.sort((x, y) => Ui.nz(x[0]).localeCompare(Ui.nz(y[0])));
+      out.push(t);
+    }
+    return out;
+  }
+
+  static teachingDoc(db, fromIso, toIso) {
+    const c = Hod.c, h = Hod.h;
+    const f = Hod.doc(db, "FACULTY TEACHING REGISTER", "Teaching_register_" + fromIso + "_" + toIso);
+    f.footer = Dates.nice(fromIso) + " to " + Dates.nice(toIso) + "  •  " + f.dept + ", " + f.college;
+    const s = f.block("SUMMARY · " + Dates.nice(fromIso) + " TO " + Dates.nice(toIso), FormDoc.NAVY, 0.34, 0.2, 0.12, 0.12, 0.22);
+    s.row(15, h("Faculty"), h("Designation"), h("Classes"), h("Sessions"), h("Students / PGs attended"));
+    const ts = Hod.teaching(db, fromIso, toIso);
+    for (const t of ts)
+      s.row(14, c(t.name + (t.unit === "" ? "" : " (" + Db.shortName(t.unit) + ")")), c(t.role), c(String(t.classes)).center(), c(String(t.sessions)).center(), c(String(t.attendance)).center());
+    for (const t of ts) {
+      if (t.items.length === 0) continue;
+      const b = f.block(t.name.toUpperCase() + " · " + t.role.toUpperCase(), 0xFF0F766E, 0.16, 0.2, 0.5, 0.14);
+      b.row(14, h("Date"), h("Kind"), h("Topic"), h("Attended"));
+      for (const i of t.items) b.row(13, c(Dates.nice(i[0])), c(i[1]), c(i[2]), c(i[3]).center());
+    }
+    return f;
+  }
+
+  // ---------- 29: NMC inspection pack ----------
+
+  static nmcPack(db) {
+    const c = Hod.c, h = Hod.h;
+    const f = Hod.doc(db, "DEPARTMENT INFORMATION FOR NMC INSPECTION", "NMC_pack_" + Dates.todayIso());
+    f.footer = "As on " + Dates.nice(Dates.todayIso()) + "  •  " + f.dept + ", " + f.college;
+
+    const fac = f.block("1. TEACHING FACULTY", FormDoc.NAVY, 0.06, 0.4, 0.3, 0.24);
+    fac.row(15, h("No."), h("Name"), h("Designation"), h("Unit"));
+    let i = 1;
+    for (const s of db.rows("SELECT * FROM staff WHERE " + Hod.FACULTY_SQL + " AND " + Db.NOT_STUDENT + Hod.FACULTY_ORDER))
+      fac.row(14, c(String(i++)).center(), c(s.get("name")), c(s.get("role")), c(Db.shortName(Ui.nz(s.get("unit")))));
+
+    const beds = f.block("2. UNITS AND BEDS", 0xFF0F766E, 0.25, 0.25, 0.25, 0.25);
+    beds.row(15, h("Unit / ward"), h("Male beds"), h("Female beds"), h("Total"));
+    let tm = 0, tf = 0;
+    for (const u of db.rows("SELECT * FROM units ORDER BY sort, code")) {
+      const m = Ui.toInt(u.get("male_cap"), 0), w = Ui.toInt(u.get("female_cap"), 0);
+      if (m + w === 0) continue;
+      tm += m;
+      tf += w;
+      beds.row(14, c(Db.unitName(u.get("code"))), c(String(m)).center(), c(String(w)).center(), c(String(m + w)).center());
+    }
+    beds.row(14, c("Total").b(), c(String(tm)).b().center(), c(String(tf)).b().center(), c(String(tm + tf)).b().center());
+
+    const res = f.block("3. RESIDENTS AND STUDENTS", 0xFF7C3AED, 0.5, 0.5);
+    for (let y = 1; y <= 3; y++) {
+      let n = 0;
+      for (const s of db.rows("SELECT * FROM staff WHERE role='Postgraduate' AND " + Approvals.APPROVED_SQL))
+        if (CaseSheet.pgYear(s.get("batch"), Dates.today()) === y) n++;
+      res.row(14, c("MD General Medicine PGs, year " + y), c(String(n)).center());
+    }
+    res.row(14, c("CRMIs (interns)"), c(String(db.num("SELECT COUNT(*) FROM staff WHERE role='CRMI' AND " + Approvals.APPROVED_SQL))).center());
+
+    const load = f.block("4. CLINICAL MATERIAL (LAST 3 MONTHS)", 0xFFB45309, 0.28, 0.18, 0.18, 0.18, 0.18);
+    load.row(15, h("Month"), h("Admissions"), h("Deaths"), h("Average stay"), h("Bed occupancy"));
+    const now = YearMonth.from(Dates.today());
+    for (let k = 3; k >= 1; k--) {
+      const m = now.minusMonths(k);
+      const st = Dashboard.stats(Dashboard.load(db, m), Dashboard.ALL, m);
+      load.row(14, c(Dates.month(m.atDay(1))), c(String(st.admissions)).center(), c(String(st.deaths)).center(),
+          c(st.alos.toFixed(1) + " days").center(), c(st.occupancy < 0 ? "–" : Math.round(st.occupancy) + "%").center());
+    }
+    load.row(14, c("In-patients today").b(), c(String(db.totalInpatients())).b().center(), c(""), c(""), c(""));
+
+    const from = now.minusMonths(3).atDay(1).toString(), to = Dates.todayIso();
+    const ac = f.block("5. ACADEMIC PROGRAMME (" + Dates.nice(from) + " TO " + Dates.nice(to) + ")", 0xFF0369A1, 0.5, 0.25, 0.25);
+    ac.row(15, h("Kind"), h("Sessions"), h("Attendance"));
+    for (const r of db.rows("SELECT kind, COUNT(*) n, SUM(IFNULL(attendance,0)) a FROM academics WHERE date BETWEEN ? AND ? GROUP BY kind ORDER BY n DESC", from, to))
+      ac.row(14, c(Ui.nz(r.get("kind")) === "" ? "Other" : r.get("kind")), c(Ui.nz(r.get("n"))).center(), c(Ui.nz(r.get("a"))).center());
+    for (const r of db.rows("SELECT kind, COUNT(*) n, SUM(IFNULL(attendance,0)) a FROM classes WHERE date BETWEEN ? AND ? GROUP BY kind ORDER BY n DESC", from, to))
+      ac.row(14, c((Ui.nz(r.get("kind")) === "" ? "Class" : r.get("kind")) + " (UG)"), c(Ui.nz(r.get("n"))).center(), c(Ui.nz(r.get("a"))).center());
+
+    const tr = f.block("6. TEACHING BY FACULTY (SAME PERIOD)", 0xFF0F766E, 0.5, 0.17, 0.17, 0.16);
+    tr.row(15, h("Faculty"), h("Classes"), h("Sessions"), h("Attended"));
+    for (const t of Hod.teaching(db, from, to))
+      tr.row(14, c(t.name), c(String(t.classes)).center(), c(String(t.sessions)).center(), c(String(t.attendance)).center());
+
+    const lb = f.block("7. PG PROCEDURE LOGBOOK (SIGNED)", 0xFF9333EA, 0.6, 0.4);
+    lb.row(15, h("Procedure"), h("Signed entries"));
+    for (const r of db.rows("SELECT procedure, COUNT(*) n FROM logbook WHERE status=? GROUP BY procedure ORDER BY n DESC", Logbook.SIGNED))
+      lb.row(14, c(r.get("procedure")), c(r.get("n")).center());
+
+    const dr = f.block("8. MORTALITY REVIEW (LAST 3 MONTHS)", 0xFF334155, 0.5, 0.5);
+    let deaths = 0, reviewed = 0;
+    for (const x of DeathReview.deaths(db, from, to)) {
+      deaths++;
+      if (DeathReview.reviewed(x)) reviewed++;
+    }
+    dr.row(14, c("Deaths"), c(String(deaths)).center());
+    dr.row(14, c("Reviewed in the mortality meeting"), c(String(reviewed)).center());
+    return f;
+  }
+
+  // ---------- shared ----------
+
+  static doc(db, title, fileBase) {
+    const f = new FormDoc();
+    f.college = db.setting("college", "Tirunelveli Medical College Hospital");
+    f.address = db.setting("address", "Tirunelveli – 627 011, Tamil Nadu");
+    f.dept = db.setting("dept", "Department of General Medicine");
+    f.title = title;
+    f.footer = f.dept + ", " + f.college;
+    f.fileBase = fileBase;
+    return f;
+  }
+
+  static c(t) {
+    return new FormDoc.Cell(t);
+  }
+
+  static h(t) {
+    return new FormDoc.Cell(t).b().fill(0xFFE3F2FD);
+  }
+
+  /** Asks PDF or Word, makes the file and offers to share or open it. maker() returns the FormDoc. */
+  static export(a, subject, maker) {
+    new AlertDialog.Builder(a).setTitle(subject).setItems(["PDF", "Word"], {
+      onClick: (d, w) => {
+        let rel;
+        try {
+          const f = maker.make();
+          rel = w === 0 ? f.pdf(a) : f.docx(a);
+        } catch (e) {
+          Ui.toast(a, "Could not make the file: " + (e.getMessage ? e.getMessage() : e.message));
+          return;
+        }
+        new AlertDialog.Builder(a).setTitle((w === 0 ? "PDF" : "Word") + " ready")
+          .setItems(["Share (WhatsApp, email…)", "Open"], {
+            onClick: (d2, x) => {
+              if (x === 0) Store.share(a, rel, subject);
+              else Store.openWith(a, rel);
+            }
+          }).setNegativeButton("Close", null).show();
+      }
+    }).show();
+  }
+}
+;
+/* ---- app/HodDeskActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** The HOD's one-page morning view (9.98): last night, deaths, beds, alerts, signatures waiting, who is away, open issues, and the HOD's tools. */
+class HodDeskActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("HOD desk");
+    this.subtitle = "The department this morning";
+    this.headerColor(Hod.COLOR);
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const r = DapDuty.build(db, Dates.admitDay().minusDays(1));
+
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Hod.HERO, 20));
+    hero.addView(Ui.tv(this, Dates.longFmt(Dates.today()), 13, 0xD9FFFFFF, true));
+    hero.addView(Ui.tv(this, db.totalInpatients() + " in-patients", 22, Color.WHITE, true));
+    hero.addView(Ui.tv(this, "Last night's DAP: " + (r.dap === "" ? "–" : r.dap) + " · admitting " + (r.unit === "" ? "–" : r.unit), 13, 0xD9FFFFFF, false));
+    const s = Ui.statRow(this, this.ws(r.admitted, "Admitted"), this.ws(r.died, "Deaths"), this.ws(r.dama + r.absconded, "DAMA/absc."), this.ws(r.imcu, "IMCU"));
+    s.setBackground(Glass.frost(this, 14));
+    s.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 10));
+    hero.addView(s);
+    Ui.margins(s, 0, 12, 0, 0);
+    const seen = Hod.seenToday(this);
+    const tick = Ui.tv(this, seen ? "✓ Seen today" : "Mark as seen", 14, seen ? Ui.GREEN : Hod.COLOR, true);
+    tick.setGravity(Gravity.CENTER);
+    tick.setBackground(Ui.round(this, Color.WHITE, 12));
+    tick.setPadding(0, Ui.dp(this, 9), 0, Ui.dp(this, 9));
+    tick.setOnClickListener({ onClick: (v) => { Hod.markSeen(this); this.render(); } });
+    hero.addView(tick);
+    Ui.margins(tick, 0, 12, 0, 0);
+    page.addView(hero);
+
+    const w = Hod.waiting(db);
+    const appr = Approvals.canApproveAny(this) ? Approvals.waitingForMe(this, db) : 0;
+    page.addView(Ui.heading(this, "Waiting for you", Hod.COLOR));
+    const wc = Ui.card(this);
+    wc.addView(this.link("PG leave at the HOD step", w[0], PgLeaveActivity));
+    wc.addView(this.link("Faculty leave applied", w[1], LeaveRegisterActivity));
+    wc.addView(this.link("Approvals (members, staff entries)", appr, ApprovalActivity));
+    wc.addView(this.link("Sign-offs waiting for faculty", w[2], SignOffActivity));
+    page.addView(wc);
+
+    page.addView(Ui.heading(this, "Last night · " + DapDuty.when(r), DapDuty.COLOR));
+    const ln = Ui.card(this);
+    if (r.deaths.length === 0) ln.addView(Ui.muted(this, "No deaths."));
+    for (const d of r.deaths) ln.addView(Ui.tv(this, "✝ " + d, 14, Ui.TEXT, false));
+    ln.addView(Ui.tv(this, "Shifted to IMCU " + r.toImcu + " · CCB " + r.toCcb + " · call overs " + r.callovers + " · critical alerts " + r.crit, 13, Ui.MUTED, false));
+    const entry = db.row("SELECT issues FROM dap WHERE date=? ORDER BY id DESC LIMIT 1", r.day.toString());
+    if (entry != null && Ui.nz(entry.get("issues")) !== "") ln.addView(Ui.tv(this, "Issues: " + entry.get("issues"), 13, Ui.TEXT, false));
+    const full = Ui.outlineButton(this, "Open the DAP report", DapDuty.COLOR, this.opener(DapReportActivity));
+    ln.addView(full);
+    Ui.margins(full, 0, 8, 0, 0);
+    page.addView(ln);
+
+    const esc = DapReportActivity.escalationCard(this, db);
+    if (esc != null) page.addView(esc);
+    page.addView(DapReportActivity.bedsCard(this, db));
+
+    const away = Hod.awayToday(db);
+    page.addView(Ui.heading(this, "Away today · " + away.length, Ui.PURPLE));
+    const ac = Ui.card(this);
+    if (away.length === 0) ac.addView(Ui.muted(this, "No approved leave today."));
+    for (const a of away) ac.addView(Ui.tv(this, a, 14, Ui.TEXT, false));
+    page.addView(ac);
+
+    page.addView(Ui.heading(this, "Open", Ui.ORANGE));
+    const oc = Ui.card(this);
+    oc.addView(this.link("Incidents and complaints", Issues.openCount(db, Issues.INCIDENT), IssuesActivity, "board", Issues.INCIDENT));
+    oc.addView(this.link("Shortages (equipment, drugs)", Issues.openCount(db, Issues.SHORTAGE), IssuesActivity, "board", Issues.SHORTAGE));
+    oc.addView(this.link("Deaths not yet reviewed (60 days)", DeathReview.pendingList(db).length, DeathReviewActivity));
+    page.addView(oc);
+
+    page.addView(Ui.heading(this, "HOD tools", Hod.COLOR));
+    const tc = Ui.card(this);
+    tc.addView(this.link("Unit scorecard (M1–M7)", -1, ScorecardActivity));
+    tc.addView(this.link("Pending work by person", -1, PendingWorkActivity));
+    tc.addView(this.link("Mortality review", -1, DeathReviewActivity));
+    tc.addView(this.link("Faculty teaching register", -1, TeachingActivity));
+    tc.addView(this.link("Dashboard", -1, DashboardActivity));
+    const nmc = this.row("NMC inspection pack (PDF / Word)", -1);
+    nmc.setOnClickListener({ onClick: (v) => { Hod.export(this, "NMC inspection pack", { make: () => Hod.nmcPack(this.db) }); } });
+    tc.addView(nmc);
+    if (Alerts.canPost(this)) {
+      const msg = this.row("Message to everyone (text or voice)", -1);
+      msg.setOnClickListener({ onClick: (v) => { Alerts.postDialog(this); } });
+      tc.addView(msg);
+    }
+    page.addView(tc);
+    this.setPage(page);
+  }
+
+  row(label, n) {
+    const t = Ui.tv(this, label + (n < 0 ? "  ›" : "  ·  " + n + "  ›"), 15, n > 0 ? Hod.COLOR : Ui.TEXT, n > 0);
+    t.setPadding(0, Ui.dp(this, 9), 0, Ui.dp(this, 9));
+    Ui.ripple(t, 0x22000000);
+    return t;
+  }
+
+  link(label, n, cls, ...kv) {
+    const t = this.row(label, n);
+    t.setOnClickListener(this.opener(cls, ...kv));
+    return t;
+  }
+
+  ws(n, label) {
+    const l = Ui.v(this);
+    l.setGravity(Gravity.CENTER);
+    const v = Ui.tv(this, String(n), 20, Color.WHITE, true);
+    v.setGravity(Gravity.CENTER);
+    const t = Ui.tv(this, label, 11, 0xD9FFFFFF, false);
+    t.setGravity(Gravity.CENTER);
+    l.addView(v);
+    l.addView(t);
+    return l;
+  }
+}
+;
 /* ---- app/HomeLayout.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -45487,13 +47219,64 @@ class Imaging {
     return Imaging.KIND_COLORS[i < 0 ? Imaging.KINDS.length - 1 : i];
   }
 
+  /** 9.96: photos of clinical findings (rash, oedema, clubbing, wounds…), kept as studies of this kind with the finding in "other". */
+  static CLINICAL = "Clinical photo";
+  static CLINICAL_COLOR = 0xFFDB2777;
+
+  static clinical(s) {
+    return Imaging.CLINICAL === s.get("kind");
+  }
+
   static label(s) {
     const k = Ui.nz(s.get("kind"));
+    if (Imaging.CLINICAL === k) return Ui.nz(s.get("other")).isEmpty() ? Imaging.CLINICAL : s.get("other");
     return "Other" === k && !Ui.nz(s.get("other")).isEmpty() ? s.get("other") : k;
   }
 
   static studies(db, pid) {
-    return db.rows("SELECT * FROM " + Imaging.TABLE + " WHERE patient_id=? ORDER BY date DESC, id DESC", String(pid));
+    return db.rows("SELECT * FROM " + Imaging.TABLE + " WHERE patient_id=? AND kind<>? ORDER BY date DESC, id DESC", String(pid), Imaging.CLINICAL);
+  }
+
+  static clinicalPhotos(db, pid) {
+    return db.rows("SELECT * FROM " + Imaging.TABLE + " WHERE patient_id=? AND kind=? ORDER BY date DESC, id DESC", String(pid), Imaging.CLINICAL);
+  }
+
+  /** The patient page section for clinical finding photos: each finding with its pictures; tap to open, + to add. */
+  static clinicalSection(a, db, pid) {
+    const box = Ui.v(a);
+    box.addView(Ui.heading(a, "Clinical findings photos", Imaging.CLINICAL_COLOR));
+    const st = Imaging.clinicalPhotos(db, pid);
+    const card = Ui.card(a);
+    if (st.isEmpty()) card.addView(Ui.muted(a, "No photos yet. Photograph a finding (rash, oedema, clubbing, ulcer, fundus…) with the camera or pick from the gallery."));
+    for (const s of st) {
+      const row = Ui.v(a);
+      row.setPadding(0, Ui.dp(a, 6), 0, Ui.dp(a, 6));
+      const top = Ui.h(a);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      top.addView(Ui.softPill(a, Imaging.label(s), Imaging.CLINICAL_COLOR));
+      const n = Imaging.files(db, s.get("id"), Imaging.FILM).size();
+      top.addView(Ui.tv(a, "  " + Dates.nice(s.get("date")) + "  ·  " + n + (n === 1 ? " photo" : " photos"), 12, Ui.MUTED, false), Ui.weight(1));
+      row.addView(top);
+      if (!Ui.nz(s.get("impression")).isEmpty()) {
+        const imp = Ui.tv(a, Ui.nz(s.get("impression")), 13, Ui.TEXT, false);
+        imp.setMaxLines(3);
+        row.addView(imp);
+        Ui.margins(imp, 0, 4, 0, 0);
+      }
+      const th = Imaging.thumbs(a, db, s.get("id"), 64, false);
+      if (th != null) {
+        row.addView(th);
+        Ui.margins(th, 0, 6, 0, 0);
+      }
+      Ui.ripple(row, Ui.alpha(Imaging.CLINICAL_COLOR, 0x22));
+      row.setOnClickListener(a.opener(ImagingActivity, "patient", String(pid), "id", s.get("id"), "clinical", "1"));
+      card.addView(row);
+    }
+    const add = Ui.outlineButton(a, "📸  + Add clinical finding photos", Imaging.CLINICAL_COLOR, a.opener(ImagingActivity, "patient", String(pid), "clinical", "1"));
+    card.addView(add);
+    Ui.margins(add, 0, 8, 0, 0);
+    box.addView(card);
+    return box;
   }
 
   static files(db, studyId, part) {
@@ -45614,7 +47397,7 @@ class Imaging {
 'use strict';
 /** One X-ray or CT study of a patient: the films (camera or gallery) and the report (photo, PDF or typed impression). */
 class ImagingActivity extends Base {
-  constructor() { super(); this.pid = 0; this.id = -1; this.form = null; this.pendingCamera = null; this.pendingPart = null; }
+  constructor() { super(); this.pid = 0; this.id = -1; this.form = null; this.pendingCamera = null; this.pendingPart = null; this.clinical = false; }
 
   static REQ_CAMERA = 71;
   static REQ_PICK = 72;
@@ -45624,15 +47407,17 @@ class ImagingActivity extends Base {
     this.pid = Long.parseLong(this.getIntent().getStringExtra("patient"));
     const s = this.getIntent().getStringExtra("id");
     if (s != null) this.id = Long.parseLong(s);
+    this.clinical = "1" === this.getIntent().getStringExtra("clinical");
     if (b != null) {
       this.id = b.getLong("id", this.id);
       this.pendingCamera = b.getString("camera");
       this.pendingPart = b.getString("part");
     }
     const p = this.db.row("SELECT name FROM patients WHERE id=?", String(this.pid));
-    this.setTitle(this.id >= 0 ? "X-ray / CT" : "Add X-ray / CT");
+    if (this.clinical) this.setTitle(this.id >= 0 ? "Clinical photos" : "Add clinical photos");
+    else this.setTitle(this.id >= 0 ? "X-ray / CT" : "Add X-ray / CT");
     this.subtitle = p == null ? "" : p.get("name");
-    this.headerColor(Imaging.COLOR);
+    this.headerColor(this.clinical ? Imaging.CLINICAL_COLOR : Imaging.COLOR);
     this.headerAction("Save", { onClick: (v) => { this.save(true); } });
   }
 
@@ -45662,6 +47447,18 @@ class ImagingActivity extends Base {
     const keepKind = form0 != null ? form0.get("kind") : null, keepDate = form0 != null ? form0.get("date") : null,
       keepOther = form0 != null ? form0.get("other") : null, keepImp = form0 != null ? form0.get("impression") : null;
     this.form = new Form(this);
+    if (this.clinical) {
+      this.form.suggest("other", "Finding (e.g. rash, pedal oedema, clubbing, ulcer)", keepOther != null ? keepOther : v(r, "other", ""), ImagingActivity.FINDINGS);
+      this.form.date("date", "Date", keepDate != null ? keepDate : v(r, "date", Dates.todayIso()));
+      this.form.multi("impression", "Notes (site, size, description; optional)", keepImp != null ? keepImp : v(r, "impression", ""));
+      const fc = Ui.card(this);
+      fc.addView(this.form.view);
+      page.addView(fc);
+      page.addView(this.part(Imaging.FILM, "📸 Photos", "Take the photo with the camera or pick it from the gallery. Several photos can be added. "
+        + "Ask the patient's consent; avoid the face unless the finding is on it.", edit));
+      this.footer(page, r, edit);
+      return;
+    }
     this.form.choice("kind", "Study", Imaging.KINDS, Imaging.KINDS, keepKind != null ? keepKind : v(r, "kind", Imaging.KINDS[0]), {
       changed: (val) => { this.form.show("other", "Other" === val); }
     });
@@ -45675,12 +47472,18 @@ class ImagingActivity extends Base {
 
     page.addView(this.part(Imaging.FILM, "🎞 Films", "Photograph the film against a light box or window, or the screen. Several films can be added.", edit));
     page.addView(this.part(Imaging.REPORT, "📄 Report", "Photograph the printed report, or pick the report PDF.", edit));
+    this.footer(page, r, edit);
+  }
+
+  footer(page, r, edit) {
+    const db = this.db;
+    const clinical = this.clinical;
     if (r != null) page.addView(Ui.muted(this, "  Added by " + Ui.nz(r.get("by_name")) + "  ·  " + Chat.when(r.get("time"))));
-    if (!edit) page.addView(Ui.muted(this, "  View only: the patient's unit can add or change imaging."));
+    if (!edit) page.addView(Ui.muted(this, clinical ? "  View only: the patient's unit can add or change these photos." : "  View only: the patient's unit can add or change imaging."));
     else if (this.id >= 0) {
-      const del = Ui.outlineButton(this, "Delete this study", Ui.RED, {
+      const del = Ui.outlineButton(this, clinical ? "Delete these photos" : "Delete this study", Ui.RED, {
         onClick: (x) => {
-          Ui.confirm(this, "Delete this study?", "The films and the report are removed for everyone.", "Delete", {
+          Ui.confirm(this, clinical ? "Delete these photos?" : "Delete this study?", clinical ? "The photos are removed for everyone." : "The films and the report are removed for everyone.", "Delete", {
             run: () => {
               Imaging.delete(db, this.id);
               this.finish();
@@ -45792,13 +47595,18 @@ class ImagingActivity extends Base {
       if (close) this.finish();
       return false;
     }
-    if ("Other" === form.get("kind") && form.get("other").trim().isEmpty()) {
+    if (!this.clinical && "Other" === form.get("kind") && form.get("other").trim().isEmpty()) {
       Ui.toast(this, "Write which study it is");
       return false;
     }
     const cv = new ContentValues();
-    cv.put("kind", form.get("kind"));
-    cv.put("other", "Other" === form.get("kind") ? form.get("other").trim() : "");
+    if (this.clinical) {
+      cv.put("kind", Imaging.CLINICAL);
+      cv.put("other", form.get("other").trim());
+    } else {
+      cv.put("kind", form.get("kind"));
+      cv.put("other", "Other" === form.get("kind") ? form.get("other").trim() : "");
+    }
     cv.put("date", form.get("date"));
     cv.put("impression", form.get("impression").trim());
     if (this.id < 0) {
@@ -45818,6 +47626,9 @@ class ImagingActivity extends Base {
     return r == null || Ui.nz(r.get(k)).isEmpty() ? def : r.get(k);
   }
 }
+
+ImagingActivity.FINDINGS = ["Rash", "Pedal oedema", "Clubbing", "Pallor", "Icterus", "Cyanosis", "Lymph node", "Goitre", "Ulcer", "Bed sore",
+  "Bite site", "Cellulitis", "Petechiae / purpura", "Joint swelling", "Wasting", "Fundus", "Skin lesion", "Wound", "Other"];
 ;
 /* ---- app/ImcuSpecialActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -47765,6 +49576,191 @@ class Intro {
 }
 Intro.enabled = true;
 ;
+/* ---- app/Issues.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Two boards in one table (9.98): complaints and incidents with an owner and a date to close by, and shortages (broken
+ * equipment, drug or consumable out of stock) that the HOD sees until fixed. Anyone reports; faculty, the HOD's office
+ * and the owner close.
+ */
+class Issues {
+  static TABLE = "issues";
+  static INCIDENT = "incident";
+  static SHORTAGE = "shortage";
+  static OPEN = "Open";
+  static CLOSED = "Closed";
+  static INCIDENT_COLOR = 0xFFC2410C;
+  static SHORTAGE_COLOR = 0xFF0E7490;
+  static INCIDENT_KINDS = ["Patient complaint", "Needle-stick injury", "Equipment failure", "Violence / threat", "Medication error", "Fall", "Other incident"];
+  static SHORTAGE_KINDS = ["Equipment not working", "Drug out of stock", "Consumable short", "Oxygen / suction", "Other"];
+
+  static title(board) { return Issues.INCIDENT === board ? "Incidents and complaints" : "Shortages"; }
+
+  static color(board) { return Issues.INCIDENT === board ? Issues.INCIDENT_COLOR : Issues.SHORTAGE_COLOR; }
+
+  static kinds(board) { return Issues.INCIDENT === board ? Issues.INCIDENT_KINDS : Issues.SHORTAGE_KINDS; }
+
+  static list(db, board, open) {
+    return db.rows("SELECT * FROM " + Issues.TABLE + " WHERE board=? AND status=? ORDER BY " + (open ? "reported_on" : "closed_on DESC") + ", id", board, open ? Issues.OPEN : Issues.CLOSED);
+  }
+
+  static openCount(db, board) {
+    return db.num("SELECT COUNT(*) FROM " + Issues.TABLE + " WHERE board=? AND status=?", board, Issues.OPEN);
+  }
+
+  static canClose(c, db, r) {
+    if (!Cloud.active(c)) return true;
+    const role = Cloud.role(c);
+    if (Cloud.isManager(role) || "professor" === role || "faculty" === role) return true;
+    const me = Wrapped.norm(Reminders.myName(c, db));
+    return Wrapped.names(Ui.nz(r.get("owner")), me) || Wrapped.names(Ui.nz(r.get("reported_by")), me);
+  }
+
+  static add(c, db, board, kind, title, ward, details, owner, due) {
+    const cv = new ContentValues();
+    cv.put("board", board);
+    cv.put("kind", kind);
+    cv.put("title", title.trim());
+    cv.put("ward", ward);
+    cv.put("details", details.trim());
+    cv.put("owner", owner.trim());
+    cv.put("due", due);
+    cv.put("reported_by", Reminders.myName(c, db));
+    cv.put("reported_on", Dates.todayIso() + " " + Dates.now());
+    cv.put("status", Issues.OPEN);
+    const id = db.insert(Issues.TABLE, cv);
+    Sync.kick(c);
+    return id;
+  }
+
+  static close(c, db, r, action) {
+    const cv = new ContentValues();
+    cv.put("status", Issues.CLOSED);
+    cv.put("action", action.trim());
+    cv.put("closed_by", Reminders.myName(c, db));
+    cv.put("closed_on", Dates.todayIso() + " " + Dates.now());
+    db.update(Issues.TABLE, cv, Long.parseLong(r.get("id")));
+    Sync.kick(c);
+  }
+
+  static age(r) {
+    const d = Dates.parse(Ui.nz(r.get("reported_on")).split(" ")[0]);
+    if (d == null) return "";
+    const n = ChronoUnit.DAYS.between(d, Dates.today());
+    return n <= 0 ? "today" : n === 1 ? "1 day" : n + " days";
+  }
+
+  static overdue(r) {
+    const due = Ui.nz(r.get("due"));
+    return Issues.OPEN === r.get("status") && due !== "" && due < Dates.todayIso();
+  }
+}
+;
+/* ---- app/IssuesActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Complaints and incidents, or shortages (extra "board"): report, see what is open and for how long, close with the action taken. */
+class IssuesActivity extends Base {
+  constructor() {
+    super();
+    this.board = Issues.INCIDENT;
+    this.open = true;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.board = Issues.SHORTAGE === this.getIntent().getStringExtra("board") ? Issues.SHORTAGE : Issues.INCIDENT;
+    this.setTitle(Issues.title(this.board));
+    this.subtitle = Issues.INCIDENT === this.board ? "Complaints, needle-stick, equipment failure…" : "Broken equipment, drugs and consumables";
+    this.headerColor(Issues.color(this.board));
+    this.headerAction("+ Report", { onClick: (v) => { this.add(); } });
+  }
+
+  render() {
+    const db = this.db, board = this.board;
+    const page = Ui.v(this);
+    const tabs = Ui.h(this);
+    tabs.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    tabs.addView(this.tab("Open · " + Issues.openCount(db, board), true));
+    const cl = this.tab("Closed", false);
+    tabs.addView(cl);
+    Ui.margins(cl, 8, 0, 0, 0);
+    page.addView(tabs);
+
+    const l = Issues.list(db, board, this.open);
+    if (l.length === 0) page.addView(this.emptyNote(this.open ? "Nothing open. Tap + Report to add one." : "Nothing closed yet."));
+    const col = Issues.color(board);
+    for (const r of l) {
+      let sub = (Ui.nz(r.get("ward")) === "" ? "" : Db.shortName(r.get("ward")) + " · ") + "by " + (Ui.nz(r.get("reported_by")) === "" ? "–" : r.get("reported_by"));
+      if (this.open) sub += " · open " + Issues.age(r);
+      if (Ui.nz(r.get("owner")) !== "") sub += "\nWith: " + r.get("owner");
+      if (Ui.nz(r.get("due")) !== "") sub += (Issues.overdue(r) ? "  ⚠ overdue since " : "  · close by ") + Dates.nice(r.get("due"));
+      if (Ui.nz(r.get("details")) !== "") sub += "\n" + r.get("details");
+      if (!this.open) sub += "\n✓ " + (Ui.nz(r.get("action")) === "" ? "Closed" : r.get("action")) + " (" + Ui.nz(r.get("closed_by")) + ", " + Dates.nice(Ui.nz(r.get("closed_on")).split(" ")[0]) + ")";
+      page.addView(this.entryCard(Ui.nz(r.get("kind")), Issues.overdue(r) ? Ui.RED : col, Ui.nz(r.get("title")), sub,
+          Dates.nice(Ui.nz(r.get("reported_on")).split(" ")[0]), { onClick: (v) => { this.detail(r); } }, 6));
+    }
+    page.addView(Ui.muted(this, "  Anyone in the department can report. Faculty, the HOD's office or the person it is given to closes it."));
+    this.setPage(page);
+  }
+
+  tab(label, openTab) {
+    const t = Ui.chip(this, label, this.open === openTab, Issues.color(this.board));
+    t.setOnClickListener({ onClick: (v) => { this.open = openTab; this.render(); } });
+    return t;
+  }
+
+  add() {
+    const db = this.db, board = this.board;
+    const f = new Form(this);
+    const kinds = Issues.kinds(board);
+    f.choice("kind", "What", kinds, kinds, kinds[0], null);
+    f.text("title", Issues.INCIDENT === board ? "In short (e.g. Relative complained about waiting)" : "Item (e.g. Multipara monitor bed 12, Inj. Noradrenaline)", "", Form.TEXT);
+    f.suggest("ward", "Ward", "", Db.CENSUS_WARDS.map((w) => Db.shortName(w)));
+    f.multi("details", "Details", "");
+    if (Issues.INCIDENT === board) {
+      f.suggest("owner", "Give to (who will act)", "", db.staffNames(""));
+      f.optionalDate("due", "Close by", "");
+    }
+    Ui.formDialog(this, Issues.INCIDENT === board ? "Report an incident or complaint" : "Report a shortage", f, "Report", {
+      run: () => {
+        if (!f.require("title", "Write what it is")) return false;
+        Issues.add(this, db, board, f.get("kind"), f.get("title"), f.get("ward").trim(), f.get("details"),
+            f.has("owner") ? f.get("owner") : "", f.has("due") ? f.get("due") : "");
+        Ui.toast(this, "Reported. The HOD sees it on the HOD desk.");
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  detail(r) {
+    let s = Ui.nz(r.get("kind")) + "\n\n" + (Ui.nz(r.get("details")) === "" ? "No details." : r.get("details"));
+    s += "\n\nReported by " + Ui.nz(r.get("reported_by")) + ", " + Ui.nz(r.get("reported_on"));
+    if (Ui.nz(r.get("owner")) !== "") s += "\nWith: " + r.get("owner");
+    if (Ui.nz(r.get("due")) !== "") s += "\nClose by: " + Dates.nice(r.get("due"));
+    if (Issues.CLOSED === r.get("status")) s += "\n\nClosed by " + Ui.nz(r.get("closed_by")) + ": " + Ui.nz(r.get("action"));
+    const d = new AlertDialog.Builder(this).setTitle(Ui.nz(r.get("title"))).setMessage(s).setNegativeButton("Back", null);
+    if (Issues.OPEN === r.get("status") && Issues.canClose(this, this.db, r))
+      d.setPositiveButton(Issues.INCIDENT === this.board ? "Close it" : "Fixed / received", { onClick: (x, w) => { this.closeDialog(r); } });
+    d.show();
+  }
+
+  closeDialog(r) {
+    const f = new Form(this);
+    f.multi("action", Issues.INCIDENT === this.board ? "What was done" : "How it was fixed (e.g. repaired by biomedical, indent received)", "");
+    Ui.formDialog(this, "Close", f, "Close", {
+      run: () => {
+        if (!f.require("action", "Write what was done")) return false;
+        Issues.close(this, this.db, r, f.get("action"));
+        this.render();
+        return true;
+      }
+    });
+  }
+}
+;
 /* ---- app/Journals.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -49355,8 +51351,37 @@ class Labs {
     const scan = Ui.outlineButton(a, "📷  Scan a lab report", Labs.COLOR, a.opener(LabsActivity, "id", String(pid), "scan", "1"));
     wrap.addView(scan);
     Ui.margins(scan, 0, 6, 0, 0);
+    const hmis = Ui.outlineButton(a, "🔬  Lab reports on TN HMIS (by PIN number)", Labs.HMIS_COLOR, { onClick: (v) => { Labs.openHmis(a, db, pid); } });
+    wrap.addView(hmis);
+    Ui.margins(hmis, 0, 6, 0, 0);
     box.addView(wrap);
     return box;
+  }
+
+  /** The college's lab reports live in the Tamil Nadu government HMIS (DMER), behind each doctor's own HMIS login. */
+  static HMIS_URL = "https://tnhmis.dmer.tn.gov.in/AHIMSG5/hissso/Login";
+  static HMIS_COLOR = 0xFF0E7490;
+
+  /** The HMIS address; the admin can point it elsewhere with the settings row hmis_url if the site moves. */
+  static hmisUrl(db) {
+    const u = Ui.nz(db.setting("hmis_url", "")).trim();
+    return u.startsWith("https://") ? u : Labs.HMIS_URL;
+  }
+
+  /** Copies the patient's PIN number (HMIS finds lab reports by PIN; the IP number if no PIN yet) and opens HMIS in a new browser tab, which keeps the doctor signed in. */
+  static openHmis(a, db, pid) {
+    const p = db.row("SELECT ip_no, pin_no FROM patients WHERE id=?", String(pid));
+    const pin = p == null ? "" : Ui.nz(p.get("pin_no")).trim(), ip = p == null ? "" : Ui.nz(p.get("ip_no")).trim();
+    const what = pin !== "" ? "PIN" : "IP", no = pin !== "" ? pin : ip;
+    if (no !== "") {
+      const cm = a.getSystemService(Context.CLIPBOARD_SERVICE);
+      if (cm != null) cm.setPrimaryClip(ClipData.newPlainText(what + " number", no));
+      Ui.toast(a, what + " " + no + " copied. Sign in to HMIS, open the lab report search and paste it."
+          + (pin === "" ? " Add the PIN number with Edit: HMIS finds lab reports by PIN." : ""));
+    } else {
+      Ui.toast(a, "This patient has no PIN number yet. Add it with Edit: HMIS finds lab reports by PIN.");
+    }
+    a.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(Labs.hmisUrl(db))));
   }
 
   static addDialog(a, db, pid, r) {
@@ -50696,7 +52721,7 @@ class LearningActivity extends Base {
 'use strict';
 /** The department's Postgraduate Leave Application, filled in from a PG leave entry, as PDF or Word. */
 class LeaveForm {
-  static TYPES = ['Casual leave', 'Medical leave', 'Examination leave', 'Conference / academic', 'Maternity leave', 'Other'];
+  static TYPES = ['Casual leave', 'Academic leave', 'Week off', 'Medical leave', 'Examination leave', 'Maternity leave', 'Other'];
   static ROMAN = ['I', 'II', 'III'];
   static LABEL = 0xFFE3EAF4;
   static HEAD = 0xFF1E3A5F;
@@ -50719,6 +52744,12 @@ class LeaveForm {
 
   static nice(iso) { return iso == null || iso.isEmpty() ? '' : Dates.nice(iso); }
 
+  /** A leave for a single day (from and to the same date). */
+  static oneDay(r) {
+    const a = Ui.nz(r.get('from_date'));
+    return !a.isEmpty() && a.equals(Ui.nz(r.get('to_date')));
+  }
+
   static build(db, r) {
     const c = LeaveForm.c, lbl = LeaveForm.lbl, hd = LeaveForm.hd, or = LeaveForm.or, nice = LeaveForm.nice, HEAD = LeaveForm.HEAD;
     const pg = db.row('SELECT * FROM staff WHERE id=?', Ui.nz(r.get('staff_id')));
@@ -50736,34 +52767,42 @@ class LeaveForm {
     f.college = db.setting('college', 'Tirunelveli Medical College');
     f.address = 'Tirunelveli';
     f.dept = db.setting('dept', 'Department of General Medicine');
-    f.title = 'POSTGRADUATE LEAVE APPLICATION';
     f.footer = 'Leave application of ' + or(name, 'PG') + '  •  ' + f.dept + ', ' + f.college;
     f.fileBase = 'PG_Leave_' + or(name, 'PG').replaceAllRx('[^A-Za-z0-9]+', '_') + '_' + Ui.nz(r.get('from_date'));
 
-    f.plain(1).row(12, new FormDoc.Cell('(For one day or more)').size(7.5).color(0xFF64748B).center());
+    const one = LeaveForm.oneDay(r);
+    const span = one ? 'one day' : or(days, '______') + ' days';
+    f.title = one ? 'PG ONE DAY LEAVE APPLICATION' : 'PG LEAVE APPLICATION (MULTIPLE DAYS)';
+    f.fileBase = 'PG_' + (one ? 'One_Day_' : '') + f.fileBase.substring(3);
 
     const a = f.block('APPLICANT DETAILS', HEAD, 0.18, 0.32, 0.2, 0.3);
     a.row(18, lbl('Name (Dr.)'), c(name.replace(/^dr\.?\s*/i, '')), lbl('Course & Year'),
         c('MD Gen. Med. — ' + (year > 0 ? LeaveForm.ROMAN[year - 1] + ' year' : 'I / II / III')));
     a.row(18, lbl('Unit'), c(unit), lbl('Date of Application'), c(nice(r.get('applied'))));
 
-    const l = f.block('LEAVE DETAILS', HEAD, 0.26, 0.19, 0.19, 0.14, 0.22);
-    l.row(16, hd('Type of Leave'), hd('From'), hd('To'), hd('No. of Days'), hd('Resuming Duty On'));
-    l.row(22, c(Ui.nz(r.get('leave_type'))).center(), c(from).center(), c(to).center(), c(days).center(), c(back).center());
+    if (one) {
+      const l = f.block('LEAVE DETAILS  —  ONE DAY LEAVE', HEAD, 0.3, 0.26, 0.16, 0.28);
+      l.row(16, hd('Type of Leave'), hd('Date of Leave'), hd('No. of Days'), hd('Resuming Duty On'));
+      l.row(22, c(Ui.nz(r.get('leave_type'))).center(), c(from).center(), c('1').center(), c(back).center());
+    } else {
+      const l = f.block('LEAVE DETAILS  —  LEAVE FOR ' + span.toUpperCase(), HEAD, 0.26, 0.19, 0.19, 0.14, 0.22);
+      l.row(16, hd('Type of Leave'), hd('From'), hd('To'), hd('No. of Days'), hd('Resuming Duty On'));
+      l.row(22, c(Ui.nz(r.get('leave_type'))).center(), c(from).center(), c(to).center(), c(days).center(), c(back).center());
+    }
 
     const u = or(unit, '________');
     const t = new StringBuilder();
     t.append('To\n      The Professor & Head of the Department\n      ').append(f.dept)
         .append('\n      ').append(f.college).append(', Tirunelveli\n\n');
     t.append('Through: The Assistant Professor and the Unit Chief, Unit ').append(u).append('\n');
-    t.append('Subject: Request for grant of leave\n\n');
+    t.append('Subject: Request for grant of ').append(one ? 'one day leave' : 'leave for ' + span).append('\n\n');
     t.append('Respected Sir/Madam,\n\n');
-    t.append('I respectfully request you to kindly grant me leave for ').append(or(days, '______')).append(' day(s), from ')
-        .append(or(from, '______________')).append(' to ').append(or(to, '______________'))
-        .append(' (both days inclusive), on account of ').append(or(r.get('reason'), '________________________________')).append('.\n\n');
+    t.append('I respectfully request you to kindly grant me leave for ').append(span)
+        .append(one ? ' on ' + or(from, '______________') : ', from ' + or(from, '______________') + ' to ' + or(to, '______________') + ' (both days inclusive)')
+        .append(', on account of ').append(or(r.get('reason'), '________________________________')).append('.\n\n');
     t.append('During my absence, Dr. ').append(or(duty.replace(/^dr\.?\s*/i, ''), '______________________'))
         .append(', Postgraduate, Unit ').append(or(dutyUnit, '______'))
-        .append(', has kindly agreed to attend to my assigned academic and clinical duties for the above period, subject to the approval of the Unit Chief / Head of the Department.\n\n');
+        .append(', has kindly agreed to attend to my assigned academic and clinical duties ').append(one ? 'on that day' : 'for the above period').append(', subject to the approval of the Unit Chief / Head of the Department.\n\n');
     t.append('I shall resume duty on ').append(or(back, '______________'))
         .append(' and shall ensure that my academic and clinical responsibilities are duly attended to. I kindly request you to consider my application favourably.\n\n');
     t.append('Thanking you,\nYours faithfully,');
@@ -50788,7 +52827,8 @@ class LeaveForm {
     const o = f.block('FOR OFFICE USE — HEAD OF THE DEPARTMENT', HEAD, 1);
     o.keep = true;
     o.row(18, c('Decision:   ' + FormDoc.boxes(['Approved', 'Not Approved'], [yes, no])).b());
-    o.row(18, c('Leave sanctioned for ' + (yes ? days : '______') + ' day(s), from ' + (yes ? from : '______________') + ' to ' + (yes ? to : '______________')));
+    o.row(18, c(one ? 'Leave sanctioned for one day on ' + (yes ? from : '______________')
+        : 'Leave sanctioned for ' + (yes ? days : '______') + ' days, from ' + (yes ? from : '______________') + ' to ' + (yes ? to : '______________')));
     o.row(18, c('Remarks: ' + (no ? 'Not approved in the TVMCHMED app' : '____________________________________________________________')));
     o.row(30, c('Signature: ' + (hs.isEmpty() || hs.equals('Pending') ? '______________________' : '(' + hs.toLowerCase() + ' in the app by ' + Ui.nz(r.get('hod_by')) + ')')
         + '                    Date: ' + or(nice(r.get('hod_date')), '______________')
@@ -50823,12 +52863,836 @@ class LeaveForm {
         }).setNegativeButton('Close', null).show();
   }
 
+  /** "One day leave form" or "Leave form (3 days)": the form that fits this leave. */
+  static name(r) {
+    return LeaveForm.oneDay(r) ? 'One day leave form' : 'Leave form (' + Ui.nz(r.get('days')).replaceAllRx('\\.0$', '') + ' days)';
+  }
+
   /** Asks PDF or Word. */
   static choose(a, r) {
-    new AlertDialog.Builder(a).setTitle('Download leave form')
+    new AlertDialog.Builder(a).setTitle('Download ' + LeaveForm.name(r).toLowerCase())
         .setItems(['PDF', 'Word'], {
           onClick: (d, w) => { LeaveForm.make(a, r, w === 0); }
         }).setNegativeButton('Cancel', null).show();
+  }
+}
+;
+/* ---- app/LeaveRegisterActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Leave register (9.94): faculty leave by type (CL, COL credited, COL taken, PL, RH, EL, ML, holidays) with balances and
+ * each type's approval chain, and the PGs' yearly CL, academic leave and week off. Faculty leave is faculty-only.
+ */
+class LeaveRegisterActivity extends Base {
+  constructor() { super(); this.faculty = false; this.tab = 'All'; this.year = 0; this.openPg = ''; this.certFor = null; }
+
+  static REQ_CERT = 61;
+
+  static $clinit() {
+    LeaveRegisterActivity.TAB_COLORS = [Ui.PRIMARY_DARK, Ui.AMBER, Ui.GREEN, Ui.TEAL, Ui.PURPLE, Ui.PINK, 0xFF2563EB, Ui.RED, Ui.SLATE];
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.year = Dates.today().getYear();
+    this.faculty = Cloud.canSeeFacultyLeave(this) && 'pg' !== this.getIntent().getStringExtra('tab');
+    this.setTitle('Leave register');
+    this.subtitle = 'Faculty and PG leave, with balances';
+    this.headerColor(Ui.PRIMARY_DARK);
+  }
+
+  render() {
+    this.headerAction('+ Apply', {
+      onClick: (v) => {
+        if (this.faculty) this.leaveDialog(null);
+        else this.startActivity(new Intent(this, PgLeaveFormActivity));
+      }
+    });
+    const page = Ui.v(this);
+    if (Cloud.canSeeFacultyLeave(this)) {
+      const seg = Ui.h(this);
+      seg.setBackground(Ui.round(this, 0xFFE2E8F0, 14));
+      seg.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+      const labels = ['🔒 Faculty', 'Postgraduates'];
+      for (let i = 0; i < 2; i++) {
+        const f = i === 0;
+        const t = Ui.tv(this, labels[i], 14, f === this.faculty ? Ui.PRIMARY : Ui.MUTED, true);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
+        if (f === this.faculty) t.setBackground(Ui.round(this, Color.WHITE, 11));
+        t.setOnClickListener({ onClick: (v) => { this.faculty = f; this.render(); } });
+        seg.addView(t, Ui.weight(1));
+      }
+      page.addView(seg);
+      Ui.margins(seg, 12, 10, 12, 4);
+    }
+    page.addView(this.yearNav());
+    if (this.faculty) this.facultyPage(page);
+    else this.pgPage(page);
+    this.setPage(page);
+  }
+
+  yearNav() {
+    const nav = Ui.h(this);
+    nav.setGravity(Gravity.CENTER_VERTICAL);
+    nav.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), 0);
+    nav.addView(Ui.outlineButton(this, '‹ ' + (this.year - 1), Ui.PRIMARY, { onClick: (v) => { this.year--; this.render(); } }));
+    const y = Ui.tv(this, 'Year ' + this.year, 16, Ui.TEXT, true);
+    y.setGravity(Gravity.CENTER);
+    nav.addView(y, Ui.weight(1));
+    const nx = Ui.outlineButton(this, (this.year + 1) + ' ›', Ui.PRIMARY, { onClick: (v) => { this.year++; this.render(); } });
+    if (this.year > Dates.today().getYear()) nx.setVisibility(View.INVISIBLE);
+    nav.addView(nx);
+    return nav;
+  }
+
+  y0() { return this.year + '-01-01'; }
+
+  y1() { return this.year + '-12-31'; }
+
+  ruleCard(page, text, color) {
+    const c = Ui.card(this);
+    c.setBackground(Ui.round(this, Ui.alpha(color, 0x14), 16));
+    const t = Ui.tv(this, '📋  ' + text, 13, Ui.TEXT, false);
+    c.addView(t);
+    page.addView(c);
+    return t;
+  }
+
+  yearEnd() {
+    return this.year === Dates.today().getYear() ? Dates.today() : LocalDate.of(this.year, 12, 31);
+  }
+
+  // ---------- faculty ----------
+
+  facultyStaff() {
+    return this.db.rows("SELECT id, name, role, unit FROM staff WHERE role IN ('Professor','Associate Professor','Assistant Professor') AND " + Approvals.APPROVED_SQL + ' '
+      + "ORDER BY CASE role WHEN 'Professor' THEN 0 WHEN 'Associate Professor' THEN 1 ELSE 2 END, name");
+  }
+
+  facultyPage(page) {
+    const db = this.db, iso = Dates.todayIso();
+    let waiting = 0;
+    for (const r of db.rows('SELECT l.*, s.role AS srole FROM faculty_leaves l LEFT JOIN staff s ON s.id=l.staff_id WHERE l.to_date>=?', Dates.today().minusYears(1).toString())) {
+      const w = LeaveRules.waiting(r, Ui.nz(r.get('srole')));
+      if (w != null && LeaveRules.canSign(this, r, w)) waiting++;
+    }
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, [Ui.PRIMARY_DARK, Ui.PRIMARY], 20));
+    const me = Cloud.myStaff(this);
+    hero.addView(Ui.statRow(this,
+      this.white(String(db.num("SELECT COUNT(DISTINCT staff_id) FROM faculty_leaves WHERE status='Approved' AND type<>? AND ? BETWEEN from_date AND to_date", 'COL credit', iso)), 'On leave today'),
+      this.white(String(waiting), 'Waiting for you'),
+      this.white(me > 0 ? LeaveRules.fmt(LeaveRules.colBalance(db, String(me))) : '–', 'My COL balance')));
+    const lock = Ui.tv(this, '🔒  Visible only to the HOD, Professors, Associate and Assistant Professors', 12, 0xE6FFFFFF, false);
+    lock.setGravity(Gravity.CENTER);
+    hero.addView(lock);
+    Ui.margins(lock, 0, 10, 0, 0);
+    page.addView(hero);
+
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 4));
+    for (let i = 0; i < LeaveRules.TABS.length; i++) {
+      const k = LeaveRules.TABS[i];
+      const c = Ui.chip(this, k, k === this.tab, LeaveRegisterActivity.TAB_COLORS[i]);
+      c.setOnClickListener({ onClick: (v) => { this.tab = k; this.render(); } });
+      chips.addView(c);
+    }
+    page.addView(Ui.hscroll(this, chips));
+    this.ruleCard(page, LeaveRules.rule(this.tab), Ui.PRIMARY);
+
+    const staff = this.facultyStaff();
+    if (staff.length === 0) {
+      page.addView(this.emptyNote('Add the faculty to the staff list first.'));
+      return;
+    }
+    switch (this.tab) {
+      case 'All':
+        for (const s of staff) page.addView(this.summaryCard(s));
+        this.entries(page, null, 'Waiting for approval', true);
+        break;
+      case 'COL credited':
+        this.colCredited(page, staff);
+        break;
+      case 'Holidays':
+        this.holidays(page);
+        break;
+      default: {
+        const type = 'COL taken' === this.tab ? 'COL' : this.tab;
+        this.balances(page, staff, type);
+        this.entries(page, type, this.tab + ' in ' + this.year, false);
+      }
+    }
+  }
+
+  /** One faculty member's year at a glance. */
+  summaryCard(s) {
+    const db = this.db, id = s.get('id'), fmt = LeaveRules.fmt;
+    const card = Ui.card(this);
+    const top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.addView(Ui.tv(this, s.get('name'), 15, Ui.TEXT, true), Ui.weight(1));
+    top.addView(Ui.softPill(this, Db.shortName(Ui.nz(s.get('unit'))) + ' · ' + LeaveRegisterActivity.roleShort(s.get('role')), Store.roleColor(s.get('role'))));
+    card.addView(top);
+    const flow = new Bands.Flow(this);
+    const cl = LeaveRules.used(db, id, 'CL', this.y0(), this.y1());
+    flow.addView(Ui.softPill(this, 'CL ' + fmt(cl) + ' / 12', cl >= LeaveRules.CL_YEAR ? Ui.RED : Ui.AMBER));
+    const cr = LeaveRules.credits(db, id, this.y0(), this.y1()).length;
+    const tk = LeaveRules.used(db, id, 'COL', this.y0(), this.y1());
+    flow.addView(Ui.softPill(this, 'COL bal ' + fmt(LeaveRules.colBalance(db, id)) + ' (+' + cr + ' earned, ' + fmt(tk) + ' taken)', Ui.GREEN));
+    flow.addView(Ui.softPill(this, 'PL ' + fmt(LeaveRules.used(db, id, 'PL', this.y0(), this.y1())), Ui.PURPLE));
+    const rh = LeaveRules.used(db, id, 'RH', this.y0(), this.y1());
+    flow.addView(Ui.softPill(this, 'RH ' + fmt(rh) + ' / 3', rh >= LeaveRules.RH_YEAR ? Ui.RED : Ui.PINK));
+    flow.addView(Ui.softPill(this, 'EL ' + fmt(LeaveRules.used(db, id, 'EL', this.y0(), this.y1())), 0xFF2563EB));
+    const ml = LeaveRules.mlUsed(db, id, this.yearEnd());
+    flow.addView(Ui.softPill(this, 'ML ' + fmt(ml) + ' / 90 in 5 yrs', ml >= LeaveRules.ML_DAYS ? Ui.RED : Ui.SLATE));
+    card.addView(flow);
+    Ui.margins(flow, 0, 8, 0, 0);
+    return card;
+  }
+
+  static roleShort(role) {
+    return 'Assistant Professor' === role ? 'Asst. Prof' : 'Associate Professor' === role ? 'Assoc. Prof' : 'Prof';
+  }
+
+  /** Each faculty member's count of one leave type, with what is left where there is a limit. */
+  balances(page, staff, type) {
+    const db = this.db, fmt = LeaveRules.fmt;
+    const card = Ui.card(this);
+    for (const s of staff) {
+      const id = s.get('id');
+      let v, color = Ui.TEXT;
+      if ('ML' === type) {
+        const u = LeaveRules.mlUsed(db, id, this.yearEnd());
+        v = fmt(u) + ' of 90 days (5 yrs) · ' + fmt(Math.max(0, LeaveRules.ML_DAYS - u)) + ' left';
+        if (u >= LeaveRules.ML_DAYS) color = Ui.RED;
+      } else if ('COL' === type) {
+        v = fmt(LeaveRules.used(db, id, type, this.y0(), this.y1())) + ' taken · balance ' + fmt(LeaveRules.colBalance(db, id));
+      } else {
+        const u = LeaveRules.used(db, id, type, this.y0(), this.y1());
+        const cap = 'CL' === type ? LeaveRules.CL_YEAR : 'RH' === type ? LeaveRules.RH_YEAR : 0;
+        v = fmt(u) + (cap > 0 ? ' of ' + cap + ' · ' + fmt(Math.max(0, cap - u)) + ' left' : ' days');
+        if (cap > 0 && u >= cap) color = Ui.RED;
+      }
+      const row = Ui.h(this);
+      row.setPadding(0, Ui.dp(this, 5), 0, Ui.dp(this, 5));
+      row.addView(Ui.tv(this, s.get('name'), 14, Ui.TEXT, true), Ui.weight(1));
+      const t = Ui.tv(this, v, 13, color, false);
+      t.setGravity(Gravity.END);
+      row.addView(t, Ui.weight(1.2));
+      card.addView(row);
+    }
+    page.addView(card);
+  }
+
+  colCredited(page, staff) {
+    for (const s of staff) {
+      const cs = LeaveRules.credits(this.db, s.get('id'), this.y0(), this.y1());
+      const card = Ui.card(this);
+      const top = Ui.h(this);
+      top.addView(Ui.tv(this, s.get('name'), 15, Ui.TEXT, true), Ui.weight(1));
+      top.addView(Ui.softPill(this, '+' + cs.length + ' COL · bal ' + LeaveRules.fmt(LeaveRules.colBalance(this.db, s.get('id'))), Ui.GREEN));
+      card.addView(top);
+      if (cs.length === 0) card.addView(Ui.muted(this, 'No holiday or second Saturday worked in ' + this.year + '.'));
+      for (const c of cs) card.addView(Ui.muted(this, '✓  ' + Dates.nice(c.date) + '  ·  ' + c.why));
+      page.addView(card);
+    }
+    this.entries(page, 'COL credit', 'COL credit claims', false);
+  }
+
+  holidays(page) {
+    const edit = !Cloud.active(this) || Cloud.isAdmin(this);
+    if (edit) page.addView(Ui.buttonRow(this,
+      Ui.outlineButton(this, '+ Government holiday', Ui.RED, { onClick: (v) => { this.dayDialog('HOLIDAY'); } }),
+      Ui.outlineButton(this, '+ RH day', Ui.PINK, { onClick: (v) => { this.dayDialog('RH'); } })));
+    for (const kind of ['HOLIDAY', 'RH']) {
+      page.addView(Ui.heading(this, ('HOLIDAY' === kind ? 'Government holidays ' : 'Government approved RH days ') + this.year, 'HOLIDAY' === kind ? Ui.RED : Ui.PINK));
+      const card = Ui.card(this);
+      const rows = this.db.rows('SELECT * FROM cal_events WHERE kind=? AND date BETWEEN ? AND ? ORDER BY date', kind, this.y0(), this.y1());
+      if (rows.length === 0) card.addView(Ui.muted(this, 'None added yet' + (edit ? '. Add them from the government order.' : '.')));
+      for (const r of rows) {
+        const end = Ui.nz(r.get('end_date'));
+        const t = Ui.tv(this, Dates.nice(r.get('date')) + (end === '' || end === r.get('date') ? '' : ' to ' + Dates.nice(end)) + '  ·  ' + Ui.nz(r.get('title')), 14, Ui.TEXT, false);
+        t.setPadding(0, Ui.dp(this, 5), 0, Ui.dp(this, 5));
+        if (edit) t.setOnLongClickListener({
+          onLongClick: (v) => {
+            Ui.confirm(this, 'Remove this day?', Ui.nz(r.get('title')), 'Remove', { run: () => { this.db.delete('cal_events', Long.parseLong(r.get('id'))); this.render(); } });
+            return true;
+          }
+        });
+        card.addView(t);
+      }
+      page.addView(card);
+    }
+    let sats = 0;
+    for (let d = LocalDate.of(this.year, 1, 1); d.getYear() === this.year; d = d.plusDays(1)) if (LeaveRules.secondSaturday(d)) sats++;
+    page.addView(Ui.muted(this, '   Second Saturdays in ' + this.year + ': ' + sats + ' (counted automatically). Long-press a day to remove it.'));
+  }
+
+  dayDialog(kind) {
+    const f = new Form(this);
+    f.date('date', 'Date', Dates.todayIso());
+    f.date('end_date', 'To (for more than one day)', '');
+    f.text('title', 'HOLIDAY' === kind ? 'Holiday (e.g. Pongal)' : 'RH day (e.g. Good Friday)', '', Form.TEXT);
+    Ui.formDialog(this, 'HOLIDAY' === kind ? 'Government holiday' : 'RH day', f, 'Add', {
+      run: () => {
+        if (!f.require('title', 'Enter the name')) return false;
+        const cv = new ContentValues();
+        cv.put('date', f.get('date'));
+        cv.put('end_date', f.get('end_date'));
+        cv.put('kind', kind);
+        cv.put('title', f.get('title'));
+        cv.put('audience', 'ALL');
+        cv.put('by_name', Cloud.prefs(this).getString('name', ''));
+        cv.put('added_on', Dates.todayIso());
+        this.db.insert('cal_events', cv);
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  /** Faculty leave entries of a type in the year (or every waiting one), with the step that waits and its buttons. */
+  entries(page, type, heading, waitingOnly) {
+    const db = this.db;
+    const rows = type == null
+      ? db.rows('SELECT l.*, s.name, s.role AS srole, s.unit FROM faculty_leaves l LEFT JOIN staff s ON s.id=l.staff_id WHERE l.to_date>=? ORDER BY l.from_date', Dates.today().minusYears(1).toString())
+      : db.rows('SELECT l.*, s.name, s.role AS srole, s.unit FROM faculty_leaves l LEFT JOIN staff s ON s.id=l.staff_id WHERE l.type=? AND l.from_date<=? AND l.to_date>=? ORDER BY l.from_date DESC',
+        type, this.y1(), this.y0());
+    let head = false;
+    for (const r of rows) {
+      const role = Ui.nz(r.get('srole'));
+      const st = LeaveRules.overall(r, role);
+      if (waitingOnly && st !== 'Applied') continue;
+      if (!head) {
+        page.addView(Ui.heading(this, heading, Ui.PRIMARY_DARK));
+        head = true;
+      }
+      const col = 'Approved' === st ? Ui.GREEN : 'Rejected' === st ? Ui.RED : Ui.ORANGE;
+      const range = Dates.nice(r.get('from_date')) + (r.get('to_date') === r.get('from_date') ? '' : ' to ' + Dates.nice(r.get('to_date')));
+      let sub = LeaveRegisterActivity.label(r.get('type')) + '  ·  ' + range + '  ·  ' + LeaveRegisterActivity.days(r.get('days'));
+      for (const l of LeaveRules.steps(Ui.nz(r.get('type')), role)) {
+        const s = LeaveRules.stepStatus(r, l);
+        if (s === '' && Ui.nz(r.get('approved_by')) !== '') continue;
+        sub += '\n' + LeaveRules.stepName(r.get('type'), l) + ': '
+          + (s === '' || s === 'Pending' ? 'waiting' : s.toLowerCase() + (Ui.nz(r.get(l + '_by')) === '' ? '' : ' by ' + r.get(l + '_by')));
+      }
+      if (Ui.nz(r.get('approved_by')) !== '' && LeaveRules.stepStatus(r, 'hod') === '') sub += '\n' + st + ' by ' + r.get('approved_by');
+      if ('ML' === r.get('type')) {
+        const a = Dates.parse(r.get('from_date'));
+        const over = LeaveRules.certOverdue(r);
+        sub += '\nMedical certificate: ' + (Ui.nz(r.get('cert')) !== '' ? 'submitted ' + Dates.nice(Ui.nz(r.get('cert_date')) === '' ? Dates.todayIso() : r.get('cert_date'))
+          : (over ? '⚠ OVERDUE (due ' : 'due by ') + (a == null ? '' : Dates.nice(a.plusDays(7))) + (over ? ')' : ''));
+      }
+      if (Ui.nz(r.get('reason')) !== '') sub += '\n' + r.get('reason');
+      const card = this.entryCard(st === 'Applied' ? 'Waiting' : st, col, Ui.nz(r.get('name')) === '' ? '(removed)' : r.get('name'), sub,
+        Db.shortName(Ui.nz(r.get('unit'))), { onClick: (v) => { this.leaveDialog(r); } }, 12);
+      const w = LeaveRules.waiting(r, role);
+      if (w != null && LeaveRules.canSign(this, r, w)) {
+        const dean = 'dean' === w;
+        const clash = Hod.clashText(this.db, Ui.nz(r.get('staff_id')), Ui.nz(r.get('from_date')), Ui.nz(r.get('to_date')));
+        if (clash !== '') {
+          const warn = Ui.tv(this, clash, 12, 0xFFB45309, false);
+          warn.setBackground(Ui.round(this, 0xFFFEF3C7, 8));
+          warn.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+          card.addView(warn);
+          Ui.margins(warn, 0, 8, 0, 0);
+        }
+        const b = Ui.buttonRow(this,
+          Ui.outlineButton(this, dean ? 'Dean approved' : 'Approve', Ui.GREEN, { onClick: (v) => { this.sign(r, role, w, 'Approved'); } }),
+          Ui.outlineButton(this, dean ? 'Dean declined' : 'Reject', Ui.RED, { onClick: (v) => { this.sign(r, role, w, 'Rejected'); } }));
+        card.addView(b);
+        Ui.margins(b, 0, 8, 0, 0);
+      }
+      if ('ML' === r.get('type') && (this.mine(r) || !Cloud.active(this) || Cloud.isAdmin(this))) {
+        const b = Ui.buttonRow(this, Ui.outlineButton(this, Ui.nz(r.get('cert')) === '' ? '📎 Attach medical certificate' : '📎 Replace certificate', Ui.PRIMARY, {
+          onClick: (v) => {
+            this.certFor = r.get('id');
+            Store.pick(this, ['application/pdf', 'image/*'], LeaveRegisterActivity.REQ_CERT);
+          }
+        }));
+        if (Ui.nz(r.get('cert')) !== '') b.addView(Ui.outlineButton(this, 'View', Ui.GREEN, this.opener(ViewerActivity, 'file', r.get('cert'), 'title', 'Medical certificate')));
+        card.addView(b);
+        Ui.margins(b, 0, 8, 0, 0);
+      }
+      page.addView(card);
+    }
+    if (!head && !waitingOnly) page.addView(this.emptyNote('Nothing recorded. Tap “+ Apply”.'));
+  }
+
+  mine(r) {
+    return String(Cloud.myStaff(this)) === Ui.nz(r.get('staff_id'));
+  }
+
+  static label(type) {
+    const i = LeaveRules.FACULTY.indexOf(type);
+    return i >= 0 ? LeaveRules.FACULTY_LABELS[i].replace(/\s+\(.*/, '') : Ui.nz(type);
+  }
+
+  sign(r, role, level, st) {
+    const name = Cloud.active(this) ? Cloud.prefs(this).getString('name', '') : this.db.setting('hod', '');
+    const cv = new ContentValues();
+    cv.put(level + '_status', st);
+    cv.put(level + '_by', name);
+    cv.put(level + '_date', Dates.todayIso());
+    const next = new Row(r);
+    next.put(level + '_status', st);
+    const all = LeaveRules.overall(next, role);
+    cv.put('status', all);
+    if (all === 'Approved') cv.put('approved_by', name);
+    this.db.update('faculty_leaves', cv, Long.parseLong(r.get('id')));
+    this.render();
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req !== LeaveRegisterActivity.REQ_CERT || res !== RESULT_OK || data == null || data.getData() == null || this.certFor == null) return;
+    try {
+      const rel = Store.importUri(this, data.getData(), 'facleave', 'mlcert');
+      const cv = new ContentValues();
+      cv.put('cert', rel);
+      cv.put('cert_date', Dates.todayIso());
+      this.db.update('faculty_leaves', cv, Long.parseLong(this.certFor));
+      this.certFor = null;
+      Ui.toast(this, 'Medical certificate attached');
+      this.render();
+    } catch (e) {
+      Ui.toast(this, 'Could not attach: ' + e.getMessage());
+    }
+  }
+
+  leaveDialog(r) {
+    const db = this.db;
+    const staff = this.facultyStaff();
+    if (staff.length === 0) {
+      Ui.toast(this, 'Add faculty members first');
+      return;
+    }
+    const manager = !Cloud.active(this) || Cloud.isAdmin(this);
+    if (r != null && !manager && !this.mine(r)) {
+      Ui.toast(this, 'Only the faculty member or the HOD can change this leave');
+      return;
+    }
+    const ids = staff.map(s => s.get('id')), names = staff.map(s => s.get('name'));
+    const me = Cloud.myStaff(this) > 0 ? String(Cloud.myStaff(this)) : ids[0];
+    const tab = this.tab;
+    const type0 = r != null ? Ui.nz(r.get('type')) : LeaveRules.FACULTY.indexOf(tab) >= 0 ? tab
+      : 'COL taken' === tab ? 'COL' : 'COL credited' === tab ? 'COL credit' : 'CL';
+    const f = new Form(this);
+    if (manager) f.choice('staff_id', 'Faculty member', names, ids, r == null ? me : r.get('staff_id'), null);
+    f.choice('type', 'Leave', LeaveRules.FACULTY_LABELS, LeaveRules.FACULTY, type0, null);
+    f.date('from_date', 'From (day worked, for a COL claim)', r == null ? Dates.todayIso() : r.get('from_date'));
+    f.date('to_date', 'To', r == null ? Dates.todayIso() : r.get('to_date'));
+    f.check('half', 'Half day', r != null && '0.5' === r.get('days'));
+    f.multi('reason', 'Reason / remarks', r == null ? '' : r.get('reason'));
+    if (r != null && (manager || this.mine(r))) {
+      const del = Ui.outlineButton(this, 'Delete this leave', Ui.RED, {
+        onClick: (v) => {
+          db.forgetFile(r.get('cert'));
+          db.delete('faculty_leaves', Long.parseLong(r.get('id')));
+          this.render();
+        }
+      });
+      f.view.addView(del);
+      Ui.margins(del, 0, 14, 0, 0);
+    }
+    Ui.formDialog(this, r == null ? 'Apply for leave' : 'Edit leave', f, 'Save', {
+      run: () => {
+        const sid = manager ? f.get('staff_id') : r != null ? r.get('staff_id') : String(Cloud.myStaff(this));
+        if (sid === '0' || sid === '-1') {
+          Ui.toast(this, 'Your account is not linked to a faculty entry yet. Ask the admin to link it.');
+          return false;
+        }
+        const type = f.get('type');
+        const a = Dates.parse(f.get('from_date')), b = 'COL credit' === type ? a : Dates.parse(f.get('to_date'));
+        if (a == null || b == null || b.isBefore(a)) {
+          Ui.toast(this, '“To” date must be on or after “From”');
+          return false;
+        }
+        const days = '1' === f.get('half') && a.equals(b) ? 0.5 : ChronoUnit.DAYS.between(a, b) + 1;
+        let why = LeaveRules.check(db, r, sid, type, a, b, days);
+        if (why == null && 'EL' === type && !a.isAfter(Dates.today()) && !manager && r == null)
+          why = 'EL needs prior approval from the HOD and the Dean: apply before the leave starts.';
+        if (why != null) {
+          Ui.toast(this, why);
+          return false;
+        }
+        const s = db.row('SELECT role FROM staff WHERE id=?', sid);
+        const role = s == null ? '' : Ui.nz(s.get('role'));
+        const cv = new ContentValues();
+        cv.put('staff_id', sid);
+        cv.put('type', type);
+        cv.put('from_date', a.toString());
+        cv.put('to_date', b.toString());
+        cv.put('days', days);
+        cv.put('reason', f.get('reason'));
+        const changed = r == null || type !== r.get('type') || a.toString() !== r.get('from_date') || b.toString() !== r.get('to_date') || sid !== r.get('staff_id');
+        if (changed) {
+          for (const l of LeaveRules.LEVELS) {
+            cv.put(l + '_status', '');
+            cv.put(l + '_by', '');
+            cv.put(l + '_date', '');
+          }
+          for (const l of LeaveRules.steps(type, role)) cv.put(l + '_status', 'Pending');
+          cv.put('status', 'Applied');
+          cv.put('approved_by', '');
+        }
+        if (r == null) {
+          cv.put('applied', Dates.todayIso());
+          db.insert('faculty_leaves', cv);
+          Ui.toast(this, 'ML' === type ? 'Sent. Attach the medical certificate within one week.' : 'Sent for approval');
+        } else db.update('faculty_leaves', cv, Long.parseLong(r.get('id')));
+        this.tab = 'COL' === type ? 'COL taken' : 'COL credit' === type ? 'COL credited' : type;
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  static days(d) {
+    const v = LeaveRules.num(d);
+    return LeaveRules.fmt(v) + (v === 1 ? ' day' : ' days');
+  }
+
+  white(v, label) {
+    const l = Ui.v(this);
+    l.setGravity(Gravity.CENTER_HORIZONTAL);
+    const n = Ui.tv(this, v, 22, Color.WHITE, true);
+    n.setGravity(Gravity.CENTER);
+    l.addView(n);
+    const t = Ui.tv(this, label, 11, 0xD9FFFFFF, false);
+    t.setGravity(Gravity.CENTER);
+    l.addView(t);
+    return l;
+  }
+
+  // ---------- PGs ----------
+
+  pgPage(page) {
+    const db = this.db, fmt = LeaveRules.fmt;
+    this.ruleCard(page, LeaveRules.pgRule(), Ui.PURPLE);
+    const pgs = db.rows("SELECT id, name, unit, batch FROM staff WHERE role='Postgraduate' AND " + Approvals.APPROVED_SQL + ' ORDER BY name');
+    if (pgs.length === 0) {
+      page.addView(this.emptyNote('Add the PGs to the staff list first (Menu → Students → PG).'));
+      return;
+    }
+    const me = String(Cloud.myStaff(this));
+    const at = pgs.findIndex(p => p.get('id') === me);
+    if (at > 0) pgs.unshift(pgs.splice(at, 1)[0]);
+    const kinds = ['Casual leave', 'Academic leave', 'Week off', 'Other'];
+    for (const p of pgs) {
+      const id = p.get('id');
+      const ok = [0, 0, 0, 0];
+      let waiting = 0;
+      const rows = db.rows('SELECT * FROM pg_leaves WHERE staff_id=? AND from_date BETWEEN ? AND ? ORDER BY from_date DESC', id, this.y0(), this.y1());
+      for (const r of rows) {
+        const o = PgLeaveActivity.overall(r);
+        if (o === 'Approved') ok[kinds.indexOf(LeaveRules.pgKind(r.get('leave_type')))] += LeaveRules.num(r.get('days'));
+        else if (o !== 'Not approved') waiting++;
+      }
+      const card = Ui.card(this);
+      if (id === me) card.setBackground(Ui.outline(this, Ui.CARD, Ui.PURPLE, 16));
+      const top = Ui.h(this);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      const yr = CaseSheet.pgYear(p.get('batch'), Dates.today());
+      top.addView(Ui.tv(this, p.get('name') + (id === me ? '  (you)' : ''), 15, Ui.TEXT, true), Ui.weight(1));
+      top.addView(Ui.softPill(this, Db.shortName(Ui.nz(p.get('unit'))) + (yr > 0 ? ' · year ' + yr : ''), Ui.PURPLE));
+      card.addView(top);
+      const flow = new Bands.Flow(this);
+      flow.addView(Ui.softPill(this, 'CL ' + fmt(ok[0]) + ' / 20 · ' + fmt(Math.max(0, LeaveRules.PG_CL - ok[0])) + ' left', ok[0] >= LeaveRules.PG_CL ? Ui.RED : Ui.AMBER));
+      flow.addView(Ui.softPill(this, 'Academic ' + fmt(ok[1]) + ' / 5', ok[1] >= LeaveRules.PG_ACADEMIC ? Ui.RED : 0xFF2563EB));
+      flow.addView(Ui.softPill(this, 'Week off ' + fmt(ok[2]), Ui.TEAL));
+      if (ok[3] > 0) flow.addView(Ui.softPill(this, 'Other ' + fmt(ok[3]), Ui.SLATE));
+      if (waiting > 0) flow.addView(Ui.softPill(this, waiting + ' waiting', Ui.ORANGE));
+      card.addView(flow);
+      Ui.margins(flow, 0, 8, 0, 0);
+      if (this.openPg === id) {
+        if (rows.length === 0) card.addView(Ui.muted(this, 'No leave in ' + this.year + '.'));
+        for (const r of rows) {
+          const o = PgLeaveActivity.overall(r);
+          const t = Ui.tv(this, ('Approved' === o ? '✓ ' : 'Not approved' === o ? '✗ ' : '… ') + LeaveRules.pgKind(r.get('leave_type')).replace('Casual leave', 'CL')
+            + '  ·  ' + Dates.nice(r.get('from_date')) + (r.get('to_date') === r.get('from_date') ? '' : ' to ' + Dates.nice(r.get('to_date')))
+            + '  ·  ' + LeaveRegisterActivity.days(r.get('days')), 13, 'Approved' === o ? Ui.GREEN : 'Not approved' === o ? Ui.RED : Ui.ORANGE, false);
+          t.setPadding(0, Ui.dp(this, 6), 0, 0);
+          t.setOnClickListener(this.opener(PgLeaveFormActivity, 'id', r.get('id')));
+          card.addView(t);
+        }
+      }
+      card.setOnClickListener({ onClick: (v) => { this.openPg = this.openPg === id ? '' : id; this.render(); } });
+      page.addView(card);
+    }
+    page.addView(Ui.muted(this, '   Tap a PG to see the leave taken. Counts are approved days; waiting applications are shown apart.'));
+  }
+}
+;
+/* ---- app/LeaveRules.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The department's leave rules (9.94) for the leave register.
+ * Faculty: CL 12 a year, COL credited for work on a government holiday or second Saturday, COL taken from that balance,
+ * PL on holidays with the superior cadre's permission, RH 3 a year on government RH days, EL with the HOD and Dean,
+ * ML 90 days in 5 years with a medical certificate to the Dean through the HOD within a week.
+ * PGs: 20 CL and 5 academic leave a year, week off only with prior permission.
+ */
+class LeaveRules {
+  static CL = 'CL';
+  static COL_CREDIT = 'COL credit';
+  static COL = 'COL';
+  static PL = 'PL';
+  static RH = 'RH';
+  static EL = 'EL';
+  static ML = 'ML';
+  /** Faculty leave a member can apply for (COL credit = a claim for a day worked that the app did not see). */
+  static FACULTY = ['CL', 'COL', 'PL', 'RH', 'EL', 'ML', 'COL credit'];
+  static FACULTY_LABELS = ['CL  (casual leave)', 'COL taken', 'PL', 'RH  (regional holiday)', 'EL  (earned leave)', 'ML  (medical leave)', 'COL credit claim (day worked)'];
+  /** The register's sub-options, in the order the department lists them. */
+  static TABS = ['All', 'CL', 'COL credited', 'COL taken', 'PL', 'RH', 'EL', 'ML', 'Holidays'];
+  static CL_YEAR = 12;
+  static RH_YEAR = 3;
+  static ML_DAYS = 90;
+  static ML_YEARS = 5;
+  static PG_CL = 20;
+  static PG_ACADEMIC = 5;
+  static ACADEMIC = 'Academic leave';
+  static WEEK_OFF = 'Week off';
+  static CASUAL = 'Casual leave';
+  static LEVELS = ['prof', 'hod', 'dean'];
+
+  static rule(tab) {
+    switch (tab) {
+      case 'CL': return '12 days of casual leave allowed per year.';
+      case 'COL credited': return 'When a faculty member works on a government holiday or a second Saturday, one COL is credited automatically '
+        + '(seen from attendance Present / On duty, the DAP register or CCB duty that day). A day worked that the app did not see can be claimed with “COL credit claim”.';
+      case 'COL taken': return 'COL is taken from the COL balance (credited minus taken).';
+      case 'PL': return 'PL is taken on government holidays and second Saturdays, with the permission of the superior cadre: '
+        + 'an Assistant Professor from the Professor and the HOD; a Professor or Associate Professor from the HOD.';
+      case 'RH': return '3 regional holidays (RH) a year, only on the government approved RH days.';
+      case 'EL': return 'Earned leave with prior approval from the HOD and the Dean.';
+      case 'ML': return 'Medical leave up to 3 months (90 days) every 5 years of government service. The medical certificate goes to the Dean through the HOD within one week of the leave.';
+      case 'Holidays': return 'Government holidays (for COL and PL) and the government approved RH days. Second Saturdays are counted on their own.';
+      default: return 'CL 12 a year · COL credited for work on holidays and second Saturdays · PL on holidays with permission · RH 3 a year · EL with HOD and Dean · ML 90 days in 5 years with certificate.';
+    }
+  }
+
+  static pgRule() {
+    return 'Every year: 20 days casual leave (CL) and 5 days academic leave. Week off is optional: only with prior permission, when the work flow is not affected.';
+  }
+
+  // ---------- dates ----------
+
+  static secondSaturday(d) {
+    return Dates.dow(d) === 6 && d.getDayOfMonth() >= 8 && d.getDayOfMonth() <= 14;
+  }
+
+  /** Calendar entries of one kind (HOLIDAY or RH), day by day, with their titles (sorted by date). */
+  static days(db, kind, from, to) {
+    const out = new Map();
+    for (const r of db.rows("SELECT date, end_date, title FROM cal_events WHERE kind=? AND date<=? AND (CASE WHEN end_date='' OR end_date IS NULL THEN date ELSE end_date END)>=?", kind, to, from)) {
+      const a = Dates.parse(r.get('date'));
+      let b = Dates.parse(Ui.nz(r.get('end_date')));
+      if (a == null) continue;
+      if (b == null || b.isBefore(a)) b = a;
+      for (let d = a; !d.isAfter(b); d = d.plusDays(1)) {
+        const iso = d.toString();
+        if (iso >= from && iso <= to) out.set(iso, Ui.nz(r.get('title')));
+      }
+    }
+    return new Map([...out.entries()].sort((x, y) => x[0] < y[0] ? -1 : x[0] > y[0] ? 1 : 0));
+  }
+
+  /** Government holiday or second Saturday: the days COL is earned on and PL is taken on. */
+  static holiday(db, d) {
+    return LeaveRules.secondSaturday(d) || LeaveRules.days(db, 'HOLIDAY', d.toString(), d.toString()).size > 0;
+  }
+
+  // ---------- faculty ----------
+
+  /** The approval steps for a faculty leave, by type and the applicant's cadre. */
+  static steps(type, role) {
+    if ('PL' === type) return 'Assistant Professor' === role ? ['prof', 'hod'] : ['hod'];
+    if ('EL' === type || 'ML' === type) return ['hod', 'dean'];
+    return ['hod'];
+  }
+
+  static stepName(type, level) {
+    if ('prof' === level) return 'Professor';
+    if ('dean' === level) return 'ML' === type ? 'Dean (through HOD)' : 'Dean';
+    return LeaveRules.steps(type, '').length === 1 && 'PL' !== type ? 'Professor / HOD' : 'HOD';
+  }
+
+  static stepStatus(r, level) {
+    return Ui.nz(r.get(level + '_status'));
+  }
+
+  /** Overall: Approved when every step approves, Rejected when one declines, else Applied (old entries keep their status). */
+  static overall(r, role) {
+    const st = LeaveRules.steps(Ui.nz(r.get('type')), role);
+    let any = false, all = true;
+    for (const l of st) {
+      const s = LeaveRules.stepStatus(r, l);
+      if (s !== '') any = true;
+      if (s === 'Rejected') return 'Rejected';
+      if (s !== 'Approved') all = false;
+    }
+    if (!any) return Ui.nz(r.get('status')) === '' ? 'Applied' : r.get('status');
+    return all ? 'Approved' : 'Applied';
+  }
+
+  /** The step waiting now, or null. */
+  static waiting(r, role) {
+    if (LeaveRules.overall(r, role) !== 'Applied') return null;
+    for (const l of LeaveRules.steps(Ui.nz(r.get('type')), role)) if (LeaveRules.stepStatus(r, l) !== 'Approved') return l;
+    return null;
+  }
+
+  /** Who may sign a step: Professors the Professor step (and CL/COL/RH sanction), the HOD, Registrar and admin every step. */
+  static canSign(a, r, level) {
+    if (!Cloud.active(a)) return true;
+    if (String(Cloud.myStaff(a)) === Ui.nz(r.get('staff_id')) && !Cloud.isOwner(a)) return false;
+    if (Cloud.isAdmin(a)) return true;
+    const prof = 'professor' === Cloud.role(a);
+    if ('prof' === level) return prof;
+    if ('hod' === level) return prof && LeaveRules.steps(Ui.nz(r.get('type')), '').length === 1 && 'PL' !== r.get('type');
+    return false;
+  }
+
+  /** One faculty member's approved days of a type in [from, to]. */
+  static used(db, staffId, type, from, to) {
+    let d = 0;
+    for (const r of db.rows('SELECT l.*, s.role AS srole FROM faculty_leaves l LEFT JOIN staff s ON s.id=l.staff_id WHERE l.staff_id=? AND l.type=? AND l.from_date<=? AND l.to_date>=?',
+      staffId, type, to, from))
+      if (LeaveRules.overall(r, Ui.nz(r.get('srole'))) === 'Approved') d += LeaveRules.num(r.get('days'));
+    return d;
+  }
+
+  /** COL credited in [from, to]: holidays and second Saturdays worked (attendance, DAP, CCB duty) plus approved claims. */
+  static credits(db, staffId, from, to) {
+    const got = new Map();
+    const s = db.row('SELECT name FROM staff WHERE id=?', staffId);
+    const key = s == null ? '' : Wrapped.norm(s.get('name'));
+    const hol = LeaveRules.days(db, 'HOLIDAY', from, to);
+    const a = Dates.parse(from), today = Dates.today();
+    let b = Dates.parse(to);
+    if (a != null && b != null) {
+      if (b.isAfter(today)) b = today;
+      for (let d = a; !d.isAfter(b); d = d.plusDays(1)) {
+        const iso = d.toString();
+        const h = hol.has(iso), sat = LeaveRules.secondSaturday(d);
+        if (!h && !sat) continue;
+        const day = h ? (hol.get(iso) === '' ? 'Holiday' : hol.get(iso)) : 'Second Saturday';
+        let why = null;
+        const at = db.row('SELECT status FROM attendance WHERE staff_id=? AND date=?', staffId, iso);
+        if (at != null && ('P' === at.get('status') || 'OD' === at.get('status'))) why = 'attendance';
+        if (why == null && key !== '') {
+          for (const r of db.rows('SELECT dap_name FROM dap WHERE date=?', iso))
+            if (Wrapped.names(r.get('dap_name'), key)) why = 'DAP duty';
+          for (const r of db.rows('SELECT prof, ap FROM ccb_duty WHERE date=?', iso))
+            if (why == null && (Wrapped.names(r.get('prof'), key) || Wrapped.names(r.get('ap'), key))) why = 'CCB duty';
+        }
+        if (why != null) got.set(iso, day + ' · ' + why);
+      }
+    }
+    for (const r of db.rows('SELECT l.*, s.role AS srole FROM faculty_leaves l LEFT JOIN staff s ON s.id=l.staff_id WHERE l.staff_id=? AND l.type=? AND l.from_date BETWEEN ? AND ?',
+      staffId, 'COL credit', from, to))
+      if (LeaveRules.overall(r, Ui.nz(r.get('srole'))) === 'Approved' && !got.has(r.get('from_date')))
+        got.set(r.get('from_date'), 'Claim approved' + (Ui.nz(r.get('reason')) === '' ? '' : ' · ' + r.get('reason')));
+    return [...got.keys()].sort().map(k => ({ date: k, why: got.get(k) }));
+  }
+
+  /** COL balance up to today: every credit minus every COL taken (approved). */
+  static colBalance(db, staffId) {
+    return LeaveRules.credits(db, staffId, '2000-01-01', Dates.todayIso()).length - LeaveRules.used(db, staffId, 'COL', '2000-01-01', '9999-12-31');
+  }
+
+  /** ML used in the 5 years up to the given day. */
+  static mlUsed(db, staffId, upTo) {
+    return LeaveRules.used(db, staffId, 'ML', upTo.minusYears(LeaveRules.ML_YEARS).plusDays(1).toString(), upTo.toString());
+  }
+
+  /** Why this leave cannot be applied as it is, or null. */
+  static check(db, old, staffId, type, a, b, days) {
+    const fmt = LeaveRules.fmt;
+    const y0 = a.getYear() + '-01-01', y1 = a.getYear() + '-12-31';
+    const mine = old != null && type === old.get('type') && 'Approved' === Ui.nz(old.get('status')) ? LeaveRules.num(old.get('days')) : 0;
+    if ('CL' === type) {
+      const left = LeaveRules.CL_YEAR - LeaveRules.used(db, staffId, 'CL', y0, y1) + mine;
+      if (days > left) return 'Only ' + fmt(left) + ' CL left in ' + a.getYear() + ' (12 a year).';
+    } else if ('COL' === type) {
+      const left = LeaveRules.colBalance(db, staffId) + mine;
+      if (days > left) return 'COL balance is ' + fmt(left) + '. Work on a government holiday or second Saturday first, or claim a day worked.';
+    } else if ('PL' === type || 'RH' === type) {
+      const rh = 'RH' === type ? LeaveRules.days(db, 'RH', a.toString(), b.toString()) : null;
+      for (let d = a; !d.isAfter(b); d = d.plusDays(1)) {
+        if ('PL' === type && !LeaveRules.holiday(db, d))
+          return Dates.nice(d) + ' is not a government holiday or second Saturday. PL is only for those days (add the holiday under Holidays if it is missing).';
+        if ('RH' === type && !rh.has(d.toString()))
+          return Dates.nice(d) + ' is not a government approved RH day. Add the RH days under Holidays first.';
+      }
+      if ('RH' === type) {
+        const left = LeaveRules.RH_YEAR - LeaveRules.used(db, staffId, 'RH', y0, y1) + mine;
+        if (days > left) return 'Only ' + fmt(left) + ' RH left in ' + a.getYear() + ' (3 a year).';
+      }
+    } else if ('ML' === type) {
+      const left = LeaveRules.ML_DAYS - LeaveRules.mlUsed(db, staffId, b) + mine;
+      if (days > left) return 'Only ' + fmt(left) + ' days of ML left in the last 5 years (90 days every 5 years).';
+    } else if ('COL credit' === type) {
+      if (a.isAfter(Dates.today())) return 'Claim COL only for a day already worked.';
+    }
+    return null;
+  }
+
+  /** The ML certificate is due within a week of the leave starting. */
+  static certOverdue(r) {
+    if ('ML' !== r.get('type') || Ui.nz(r.get('cert')) !== '') return false;
+    const a = Dates.parse(r.get('from_date'));
+    return a != null && Dates.today().isAfter(a.plusDays(7));
+  }
+
+  // ---------- PGs ----------
+
+  /** "Casual leave", "Academic leave", "Week off" or "Other" for the register's columns (older "Conference / academic" counts as academic). */
+  static pgKind(leaveType) {
+    const t = Ui.nz(leaveType);
+    if (t === '' || t === 'Casual leave') return 'Casual leave';
+    if (t === 'Academic leave' || t.startsWith('Conference')) return 'Academic leave';
+    if (t === 'Week off') return 'Week off';
+    return 'Other';
+  }
+
+  /** A PG's approved and waiting days of a register kind in a year. */
+  static pgUsed(db, staffId, kind, year, skipId) {
+    let d = 0;
+    for (const r of db.rows('SELECT * FROM pg_leaves WHERE staff_id=? AND from_date BETWEEN ? AND ?', staffId, year + '-01-01', year + '-12-31')) {
+      if (String(skipId) === String(r.get('id'))) continue;
+      if (LeaveRules.pgKind(r.get('leave_type')) === kind && PgLeaveActivity.overall(r) !== 'Not approved') d += LeaveRules.num(r.get('days'));
+    }
+    return d;
+  }
+
+  /** Why a PG leave cannot be applied as it is, or null (counts approved and waiting applications). */
+  static pgCheck(db, id, staffId, type, a, days) {
+    const k = LeaveRules.pgKind(type), fmt = LeaveRules.fmt;
+    if (k === 'Casual leave') {
+      const left = LeaveRules.PG_CL - LeaveRules.pgUsed(db, staffId, k, a.getYear(), id);
+      if (days > left) return 'Only ' + fmt(left) + ' days of CL left in ' + a.getYear() + ' (20 a year).';
+    } else if (k === 'Academic leave') {
+      const left = LeaveRules.PG_ACADEMIC - LeaveRules.pgUsed(db, staffId, k, a.getYear(), id);
+      if (days > left) return 'Only ' + fmt(left) + ' days of academic leave left in ' + a.getYear() + ' (5 a year).';
+    } else if (k === 'Week off' && id < 0 && !a.isAfter(Dates.today())) {
+      return 'Week off needs prior permission: apply before the day.';
+    }
+    return null;
+  }
+
+  static num(s) {
+    const v = parseFloat(Ui.nz(s == null ? '' : String(s)));
+    return isNaN(v) ? 0 : v;
+  }
+
+  static fmt(v) {
+    return v === Math.floor(v) ? String(Math.trunc(v)) : String(v);
   }
 }
 ;
@@ -54103,46 +56967,39 @@ class MainActivity extends Base {
     Ui.margins(stats, 0, 12, 0, 0);
     page.addView(hero);
     page.addView(HomeLayout.myDay(this, db));
-    const bub = Doubts.homeBubble(this, db);
-    if (bub != null) page.addView(bub);
-    const back = AiReturn.homeCard(this, db);
-    if (back != null) page.addView(back);
-    const um = UnitMoves.homeCard(this, db);
-    if (um != null) page.addView(um);
-    const ho = HandoverActivity.homeCard(this, db);
-    if (ho != null) page.addView(ho);
-    const mb = MorningBrief.homeCard(this, db);
-    if (mb != null) page.addView(mb);
-    const ew = Ews.homeCard(this, db);
-    if (ew != null) page.addView(ew);
-    const pr = ProtocolActivity.homeCard(this, db);
-    if (pr != null) page.addView(pr);
-    const ob = Outbreak.homeCard(this, db);
-    if (ob != null) page.addView(ob);
-    const cl = CriticalLabs.homeCard(this, db);
-    if (cl != null) page.addView(cl);
-    const wt = Watch.homeCard(this, db);
-    if (wt != null) page.addView(wt);
-    const rs = Results.homeCard(this, db);
-    if (rs != null) page.addView(rs);
-    const sw = Swaps.homeCard(this, db);
-    if (sw != null) page.addView(sw);
-    const lb = Logbook.homeCard(this, db);
-    if (lb != null) page.addView(lb);
-    page.addView(this.admissionDayCard(Dates.admitDay().toString()));
+    // 9.90: on a tablet the day's work and the day's teaching sit side by side; on a phone they follow one another
+    let duty = page, teach = page;
+    if (Base.wide(this)) {
+      const cols = Ui.h(this);
+      cols.setGravity(Gravity.TOP);
+      duty = Ui.v(this);
+      teach = Ui.v(this);
+      cols.addView(duty, Ui.weight(1));
+      cols.addView(teach, Ui.weight(1));
+      page.addView(cols);
+    }
+    for (const card of [AiReturn.homeCard(this, db), UnitMoves.homeCard(this, db), HandoverActivity.homeCard(this, db), MorningBrief.homeCard(this, db),
+      Ews.homeCard(this, db), ProtocolActivity.homeCard(this, db), Outbreak.homeCard(this, db), CriticalLabs.homeCard(this, db), Watch.homeCard(this, db),
+      Results.homeCard(this, db), Swaps.homeCard(this, db), Logbook.homeCard(this, db)]) if (card != null) duty.addView(card);
+    duty.addView(Ui.heading(this, "On duty today", Ui.unitColor(db.todaysUnit())));
+    duty.addView(this.admissionDayCard(Dates.admitDay().toString()));
     // 9.70: the admit button sits right under the admission day (user asked)
     const ab = Ui.v(this);
     ab.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), 0);
     ab.addView(Ui.button(this, "+  Admit a patient", Ui.PRIMARY, this.opener(FormActivity, "kind", "patient", "unit", db.todaysUnit())));
-    page.addView(ab);
-    page.addView(this.dapCard(Dates.admitDay().toString()));
+    duty.addView(ab);
+    duty.addView(this.dapCard(Dates.admitDay().toString()));
 
-    for (const s of SessionAttendance.open(db)) page.addView(AcademicActivity.attendanceBanner(this, db, s));
+    teach.addView(Ui.heading(this, "Teaching today", Ui.PURPLE));
+    for (const s of SessionAttendance.open(db)) teach.addView(AcademicActivity.attendanceBanner(this, db, s));
+    const bub = Doubts.homeBubble(this, db);
+    if (bub != null) teach.addView(bub);
     const mcq = Mcq.homeCard(this, db);
-    if (mcq != null) page.addView(mcq);
-    page.addView(Spots.homeRow(this, db));
+    if (mcq != null) teach.addView(mcq);
+    teach.addView(Spots.homeRow(this, db));
     const ach = AchievementsActivity.homeCard(this, db);
-    if (ach != null) page.addView(ach);
+    if (ach != null) teach.addView(ach);
+    if (!AdminControl.isHidden(db, "Learning board")) teach.addView(TopicNotes.homeSection(this, db));
 
     const upd = Updates.available(this, db);
     if (upd != null) {
@@ -54161,7 +57018,6 @@ class MainActivity extends Base {
     const mods = this.modules();
     const byLabel = new JMap();
     for (const m of mods) byLabel.put(m.label, m);
-    if (byLabel.containsKey("Learning board") || !AdminControl.isHidden(db, "Learning board")) page.addView(TopicNotes.homeSection(this, db));
     page.addView(Ui.heading(this, "Your sections", Ui.PRIMARY));
     const mine = [];
     for (const l of HomeLayout.picks(this, Cloud.role(this), byLabel.keySet(), HomeLayout.YOURS)) mine.push(byLabel.get(l));
@@ -54267,7 +57123,6 @@ class MainActivity extends Base {
     bp.setMargins(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 6));
     page.addView(box, bp);
 
-    page.addView(Ui.heading(this, "This week's academics", Ui.PURPLE));
     page.addView(this.scheduleCard()); page.addView(Copyright.footer(this, Ui.MUTED));
   }
 
@@ -54610,9 +57465,15 @@ class MainActivity extends Base {
       const dqo = Doubts.open(db);
       m.add(new Module("PG questions", dqo > 0 ? dqo + " waiting" : "Ask · answer doubts", R.drawable.ic_doubt, Doubts.ORANGE, this.opener(DoubtsActivity)));
     }
-    if (Cloud.canSeeFacultyLeave(this)) m.add(new Module("Faculty leave", db.num("SELECT COUNT(*) FROM faculty_leaves WHERE status='Applied'") + " awaiting", R.drawable.ic_flight, Ui.PRIMARY_DARK, this.opener(FacultyLeaveActivity)));
+    m.add(new Module("Leave register", Cloud.canSeeFacultyLeave(this) ? db.num("SELECT COUNT(*) FROM faculty_leaves WHERE status='Applied'") + " awaiting" : "CL · academic · week off", R.drawable.ic_flight, Ui.PRIMARY_DARK, this.opener(LeaveRegisterActivity)));
     if (SignOff.showHome(this, db)) m.add(new Module("Sign-off queue", SignOff.homeLine(this, db), R.drawable.ic_approve, SignOff.COLOR, this.opener(SignOffActivity)));
     m.add(new Module("University questions", QuestionBank.homeLine(this, db), R.drawable.ic_book, QuestionBank.COLOR, this.opener(QuestionBankActivity)));
+    if (Hod.canUse(this)) m.add(new Module("HOD desk", Hod.seenToday(this) ? "Seen today" : "This morning in one page", R.drawable.ic_approve, Hod.COLOR, this.opener(HodDeskActivity)));
+    const incOpen = Issues.openCount(db, Issues.INCIDENT), shOpen = Issues.openCount(db, Issues.SHORTAGE);
+    m.add(new Module("Incidents", incOpen > 0 ? incOpen + " open" : "Complaints, needle-stick…", R.drawable.ic_notice, Issues.INCIDENT_COLOR, this.opener(IssuesActivity, "board", Issues.INCIDENT)));
+    m.add(new Module("Shortages", shOpen > 0 ? shOpen + " open" : "Equipment, drugs", R.drawable.ic_task, Issues.SHORTAGE_COLOR, this.opener(IssuesActivity, "board", Issues.SHORTAGE)));
+    m.add(new Module("Mortality review", DeathReview.pendingList(db).length + " to review", R.drawable.ic_notice, DeathReview.COLOR, this.opener(DeathReviewActivity)));
+    m.add(new Module("MD exam planner", ExamPlan.homeLine(this, db), R.drawable.ic_book, ExamPlan.COLOR, this.opener(ExamPlanActivity)));
     if (Approvals.canApproveAny(this)) m.add(new Module("Approvals", Approvals.waitingForMe(this, db) + " awaiting", R.drawable.ic_approve, Ui.AMBER, this.opener(ApprovalActivity)));
     const hoDay = Dates.admitDay().toString(), hoPrev = Dates.admitDay().minusDays(1).toString();
     const hoUnseen = db.num("SELECT COUNT(*) FROM handovers WHERE day=? AND seen_by=''", hoPrev);
@@ -54644,17 +57505,17 @@ class MainActivity extends Base {
   static GROUPS = [
     ["AI assistant", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped"],
     ["Wards & critical care", "Ward round", "Search", "Critical labs", "Clinical scores", "ABG interpreter", "Outbreak watch", "Protocol timers", "Infusion calculator", "DAMA forms", "Death certificate", "Live census", "Wall screen", "Census", "Bed board", "Tasks", "Pending results", "Antibiogram", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
-    ["Duty & coordination", "Duty hours", "PG Connect", "PG questions", "Intercom", "Handover", "Faculty chat", "DAP register", "Call duty", "Call over", "VIP cases"],
-    ["Approvals & leave", "Approvals", "Sign-off queue", "CMCHIS", "Attendance", "PG leave", "Duty swaps", "Faculty leave"],
-    ["Academics, people & tools", "Harrison's topic", "Flashcards", "Competency map", "Library", "University questions", "Presentations", "Latest journals", "Verify a document", "Conduct reports", "Memo", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
+    ["Duty & coordination", "Incidents", "Shortages", "Duty hours", "PG Connect", "PG questions", "Intercom", "Handover", "Faculty chat", "DAP register", "Call duty", "Call over", "VIP cases"],
+    ["Approvals & leave", "HOD desk", "Mortality review", "Approvals", "Sign-off queue", "CMCHIS", "Attendance", "PG leave", "Duty swaps", "Leave register"],
+    ["Academics, people & tools", "Harrison's topic", "Flashcards", "Competency map", "Library", "University questions", "MD exam planner", "Presentations", "Latest journals", "Verify a document", "Conduct reports", "Memo", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
 
   /** Bright, distinct colours for the home icons, so neighbours in a row never share a colour. */
   static TILE_COLORS = (() => {
     const m = new JMap();
     const k = ["Fever ward", "Critical care", "IMCU", "Kandiyaperi", "DAP register", "Call duty", "Call over", "VIP cases",
-      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Faculty leave", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports", "DAMA forms", "Sign-off queue", "University questions", "Library", "Critical labs", "Clinical scores", "Outbreak watch", "ABG interpreter", "Flashcards", "Ward round", "Duty hours", "Competency map", "Harrison's topic"];
+      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Leave register", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports", "DAMA forms", "Sign-off queue", "University questions", "MD exam planner", "Library", "Critical labs", "Clinical scores", "Outbreak watch", "ABG interpreter", "Flashcards", "Ward round", "Duty hours", "Competency map", "Harrison's topic", "HOD desk", "Incidents", "Shortages", "Mortality review"];
     const c = [0xFFF97316, 0xFFEC4899, 0xFFEF4444, 0xFF10B981, 0xFF6366F1, 0xFF8B5CF6, 0xFF14B8A6, 0xFFF59E0B,
-      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C, 0xFFB7372B, 0xFF0F766E, 0xFF7C2D12, 0xFF8B5E34, 0xFFDC2626, 0xFF0E7490, 0xFFB45309, 0xFF0369A1, 0xFF6D28D9, 0xFF0E7490, 0xFF9333EA, 0xFF4338CA, 0xFF9F1239];
+      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C, 0xFFB7372B, 0xFF0F766E, 0xFF7C2D12, 0xFF9333EA, 0xFF8B5E34, 0xFFDC2626, 0xFF0E7490, 0xFFB45309, 0xFF0369A1, 0xFF6D28D9, 0xFF0E7490, 0xFF9333EA, 0xFF4338CA, 0xFF9F1239, 0xFFB91C1C, 0xFFEA580C, 0xFF0891B2, 0xFF475569];
     for (let i = 0; i < k.length; i++) m.put(k[i], c[i]);
     return m;
   })();
@@ -55136,7 +57997,7 @@ class MainActivity extends Base {
     this.menuItem(page, R.drawable.ic_quiz, "Daily MCQ, ECG & Image", "Case-based questions, ECGs and images to discuss, top scorers", 0xFF6D28D9, this.opener(McqActivity));
     this.menuItem(page, R.drawable.ic_verified, "CMCHIS", "Patients per unit and IMCU, approved or not; weekly totals", Ui.PINK, this.opener(CmchisActivity));
     this.menuItem(page, R.drawable.ic_mail, "PG leave", "Leave letters, approval by Asst. Professor, Professor and HOD", Ui.PURPLE, this.opener(PgLeaveActivity));
-    if (Cloud.canSeeFacultyLeave(this)) this.menuItem(page, R.drawable.ic_flight, "Faculty leave", "Week off, CL, COL, PL (faculty only)", Ui.PRIMARY_DARK, this.opener(FacultyLeaveActivity));
+    this.menuItem(page, R.drawable.ic_flight, "Leave register", "Faculty CL, COL, PL, RH, EL, ML · PG CL, academic, week off", Ui.PRIMARY_DARK, this.opener(LeaveRegisterActivity));
     this.menuItem(page, R.drawable.ic_book, "PG logbook", "Procedures logged by PGs and signed by faculty", Logbook.COLOR, this.opener(LogbookActivity));
     this.menuItem(page, R.drawable.ic_doc, "Monthly department report", "Admissions, deaths, CMCHIS and academics in one PDF for the HOD", Ui.PRIMARY_DARK, {
       onClick: (v) => { MonthlyReport.choose(this, true); }
@@ -60056,7 +62917,8 @@ class PatientActivity extends Base {
     const color = Db.DIED.equals(p.get("status")) ? Ui.SLATE : Ui.unitColor(loc);
     this.setTitle(p.get("name"));
     const age = p.get("age").isEmpty() ? "" : p.get("age") + " y, ";
-    this.subtitle = age + Base.sexLabel(p.get("sex")) + (p.get("ip_no").isEmpty() ? "" : "  ·  IP " + p.get("ip_no"));
+    this.subtitle = age + Base.sexLabel(p.get("sex")) + (p.get("ip_no").isEmpty() ? "" : "  ·  IP " + p.get("ip_no"))
+        + (Ui.nz(p.get("pin_no")).isEmpty() ? "" : "  ·  PIN " + p.get("pin_no"));
     const mlc = Ui.nz(p.get("mlc"));
     if (!mlc.isEmpty()) this.subtitle += "  ·  " + mlc + ("MLC".equals(mlc) && !Ui.nz(p.get("ar_no")).isEmpty() ? " (AR " + p.get("ar_no") + ")" : "");
     this.headerColor(color);
@@ -60135,6 +62997,7 @@ class PatientActivity extends Base {
     if (inn || !Antibiogram.forPatient(db, id).isEmpty()) page.addView(CultureActivity.patientCard(this, db, id));
     page.addView(Labs.section(this, db, id));
     page.addView(Imaging.section(this, db, id));
+    page.addView(Imaging.clinicalSection(this, db, id));
     page.addView(ScoresActivity.patientCard(this, db, id));
     page.addView(AbgActivity.patientCard(this, db, id));
     page.addView(PillCardActivity.patientButton(this, db, id));
@@ -60240,6 +63103,7 @@ class PatientActivity extends Base {
         Ui.margins(dg, 0, 8, 0, 0);
       }
     }
+    det.addView(Ui.kv(this, "PIN number (TN HMIS)", Ui.nz(p.get("pin_no"))));
     det.addView(Ui.kv(this, "Phone", p.get("phone")));
     det.addView(Ui.kv(this, "Address", p.get("address")));
     det.addView(Ui.kv(this, "CMCHIS", "1".equals(p.get("cmchis")) ? "Yes" + (p.get("cmchis_no").isEmpty() ? "" : " (" + p.get("cmchis_no") + ")") : "No"));
@@ -60674,6 +63538,60 @@ PatientTimeline.Item = class {
   }
   key() { return this.date + " " + (this.time.length > 5 ? this.time.substring(0, 5) : this.time); }
 };
+;
+/* ---- app/PendingWorkActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Pending work by person (9.98): who has sign-offs, alerts, logbook entries, leave approvals, death reviews and overdue issues waiting. */
+class PendingWorkActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Pending work");
+    this.subtitle = "Who has what waiting · remind on WhatsApp";
+    this.headerColor(Hod.COLOR);
+  }
+
+  render() {
+    const page = Ui.v(this);
+    const l = Hod.pending(this.db);
+    let n = 0;
+    for (const p of l) n += p.items.length;
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Hod.HERO, 20));
+    hero.addView(Ui.tv(this, n === 0 ? "Nothing pending" : n + " things waiting with " + l.length + (l.length === 1 ? " person or team" : " people or teams"), 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Sign-offs, critical alerts, logbook, PG and faculty leave, death reviews and overdue incidents.", 13, 0xD9FFFFFF, false));
+    page.addView(hero);
+    for (const p of l) {
+      const c = Ui.card(this);
+      const top = Ui.h(this);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      top.addView(Ui.tv(this, p.who, 15, Ui.TEXT, true), Ui.weight(1));
+      top.addView(Ui.softPill(this, String(p.items.length), p.items.length >= 5 ? Ui.RED : Ui.ORANGE));
+      c.addView(top);
+      for (const s of p.items.slice(0, 6)) c.addView(Ui.tv(this, "• " + s, 13, Ui.TEXT, false));
+      if (p.items.length > 6) c.addView(Ui.muted(this, "+ " + (p.items.length - 6) + " more"));
+      const rem = Ui.outlineButton(this, p.phone === "" ? "Remind (share)" : "Remind on WhatsApp", Chat.GREEN, { onClick: (v) => { this.remind(p); } });
+      c.addView(rem);
+      Ui.margins(rem, 0, 8, 0, 0);
+      page.addView(c);
+    }
+    this.setPage(page);
+  }
+
+  remind(p) {
+    const text = Hod.reminder(p);
+    if (p.phone === "") {
+      ReportActivity.shareText(this, text);
+      return;
+    }
+    const u = Uri.parse("https://wa.me/" + PhoneDirectoryActivity.whatsapp(p.phone) + "?text=" + Uri.encode(text));
+    try {
+      this.startActivity(new Intent(Intent.ACTION_VIEW, u));
+    } catch (e) {
+      ReportActivity.shareText(this, text);
+    }
+  }
+}
 ;
 /* ---- app/People.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -61878,7 +64796,7 @@ class PgLeaveActivity extends Base {
     for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) card.addView(PgLeaveActivity.approvalRow(this, r, i, {
       run: () => { this.render(); }
     }));
-    const form = Ui.tv(this, "📄  Leave form (PDF / Word)", 13, Ui.PURPLE, true);
+    const form = Ui.tv(this, "📄  " + LeaveForm.name(r) + " (PDF / Word)", 13, Ui.PURPLE, true);
     form.setPadding(0, Ui.dp(this, 10), 0, 0);
     form.setOnClickListener({
       onClick: (v) => { LeaveForm.choose(this, r); }
@@ -61941,6 +64859,18 @@ class PgLeaveActivity extends Base {
       });
       row.addView(no);
       Ui.margins(no, 6, 0, 0, 0);
+      // 9.98: others of the unit away, the admission day and roster duties in those days
+      const clash = Hod.clashText(a.db, Ui.nz(r.get("staff_id")), Ui.nz(r.get("from_date")), Ui.nz(r.get("to_date")));
+      if (clash !== "") {
+        const box = Ui.v(a);
+        box.addView(row);
+        const warn = Ui.tv(a, clash, 12, 0xFFB45309, false);
+        warn.setBackground(Ui.round(a, 0xFFFEF3C7, 8));
+        warn.setPadding(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 10), Ui.dp(a, 6));
+        box.addView(warn);
+        Ui.margins(warn, 32, 6, 0, 0);
+        return box;
+      }
     }
     return row;
   }
@@ -62010,6 +64940,7 @@ class PgLeaveFormActivity extends Base {
 
   static REQ_PICK = 51;
   static REQ_SCAN = 52;
+  static SPANS = ['One day', 'More than one day'];
 
   onCreate(b) {
     super.onCreate(b);
@@ -62073,9 +65004,20 @@ class PgLeaveFormActivity extends Base {
     this.form = new Form(this);
     const form = this.form;
     form.choice("staff_id", "PG", names, ids, r == null ? mine : r.get("staff_id"), null);
+    const SPANS = PgLeaveFormActivity.SPANS;
+    form.segment("span", "Leave for", SPANS, r == null || LeaveForm.oneDay(r) ? SPANS[0] : SPANS[1], null, {
+      changed: (v) => {
+        const one = SPANS[0].equals(v);
+        form.show("on_date", one);
+        form.show("from_date", !one);
+        form.show("to_date", !one);
+      }
+    });
+    form.date("on_date", "Date of leave", r == null ? Dates.todayIso() : r.get("from_date"));
     form.date("from_date", "Leave from", r == null ? Dates.todayIso() : r.get("from_date"));
-    form.date("to_date", "Leave to", r == null ? Dates.todayIso() : r.get("to_date"));
-    form.choice("leave_type", "Type of leave", LeaveForm.TYPES, LeaveForm.TYPES, r == null || Ui.nz(r.get("leave_type")).isEmpty() ? LeaveForm.TYPES[0] : r.get("leave_type"), null);
+    form.date("to_date", "Leave to", r == null ? Dates.today().plusDays(1).toString() : r.get("to_date"));
+    form.choice("leave_type", "Type of leave", LeaveForm.TYPES, LeaveForm.TYPES, r == null || Ui.nz(r.get("leave_type")).isEmpty() ? LeaveForm.TYPES[0]
+      : LeaveRules.pgKind(r.get("leave_type")) === LeaveRules.ACADEMIC ? LeaveRules.ACADEMIC : r.get("leave_type"), null);
     form.multi("reason", "Reason for leave (on account of) *", r == null ? "" : r.get("reason"));
     form.date("resume_date", "Resuming duty on", r == null ? Dates.today().plusDays(1).toString() : LeaveForm.resume(r));
     const others = [];
@@ -62085,6 +65027,9 @@ class PgLeaveFormActivity extends Base {
     ol[0] = "Not decided";
     form.choice("duty_pg", "Doing-duty PG (attends my duties)", ol, on, r == null ? "" : Ui.nz(r.get("duty_pg")), null);
     card.addView(form.view);
+    const rule = Ui.muted(this, "📋  " + LeaveRules.pgRule());
+    card.addView(rule);
+    Ui.margins(rule, 0, 10, 0, 0);
     page.addView(card);
 
     page.addView(Ui.heading(this, "Leave letter", Ui.PURPLE));
@@ -62093,9 +65038,9 @@ class PgLeaveFormActivity extends Base {
     this.drawLetter();
 
     if (r != null) {
-      page.addView(Ui.heading(this, "Leave application form", Ui.PURPLE));
+      page.addView(Ui.heading(this, LeaveForm.name(r), Ui.PURPLE));
       const fm = Ui.card(this);
-      fm.addView(Ui.muted(this, "The department's leave application, filled in from this entry, with the approvals given so far."));
+      fm.addView(Ui.muted(this, (LeaveForm.oneDay(r) ? "The one day leave application" : "The leave application for more than one day") + ", filled in from this entry, with the approvals given so far."));
       fm.addView(Ui.buttonRow(this,
         Ui.outlineButton(this, "Download PDF", Ui.PURPLE, {
           onClick: (v) => { LeaveForm.make(this, r, true); }
@@ -62187,9 +65132,13 @@ class PgLeaveFormActivity extends Base {
   save() {
     const form = this.form, r = this.r;
     if (form == null) return;
-    const a = Dates.parse(form.get("from_date")), b = Dates.parse(form.get("to_date"));
+    const one = PgLeaveFormActivity.SPANS[0].equals(form.get("span"));
+    const a = Dates.parse(form.get(one ? "on_date" : "from_date")), b = one ? a : Dates.parse(form.get("to_date"));
     if (a == null || b == null || b.isBefore(a)) { Ui.toast(this, "“Leave to” must be on or after “Leave from”"); return; }
+    if (!one && !b.isAfter(a)) { Ui.toast(this, "For a single day choose “One day”, or set “Leave to” after “Leave from”"); return; }
     if (!form.require("reason", "Enter the reason")) return;
+    const limit = LeaveRules.pgCheck(this.db, r == null ? -1 : this.id, form.get("staff_id"), form.get("leave_type"), a, ChronoUnit.DAYS.between(a, b) + 1);
+    if (limit != null) { Ui.toast(this, limit); return; }
     const cv = new ContentValues();
     cv.put("staff_id", form.get("staff_id"));
     cv.put("from_date", a.toString());
@@ -68698,11 +71647,113 @@ class RosterFormActivity extends Base {
   }
 }
 ;
+/* ---- app/ScorecardActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Unit scorecard (9.98): M1 to M7 side by side for a month, outcomes and how the work gets done; best green, worst red. */
+class ScorecardActivity extends Base {
+  constructor() {
+    super();
+    this.back = 0;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Unit scorecard");
+    this.subtitle = "M1 to M7 side by side";
+    this.headerColor(Hod.COLOR);
+    this.headerAction("PDF / Word", {
+      onClick: (v) => {
+        const m = YearMonth.from(Dates.today()).minusMonths(this.back);
+        Hod.export(this, "Unit scorecard " + Dates.month(m.atDay(1)), { make: () => ScorecardActivity.doc(this.db, m) });
+      }
+    });
+  }
+
+  render() {
+    const page = Ui.v(this);
+    const tabs = Ui.h(this);
+    tabs.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    for (let i = 0; i < 3; i++) {
+      const k = i;
+      const t = Ui.chip(this, Dates.month(YearMonth.from(Dates.today()).minusMonths(i).atDay(1)) + (i === 0 ? " (so far)" : ""), this.back === i, Hod.COLOR);
+      t.setOnClickListener({ onClick: (v) => { this.back = k; this.render(); } });
+      tabs.addView(t);
+      if (i > 0) Ui.margins(t, 8, 0, 0, 0);
+    }
+    page.addView(tabs);
+
+    const m = YearMonth.from(Dates.today()).minusMonths(this.back);
+    const all = Hod.scorecard(this.db, m);
+    const card = Ui.card(this);
+    const grid = Ui.v(this);
+    const w = [54, 48, 54, 58, 54, 50, 70, 72, 70, 66, 62];
+    const head = Ui.h(this);
+    for (let c = 0; c < Hod.SCORE_COLS.length; c++) head.addView(this.cell(Hod.SCORE_COLS[c], w[c], Ui.MUTED, true, 0));
+    grid.addView(head);
+    for (const s of all) {
+      const row = Ui.h(this);
+      row.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
+      const v = Hod.cells(s);
+      for (let c = 0; c < v.length; c++) {
+        const mk = c === 0 ? 0 : Hod.mark(all, s, c);
+        row.addView(this.cell(v[c], w[c], c === 0 ? Ui.unitColor(s.unit) : mk > 0 ? Ui.GREEN : mk < 0 ? Ui.RED : Ui.TEXT, c === 0 || mk !== 0,
+            mk > 0 ? Ui.alpha(Ui.GREEN, 0x1A) : mk < 0 ? Ui.alpha(Ui.RED, 0x1A) : 0));
+      }
+      grid.addView(row);
+    }
+    card.addView(Ui.hscroll(this, grid));
+    page.addView(card);
+
+    page.addView(Ui.heading(this, "How it is counted", Ui.SLATE));
+    const k = Ui.card(this);
+    k.addView(Ui.muted(this, "Adm, deaths, mortality, stay and DAMA: as in the Dashboard (by parent unit).\n"
+        + "Crit. ack: usual minutes to acknowledge a critical lab or NEWS2 alert.\n"
+        + "Death rev.: deaths reviewed / deaths.\n"
+        + "Sign-off wait: discharge summaries, MCCD and DAMA forms waiting for faculty now.\n"
+        + "Teaching: academic sessions and classes of the unit. Logbook: procedures signed.\n"
+        + "Green is the best unit in a column, red the one to look at. Small numbers can mislead."));
+    page.addView(k);
+    this.setPage(page);
+  }
+
+  cell(s, wDp, color, bold, bg) {
+    const t = Ui.tv(this, s, 13, color, bold);
+    t.setGravity(Gravity.CENTER);
+    t.setPadding(Ui.dp(this, 2), Ui.dp(this, 4), Ui.dp(this, 2), Ui.dp(this, 4));
+    if (bg !== 0) t.setBackground(Ui.round(this, bg, 6));
+    t.setLayoutParams(Ui.lp(Ui.dp(this, wDp), LinearLayout.LayoutParams.WRAP_CONTENT));
+    return t;
+  }
+
+  static doc(db, m) {
+    const f = Hod.doc(db, "UNIT SCORECARD · " + Dates.month(m.atDay(1)).toUpperCase(), "Unit_scorecard_" + m);
+    f.footer = Dates.month(m.atDay(1)) + "  •  " + f.dept + ", " + f.college;
+    const b = f.block("UNITS M1 TO M7", FormDoc.NAVY, 0.08, 0.07, 0.08, 0.09, 0.09, 0.08, 0.1, 0.1, 0.1, 0.1, 0.11);
+    b.row(16, ...Hod.SCORE_COLS.map((x) => Hod.h(x).center()));
+    const all = Hod.scorecard(db, m);
+    for (const s of all) {
+      const v = Hod.cells(s);
+      const r = v.map((x, i) => {
+        const mk = i === 0 ? 0 : Hod.mark(all, s, i);
+        const c = Hod.c(x).center();
+        if (i === 0) c.b();
+        if (mk > 0) c.fill(0xFFDCFCE7);
+        if (mk < 0) c.fill(0xFFFEE2E2);
+        return c;
+      });
+      b.row(14, ...r);
+    }
+    return f;
+  }
+}
+;
 /* ---- app/Scores.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
 /**
- * Clinical score calculators (9.50): qSOFA, CURB-65, GCS, Child-Pugh, MELD-Na, Wells (PE), CHA₂DS₂-VASc and HAS-BLED, filled in from the
+ * Clinical score calculators (9.50): qSOFA, CURB-65, GCS, Child-Pugh, MELD-Na, Wells (PE), CHA₂DS₂-VASc and HAS-BLED; 9.96 adds eGFR,
+ * NEWS2, SOFA, NIHSS, Framingham heart failure criteria, ABCD², Hunt & Hess and WFNS. Filled in from the
  * patient's own data where the app has it (age, sex, the newest vitals and labs, the past history), and saved into the case
  * sheet. The published scoring rules; decision support only.
  */
@@ -68726,6 +71777,8 @@ class Scores {
   }
 
   static $clinit() {
+    Scores.NIH_LIMB = ["No drift", "Drift", "Some effort vs gravity", "No effort vs gravity", "No movement"];
+    Scores.NIH_LIMB_PTS = [0, 1, 2, 3, 4];
     const check = Scores.check, num = Scores.num, choice = Scores.choice, Calc = Scores.Calc;
     Scores.ALL = [
       new Calc("QSOFA", "qSOFA", "Sepsis: risk of a poor outcome outside the ICU", "Seymour et al., JAMA 2016 (Sepsis-3)",
@@ -68756,7 +71809,51 @@ class Scores {
         check("htn_unc", "Uncontrolled hypertension (SBP above 160)", 1), check("renal", "Abnormal renal function (dialysis, transplant, creatinine 2.26+)", 1),
         check("liver", "Abnormal liver function (cirrhosis, bilirubin 2x, enzymes 3x)", 1), check("stroke", "Previous stroke", 1),
         check("bleed", "Bleeding history or tendency", 1), check("inr", "Labile INR", 1), check("elderly", "Age above 65", 1),
-        check("drugs", "Antiplatelets or NSAIDs", 1), check("alcohol", "Alcohol (8+ drinks a week)", 1))];
+        check("drugs", "Antiplatelets or NSAIDs", 1), check("alcohol", "Alcohol (8+ drinks a week)", 1)),
+      // 9.96
+      new Calc("EGFR", "eGFR (CKD-EPI 2021)", "Kidney function from serum creatinine, age and sex (no race term)", "Inker et al., NEJM 2021; KDIGO stages",
+        num("creat", "Serum creatinine", "mg/dL"), num("age", "Age", "years"), check("female", "Female", 0)),
+      new Calc("NEWS2", "NEWS2 (sepsis screen)", "Early warning score: sepsis and deterioration in adults", "Royal College of Physicians 2017; NICE NG51",
+        num("rr", "Respiratory rate", "/min"), num("spo2", "SpO2", "%"), check("scale2", "SpO2 scale 2 (COPD / hypercapnic, target 88-92%)", 0),
+        check("o2on", "On oxygen", 0), num("temp", "Temperature", "°F or °C"), num("sbp", "Systolic BP", "mmHg"), num("pulse", "Pulse", "/min"),
+        choice("avpu", "Consciousness", ["Alert", "New confusion, voice, pain or unresponsive"], [0, 0])),
+      new Calc("SOFA", "SOFA score", "Sepsis-3 organ dysfunction (a rise of 2 or more = sepsis) and ICU mortality", "Vincent et al., Intensive Care Med 1996; Singer et al., JAMA 2016",
+        num("pao2", "PaO2", "mmHg"), num("fio2", "FiO2", "% or fraction"), check("vent", "On ventilator or NIV", 0),
+        num("plt", "Platelets", "lakh/µL"), num("bili", "Bilirubin", "mg/dL"),
+        choice("cvs", "Circulation", ["MAP 70 or more", "MAP below 70", "Dopamine ≤5 or dobutamine", "Dopa >5 / NA or adr ≤0.1", "Dopa >15 / NA or adr >0.1"], [0, 1, 2, 3, 4]),
+        num("gcs", "GCS", "3-15"), num("creat", "Creatinine", "mg/dL"), num("urine", "Urine output (optional)", "mL/day")),
+      new Calc("NIHSS", "NIH Stroke Scale", "Acute stroke severity (0-42); repeat after thrombolysis and at 24 h", "Brott et al., Stroke 1989; NINDS",
+        choice("loc", "1a. Level of consciousness", ["Alert", "Drowsy", "Stuporous", "Coma"], [0, 1, 2, 3]),
+        choice("locq", "1b. Month and age questions", ["Both right", "One right", "Neither"], [0, 1, 2]),
+        choice("locc", "1c. Close eyes, make a fist", ["Both done", "One done", "Neither"], [0, 1, 2]),
+        choice("gaze", "2. Best gaze", ["Normal", "Partial palsy", "Forced deviation"], [0, 1, 2]),
+        choice("visual", "3. Visual fields", ["No loss", "Partial hemianopia", "Complete hemianopia", "Bilateral / blind"], [0, 1, 2, 3]),
+        choice("face", "4. Facial palsy", ["Normal", "Minor", "Partial", "Complete"], [0, 1, 2, 3]),
+        choice("arm_l", "5a. Left arm", Scores.NIH_LIMB, Scores.NIH_LIMB_PTS), choice("arm_r", "5b. Right arm", Scores.NIH_LIMB, Scores.NIH_LIMB_PTS),
+        choice("leg_l", "6a. Left leg", Scores.NIH_LIMB, Scores.NIH_LIMB_PTS), choice("leg_r", "6b. Right leg", Scores.NIH_LIMB, Scores.NIH_LIMB_PTS),
+        choice("ataxia", "7. Limb ataxia", ["Absent", "One limb", "Two limbs"], [0, 1, 2]),
+        choice("sensory", "8. Sensory", ["Normal", "Mild-moderate loss", "Severe or total loss"], [0, 1, 2]),
+        choice("language", "9. Best language", ["No aphasia", "Mild-moderate aphasia", "Severe aphasia", "Mute / global aphasia"], [0, 1, 2, 3]),
+        choice("dysarthria", "10. Dysarthria", ["Normal", "Mild-moderate", "Severe"], [0, 1, 2]),
+        choice("extinction", "11. Extinction / inattention", ["None", "One modality", "Profound"], [0, 1, 2])),
+      new Calc("FRAMHF", "Framingham heart failure criteria", "Clinical diagnosis of heart failure: 2 major, or 1 major and 2 minor", "McKee et al., NEJM 1971",
+        check("mj_pnd", "Major: paroxysmal nocturnal dyspnoea", 0), check("mj_jvp", "Major: neck vein distension", 0), check("mj_rales", "Major: crepitations (rales)", 0),
+        check("mj_cardio", "Major: cardiomegaly on X-ray", 0), check("mj_ape", "Major: acute pulmonary oedema", 0), check("mj_s3", "Major: S3 gallop", 0),
+        check("mj_cvp", "Major: CVP above 16 cm H2O", 0), check("mj_hjr", "Major: hepatojugular reflux", 0),
+        check("mj_wt", "Major: weight loss over 4.5 kg in 5 days on treatment", 0),
+        check("mn_oedema", "Minor: bilateral ankle oedema", 0), check("mn_cough", "Minor: nocturnal cough", 0), check("mn_doe", "Minor: breathless on ordinary exertion", 0),
+        check("mn_liver", "Minor: hepatomegaly", 0), check("mn_effusion", "Minor: pleural effusion", 0), check("mn_vc", "Minor: vital capacity down by a third", 0),
+        check("mn_hr", "Minor: heart rate 120 or more", 0)),
+      new Calc("ABCD2", "ABCD² score (TIA)", "Transient ischaemic attack: stroke risk in the next 2 days", "Johnston et al., Lancet 2007",
+        num("age", "Age", "years"), num("sbp", "Systolic BP (first)", "mmHg"), num("dbp", "Diastolic BP (first)", "mmHg"),
+        choice("clin", "Clinical features", ["Unilateral weakness", "Speech only, no weakness", "Other"], [2, 1, 0]),
+        choice("dur", "Duration", ["60 min or more", "10 to 59 min", "Under 10 min"], [2, 1, 0]),
+        check("dm", "Diabetes", 1)),
+      new Calc("HUNTHESS", "Hunt & Hess scale (SAH)", "Subarachnoid haemorrhage: clinical grade on admission", "Hunt & Hess, J Neurosurg 1968",
+        choice("grade", "Clinical grade", ["I: mild headache, stiff neck", "II: bad headache, stiff neck", "III: drowsy, mild deficit", "IV: stupor, hemiparesis", "V: deep coma, decerebrate"], [1, 2, 3, 4, 5]),
+        check("serious", "Serious systemic disease or severe vasospasm (one grade worse)", 0)),
+      new Calc("WFNS", "WFNS scale (SAH)", "Subarachnoid haemorrhage grade from GCS and motor deficit", "Drake et al. (WFNS), J Neurosurg 1988",
+        num("gcs", "GCS", "3-15"), check("deficit", "Motor deficit present", 0))];
   }
 
   static calc(code) {
@@ -68897,10 +71994,159 @@ class Scores {
         else Scores.ok(r, "Low to moderate", "0 to 2: lower bleeding risk.");
         break;
       }
+      case "EGFR": {
+        const cr = d("creat"), age = d("age");
+        if (cr == null) r.missing.add("Serum creatinine");
+        if (age == null) r.missing.add("Age");
+        if (!r.missing.isEmpty() || cr <= 0) {
+          r.shown = "–";
+          break;
+        }
+        const e = Scores.egfr(cr, age, on("female"));
+        r.value = e;
+        r.shown = Math.round(e) + " mL/min/1.73m²";
+        if (e < 15) Scores.bad(r, "G5 (kidney failure)", "Below 15: plan dialysis or transplant care; adjust every drug dose (Kidney dose check).");
+        else if (e < 30) Scores.bad(r, "G4 (severe)", "15 to 29: severely decreased. Nephrology care; avoid nephrotoxins and contrast where possible; adjust doses.");
+        else if (e < 45) Scores.mid(r, "G3b (moderate-severe)", "30 to 44: adjust doses of renally cleared drugs; check potassium, Hb and bone markers.");
+        else if (e < 60) Scores.mid(r, "G3a (mild-moderate)", "45 to 59: mildly to moderately decreased.");
+        else if (e < 90) Scores.ok(r, "G2 (mild)", "60 to 89: CKD only with markers of kidney damage (albuminuria, structure).");
+        else Scores.ok(r, "G1 (normal)", "90 or more: normal or high. In AKI creatinine is not steady, so eGFR overestimates kidney function.");
+        break;
+      }
+      case "NEWS2": {
+        const o = new JSONObject();
+        for (const k of ["rr", "spo2", "temp", "sbp"]) if (d(k) != null) o.put(k, inp.get(k).trim());
+        if (d("pulse") != null) o.put("hr", inp.get("pulse").trim());
+        o.put("o2", on("o2on") ? "Oxygen" : "Air");
+        if (on("scale2")) o.put("scale2", "Yes");
+        const av = Ui.nz(inp.get("avpu"));
+        if (!av.isEmpty()) o.put("avpu", "Alert" === av ? "Alert" : "Confusion");
+        for (const k of [["rr", "Respiratory rate"], ["spo2", "SpO2"], ["temp", "Temperature"], ["sbp", "Systolic BP"], ["pulse", "Pulse"]])
+          if (d(k[0]) == null) r.missing.add(k[1]);
+        const e = Ews.score(o);
+        r.value = e.total;
+        r.shown = e.count === 0 ? "–" : e.total + " / 20" + (r.missing.isEmpty() ? "" : " (partial)");
+        if (e.count === 0) break;
+        const advice = e.text.replace("Decision support (NEWS2): ", "") + " For sepsis: 5 or more (or any red score) with a suspected infection = high risk; take cultures and lactate and give antibiotics within the hour.";
+        if (Ews.HIGH === e.band) Scores.bad(r, "High (7 or more)", advice);
+        else if (Ews.MEDIUM === e.band) Scores.bad(r, "Medium (5 to 6)", advice);
+        else if (Ews.LOW_MED === e.band) Scores.mid(r, "Low-medium (a 3 in one parameter)", advice);
+        else Scores.ok(r, "Low (0 to 4)", advice);
+        break;
+      }
+      case "SOFA": {
+        // circulation came from its choice (already in s); the rest by thresholds
+        const pao2 = d("pao2"), fio2 = d("fio2"), plt = d("plt"), bili = d("bili"), gcs = d("gcs"), cr = d("creat"), urine = d("urine");
+        if (pao2 == null || fio2 == null || fio2 <= 0) r.missing.add("PaO2 and FiO2");
+        else {
+          const f = fio2 > 1 ? fio2 / 100 : fio2;
+          const pf = pao2 / f;
+          const vent = on("vent");
+          s += pf < 100 && vent ? 4 : pf < 200 && vent ? 3 : pf < 300 ? 2 : pf < 400 ? 1 : 0;
+        }
+        if (plt == null) r.missing.add("Platelets");
+        else {
+          const l = plt >= 10 ? plt / 100 : plt;   // typed in thousands (e.g. 85) instead of lakh (0.85)
+          s += l < 0.2 ? 4 : l < 0.5 ? 3 : l < 1.0 ? 2 : l < 1.5 ? 1 : 0;
+        }
+        if (bili == null) r.missing.add("Bilirubin");
+        else s += bili >= 12 ? 4 : bili >= 6 ? 3 : bili >= 2 ? 2 : bili >= 1.2 ? 1 : 0;
+        if (gcs == null) r.missing.add("GCS");
+        else s += gcs < 6 ? 4 : gcs < 10 ? 3 : gcs < 13 ? 2 : gcs < 15 ? 1 : 0;
+        let renal = -1;
+        if (cr != null) renal = cr >= 5 ? 4 : cr >= 3.5 ? 3 : cr >= 2 ? 2 : cr >= 1.2 ? 1 : 0;
+        if (urine != null) renal = Math.max(renal, urine < 200 ? 4 : urine < 500 ? 3 : 0);
+        if (renal < 0) r.missing.add("Creatinine");
+        else s += renal;
+        r.value = s;
+        r.shown = toInt(s) + " / 24" + (r.missing.isEmpty() ? "" : " (partial)");
+        if (s >= 12) Scores.bad(r, "Very high", "12 or more: ICU mortality about 40-50% or more. Organ support in the ICU.");
+        else if (s >= 7) Scores.bad(r, "High", "7 to 11: mortality about 15-40%. Treat as sepsis with organ dysfunction; consider the ICU.");
+        else if (s >= 2) Scores.mid(r, "Organ dysfunction", "2 or more above the patient's baseline with an infection = sepsis (Sepsis-3). Cultures, lactate, antibiotics within the hour, fluids; repeat daily.");
+        else Scores.ok(r, "Low", "0 to 1: no significant organ dysfunction now; reassess if worse.");
+        break;
+      }
+      case "NIHSS": {
+        if (r.missing.size() === c.fields.length) {
+          r.shown = "–";
+          break;
+        }
+        r.value = s;
+        r.shown = r.missing.isEmpty() ? toInt(s) + " / 42" : toInt(s) + " / 42 (partial)";
+        if (s >= 21) Scores.bad(r, "Severe stroke", "21 to 42: severe. Airway and swallow; thrombectomy centre if large vessel occlusion.");
+        else if (s >= 16) Scores.bad(r, "Moderate to severe", "16 to 20: CT angiography for large vessel occlusion; thrombolysis if eligible and within 4.5 hours.");
+        else if (s >= 5) Scores.mid(r, "Moderate", "5 to 15: thrombolysis if eligible and within 4.5 hours; 6 or more with a large vessel occlusion: consider thrombectomy.");
+        else if (s >= 1) Scores.ok(r, "Minor", "1 to 4: minor stroke. Thrombolysis only if the deficit is disabling; otherwise dual antiplatelets as per guideline.");
+        else Scores.ok(r, "No measurable deficit", "0: no stroke symptoms on the scale.");
+        break;
+      }
+      case "FRAMHF": {
+        let mj = 0, mn = 0;
+        for (const f of c.fields) if (on(f.key)) {
+          if (f.key.startsWith("mj_")) mj++;
+          else mn++;
+        }
+        r.value = mj * 10 + mn;
+        r.shown = mj + " major, " + mn + " minor";
+        if (mj >= 2 || (mj >= 1 && mn >= 2)) Scores.bad(r, "Criteria met: heart failure", "2 major, or 1 major and 2 minor. Confirm with echo and NT-proBNP; minor criteria count only when no other cause explains them.");
+        else Scores.mid(r, "Criteria not met", "Heart failure is not established clinically; if suspected, check NT-proBNP and echo.");
+        break;
+      }
+      case "ABCD2": {
+        const age = d("age"), sbp = d("sbp"), dbp = d("dbp");
+        if (age == null) r.missing.add("Age");
+        else if (age >= 60) s += 1;
+        if (sbp == null && dbp == null) r.missing.add("Blood pressure");
+        else if ((sbp != null && sbp >= 140) || (dbp != null && dbp >= 90)) s += 1;
+        r.value = s;
+        r.shown = toInt(s) + " / 7";
+        if (s >= 6) Scores.bad(r, "High risk", "6 to 7: 2-day stroke risk about 8%. Admit; urgent imaging of brain and carotids; start antiplatelets.");
+        else if (s >= 4) Scores.mid(r, "Moderate risk", "4 to 5: 2-day stroke risk about 4%. Admit or same-day TIA clinic; dual antiplatelets if no bleed.");
+        else Scores.ok(r, "Low risk", "0 to 3: 2-day stroke risk about 1%. Still needs work-up within 24-48 hours; a low score does not exclude AF or carotid disease.");
+        break;
+      }
+      case "HUNTHESS": {
+        if (!r.missing.isEmpty()) {
+          r.shown = "–";
+          break;
+        }
+        const g = toInt(Math.min(5, s + (on("serious") ? 1 : 0)));
+        r.value = g;
+        const roman = ["", "I", "II", "III", "IV", "V"];
+        r.shown = "Grade " + roman[g];
+        if (g >= 4) Scores.bad(r, "Poor grade", "IV to V: poor grade, high mortality. ICU, secure the airway, treat raised ICP, nimodipine; neurosurgery opinion.");
+        else if (g === 3) Scores.mid(r, "Intermediate", "III: early neurosurgical / interventional referral to secure the aneurysm; nimodipine; watch for vasospasm and hyponatraemia.");
+        else Scores.ok(r, "Good grade", "I to II: good grade; early securing of the aneurysm; nimodipine 60 mg 4-hourly for 21 days.");
+        break;
+      }
+      case "WFNS": {
+        const gcs = d("gcs");
+        if (gcs == null) {
+          r.missing.add("GCS");
+          r.shown = "–";
+          break;
+        }
+        const def = on("deficit");
+        const g = gcs >= 15 ? 1 : gcs >= 13 ? (def ? 3 : 2) : gcs >= 7 ? 4 : 5;
+        r.value = g;
+        const roman = ["", "I", "II", "III", "IV", "V"];
+        r.shown = "Grade " + roman[g];
+        if (g >= 4) Scores.bad(r, "Poor grade", "IV (GCS 7-12) or V (GCS 3-6): poor grade, high risk of death or disability. ICU care and neurosurgery opinion.");
+        else if (g === 3) Scores.mid(r, "Intermediate", "III: GCS 13-14 with a motor deficit.");
+        else Scores.ok(r, "Good grade", g === 1 ? "I: GCS 15, no motor deficit." : "II: GCS 13-14, no motor deficit.");
+        break;
+      }
       default:
         break;
     }
     return r;
+  }
+
+  /** CKD-EPI 2021 creatinine equation (race-free), mL/min/1.73 m². */
+  static egfr(creat, age, female) {
+    const k = female ? 0.7 : 0.9, a = female ? -0.241 : -0.302;
+    const q = creat / k;
+    return 142 * Math.pow(Math.min(q, 1), a) * Math.pow(Math.max(q, 1), -1.200) * Math.pow(0.9938, age) * (female ? 1.012 : 1);
   }
 
   static idx(c, inp, key) {
@@ -68956,11 +72202,20 @@ class Scores {
         const v = o.optString(k, "").trim();
         if (!v.isEmpty() && Labs.num(v) != null && !out.containsKey(k)) put(out, k, v, when);
       }
+      for (const k of ["spo2", "temp"]) {
+        const v = o.optString(k, "").trim();
+        if (!v.isEmpty() && Labs.num(v) != null && !out.containsKey(k)) put(out, k, v, when);
+      }
+      if (!o.optString("o2", "").isEmpty() && !out.containsKey("o2on")) put(out, "o2on", "Oxygen" === o.optString("o2") ? "1" : "0", when);
+      if ("Yes" === o.optString("scale2") && !out.containsKey("scale2")) put(out, "scale2", "1", when);
       const hr = Labs.num(o.optString("hr", ""));
+      if (hr != null && !out.containsKey("pulse")) put(out, "pulse", Scores.fmt(hr), when);
       if (hr != null && !out.containsKey("hr")) put(out, "hr", hr > 100 ? "1" : "0", when + " (pulse " + Scores.fmt(hr) + ")");
       const avpu = o.optString("avpu", "");
+      if (!avpu.isEmpty() && !out.containsKey("avpu")) put(out, "avpu", "Alert" === avpu ? "Alert" : "New confusion, voice, pain or unresponsive", when);
       if (!avpu.isEmpty() && !out.containsKey("mental")) put(out, "mental", "Alert" === avpu ? "0" : "1", when);
       const gcs = o.optString("gcs", "").trim();
+      if (!gcs.isEmpty() && Labs.num(gcs) != null && !out.containsKey("gcs")) put(out, "gcs", Scores.fmt(Labs.num(gcs)), when);
       if (!gcs.isEmpty() && !out.containsKey("mental") && Labs.num(gcs) != null) put(out, "mental", Labs.num(gcs) < 15 ? "1" : "0", when);
     }
     if (out.containsKey("mental")) put(out, "confusion", out.get("mental"), out.get("src:mental"));
@@ -68973,7 +72228,7 @@ class Scores {
     const labs = Labs.rows(db, pid);
     for (let i = labs.size() - 1; i >= 0; i--) {
       const l = labs.get(i);
-      for (const k of ["urea", "creat", "na", "bili"]) {
+      for (const k of ["urea", "creat", "na", "bili", "plt"]) {
         const v = Ui.nz(l.get(k)).trim();
         if (!v.isEmpty() && !out.containsKey(k)) put(out, k, v, "labs " + Dates.nice(l.get("date")));
       }
@@ -69172,7 +72427,12 @@ class ScoresActivity extends Base {
         from.add(fd.label + (fd.type === Scores.NUM ? " " + v : "") + ": " + pre.get("src:" + fd.key));
       if (fd.type === Scores.NUM) form.text(fd.key, fd.label + (fd.unit.isEmpty() ? "" : " (" + fd.unit + ")"), v, Form.DECIMAL);
       else if (fd.type === Scores.CHECK) form.check(fd.key, fd.label + (fd.points > 0 ? "  +" + Scores.fmt(fd.points) : ""), "1" === v);
-      else form.segment(fd.key, fd.label, fd.options, v);
+      else {
+        let len = 0;
+        for (const o of fd.options) len = Math.max(len, o.length);
+        if (len > 14 || fd.options.length > 4) form.choice(fd.key, fd.label, fd.options, fd.options, v, null);
+        else form.segment(fd.key, fd.label, fd.options, v);
+      }
     }
     const fc = Ui.card(this);
     fc.addView(form.view);
@@ -69236,7 +72496,7 @@ class ScoresActivity extends Base {
       box.addView(t);
       Ui.margins(t, 4, 0, 4, 6);
     }
-    box.addView(Ui.outlineButton(a, "🧮  Clinical scores (qSOFA, CURB-65, MELD…)", Scores.COLOR, a.opener(ScoresActivity, "id", String(pid))));
+    box.addView(Ui.outlineButton(a, "🧮  Clinical scores (eGFR, SOFA, NIHSS, CURB-65…)", Scores.COLOR, a.opener(ScoresActivity, "id", String(pid))));
     return box;
   }
 }
@@ -73734,6 +76994,70 @@ class TasksActivity extends Base {
   }
 }
 ;
+/* ---- app/TeachingActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Faculty teaching register (9.98): classes taken and sessions moderated by each faculty member, with attendance, for NMC. */
+class TeachingActivity extends Base {
+  static PERIODS = ["This month", "Last 3 months", "Academic year"];
+
+  constructor() {
+    super();
+    this.period = 0;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Faculty teaching register");
+    this.subtitle = "Classes and sessions by each faculty member";
+    this.headerColor(0xFF0F766E);
+    this.headerAction("PDF / Word", {
+      onClick: (v) => {
+        const r = this.range();
+        Hod.export(this, "Faculty teaching register", { make: () => Hod.teachingDoc(this.db, r[0], r[1]) });
+      }
+    });
+  }
+
+  /** [from, to]: the academic year starts on 1 August. */
+  range() {
+    const t = Dates.today();
+    const from = this.period === 0 ? t.withDayOfMonth(1) : this.period === 1 ? t.minusMonths(3).plusDays(1)
+        : LocalDate.of(t.getMonthValue() >= 8 ? t.getYear() : t.getYear() - 1, 8, 1);
+    return [from.toString(), t.toString()];
+  }
+
+  render() {
+    const page = Ui.v(this);
+    const tabs = Ui.h(this);
+    tabs.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    TeachingActivity.PERIODS.forEach((p, i) => {
+      const t = Ui.chip(this, p, this.period === i, 0xFF0F766E);
+      t.setOnClickListener({ onClick: (v) => { this.period = i; this.render(); } });
+      tabs.addView(t);
+      if (i > 0) Ui.margins(t, 8, 0, 0, 0);
+    });
+    page.addView(tabs);
+    const r = this.range();
+    const ts = Hod.teaching(this.db, r[0], r[1]);
+    if (ts.length === 0) page.addView(this.emptyNote("No faculty in the Staff list yet."));
+    let max = 1;
+    for (const t of ts) max = Math.max(max, t.classes + t.sessions);
+    for (const t of ts) {
+      const c = Ui.card(this);
+      c.addView(Ui.tv(this, t.name, 15, Ui.TEXT, true));
+      c.addView(Ui.muted(this, t.role + (t.unit === "" ? "" : " · " + Db.shortName(t.unit)) + " · " + t.classes + " classes · " + t.sessions + " sessions · " + t.attendance + " attended"));
+      c.addView(Ui.bar(this, t.classes + t.sessions, max, 0xFF0F766E));
+      for (const i of t.items.slice(0, 4)) c.addView(Ui.tv(this, Dates.nice(i[0]) + " · " + i[1] + " · " + i[2], 13, Ui.TEXT, false));
+      if (t.items.length > 4) c.addView(Ui.muted(this, "+ " + (t.items.length - 4) + " more (in the PDF)"));
+      if (t.items.length === 0) c.addView(Ui.muted(this, "Nothing entered in this period."));
+      page.addView(c);
+    }
+    page.addView(Ui.muted(this, "  Counted from the class register (taken by) and This week's academics (moderator or presenter), matched by name."));
+    this.setPage(page);
+  }
+}
+;
 /* ---- app/Thesis.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -77667,6 +80991,7 @@ class WaAdmit {
     WaAdmit.label("sex", "sex", "gender");
     WaAdmit.label("agesex", "age/sex", "age / sex", "age sex", "a/s");
     WaAdmit.label("ip_no", "ip", "ip no", "ip no.", "ipno", "i.p", "i.p.", "i.p no", "i.p. no", "i.p.no", "ip number", "ip num", "inpatient no", "in patient no", "ipd no", "uhid", "ip#");
+    WaAdmit.label("pin_no", "pin", "pin no", "pin no.", "pin number", "pinno", "hmis pin", "hmis pin no", "patient pin", "pin#");
     WaAdmit.label("phone", "ph", "ph no", "phone", "phone no", "mob", "mobile", "mobile no", "cell", "cell no", "contact", "contact no", "attender no", "attender phone");
     WaAdmit.label("address", "address", "addr", "add", "r/o", "resident of", "native", "native of", "place", "village");
     WaAdmit.label("diagnosis", "dx", "diagnosis", "diag", "impression", "prov dx", "provisional diagnosis", "provisional dx", "working diagnosis", "Δ", "d/d", "case of",
@@ -77910,6 +81235,9 @@ class WaAdmit {
       case "sex":
         r.fields.put("sex", WaAdmit.sexOf(val));
         break;
+      case "pin_no":
+        r.fields.put("pin_no", val.replaceAllRx("(?i)^(no\\.?|number)\\s*", "").replaceAllRx("\\s+", "").replaceAllRx("[.,]+$", ""));
+        break;
       case "ip_no":
         r.fields.put("ip_no", val.replaceAllRx("(?i)^(no\\.?|number)\\s*", "").replaceAllRx("\\s+", "").replaceAllRx("[.,]+$", ""));
         break;
@@ -77987,7 +81315,7 @@ class WaAdmit {
 
   /** What was filled, for the message after pasting: "name, age, sex, IP number, diagnosis". */
   static summary(r) {
-    const names = [["name", "name"], ["age", "age"], ["sex", "sex"], ["ip_no", "IP number"], ["phone", "phone"], ["address", "address"],
+    const names = [["name", "name"], ["age", "age"], ["sex", "sex"], ["ip_no", "IP number"], ["pin_no", "PIN number"], ["phone", "phone"], ["address", "address"],
       ["diagnosis", "diagnosis"], ["bed", "bed"], ["cmchis", "CMCHIS"], ["mlc", "MLC / NMLC"], ["ar_no", "AR number"], ["date", "date"], ["time", "time"]];
     const b = new StringBuilder();
     for (const n of names) if (r.fields.containsKey(n[0])) b.append(b.length() === 0 ? "" : ", ").append(n[1]);
@@ -80315,7 +83643,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, CompetencyActivity, Conduct, ConductActivity, ConvictActivity, Copilot, Crashes, CrashesActivity, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, Dashboard, DashboardActivity, Diagnoses, Dictation, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, Extract, FacultyActivity, FacultyLeaveActivity, FacultyProfileActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, Guidelines, HandoverActivity, Harrison, HarrisonActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, Library, LibraryActivity, LibraryService, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, Notify, ObstetricActivity, Opinions, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, Scores, ScoresActivity, SearchActivity, SessionAttendance, SettingsActivity, SignOff, SignOffActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WaAdmit, Wall, WallActivity, WardDuty, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, Wrapped, WrappedActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, CompetencyActivity, Conduct, ConductActivity, ConvictActivity, Copilot, Crashes, CrashesActivity, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, LabScan, Labs, LabsActivity, Learning, LearningActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MonthlyReport, MorningBrief, MorningBriefActivity, NightlyBackup, Notify, ObstetricActivity, Opinions, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, ScorecardActivity, Scores, ScoresActivity, SearchActivity, SessionAttendance, SettingsActivity, SignOff, SignOffActivity, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, SummaryExport, Swaps, SwapsActivity, SyncStatus, TamilNote, Tasks, TasksActivity, TeachingActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, WaAdmit, Wall, WallActivity, WardDuty, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
