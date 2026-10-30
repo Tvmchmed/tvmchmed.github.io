@@ -4687,6 +4687,8 @@ Object.keys(R.VECTORS).forEach(function (k) { R.drawable[k] = { name: k, vector:
 R.drawable.dept_logo = { name: "dept_logo", src: "dept_logo.png", w: 0, h: 0 };
 R.drawable.home_banner = { name: "home_banner", src: "home_banner.webp", w: 0, h: 0 };
 R.drawable.home_banner_wide = { name: "home_banner_wide", src: "home_banner_wide.webp", w: 0, h: 0 };
+R.drawable.album_frame = { name: "album_frame", src: "album_frame.webp", w: 0, h: 0 };
+R.drawable.cert_template = { name: "cert_template", src: "cert_template.webp", w: 0, h: 0 };
 R.drawable.doubt_heart = { name: "doubt_heart", src: "doubt_heart.webp", w: 0, h: 0 };
 R.drawable.home_poster = { name: "home_poster", src: "home_poster.webp", w: 0, h: 0 };
 R.string = { app_name: 'TVMCHMED', cloud_url: 'https://dgxifayxugbprykzrnpj.supabase.co', cloud_key: 'sb_publishable_ibmSKedCcdJLB4505Tdyxg_25B3qViz' };
@@ -5384,11 +5386,20 @@ class Ui {
     v.setLayoutParams(m);
   }
 
+  /** 10.35: screens drawn in the clean style of the user's patient page picture (flat white cards, small caps headings). */
+  static clean(c) {
+    return c instanceof Base && !!c.clean;
+  }
+
   static card(c) {
     const l = Ui.v(c);
-    l.setBackground(Glass.panel(c, 20));
-    l.setElevation(Ui.dp(c, 3));
-    Glass.softShadow(l, 0xFF1D4E89);
+    if (Ui.clean(c)) {
+      l.setBackground(Ui.outline(c, Color.WHITE, 0xFFE7E4DE, 18));
+    } else {
+      l.setBackground(Glass.panel(c, 20));
+      l.setElevation(Ui.dp(c, 3));
+      Glass.softShadow(l, 0xFF1D4E89);
+    }
     const p = Ui.dp(c, 16);
     l.setPadding(p, Ui.dp(c, 14), p, Ui.dp(c, 14));
     const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -5443,7 +5454,8 @@ class Ui {
   static button(c, s, color, l) {
     const t = Ui.tv(c, s, 15, Color.WHITE, true);
     t.setGravity(Gravity.CENTER);
-    t.setBackground(Glass.hero(c, [Ui.mix(color, Color.WHITE, 0.12), Ui.mix(color, 0xFF000000, 0.12)], 14));
+    if (Ui.clean(c)) t.setBackground(Ui.round(c, color === Ui.PRIMARY ? PatientDesign.INK : color, 14));
+    else t.setBackground(Glass.hero(c, [Ui.mix(color, Color.WHITE, 0.12), Ui.mix(color, 0xFF000000, 0.12)], 14));
     t.setPadding(Ui.dp(c, 14), Ui.dp(c, 12), Ui.dp(c, 14), Ui.dp(c, 12));
     Ui.ripple(t, 0x44FFFFFF);
     t.setOnClickListener(l);
@@ -5453,7 +5465,7 @@ class Ui {
   static outlineButton(c, s, color, l) {
     const t = Ui.tv(c, s, 14, color, true);
     t.setGravity(Gravity.CENTER);
-    t.setBackground(Ui.outline(c, Ui.CARD, Ui.alpha(color, 0x88), 10));
+    t.setBackground(Ui.clean(c) ? Ui.outline(c, Color.WHITE, Ui.alpha(color, 0x55), 14) : Ui.outline(c, Ui.CARD, Ui.alpha(color, 0x88), 10));
     t.setPadding(Ui.dp(c, 12), Ui.dp(c, 9), Ui.dp(c, 12), Ui.dp(c, 9));
     Ui.ripple(t, Ui.alpha(color, 0x33));
     t.setOnClickListener(l);
@@ -5594,6 +5606,7 @@ class Ui {
 
   /** Section title with a coloured accent bar. */
   static heading(c, s, color) {
+    if (Ui.clean(c)) return PatientDesign.heading(c, s, null);
     const row = Ui.h(c);
     const bar = new View(c);
     bar.setBackground(Ui.round(c, color, 2));
@@ -5934,7 +5947,7 @@ class Db extends SQLiteOpenHelper {
     "ENT", "Ophthalmology", "Neurosurgery", "Urology", "Cardiothoracic", "Emergency / casualty", "Dermatology", "Other"];
 
   static TABLES = ["units", "staff", "patients", "events", "classes", "academics", "cmchis", "settings",
-    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison", "death_reviews", "issues", "duel_scores", "mysteries", "mystery_guesses", "kudos", "fame", "code_blues", "counsel_logs", "shift_checks"];
+    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison", "death_reviews", "issues", "duel_scores", "mysteries", "mystery_guesses", "kudos", "fame", "code_blues", "counsel_logs", "shift_checks", "teach_points", "album_photos", "app_days", "nmc_marks", "postings", "posting_members", "posting_att", "posting_marks"];
   /** Tables kept on this phone only (in the backup file, never synced online). Case sheets are shared since 7.62. */
   static LOCAL_TABLES = [];
 
@@ -5946,7 +5959,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 72);
+    super(c, "tvmchmed.db", null, 82);
     this.ctx = c;
   }
 
@@ -6450,6 +6463,59 @@ class Db extends SQLiteOpenHelper {
           + "details TEXT DEFAULT '', reported_by TEXT DEFAULT '', reported_on TEXT DEFAULT '', owner TEXT DEFAULT '', due TEXT DEFAULT '', "
           + "status TEXT DEFAULT 'Open', action TEXT DEFAULT '', closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '')");
       Db.addColumn(db, "alerts", "audio", "TEXT DEFAULT ''");
+    }
+    if (oldV < 82) {
+      // 10.29: sick case report format from the unit PGs to the DAP (vitals, oxygen, treatment, need) + DAP seen
+      for (const c of SickReport.FIELDS) Db.addColumn(db, "duty_sick", c, "TEXT DEFAULT ''");
+      Db.addColumn(db, "duty_sick", "ack_by", "TEXT DEFAULT ''");
+      Db.addColumn(db, "duty_sick", "ack_time", "TEXT DEFAULT ''");
+    }
+    if (oldV < 81) {
+      // 10.26: MBBS clinical posting: the posting list by unit, daily attendance and end-posting marks
+      db.execSQL("CREATE TABLE IF NOT EXISTS postings(id INTEGER PRIMARY KEY, title TEXT DEFAULT '', year TEXT DEFAULT '', batch TEXT DEFAULT '', "
+        + "from_date TEXT DEFAULT '', to_date TEXT DEFAULT '', parts TEXT DEFAULT '', marks_shown TEXT DEFAULT '', created TEXT DEFAULT '', by_name TEXT DEFAULT '')");
+      db.execSQL("CREATE TABLE IF NOT EXISTS posting_members(id INTEGER PRIMARY KEY, posting_id TEXT DEFAULT '', staff_id TEXT DEFAULT '', sl TEXT DEFAULT '', unit TEXT DEFAULT '')");
+      db.execSQL("CREATE TABLE IF NOT EXISTS posting_att(id INTEGER PRIMARY KEY, posting_id TEXT DEFAULT '', staff_id TEXT DEFAULT '', day TEXT DEFAULT '', "
+        + "status TEXT DEFAULT '', by_name TEXT DEFAULT '', time TEXT DEFAULT '')");
+      db.execSQL("CREATE TABLE IF NOT EXISTS posting_marks(id INTEGER PRIMARY KEY, posting_id TEXT DEFAULT '', staff_id TEXT DEFAULT '', scores TEXT DEFAULT '', "
+        + "total TEXT DEFAULT '', remarks TEXT DEFAULT '', by_name TEXT DEFAULT '', time TEXT DEFAULT '')");
+    }
+    if (oldV < 80) {
+      // 10.22: where the class is held (filled from the WhatsApp class message)
+      Db.addColumn(db, "classes", "venue", "TEXT DEFAULT ''");
+    }
+    if (oldV < 79) {
+      // 10.21: the time of each in-app PG leave approval, printed on the letter
+      for (const col of ["ap_time", "prof_time", "nodal_time"]) Db.addColumn(db, "pg_leaves", col, "TEXT DEFAULT ''");
+    }
+    if (oldV < 78) {
+      // 10.20: the department's own note of NMC (AEBAS) check-in and check-out
+      db.execSQL("CREATE TABLE IF NOT EXISTS nmc_marks(id INTEGER PRIMARY KEY, staff_id TEXT DEFAULT '', name TEXT DEFAULT '', day TEXT DEFAULT '', "
+        + "kind TEXT DEFAULT '', time TEXT DEFAULT '')");
+    }
+    if (oldV < 77) {
+      // 10.17: the 10-second admission (rest of the form to fill later) and the CMCHIS claim's papers checklist
+      Db.addColumn(db, "patients", "quick", "TEXT DEFAULT ''");
+      Db.addColumn(db, "cmchis_cases", "papers", "TEXT DEFAULT ''");
+    }
+    if (oldV < 76) {
+      // 10.15: the CMCHIS package chosen at admission
+      Db.addColumn(db, "patients", "cmchis_pkg", "TEXT DEFAULT ''");
+    }
+    if (oldV < 75) {
+      // 10.14: the days each person used the app, for Golden Honours
+      db.execSQL("CREATE TABLE IF NOT EXISTS app_days(id INTEGER PRIMARY KEY, staff_id TEXT DEFAULT '', name TEXT DEFAULT '', day TEXT DEFAULT '')");
+    }
+    if (oldV < 74) {
+      // 10.11: the department album
+      db.execSQL("CREATE TABLE IF NOT EXISTS album_photos(id INTEGER PRIMARY KEY, album TEXT DEFAULT '', file TEXT DEFAULT '', caption TEXT DEFAULT '', "
+          + "by_name TEXT DEFAULT '', time TEXT DEFAULT '')");
+    }
+    if (oldV < 73) {
+      // 10.10: teaching moments, and a doctor's mark on a rare case
+      db.execSQL("CREATE TABLE IF NOT EXISTS teach_points(id INTEGER PRIMARY KEY, patient_id TEXT, ward TEXT DEFAULT '', bed TEXT DEFAULT '', "
+          + "unit TEXT DEFAULT '', point TEXT DEFAULT '', by_name TEXT DEFAULT '', by_staff TEXT DEFAULT '', time TEXT DEFAULT '')");
+      Db.addColumn(db, "patients", "rare", "TEXT DEFAULT ''");
     }
     if (oldV < 72) {
       // 10.4: the 7:30 AM checklist, and indexes so screens stay quick with thousands of patients
@@ -6970,7 +7036,7 @@ class Db extends SQLiteOpenHelper {
     if (l != null) return l.get("type").startsWith("On duty") ? "OD" : l.get("type").equals("Week off") ? "WO" : "L";
     const fl = this.row("SELECT type FROM faculty_leaves WHERE staff_id=? AND status='Approved' AND type<>'COL credit' AND ? BETWEEN from_date AND to_date", String(staffId), date);
     if (fl != null) return fl.get("type").equals("Week off") ? "WO" : "L";
-    if (this.num("SELECT COUNT(*) FROM pg_leaves WHERE staff_id=? AND ? BETWEEN from_date AND to_date AND ap_status='Approved' AND prof_status='Approved' AND IFNULL(nodal_status,'') IN ('','Approved') AND hod_status='Approved'",
+    if (this.num("SELECT COUNT(*) FROM pg_leaves WHERE staff_id=? AND ? BETWEEN from_date AND to_date AND ap_status='Approved' AND prof_status='Approved' AND IFNULL(nodal_status,'') IN ('','Approved') AND IFNULL(hod_status,'') IN ('','Approved')",
       String(staffId), date) > 0) return "L";
     return "";
   }
@@ -7046,7 +7112,7 @@ class Db extends SQLiteOpenHelper {
   // ---------- faculty files ----------
 
   /** Folders under filesDir that hold user files and travel with the backup. */
-  static FILE_DIRS = ["notices", "faculty", "leaves", "academics", "chat", "spots", "achievements", "imaging", "ebooks"];
+  static FILE_DIRS = ["notices", "faculty", "leaves", "academics", "chat", "spots", "achievements", "imaging", "ebooks", "album"];
 
   static isFaculty(role) {
     for (const r of Db.FACULTY_ROLES) if (r.equals(role)) return true;
@@ -8557,6 +8623,8 @@ class Form {
   constructor(c) {
     this.c = c;
     this.view = Ui.v(c);
+    /** The headings added so far (10.34: the admission form's section cards take their place). */
+    this.headings = [];
     this.fields = new JMap();
     this.boxes = new JMap();
     /** Field labels in the order shown, and the allowed values of choice fields (for the Copilot, 8.90). */
@@ -8590,6 +8658,7 @@ class Form {
     const t = Ui.tv(this.c, s, 16, Ui.PRIMARY, true);
     t.setPadding(0, Ui.dp(this.c, 18), 0, 0);
     this.view.addView(t);
+    this.headings.add(t);
   }
 
   /** Fields added until endRow() sit side by side. */
@@ -8930,6 +8999,18 @@ class Form {
     if (b != null) b.setVisibility(visible ? View.VISIBLE : View.GONE);
   }
 
+  /** The input view of a field (null when there is none). */
+  fieldOf(key) {
+    const f = this.fields.get(key);
+    return f == null ? null : f;
+  }
+
+  /** The labelled box that holds a field (null when there is none). */
+  boxOf(key) {
+    const b = this.boxes.get(key);
+    return b == null ? null : b;
+  }
+
   has(key) {
     return this.fields.containsKey(key);
   }
@@ -9014,8 +9095,8 @@ class Form {
  * Settings live in SharedPreferences so they never travel in backups or sync.
  */
 class Cloud {
-  static ROLES = ["admin", "hod", "registrar", "professor", "faculty", "pg", "crmi", "staff", "pending", "blocked"];
-  static ROLE_LABELS = ["Admin (app maker)", "HOD", "Medical Registrar", "Professor / Associate Professor", "Assistant Professor", "Postgraduate", "CRMI", "Staff",
+  static ROLES = ["admin", "hod", "registrar", "professor", "faculty", "pg", "crmi", "staff", "student", "pending", "blocked"];
+  static ROLE_LABELS = ["Admin (app maker)", "HOD", "Medical Registrar", "Professor / Associate Professor", "Assistant Professor", "Postgraduate", "CRMI", "Staff", "MBBS student",
     "Waiting for approval", "Removed (no access)"];
 
   static prefs(c) {
@@ -9545,6 +9626,14 @@ class Store {
     }
     // the picture is in memory now: later synchronous decodes of this file see it
     if (bm.canvas) { Bitmaps.decoded.set(VFS.norm(f.rel()), bm); VFS.setMeta(f.rel(), { w: bm.w, h: bm.h }); }
+  }
+
+  /** Saves a picked picture as a JPEG at filesDir/{rel}, at most maxPx on its long side (10.11, the album). Null if it is not a picture. */
+  static saveImage(c, src, rel, maxPx) {
+    const bm = Store.decode(c, src, maxPx);
+    if (bm == null) return null;
+    Store.writeJpeg(bm, Db.get(c).file(rel), 86);
+    return rel;
   }
 
   /** Re-saves a camera capture in place, scaled to at most maxPx. Returns false if it is not an image. */
@@ -10577,7 +10666,7 @@ class Sync {
   static fileOf(t, data) {
     if (t.equals("ebooks.cover")) return data.isNull("cover") ? "" : data.optString("cover", "");   // a Library book's front page
     if (t.equals("settings")) return "hod_photo".equals(data.optString("k")) && !data.isNull("v") ? data.optString("v", "") : "";
-    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : t.equals("ebooks") ? "file" : t.equals("attach") ? "file" : t.equals("harrison") ? "file" : t.equals("faculty_leaves") ? "cert" : t.equals("alerts") ? "audio" : null;
+    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : t.equals("ebooks") ? "file" : t.equals("attach") ? "file" : t.equals("harrison") ? "file" : t.equals("faculty_leaves") ? "cert" : t.equals("alerts") ? "audio" : t.equals("album_photos") ? "file" : null;
     return col == null || data.isNull(col) ? "" : data.optString(col, "");
   }
 
@@ -10759,7 +10848,7 @@ class Sync {
   /** Downloads photos and documents that other phones added. */
   static async fetchFiles(c, db) {
     const want = [];
-    for (const r of db.rows("SELECT file AS f FROM docs UNION SELECT photo FROM staff UNION SELECT image FROM notices UNION SELECT letter FROM pg_leaves UNION SELECT v FROM settings WHERE k='hod_photo' UNION SELECT file FROM chat_messages WHERE file LIKE 'chat/%.jpg' AND deleted='' UNION SELECT image FROM spots UNION SELECT image FROM achievements UNION SELECT file FROM imaging_files UNION SELECT cover FROM ebooks")) {
+    for (const r of db.rows("SELECT file AS f FROM docs UNION SELECT photo FROM staff UNION SELECT image FROM notices UNION SELECT letter FROM pg_leaves UNION SELECT v FROM settings WHERE k='hod_photo' UNION SELECT file FROM chat_messages WHERE file LIKE 'chat/%.jpg' AND deleted='' UNION SELECT image FROM spots UNION SELECT image FROM achievements UNION SELECT file FROM imaging_files UNION SELECT cover FROM ebooks UNION SELECT file FROM album_photos")) {
       const rel = r.get("f");
       if (!rel.isEmpty() && Sync.safeRel(rel) && !db.file(rel).exists() && !Sync.missingFiles.contains(rel)) want.add(rel);
     }
@@ -11240,7 +11329,7 @@ class Background extends JobService {
   static JOB = 7300;
   static CHANNEL = "alerts";
   static PERIOD_MS = 15 * 60 * 1000;
-  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215; static N_ESCALATE = 7216; static N_BEDS = 7217; static N_DAPREPORT = 7218; static N_ISSUE = 7219; static N_KUDOS = 7220; static N_MONTH = 7221; static N_DUEL = 7222;
+  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215; static N_ESCALATE = 7216; static N_BEDS = 7217; static N_DAPREPORT = 7218; static N_ISSUE = 7219; static N_KUDOS = 7220; static N_MONTH = 7221; static N_DUEL = 7222; static N_CODE = 7224; static N_TEACH = 7225; static N_RARE = 7226; static N_NMC = 7227;
   /** Web: the repeating timer, started once. */
   static timer = null;
 
@@ -11268,6 +11357,7 @@ class Background extends JobService {
         const changed = await Sync.run(c);
         if (changed) Reminders.schedule(c);
         if (changed) Protocols.schedule(c);
+        if (changed) Countdown.schedule(c);
         Chat.notifyNew(c);
         Background.check(c);
         try {
@@ -11309,6 +11399,14 @@ class Background extends JobService {
     }
     e.putString("alert_seen", max.isEmpty() ? Alerts.now() : max);
     if (newest != null) Background.show(c, Background.N_ALERT, "🚨 HOD urgent message", Ui.nz(newest.get("message")), Ui.RED, MainActivity);
+
+    // 10.20: NMC biometric attendance reminder for faculty, check-in and check-out, once a day each
+    try {
+      const nmc = NmcAttendance.remind(c, db, p, e);
+      if (!nmc.isEmpty()) Background.show(c, Background.N_NMC, "🖐 NMC attendance: " + NmcAttendance.label(nmc), "Tap to open the NMC app and mark your " + NmcAttendance.label(nmc), NmcAttendance.COLOR, NmcAttendanceActivity);
+    } catch (ex) {
+      // the reminder is optional
+    }
 
     // PG Connect: never the message itself on the lock screen, it is end-to-end encrypted
     const pgSeen = p.getString("pgc_seen", "");
@@ -11444,7 +11542,7 @@ class Background extends JobService {
       e.putString("arena_mine", mine.join(","));
       if (p.contains("arena_mine")) {
         if (fame > 0) Background.show(c, Background.N_KUDOS, "🏅 You are on the Wall of Fame", "Faculty named you. Tap to see.", Fame.COLOR, FameActivity);
-        else if (likes > 0) Background.show(c, Background.N_KUDOS, "👍 A faculty member liked your work", likes === 1 ? "Tap to see what they liked" : likes + " new likes. Tap to see.", Kudos.COLOR, ArenaActivity);
+        else if (likes > 0) Background.show(c, Background.N_KUDOS, "👏 Applause! A faculty member liked your work", likes === 1 ? "Tap to see what they liked" : likes + " new likes. Tap to see.", Kudos.COLOR, ArenaActivity);
       }
       const role = Cloud.role(c);
       const pg = "pg" === role || "crmi" === role;
@@ -11461,6 +11559,56 @@ class Background extends JobService {
       }
     } catch (ignored) {
       // the alert is optional
+    }
+
+    // 10.10: a code blue running anywhere (ward and bed, never the name), with its own vibration
+    try {
+      const cb = CodeBlue.running(db);
+      const startMs = cb == null ? 0 : Ui.toLong(cb.get("start_ms"), 0);
+      if (cb != null && System.currentTimeMillis() - startMs < 15 * 60000 && Ui.nz(cb.get("id")) !== p.getString("code_told", "")) {
+        e.putString("code_told", Ui.nz(cb.get("id")));
+        const pt = db.row("SELECT location, bed FROM patients WHERE id=?", Ui.nz(cb.get("patient_id")));
+        const where = pt != null ? Protocols.where(pt) : Db.shortName(Ui.nz(cb.get("ward")));
+        if (Ui.nz(cb.get("by_name")) !== CallDutyActivity.myName(c))
+          Background.show(c, Background.N_CODE, "🚨 CODE BLUE", (where.isEmpty() ? "A code blue is running" : where) + ". Tap to open the recorder.", CodeBlue.COLOR,
+              new Intent(c, CodeBlueActivity).putExtra("patient", Ui.nz(cb.get("patient_id"))));
+      }
+    } catch (ignored) {
+      // optional
+    }
+
+    // 10.10: teaching moments for the PGs, and a rare case admitted anywhere (ward and bed, never the name)
+    try {
+      const role = Cloud.role(c);
+      const doctor = "pg" === role || "crmi" === role || SignOff.faculty(c) || Cloud.isAdmin(c);
+      const tSeen = p.getString("teach_seen", "");
+      if (tSeen.isEmpty()) e.putString("teach_seen", Dates.todayIso() + " " + Dates.now());
+      else {
+        let tMax = tSeen, line = null;
+        const me = CallDutyActivity.myName(c);
+        let n = 0;
+        for (const t of TeachPoints.since(db, tSeen)) {
+          if (Ui.nz(t.get("time")).compareTo(tMax) > 0) tMax = t.get("time");
+          if (Ui.nz(t.get("by_name")) === me) continue;
+          n++;
+          line = TeachPoints.where(t) + ": " + Ui.nz(t.get("point"));
+        }
+        e.putString("teach_seen", tMax);
+        if (n > 0 && ("pg" === role || "crmi" === role || Cloud.isOwner(c)))
+          Background.show(c, Background.N_TEACH, "💡 Teaching moment", n === 1 ? line : n + " new teaching points. Latest: " + line, TeachPoints.COLOR, TeachActivity);
+      }
+      const rare = [];
+      let rareLine = null;
+      for (const r of RareCase.inWards(db)) {
+        rare.push(String(r.get("id")));
+        if (!(("," + p.getString("rare_in", "") + ",").contains("," + r.get("id") + ","))) rareLine = r.get("rare_name") + " in " + Protocols.where(r);
+      }
+      const first = !p.contains("rare_in");
+      e.putString("rare_in", rare.sort().join(","));
+      if (!first && rareLine != null && doctor)
+        Background.show(c, Background.N_RARE, "🦓 Rare case in the department", rareLine + ". Go and see it while the patient is here.", RareCase.COLOR, RareCaseActivity);
+    } catch (ignored) {
+      // optional
     }
 
     // early warning: a patient newly at a red NEWS2 (never names or numbers on the lock screen)
@@ -11602,7 +11750,11 @@ class Background extends JobService {
       .setContentIntent(pi);
     if (Build.VERSION.SDK_INT < 26) b.setPriority(Notification.PRIORITY_HIGH).setDefaults(Notification.DEFAULT_ALL);
     try {
-      if (Notify.on(c)) nm.notify(id, b.build());
+      if (Notify.on(c)) {
+        nm.notify(id, b.build());
+        const bz = Buzz.forNotification(id);
+        if (bz != null) Buzz.buzz(c, bz);   // 10.10: its own vibration pattern
+      }
     } catch (ignored) {
       // notifications not allowed on this phone
     }
@@ -11635,6 +11787,30 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["10.35", "🩺 New patient page design (from your picture): a dark top card with the patient's initials, \"Now in\" ward, day of stay, diagnosis, Admitted / Bed / CMCHIS tiles and big Case sheet, Timeline, Summary and Discharge buttons; small caps headings, white chart pills and flat white cards on a light page. The case sheet has the same look."],
+    ["10.34", "📝 New admission form design (from your picture): a navy banner with \"Medicine Ward\" in gold, the fields in coloured section cards (Patient Details, More Details, Admission Group, daily census, Toxicology, Admission, Coverage & Insurance) with round icons, inputs with an icon at the left, pill buttons for WhatsApp paste and diet sheet scan, and a gold Save button."],
+    ["10.33", "🌊 New unit team board design (from your picture), for every unit and special ward: a dark navy board with the unit's name in gold, its admission day, a wave band in the unit's own theme colours, gold group headings, each person in a glowing coloured ring, and a dark MBBS students card with the year and a numbered two-column list."],
+    ["10.32", "🗓 New PG leave design (from your picture): navy banner with a gold \"PG Leave\" title, a blue-violet panel with leave today, awaiting approval and applications, a big Apply for leave button, filter chips with counts, and leave cards showing the PG, dates, reason, Approve / Not approve at the side and the three approval steps side by side."],
+    ["10.31", "💛 The golden heart in the PG question corner is now a solid 3D heart: you see its golden thickness as it turns, and a band of light sweeps across its face. 📞 New Intercom design (from your picture): dark Department Intercom screen with the golden hexagon, Members / Call log / Keypad tabs, search, All / Doctors / Staff / Others filters, a 3-digit extension for every member, round green call buttons with online dots, and a new calling screen with a glowing ring, voice wave, Mute, Speaker and a big red End Call (Decline / Accept for incoming calls)."],
+    ["10.30", "🎨 New home census design (from your picture): navy panel with a Ward Census hero (total inpatients, occupied and vacant beds with %), a Live Census button, colour legend (general, special, isolation, ICU), white ward cards with the unit pill, patients / beds, male and female, occupancy bar and status line, and a View all wards card for the bed board."],
+    ["10.29", "🚨 Sick case report format for the unit PGs to the DAP (Call duty → Sick case reports): patient, age/sex, IP, bed, diagnosis, status, vitals (BP, pulse, RR, SpO₂ with oxygen, temperature, GRBS, GCS, urine), problem now, treatment given and what the DAP is asked to do. Send to DAP opens WhatsApp to the DAP's number with the report typed in; the DAP marks each case Seen. The night's report downloads as PDF or Word."],
+    ["10.28", "🖼 MBBS clinical posting: pick the posting order photo(s) (JPG, one or more pages) from the gallery or take a photo. The AI copies the names and units into the paste box for you to check, then tap Add."],
+    ["10.27", "🎓 MBBS clinical posting: paste the whole posting order (heading with year, batch and dates, then Sl.No, name and unit) and the posting, students and units are made by themselves. Each unit's page now has an MBBS students card by year (second, third, final). MBBS class attendance lists only that class's year (from the class's Batch / year, e.g. Final year MBBS) with Present, Absent and Leave."],
+    ["10.26", "🎓 MBBS clinical posting (Teaching): paste the department's posting list once (Sl. No, name, unit). Each unit's faculty and PGs mark the students' daily attendance, the unit's faculty enter the end-posting marks, and the report downloads as PDF or Word. MBBS students create an account, tap \"I am an MBBS student\" and pick their own name from their unit's list; any faculty member of that unit approves them (Join requests). Students see only their own attendance, marks (when the faculty share them) and the coming MBBS classes, never patients."],
+    ["10.23", "📝 PG leave, final order: apply in the app with the dates, reason and doing-duty PG. Any one Assistant Professor, then the unit chief, then the leave nodal officer approve in the app (each prints \"Approved in the app on <date> at <time>\" on the form). Then download the form, sign it with the doing-duty PG, get the HOD's signature in person, submit it in the medicine office and upload the signed letter in the leave entry."],
+    ["10.22", "💬 Paste the WhatsApp class message: in This week's academics, tap 💬 Paste on MBBS class (or the green button on the class form). The date, time, unit, class (e.g. Final year OP class), topic, faculty and venue fill in by themselves. The new Venue field shows on the week list."],
+    ["10.21", "📝 PG leave, the new way: download the form, sign it with the doing-duty PG and upload it. Any one Assistant Professor, then the unit chief, then the leave nodal officer approve in the app, and each box on the letter prints \"Approved in the app on <date> at <time>\". Then download the letter again, get the HOD's signature in person and submit it to the office."],
+    ["10.20", "🖐 NMC attendance for faculty: one tap opens NMC's AEBAS app (or its Play Store page) to check in or out, a reminder at 9 AM and 4 PM (admin can change), a home card that asks if the NMC app accepted it, and a daily list of who noted check-in and check-out for the HOD. Attendance itself is still marked only in the NMC app."],
+    ["10.19", "More room on the screen: the top bar and the bottom tabs slide away while you scroll down and come back as soon as you scroll up a little (or reach the top or the end). Works on every screen, phone or tablet, upright or sideways."],
+    ["10.18", "Home page tidied into eight folders: Wards, Emergency, Duty & team, Paperwork, Teaching, PG corner, AI assistant, HOD & admin. Tap a folder to open it in place; a red number shows what waits inside. The search box is always on top. Press and hold any icon to pin it to Your sections (or take it off). ☰ List shows every folder opened."],
+    ["10.17", "Six new things. ⚡ 10-second admission: only name, age, sex and diagnosis to save; the rest is filled later from the patient's page. 👏 Faculty applause: a golden pop-up with clapping when an AP or the HOD likes your work. 📄 My month: a monthly work record that fills itself from your entries (Logbook), and the thesis adds and updates its ward cases by itself. 🏠 Tamil discharge card: one picture for the family's WhatsApp. 💰 CMCHIS claim tracker: claims not started, may-be-eligible patients, papers checklist and money. ⏱ Golden-hour scores: door-to-antibiotic, needle, ECG, ASV and adrenaline times with a unit league."],
+    ["10.16", "Golden Honours certificate now uses your new design: the gold-and-navy Certificate of Excellence with the laurels, stethoscope and seal. The winner's name is written in gold on the navy banner, with the award and the month under it."],
+    ["10.15", "CMCHIS packages for General Medicine (263, with codes and rates) are in the app. On the admission form, the packages that fit the provisional diagnosis show under CMCHIS as you type: tap one to choose it, or browse the whole list. In the CMCHIS section, open the package list from the top card, and choose a package for each patient (the rate fills the amount)."],
+    ["10.14", "Golden Honours: a golden PG ranking on the home page. PGs earn points for case sheets, progress notes, academics attended, presentations, the Duel and Mystery case, teaching posts, logbook, each day they use the app and faculty praise. A gold podium crowns the PG of the Month, with awards for Case Sheet Champion, Academic Star, Quiz Master, Best Teacher, Most Dedicated, Faculty's Favourite and Rising Star. The golden board shows the top 10 and each person's climb, your own card shows how to go higher, and every winner gets a certificate to share."],
+    ["10.13", "Call duty and DAP duty: each doctor's full name now sits on one line, with the Call and WhatsApp buttons under it."],
+    ["10.12", "Department album: one big gold frame now fills the whole space under the DAP card, on phones too. The newest photos slide inside it every 4 seconds; swipe to look, tap one to open it, and + Add uploads an album."],
+    ["10.11", "Department album: photos of the department in albums, each in the navy and gold Department of Medicine frame. On tablets and the website it sits under the DAP card and scrolls sideways. Upload a whole album at once from the home page or the Album screen; tap a photo to see it full screen, long-press your photo to caption, move or remove it."],
+    ["10.10", "Countdown clocks: each in-patient's card shows the next thing due (\"Repeat K in 40 min\"), ticking live, from protocol steps, results expected and timers you set on the patient's page; a Due soon screen and an alarm when a timer is due. Teaching moments: faculty tap Teaching point on a patient and every PG gets the pearl with the ward and bed. Rare case alert: a rare diagnosis admitted anywhere (Wilson's, pheo, myasthenia and 46 more) tells all doctors at once. Silent alarm: code blue, critical lab, not-acknowledged and timer alerts each vibrate in their own pattern (Settings). A code blue now alerts every phone. Time machine: see every ward and patient as it was at any past date and hour. No internet? Send the new entries and the census to the phone next to you by Bluetooth (Waiting to go up)."],
     ["10.9", "Emergency protocols: 16 CMC Vellore protocols (Handbook of Emergency Medicine, 3rd edition 2022) as timers, under their own heading: triage, cardiac arrest, bradycardia and post-ROSC, anaphylaxis, sepsis, septic shock, hyperkalaemia, DKA, STEMI, asthma, stroke, status epilepticus, OP poisoning, snake bite, upper GI bleed and trauma."],
     ["10.8", "Emergency protocols: 8 more step-by-step timers, each naming its guideline: anaphylaxis, sepsis and septic shock, STEMI, acute severe asthma, scorpion sting, upper GI bleed, hypoglycaemia and stroke thrombolysis."],
     ["10.7", "PG question corner: a golden glass heart in place of the bubble. It revolves and beats faster with every unanswered doubt, with rings of golden light, a golden pearl for each doubt, ripples on each beat, and comes to rest facing you when all are answered."],
@@ -11895,6 +12071,8 @@ class Base extends Activity {
     super();
     this.db = null;
     this._scroll = null;
+    /** True while the bars are slid away; kept across redraws so a refresh does not bring them back. */
+    this.barsHidden = false;
     this.titleText = "";          // Java: private CharSequence title
     this.subtitle = null;
     this.headerColors = Ui.HERO;
@@ -11992,6 +12170,11 @@ class Base extends Activity {
     super.onActivityResult(req, res, data);
     People.onResult(this, req, res, data);
     VoiceInput.onResult(req, res, data);
+    if (req === Album.REQ_PICK && res === RESULT_OK && data != null) {
+      const n = Album.onPicked(this, this.db, data);
+      Ui.toast(this, n === 0 ? "No photos were added" : n + (n === 1 ? " photo added to " : " photos added to ") + Album.pendingAlbum);
+      this.render();
+    }
   }
 
   /** Every screen gets the ✨ Copilot button over its content (8.90). */
@@ -12069,16 +12252,64 @@ class Base extends Activity {
     const y = this._scroll == null ? 0 : this._scroll.getScrollY();
     content.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 28));
     const scroll = this._scroll = Ui.scroll(this, Base.capped(this, content, this.maxWidthDp));
-    const root = Ui.v(this);
-    root.setBackground(new Glass.Backdrop());
-    root.addView(this.header(), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    if (this.pageBg) scroll.setBackgroundColor(this.pageBg);   // 10.31: a screen with its own page colour (the dark intercom)
+    const top = Ui.v(this);
+    top.addView(this.header(), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     // 10.4: a shared-database phone without internet says so on every screen
     const off = this instanceof AccountActivity || this instanceof LockActivity ? null : Net.bar(this);
-    if (off != null) root.addView(off, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-    root.addView(scroll, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-    this.setContentView(root);
+    if (off != null) top.addView(off, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    this.setContentView(this.floatingBars(scroll, top, null));
     Undo.attach(this);
     scroll.post({ run: () => { scroll.scrollTo(0, y); } });
+  }
+
+  /**
+   * 10.19 (user asked, for more room on phones, mostly sideways): the header (with the offline line) and the bottom bar float over
+   * the page. Scrolling down slides them away; scrolling up a little, or reaching the top or the end, brings them back.
+   */
+  floatingBars(sv, top, bottom) {
+    const frame = new FrameLayout(this);
+    frame.setBackground(new Glass.Backdrop());
+    sv.setClipToPadding(false);
+    frame.addView(sv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    frame.addView(top, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP));
+    if (bottom != null) frame.addView(bottom, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
+    // the page starts below the header and ends above the bottom bar, so nothing is covered while the bars show
+    const pad = { onLayoutChange: () => {
+      const pt = top.getHeight(), pb = bottom == null ? 0 : bottom.getHeight();
+      if (sv.getPaddingTop() !== pt || sv.getPaddingBottom() !== pb) sv.setPadding(0, pt, 0, pb);
+      if (this.barsHidden) {
+        top.setTranslationY(-pt);
+        if (bottom != null) bottom.setTranslationY(pb);
+      }
+    } };
+    top.addOnLayoutChangeListener(pad);
+    if (bottom != null) bottom.addOnLayoutChangeListener(pad);
+    let last = -1, run = 0;
+    sv.setOnScrollChangeListener({ onScrollChange: (v, x, y) => {
+      // the first call is the redraw putting the page back where it was: it changes nothing
+      if (last < 0) { last = y; return; }
+      const dy = y - last;
+      last = y;
+      if (dy === 0) return;
+      run = (run > 0) === (dy > 0) ? run + dy : dy;
+      const step = Ui.dp(this, 24);
+      const show = y <= top.getHeight() || !sv.canScrollVertically(1) || run < -step;
+      if (show && this.barsHidden) {
+        this.barsHidden = false;
+        Base.slide(top, 0);
+        if (bottom != null) Base.slide(bottom, 0);
+      } else if (!show && !this.barsHidden && run > step) {
+        this.barsHidden = true;
+        Base.slide(top, -top.getHeight());
+        if (bottom != null) Base.slide(bottom, bottom.getHeight());
+      }
+    } });
+    return frame;
+  }
+
+  static slide(v, y) {
+    v.animate().translationY(y).setDuration(220).start();
   }
 
   /** The page centred at no more than maxDp wide (only on screens wider than that). */
@@ -12189,6 +12420,23 @@ class Base extends Activity {
       const ra = Ui.softPill(this, "↩ Readmitted", Readmit.COLOR);
       right.addView(ra);
       Ui.margins(ra, 0, 4, 0, 0);
+    }
+    if (p.get("id") != null && Db.IN === p.get("status") && !p.containsKey("at_loc")) {
+      const cd = Countdown.pill(this, db, Long.parseLong(p.get("id")));
+      if (cd != null) {
+        right.addView(cd);
+        Ui.margins(cd, 0, 4, 0, 0);
+      }
+      if (p.containsKey("diagnosis") && RareCase.of(p) != null) {
+        const rr = Ui.softPill(this, "🦓 Rare", RareCase.COLOR);
+        right.addView(rr);
+        Ui.margins(rr, 0, 4, 0, 0);
+      }
+    }
+    if (p.get("id") != null && Db.IN === p.get("status") && "1" === p.get("quick")) {
+      const qk = Ui.softPill(this, "⚡ Fill details", FormActivity.QUICK_COLOR);
+      right.addView(qk);
+      Ui.margins(qk, 0, 4, 0, 0);
     }
     if (p.get("id") != null && Db.IN === p.get("status") && ExamCases.forPatient(db, Long.parseLong(p.get("id"))) != null) {
       const ex = Ui.softPill(this, "🎓 Exam case", ExamCases.COLOR);
@@ -13344,9 +13592,14 @@ class AccountActivity extends Base {
       srv.setPadding(Ui.dp(this, 20), Ui.dp(this, 4), Ui.dp(this, 20), 0);
       srv.setOnClickListener({ onClick: (v) => { this.serverDialog(); } });
       if (!this.gate) page.addView(srv);
+    } else if (StudentPortal.isStudent(this)) {
+      // 10.26: an approved MBBS student sees only their own posting, attendance and marks
+      this.subtitle = Cloud.prefs(this).getString("name", "") + "  ·  MBBS student";
+      page.addView(StudentPortal.page(this, { run: () => { Sync.leave(this); this.render(); } }));
     } else if (!Cloud.approved(this)) {
       this.subtitle = Cloud.prefs(this).getString("email", "");
       page.addView(this.waitingCard());
+      if ("pending" === Cloud.role(this)) page.addView(StudentPortal.joinCard(this, { run: () => { this.render(); } }));
     } else if (!Cloud.active(this)) {
       this.subtitle = Cloud.prefs(this).getString("email", "");
       page.addView(this.startCard());
@@ -13484,7 +13737,7 @@ class AccountActivity extends Base {
           this.bg("Checking…", {
             run: () => {
               Cloud.join(this, Cloud.prefs(this).getString("name", ""));
-              return Cloud.approved(this) ? null : "Not approved yet.";
+              return Cloud.approved(this) || StudentPortal.isStudent(this) ? null : "Not approved yet.";
             }
           });
         }
@@ -13829,6 +14082,7 @@ class AccountActivity extends Base {
     if (Db.isFaculty(r)) return "faculty";
     if (r.equals("Postgraduate")) return "pg";
     if (r.equals("CRMI")) return "crmi";
+    if (r.startsWith("MBBS")) return "student";
     return "staff";
   }
 
@@ -14253,6 +14507,259 @@ class AdmissionDayActivity extends Base {
     page.addView(Ui.heading(this, title + "  ·  " + rows.length, color));
     if (rows.isEmpty()) page.addView(this.emptyNote("None"));
     for (const p of rows) page.addView(this.patientRow(p));
+  }
+}
+;
+/* ---- app/AdmitDesign.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.34 (user sent a "Medicine Ward Admission Form" picture): the admission form's look. A navy banner with the gold title,
+ * the fields in pastel section cards with a round icon, inputs with an icon cell, pill buttons and a gold Save button.
+ */
+class AdmitDesign {
+  static NAVY = 0xFF071338;
+  static GOLD = 0xFFF5C451;
+  static BLUE = 0xFF2563EB; static GREEN = 0xFF059669; static PURPLE = 0xFF7C3AED; static ORANGE = 0xFFEA580C; static TEAL = 0xFF0D9488; static INDIGO = 0xFF1E3A8A;
+  static INK = 0xFF1E293B;
+
+  /** Navy banner: the department logo in a gold ring, "Medicine Ward" in gold, the form's name in white script, the motto. */
+  static hero(c, name) {
+    const b = Ui.v(c);
+    b.setBackground(new PgLeaveActivity.Banner(c));
+    b.setPadding(Ui.dp(c, 14), Ui.dp(c, 14), Ui.dp(c, 14), Ui.dp(c, 12));
+    const top = Ui.h(c);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    const ring = new FrameLayout(c);
+    const rg = new GradientDrawable();
+    rg.setShape(GradientDrawable.OVAL);
+    rg.setColor(0xFF0B1F55);
+    rg.setStroke(Ui.dp(c, 2), AdmitDesign.GOLD);
+    ring.setBackground(rg);
+    const logo = new ImageView(c);
+    logo.setImageResource(R.drawable.dept_logo);
+    logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    ring.addView(logo, new FrameLayout.LayoutParams(Ui.dp(c, 46), Ui.dp(c, 46), Gravity.CENTER));
+    top.addView(ring, Ui.lp(Ui.dp(c, 60), Ui.dp(c, 60)));
+    const t = Ui.v(c);
+    t.setPadding(Ui.dp(c, 12), 0, 0, 0);
+    const gold = Honours.goldText(c, "Medicine Ward", 27, true);
+    gold.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD));
+    t.addView(gold);
+    const form = Ui.tv(c, name, 23, Color.WHITE, true);
+    form.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+    form.setShadowLayer(6, 0, 0, 0xFF3B82F6);
+    t.addView(form);
+    const motto = Ui.tv(c, "BETTER CARE • HEALTHIER TOMORROW", 10, 0xE6FFFFFF, true);
+    motto.setLetterSpacing(0.12);
+    t.addView(motto);
+    Ui.margins(motto, 0, 4, 0, 0);
+    top.addView(t, Ui.weight(1));
+    b.addView(top);
+    const pr = Ui.tv(c, "Patient Care, Our Priority  ♡", 13, 0xFFE9C46A, false);
+    pr.setTypeface(Typeface.create(Typeface.SERIF, Typeface.ITALIC));
+    pr.setGravity(Gravity.END);
+    b.addView(pr, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    Ui.margins(pr, 0, 6, 6, 32);
+    const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    m.setMargins(Ui.dp(c, 10), Ui.dp(c, 6), Ui.dp(c, 10), 0);
+    b.setLayoutParams(m);
+    return b;
+  }
+
+  /** The pale panel the whole form sits in. */
+  static panel(c) {
+    const p = Ui.v(c);
+    p.setBackground(Ui.outline(c, 0xFFF7F9FE, 0xFF8FB4FF, 24));
+    p.setPadding(Ui.dp(c, 10), Ui.dp(c, 12), Ui.dp(c, 10), Ui.dp(c, 12));
+    const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    m.setMargins(Ui.dp(c, 8), Ui.dp(c, 10), Ui.dp(c, 8), 0);
+    p.setLayoutParams(m);
+    return p;
+  }
+
+  /** A round icon: a gradient circle of the colour with a white ring and a white symbol. */
+  static badge(c, icon, color, sizeDp) {
+    const f = new FrameLayout(c);
+    const g = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [Ui.mix(color, Color.WHITE, 0.15), Ui.mix(color, Color.BLACK, 0.3)]);
+    g.setShape(GradientDrawable.OVAL);
+    g.setStroke(Ui.dp(c, 2), Color.WHITE);
+    f.setBackground(g);
+    const iv = new ImageView(c);
+    iv.setImageResource(icon);
+    iv.setColorFilter(Color.WHITE);
+    const s = Math.round(sizeDp * 0.5);
+    f.addView(iv, new FrameLayout.LayoutParams(Ui.dp(c, s), Ui.dp(c, s), Gravity.CENTER));
+    f.setLayoutParams(Ui.lp(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
+    return f;
+  }
+
+  /** A pastel section card with its round icon, title and one-line subtitle. Fields are added to the card after the header. */
+  static section(c, icon, title, sub, color) {
+    const card = Ui.v(c);
+    const g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [Ui.mix(color, Color.WHITE, 0.86), Ui.mix(color, Color.WHITE, 0.97)]);
+    g.setCornerRadius(Ui.dp(c, 18));
+    g.setStroke(Ui.dp(c, 1), Ui.mix(color, Color.WHITE, 0.62));
+    card.setBackground(g);
+    card.setPadding(Ui.dp(c, 12), Ui.dp(c, 10), Ui.dp(c, 12), Ui.dp(c, 14));
+    const h = Ui.h(c);
+    h.setGravity(Gravity.CENTER_VERTICAL);
+    h.addView(AdmitDesign.badge(c, icon, color, 46));
+    const t = Ui.v(c);
+    t.setPadding(Ui.dp(c, 12), 0, 0, 0);
+    t.addView(Ui.tv(c, title, 17, Ui.mix(color, Color.BLACK, 0.45), true));
+    if (sub != null) t.addView(Ui.tv(c, sub, 12, 0xFF475569, false));
+    h.addView(t, Ui.weight(1));
+    card.addView(h);
+    const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    m.setMargins(0, Ui.dp(c, 12), 0, 0);
+    card.setLayoutParams(m);
+    return card;
+  }
+
+  /** Two field boxes side by side. */
+  static pair(c, a, b) {
+    const r = Ui.h(c);
+    r.setBaselineAligned(false);
+    r.addView(a, Ui.weight(1));
+    const p = Ui.weight(1);
+    p.leftMargin = Ui.dp(c, 10);
+    r.addView(b, p);
+    return r;
+  }
+
+  /** Restyles one field: a dark bold label, and the input in a white rounded box with a coloured icon cell on its left. */
+  static field(c, form, key, icon, color, hint) {
+    const f = form.fieldOf(key);
+    const box = form.boxOf(key);
+    if (!(box instanceof LinearLayout) || f == null || f.getParent() !== box) return;
+    if (box.getChildCount() > 1 && box.getChildAt(0) instanceof TextView) box.getChildAt(0).setTextColor(AdmitDesign.INK);
+    const at = box.indexOfChild(f);
+    box.removeView(f);
+    const row = Ui.h(c);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setBackground(Ui.outline(c, Color.WHITE, 0xFFD3DCEA, 12));
+    const iv = new ImageView(c);
+    iv.setImageResource(icon);
+    iv.setColorFilter(color);
+    const ip = Ui.lp(Ui.dp(c, 20), Ui.dp(c, 20));
+    ip.setMargins(Ui.dp(c, 11), 0, Ui.dp(c, 9), 0);
+    row.addView(iv, ip);
+    const line = new View(c);
+    line.setBackgroundColor(0xFFE2E8F0);
+    row.addView(line, Ui.lp(Ui.dp(c, 1), Ui.dp(c, 26)));
+    // a clear background (not none) also drops the underline on the website
+    f.setBackground(Ui.round(c, 0x00FFFFFF, 0));
+    f.setPadding(Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 10));
+    if (f instanceof TextView) {
+      f.setTextSize(15);
+      f.setTextColor(AdmitDesign.INK);
+      if (hint != null) f.setHint(hint);
+      f.setHintTextColor(0xFF94A3B8);
+    }
+    row.addView(f, Ui.weight(1));
+    const rp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    rp.topMargin = Ui.dp(c, 5);
+    box.addView(row, at, rp);
+  }
+
+  /** Darkens a field box's label (for choices and ticks, which keep their colour bands). */
+  static label(form, key) {
+    const bx = form.boxOf(key);
+    if (bx instanceof LinearLayout && bx.getChildCount() > 1 && bx.getChildAt(0) instanceof TextView) bx.getChildAt(0).setTextColor(AdmitDesign.INK);
+  }
+
+  /** Hides a field's label where the section card's title already says it. */
+  static noLabel(form, key) {
+    const bx = form.boxOf(key);
+    if (bx instanceof LinearLayout && bx.getChildCount() > 1 && bx.getChildAt(0) instanceof TextView) bx.getChildAt(0).setVisibility(View.GONE);
+  }
+
+  /** A wide gradient pill with an icon at the left and a chevron at the right (WhatsApp paste, diet sheet scan). */
+  static action(c, text, icon, color, l) {
+    const r = Ui.h(c);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    const g = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [Ui.mix(color, Color.BLACK, 0.12), Ui.mix(color, Color.WHITE, 0.12)]);
+    g.setCornerRadius(Ui.dp(c, 26));
+    g.setStroke(Ui.dp(c, 1), Ui.mix(color, Color.WHITE, 0.45));
+    r.setBackground(g);
+    r.setPadding(Ui.dp(c, 6), Ui.dp(c, 6), Ui.dp(c, 14), Ui.dp(c, 6));
+    const ic = new FrameLayout(c);
+    ic.setBackground(Ui.round(c, Color.WHITE, 17));
+    const iv = new ImageView(c);
+    iv.setImageResource(icon);
+    iv.setColorFilter(color);
+    ic.addView(iv, new FrameLayout.LayoutParams(Ui.dp(c, 20), Ui.dp(c, 20), Gravity.CENTER));
+    r.addView(ic, Ui.lp(Ui.dp(c, 34), Ui.dp(c, 34)));
+    const t = Ui.tv(c, text, 14, Color.WHITE, true);
+    t.setPadding(Ui.dp(c, 12), 0, Ui.dp(c, 6), 0);
+    r.addView(t, Ui.weight(1));
+    r.addView(Ui.tv(c, "›", 22, Color.WHITE, true));
+    Ui.ripple(r, 0x44FFFFFF);
+    r.setOnClickListener(l);
+    const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    m.topMargin = Ui.dp(c, 8);
+    r.setLayoutParams(m);
+    return r;
+  }
+
+  /** The "10-second admission" / "Full form" switch: a yellow-gold pill and a royal blue pill; the chosen one is solid. */
+  static mode(c, text, gold, on) {
+    const t = Ui.tv(c, text, 15, on ? (gold ? 0xFF1E1B4B : Color.WHITE) : (gold ? 0xFF92400E : 0xFF1E40AF), true);
+    t.setGravity(Gravity.CENTER);
+    t.setMaxLines(1);
+    t.setPadding(Ui.dp(c, 10), Ui.dp(c, 11), Ui.dp(c, 10), Ui.dp(c, 11));
+    let g;
+    if (on) {
+      g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, gold ? [0xFFFDE68A, 0xFFF5B301] : [0xFF2F5BEA, 0xFF1E3A8A]);
+      g.setStroke(Ui.dp(c, 2), gold ? 0xFFFFF3C4 : 0xFF93C5FD);
+    } else {
+      g = new GradientDrawable();
+      g.setColor(gold ? 0xFFFFF7DB : 0xFFE8EEFF);
+      g.setStroke(Ui.dp(c, 1), gold ? 0xFFF5D27A : 0xFFB8C8F5);
+    }
+    g.setCornerRadius(Ui.dp(c, 26));
+    t.setBackground(g);
+    return t;
+  }
+
+  /** The gold Save button in a dark rounded tray. */
+  static save(c, text, l) {
+    const tray = new FrameLayout(c);
+    tray.setPadding(Ui.dp(c, 6), Ui.dp(c, 6), Ui.dp(c, 6), Ui.dp(c, 6));
+    const tg = new GradientDrawable();
+    tg.setColor(0xFF0B1A4A);
+    tg.setCornerRadius(Ui.dp(c, 34));
+    tg.setStroke(Ui.dp(c, 1), 0x66F5C451);
+    tray.setBackground(tg);
+    const b = Ui.tv(c, "💾  " + text, 19, 0xFF1E1B4B, true);
+    b.setGravity(Gravity.CENTER);
+    b.setPadding(Ui.dp(c, 16), Ui.dp(c, 13), Ui.dp(c, 16), Ui.dp(c, 13));
+    const g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFFFE27A, 0xFFF5B301, 0xFFE09A00]);
+    g.setCornerRadius(Ui.dp(c, 28));
+    g.setStroke(Ui.dp(c, 2), 0xFFFFF1B8);
+    b.setBackground(g);
+    Ui.ripple(b, 0x33FFFFFF);
+    b.setOnClickListener(l);
+    tray.addView(b, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    m.setMargins(Ui.dp(c, 40), Ui.dp(c, 16), Ui.dp(c, 40), 0);
+    tray.setLayoutParams(m);
+    return tray;
+  }
+
+  /** "Save • Care • Heal" at the left and a gold ECG heart at the right. */
+  static footer(c) {
+    const f = Ui.h(c);
+    f.setGravity(Gravity.CENTER_VERTICAL);
+    f.setPadding(Ui.dp(c, 22), Ui.dp(c, 14), Ui.dp(c, 18), 0);
+    const t = Ui.tv(c, "Save • Care • Heal  ♡", 15, 0xFFDCE6FF, false);
+    t.setTypeface(Typeface.create(Typeface.SERIF, Typeface.ITALIC));
+    f.addView(t, Ui.weight(1));
+    const ecg = new View(c);
+    ecg.setBackground(new PgLeaveActivity.HeartEcg());
+    f.addView(ecg, Ui.lp(Ui.dp(c, 130), Ui.dp(c, 34)));
+    return f;
   }
 }
 ;
@@ -15202,6 +15709,360 @@ class AiRun {
   }
 }
 ;
+/* ---- app/Album.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The department album (10.11): photos of the department in albums, each shown inside the navy-and-gold "Department of
+ * Medicine, Tirunelveli Medical College" frame the user designed (res album_frame, its white panel made see-through so
+ * the stethoscope, flowers and book lie over the photo). On the home page of tablets and the website the album sits below
+ * the DAP card and scrolls sideways; the Album screen holds every album and the upload.
+ */
+class Album {
+  static TABLE = "album_photos"; static DIR = "album";
+  static NAVY = 0xFF0F2A5C; static GOLD = 0xFFC9A048;
+  static REQ_PICK = 7321;
+  /** Where the photo sits inside the frame picture, as fractions of its width and height (left, top, right, bottom). */
+  static FL = 146 / 1536; static FT = 150 / 1024; static FR = 126 / 1536; static FB = 82 / 1024;
+  static pendingAlbum = "";
+
+  static latest(db, n) {
+    return db.rows("SELECT * FROM " + Album.TABLE + " ORDER BY time DESC, id DESC LIMIT " + n);
+  }
+
+  static albums(db) {
+    const out = [];
+    for (const r of db.rows("SELECT album, MAX(time) AS t FROM " + Album.TABLE + " GROUP BY album ORDER BY t DESC")) out.push(Ui.nz(r.get("album")));
+    return out;
+  }
+
+  static inAlbum(db, album) {
+    return db.rows("SELECT * FROM " + Album.TABLE + " WHERE album=? ORDER BY time, id", album);
+  }
+
+  /** Any signed-in member adds photos; the one who added a photo, and the admin, HOD and registrar, change or remove it. */
+  static canEdit(c, r) {
+    return Cloud.isAdmin(c) || !Cloud.active(c) || Ui.nz(r.get("by_name")) === CallDutyActivity.myName(c);
+  }
+
+  /** One photo in the gold frame, widthPx wide (3:2). A photo still downloading shows an hourglass. */
+  static framed(c, rel, widthPx) {
+    const h = Math.trunc(widthPx * 2 / 3);
+    const f = new FrameLayout(c);
+    f.setLayoutParams(new LinearLayout.LayoutParams(widthPx, h));
+    const pp = new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT);
+    pp.setMargins(Math.round(widthPx * Album.FL), Math.round(h * Album.FT), Math.round(widthPx * Album.FR), Math.round(h * Album.FB));
+    const file = rel == null ? null : Db.get(c).file(rel);
+    if (file != null && file.exists()) {
+      const ph = new ImageView(c);
+      ph.setScaleType(ImageView.ScaleType.CENTER_CROP);
+      ph.setImageBitmap(Ui.loadScaled(file, Math.max(600, widthPx)));
+      ph.setBackgroundColor(0xFFFFFBF2);
+      f.addView(ph, pp);
+    } else {
+      const t = Ui.tv(c, rel == null ? "" : "⏳", 22, Album.NAVY, true);
+      t.setGravity(Gravity.CENTER);
+      t.setBackgroundColor(0xFFFFFBF2);
+      f.addView(t, pp);
+    }
+    const frame = new ImageView(c);
+    frame.setScaleType(ImageView.ScaleType.FIT_XY);
+    frame.setImageResource(R.drawable.album_frame);
+    frame.el.style.pointerEvents = 'none';   // Web: taps pass through the frame, as on Android
+    f.addView(frame, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    return f;
+  }
+
+  /** A framed photo with its caption under it, opening the photo full screen; long-press to change or remove it. */
+  static tile(a, db, r, widthPx) {
+    const box = Ui.v(a);
+    const f = Album.framed(a, r.get("file"), widthPx);
+    box.addView(f);
+    const cap = Ui.nz(r.get("caption")).trim();
+    const t = Ui.tv(a, cap.isEmpty() ? Ui.nz(r.get("album")) : cap, 13, Ui.TEXT, true);
+    t.setGravity(Gravity.CENTER);
+    t.setMaxLines(1);
+    t.setEllipsize(TextUtils.TruncateAt.END);
+    box.addView(t, Ui.lp(widthPx, LinearLayout.LayoutParams.WRAP_CONTENT));
+    box.setOnClickListener({ onClick: () => { Album.open(a, db, r); } });
+    box.setOnLongClickListener({
+      onLongClick: () => {
+        if (Album.canEdit(a, r)) Album.editDialog(a, db, r);
+        return true;
+      }
+    });
+    return box;
+  }
+
+  static open(a, db, r) {
+    const rel = Ui.nz(r.get("file"));
+    if (!db.file(rel).exists()) {
+      Ui.toast(a, "Still downloading. Try again in a moment.");
+      Sync.kick(a);
+      return;
+    }
+    const cap = Ui.nz(r.get("caption")).trim();
+    a.startActivity(new Intent(a, ViewerActivity).putExtra("file", rel).putExtra("title", cap.isEmpty() ? Ui.nz(r.get("album")) : cap));
+  }
+
+  /** Long-press: change the caption or album, or remove the photo. */
+  static editDialog(a, db, r) {
+    new AlertDialog.Builder(a).setTitle("Photo")
+      .setItems(["Change caption or album", "Remove photo"], {
+        onClick: (d, w) => {
+          if (w === 0) Album.captionDialog(a, db, r);
+          else Album.remove(a, db, r);
+        }
+      }).setNegativeButton("Close", null).show();
+  }
+
+  static captionDialog(a, db, r) {
+    const f = new Form(a);
+    f.text("caption", "Caption", Ui.nz(r.get("caption")), InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+    f.suggest("album", "Album", Ui.nz(r.get("album")), Album.albums(db));
+    Ui.formDialog(a, "Photo", f, "Save", {
+      run: () => {
+        if (!f.require("album", "Name the album")) return false;
+        const cv = new ContentValues();
+        cv.put("caption", f.get("caption").trim());
+        cv.put("album", f.get("album").trim());
+        db.update(Album.TABLE, cv, Ui.toLong(r.get("id"), 0));
+        a.render();
+        return true;
+      }
+    });
+  }
+
+  static remove(a, db, r) {
+    Ui.confirm(a, "Remove this photo?", "It goes from the album on every phone.", "Remove", {
+      run: () => {
+        db.forgetFile(r.get("file"));
+        db.delete(Album.TABLE, Ui.toLong(r.get("id"), 0));
+        a.render();
+      }
+    });
+  }
+
+  /** "Upload an album": its name (new or one already there), then the photos, many at once. */
+  static uploadDialog(a, db, album) {
+    const f = new Form(a);
+    f.suggest("album", "Album name", Ui.nz(album), Album.albums(db));
+    f.heading("Example: \"CME on sepsis, Oct 2026\". Then choose the photos: you can pick many at once.");
+    Ui.formDialog(a, "📸 Upload photos", f, "Choose photos", {
+      run: () => {
+        if (!f.require("album", "Name the album")) return false;
+        Album.pendingAlbum = f.get("album").trim();
+        const i = new Intent(Intent.ACTION_GET_CONTENT);
+        i.setType("image/*");
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        try {
+          a.startActivityForResult(Intent.createChooser(i, "Choose photos"), Album.REQ_PICK);
+        } catch (e) {
+          Ui.toast(a, "No photo picker found");
+        }
+        return true;
+      }
+    });
+  }
+
+  /** The picked photos: each saved as a JPEG (at most 1600 px) under album/ and added to the album. Returns how many. */
+  static onPicked(a, db, data) {
+    const uris = [];
+    if (data.getClipData() != null) {
+      for (let i = 0; i < data.getClipData().getItemCount(); i++) {
+        const u = data.getClipData().getItemAt(i).getUri();
+        if (u != null) uris.push(u);
+      }
+    } else if (data.getData() != null) uris.push(data.getData());
+    const album = Album.pendingAlbum.isEmpty() ? "Department" : Album.pendingAlbum;
+    let n = 0;
+    const t0 = System.currentTimeMillis();
+    for (const u of uris) {
+      try {
+        const rel = Store.saveImage(a, u, Album.DIR + "/" + t0 + "_" + (n + 1) + ".jpg", 1600);
+        if (rel == null) continue;
+        const cv = new ContentValues();
+        cv.put("album", album);
+        cv.put("file", rel);
+        cv.put("caption", "");
+        cv.put("by_name", CallDutyActivity.myName(a));
+        cv.put("time", Dates.todayIso() + " " + Dates.now() + jfmt(":%02d", n % 60));
+        db.insert(Album.TABLE, cv);
+        n++;
+      } catch (ignored) {
+        // not a picture: skipped
+      }
+    }
+    return n;
+  }
+
+  /**
+   * Home, below the DAP card (10.12: on phones too): one big frame across the whole column, the newest photos sliding
+   * inside it by themselves every 4 seconds; swipe to look, tap a photo to open it.
+   */
+  static homeSection(a, db) {
+    const box = Ui.v(a);
+    const head = Ui.h(a);
+    head.setGravity(Gravity.CENTER_VERTICAL);
+    head.addView(Ui.heading(a, "📸 Department album", Album.NAVY), Ui.weight(1));
+    const up = Ui.tv(a, "+ Add", 13, Album.NAVY, true);
+    up.setPadding(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 6), Ui.dp(a, 6));
+    up.setOnClickListener({ onClick: () => { Album.uploadDialog(a, db, null); } });
+    head.addView(up);
+    const all = Ui.tv(a, "All albums  ›", 13, Album.GOLD, true);
+    all.setPadding(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 16), Ui.dp(a, 6));
+    all.setOnClickListener(a.opener(AlbumActivity));
+    head.addView(all);
+    box.addView(head);
+    const sw = a.getResources().getConfiguration().screenWidthDp;
+    const w = Ui.dp(a, (Base.wide(a) ? Math.trunc(sw / 2) : sw) - 24);
+    const photos = Album.latest(db, 30);
+    const wrap = Ui.v(a);
+    wrap.setPadding(Ui.dp(a, 12), Ui.dp(a, 2), Ui.dp(a, 12), 0);
+    wrap.addView(Album.big(a, db, photos, w));
+    box.addView(wrap);
+    const cap = Ui.muted(a, photos.length === 0 ? "Tap the frame to upload the first album." : photos.length + (photos.length === 1 ? " photo" : " photos")
+        + "  ·  swipe inside the frame  ·  tap a photo to open it");
+    cap.setGravity(Gravity.CENTER);
+    cap.setPadding(Ui.dp(a, 12), Ui.dp(a, 2), Ui.dp(a, 12), Ui.dp(a, 8));
+    box.addView(cap);
+    return box;
+  }
+
+  /** The big frame: the photos side by side inside its panel, sliding on by themselves. */
+  static big(a, db, photos, w) {
+    const h = Math.trunc(w * 2 / 3);
+    const f = new FrameLayout(a);
+    f.setLayoutParams(new LinearLayout.LayoutParams(w, h));
+    const ml = Math.round(w * Album.FL), mt = Math.round(h * Album.FT), mr = Math.round(w * Album.FR), mb = Math.round(h * Album.FB);
+    const pw = w - ml - mr, ph = h - mt - mb;
+    const pp = new FrameLayout.LayoutParams(pw, ph);
+    pp.setMargins(ml, mt, mr, mb);
+    if (photos.length === 0) {
+      const t = Ui.tv(a, "+\nAdd the first photos", 20, Album.NAVY, true);
+      t.setGravity(Gravity.CENTER);
+      t.setBackgroundColor(0xFFFFFBF2);
+      f.addView(t, pp);
+      f.setOnClickListener({ onClick: () => { Album.uploadDialog(a, db, null); } });
+    } else {
+      const sc = new HorizontalScrollView(a);
+      sc.setHorizontalScrollBarEnabled(false);
+      sc.setBackgroundColor(0xFFFFFBF2);
+      const row = Ui.h(a);
+      for (const r of photos) {
+        const file = Db.get(a).file(Ui.nz(r.get("file")));
+        let v;
+        if (file.exists()) {
+          const iv = new ImageView(a);
+          iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+          iv.setImageBitmap(Ui.loadScaled(file, Math.max(800, pw)));
+          v = iv;
+        } else {
+          const t = Ui.tv(a, "⏳", 24, Album.NAVY, true);
+          t.setGravity(Gravity.CENTER);
+          v = t;
+        }
+        v.setOnClickListener({ onClick: () => { Album.open(a, db, r); } });
+        v.setOnLongClickListener({
+          onLongClick: () => {
+            if (Album.canEdit(a, r)) Album.editDialog(a, db, r);
+            return true;
+          }
+        });
+        row.addView(v, new LinearLayout.LayoutParams(pw, ph));
+      }
+      sc.addView(row);
+      f.addView(sc, pp);
+      const n = photos.length;
+      if (n > 1) {
+        const slide = {
+          run: () => {
+            if (!sc.isAttachedToWindow()) return;
+            const next = (Math.round(sc.getScrollX() / pw) + 1) % n;
+            sc.smoothScrollTo(next * pw, 0);
+            sc.postDelayed(slide, 4000);
+          }
+        };
+        sc.postDelayed(slide, 4000);
+      }
+    }
+    const frame = new ImageView(a);
+    frame.setScaleType(ImageView.ScaleType.FIT_XY);
+    frame.setImageResource(R.drawable.album_frame);
+    // Web: the frame lies over the photos, so taps and swipes must pass through it (Android does this by itself)
+    frame.el.style.pointerEvents = 'none';
+    f.addView(frame, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    return f;
+  }
+
+  /** A sideways-scrolling row of framed photos, ending with the "+ Add photos" frame. */
+  static strip(a, db, photos, album) {
+    const sc = new HorizontalScrollView(a);
+    sc.setHorizontalScrollBarEnabled(false);
+    const row = Ui.h(a);
+    row.setPadding(Ui.dp(a, 12), Ui.dp(a, 4), Ui.dp(a, 12), Ui.dp(a, 8));
+    const w = Ui.dp(a, Base.wide(a) ? 330 : 270);
+    for (const r of photos) {
+      const t = Album.tile(a, db, r, w);
+      row.addView(t);
+      Ui.margins(t, 0, 0, 12, 0);
+    }
+    const add = Ui.v(a);
+    const f = Album.framed(a, null, w);
+    const plus = Ui.tv(a, photos.length === 0 ? "+\nAdd the first photos" : "+\nAdd photos", 18, Album.NAVY, true);
+    plus.setGravity(Gravity.CENTER);
+    f.addView(plus, 1, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    add.addView(f);
+    const cap = Ui.tv(a, "Upload an album", 13, Ui.MUTED, true);
+    cap.setGravity(Gravity.CENTER);
+    add.addView(cap, Ui.lp(w, LinearLayout.LayoutParams.WRAP_CONTENT));
+    add.setOnClickListener({ onClick: () => { Album.uploadDialog(a, db, album); } });
+    row.addView(add);
+    sc.addView(row);
+    return sc;
+  }
+}
+;
+/* ---- app/AlbumActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** The department album (10.11): every album, newest first, each a sideways row of framed photos; upload from the header. */
+class AlbumActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Department album");
+    this.subtitle = "Photos of the Department of Medicine";
+    this.headerColor(Album.NAVY);
+    this.headerAction("+ Upload", { onClick: () => { Album.uploadDialog(this, this.db, null); } });
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const albums = Album.albums(db);
+    const hero = Ui.v(this);
+    hero.setBackground(Glass.hero(this, [0xFF1E3A8A, Album.NAVY], 20));
+    hero.setPadding(Ui.dp(this, 18), Ui.dp(this, 14), Ui.dp(this, 18), Ui.dp(this, 14));
+    const n = db.num("SELECT COUNT(*) FROM " + Album.TABLE);
+    hero.addView(Ui.tv(this, "📸 " + albums.length + (albums.length === 1 ? " album" : " albums") + "  ·  " + n + (n === 1 ? " photo" : " photos"), 18, 0xFFF5D98B, true));
+    hero.addView(Ui.tv(this, "Tap a photo to see it full screen. Long-press your photo to add a caption, move it to another album or remove it.", 13, 0xD9FFFFFF, false));
+    const hp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    hp.setMargins(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
+    page.addView(hero, hp);
+    for (const al of albums) {
+      const l = Album.inAlbum(db, al);
+      page.addView(Ui.heading(this, (al.isEmpty() ? "Department" : al) + "  ·  " + l.length, Album.NAVY));
+      page.addView(Album.strip(this, db, l, al));
+    }
+    if (albums.length === 0) {
+      page.addView(Ui.heading(this, "No albums yet", Album.NAVY));
+      page.addView(Album.strip(this, db, [], null));
+    }
+    this.setPage(page);
+  }
+}
+;
 /* ---- app/Alerts.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -16126,6 +16987,213 @@ class AntibiogramActivity extends Base {
         }).setNegativeButton("Close", null).show();
   }
 }
+;
+/* ---- app/Applause.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Faculty applause (10.17, user's pick 214): when an Assistant Professor, Professor or the HOD gives a 👍 to a PG's work, the PG
+ * gets a golden pop-up with confetti and the sound of clapping the next time they open the app. Each like is shown once.
+ */
+class Applause {
+  static GOLD = 0xFFF59E0B;
+  static DEEP = 0xFF92400E;
+  static PREFS = "applause";
+  static showing = false;
+  static RATE = 22050;
+
+  /** Shows the pop-up for likes not seen yet on this phone. The first time, older likes are only marked as seen. */
+  static check(a, db) {
+    if (Applause.showing) return;
+    const sp = a.getApplicationContext().getSharedPreferences(Applause.PREFS, Context.MODE_PRIVATE);
+    const mine = Kudos.toMe(a, db);
+    const seen = sp.getString("seen", "");
+    const fresh = [];
+    let all = "";
+    for (const k of mine) {
+      all += (all.length === 0 ? "" : ",") + k.get("id");
+      if (!("," + seen + ",").contains("," + k.get("id") + ",")) fresh.add(k);
+    }
+    const first = !sp.contains("seen");
+    sp.edit().putString("seen", all).apply();
+    if (first || fresh.isEmpty()) return;
+    Applause.show(a, fresh);
+  }
+
+  static show(a, likes) {
+    Applause.showing = true;
+    const root = new FrameLayout(a);
+    const card = Ui.v(a);
+    card.setGravity(Gravity.CENTER_HORIZONTAL);
+    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFFFFFBEB, 0xFFFEF3C7, 0xFFFDE68A]);
+    bg.setCornerRadius(Ui.dp(a, 24));
+    bg.setStroke(Ui.dp(a, 2), Applause.GOLD);
+    card.setBackground(bg);
+    card.setPadding(Ui.dp(a, 20), Ui.dp(a, 22), Ui.dp(a, 20), Ui.dp(a, 18));
+    const clap = Ui.tv(a, "👏", 64, Ui.TEXT, false);
+    clap.setGravity(Gravity.CENTER);
+    card.addView(clap);
+    const title = Ui.tv(a, "Applause!", 26, Applause.DEEP, true);
+    title.setGravity(Gravity.CENTER);
+    card.addView(title);
+    const sub = Ui.tv(a, likes.size() === 1 ? "Your faculty noticed your work" : "Your faculty noticed your work " + likes.size() + " times", 14, 0xFF78350F, false);
+    sub.setGravity(Gravity.CENTER);
+    card.addView(sub);
+    Ui.margins(sub, 0, 2, 0, 10);
+    for (let i = 0; i < Math.min(4, likes.size()); i++) {
+      const k = likes.get(i);
+      const row = Ui.h(a);
+      row.setGravity(Gravity.CENTER_VERTICAL);
+      row.setBackground(Ui.round(a, 0xB3FFFFFF, 14));
+      row.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), Ui.dp(a, 8));
+      row.addView(Ui.tv(a, "👍", 20, Ui.TEXT, false));
+      const t = Ui.v(a);
+      t.setPadding(Ui.dp(a, 10), 0, 0, 0);
+      t.addView(Ui.tv(a, Ui.nz(k.get("by_name")).isEmpty() ? "A faculty member" : k.get("by_name"), 15, Applause.DEEP, true));
+      t.addView(Ui.tv(a, "liked your " + Ui.nz(k.get("what")), 13, 0xFF57534E, false));
+      row.addView(t, Ui.weight(1));
+      card.addView(row);
+      Ui.margins(row, 0, 6, 0, 0);
+    }
+    if (likes.size() > 4) {
+      const more = Ui.tv(a, "+ " + (likes.size() - 4) + " more", 13, Applause.DEEP, true);
+      more.setGravity(Gravity.CENTER);
+      card.addView(more);
+      Ui.margins(more, 0, 6, 0, 0);
+    }
+    const pts = Ui.tv(a, "+" + (Kudos.POINTS * likes.size()) + " points in Golden Honours", 13, 0xFF047857, true);
+    pts.setGravity(Gravity.CENTER);
+    card.addView(pts);
+    Ui.margins(pts, 0, 12, 0, 0);
+    const cp = new FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
+    const m = Ui.dp(a, 8);
+    cp.setMargins(m, m, m, m);
+    root.addView(card, cp);
+    const conf = new Applause.Confetti(a);
+    root.addView(conf, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+    const d = new AlertDialog.Builder(a).setView(root).setPositiveButton("Thank you 🙏", null)
+      .setNeutralButton("See all", { onClick: (dd, w) => { a.open(ArenaActivity); } }).create();
+    d.setOnDismissListener({
+      onDismiss: (dd) => {
+        Applause.showing = false;
+        conf.stop();
+      }
+    });
+    d.show();
+    // the clapping hands bounce while the sound plays
+    const bounce = ValueAnimator.ofFloat(0, 1);
+    bounce.setDuration(450);
+    bounce.setRepeatCount(4);
+    bounce.addUpdateListener({
+      onAnimationUpdate: (v) => {
+        const f = v.getAnimatedValue();
+        const s = 1 + 0.18 * Math.sin(f * Math.PI);
+        clap.setScaleX(s);
+        clap.setScaleY(s);
+      }
+    });
+    bounce.start();
+    conf.start();
+    Applause.play(a);
+  }
+
+  /** About two seconds of a small crowd clapping, made from short bursts of noise (no sound file needed). */
+  static clapping() {
+    const RATE = Applause.RATE;
+    const n = Math.floor(RATE * 2.2);
+    const buf = new Float32Array(n);
+    // each clapper claps about 4 times a second; the crowd swells and fades
+    for (let who = 0; who < 9; who++) {
+      let at = Math.random() * 0.25;
+      const gap = 0.21 + Math.random() * 0.08;
+      const loud = 0.35 + Math.random() * 0.4;
+      while (at < 2.0) {
+        const s0 = Math.floor(at * RATE);
+        const env = at < 0.3 ? at / 0.3 : at > 1.4 ? Math.max(0, (2.0 - at) / 0.6) : 1;
+        let prev = 0;
+        for (let i = 0; i < RATE * 0.03 && s0 + i < n; i++) {
+          const noise = Math.random() * 2 - 1;
+          // a crude band-pass: take away the slow part so the burst sounds like a slap, not a hiss
+          const hp = noise - prev * 0.6;
+          prev = noise;
+          buf[s0 + i] += hp * loud * env * Math.exp(-i / (RATE * 0.006));
+        }
+        at += gap + (Math.random() - 0.5) * 0.03;
+      }
+    }
+    for (let i = 0; i < n; i++) buf[i] = Math.max(-1, Math.min(1, buf[i] * 0.45));
+    return buf;
+  }
+
+  /** Plays the clapping (browsers need the page to have been touched once; otherwise it stays silent). */
+  static play(c) {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const pcm = Applause.clapping();
+      const b = ctx.createBuffer(1, pcm.length, Applause.RATE);
+      b.getChannelData(0).set(pcm);
+      const src = ctx.createBufferSource();
+      src.buffer = b;
+      src.connect(ctx.destination);
+      src.start();
+      setTimeout(() => { try { ctx.close(); } catch (ignored) { } }, 3000);
+    } catch (ignored) {
+      // the pop-up works without sound
+    }
+  }
+}
+
+/** Falling paper pieces in gold and bright colours over the card, for about four seconds. */
+Applause.Confetti = class extends View {
+  constructor(c) {
+    super(c);
+    this.COLORS = [0xFFF59E0B, 0xFFEF4444, 0xFF10B981, 0xFF3B82F6, 0xFFEC4899, 0xFF8B5CF6, 0xFFFACC15];
+    this.bits = [];
+    this.paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.anim = null;
+    this.t = 0;
+    // x (0-1), start y (-1..0), speed, size, sway phase, colour index, spin
+    for (let i = 0; i < 60; i++)
+      this.bits.push([Math.random(), -Math.random(), 0.5 + Math.random() * 0.7, 5 + Math.random() * 7, Math.random() * 6.28, Math.floor(Math.random() * this.COLORS.length), Math.random() * 360]);
+  }
+
+  start() {
+    this.anim = ValueAnimator.ofFloat(0, 1);
+    this.anim.setDuration(4200);
+    this.anim.addUpdateListener({
+      onAnimationUpdate: (v) => {
+        this.t = v.getAnimatedValue();
+        this.invalidate();
+      }
+    });
+    this.anim.start();
+  }
+
+  stop() {
+    if (this.anim != null) this.anim.cancel();
+  }
+
+  onDraw(cv) {
+    const w = this.getWidth(), h = this.getHeight();
+    const t = this.t;
+    if (w === 0 || t >= 1) return;
+    const dp = 1;
+    const alpha = t > 0.8 ? Math.trunc(255 * (1 - t) / 0.2) : 255;
+    for (const b of this.bits) {
+      const y = (b[1] + t * 2.2 * b[2]) * h;
+      if (y < -20 || y > h + 20) continue;
+      const x = b[0] * w + Math.sin(b[4] + t * 12) * 14 * dp;
+      this.paint.setColor(this.COLORS[b[5]]);
+      this.paint.setAlpha(Math.max(0, alpha));
+      cv.save();
+      cv.rotate(b[6] + t * 720, x, y);
+      cv.drawRect(x - b[3] * dp / 2, y - b[3] * dp / 4, x + b[3] * dp / 2, y + b[3] * dp / 4, this.paint);
+      cv.restore();
+    }
+  }
+};
 ;
 /* ---- app/ApprovalActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -18268,6 +19336,78 @@ BedBoardActivity.Section = class {
   }
 };
 ;
+/* ---- app/Buzz.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Silent alarm (10.10, idea 145): each kind of urgent alert has its own vibration pattern, so the phone in a pocket says
+ * what happened without a sound in a quiet ward. Code blue: three long buzzes, repeated. Critical lab: short-short-long.
+ * Escalation to the DAP: five quick buzzes. A timer or protocol step due: two gentle buzzes. Switch in Settings.
+ * Web: the browser's vibration (Android phones; iPhones do not vibrate from a web page).
+ */
+class Buzz {
+  static CODE = "code"; static CRIT = "crit"; static ESCALATE = "escalate"; static TIMER = "timer";
+
+  /** Off, on, off, on... in milliseconds. */
+  static pattern(kind) {
+    if (Buzz.CODE === kind) return [0, 900, 250, 900, 250, 900, 700, 900, 250, 900, 250, 900];
+    if (Buzz.CRIT === kind) return [0, 150, 120, 150, 120, 700, 600, 150, 120, 150, 120, 700];
+    if (Buzz.ESCALATE === kind) return [0, 120, 90, 120, 90, 120, 90, 120, 90, 120];
+    return [0, 250, 200, 250];
+  }
+
+  static label(kind) {
+    if (Buzz.CODE === kind) return "Code blue: three long buzzes, twice";
+    if (Buzz.CRIT === kind) return "Critical lab: short, short, long (twice)";
+    if (Buzz.ESCALATE === kind) return "Escalation to the DAP: five quick buzzes";
+    return "Timer or protocol step due: two gentle buzzes";
+  }
+
+  static prefs(c) {
+    return c.getApplicationContext().getSharedPreferences("buzz", Context.MODE_PRIVATE);
+  }
+
+  static on(c) {
+    return Buzz.prefs(c).getBoolean("on", true);
+  }
+
+  static setOn(c, v) {
+    Buzz.prefs(c).edit().putBoolean("on", v).apply();
+  }
+
+  static buzz(c, kind) {
+    if (!Buzz.on(c)) return;
+    try {
+      // the browser takes the same vibrate / pause list without the leading pause
+      if (navigator.vibrate) navigator.vibrate(Buzz.pattern(kind).slice(1));
+    } catch (ignored) {
+      // no vibrator, or not allowed
+    }
+  }
+
+  /** The buzz that goes with a notification id, or null for an ordinary one. */
+  static forNotification(id) {
+    if (id === Background.N_CODE) return Buzz.CODE;
+    if (id === Background.N_CRIT) return Buzz.CRIT;
+    if (id === Background.N_ESCALATE) return Buzz.ESCALATE;
+    if (id === Protocols.N_DUE || id === Countdown.N_TIMER) return Buzz.TIMER;
+    return null;
+  }
+
+  /** Settings: feel each pattern once. */
+  static feelDialog(a) {
+    const kinds = [Buzz.CODE, Buzz.CRIT, Buzz.ESCALATE, Buzz.TIMER];
+    const labels = kinds.map(k => Buzz.label(k));
+    new AlertDialog.Builder(a).setTitle("📳 Tap one to feel it")
+      .setItems(labels, {
+        onClick: (d, w) => {
+          Buzz.buzz(a, kinds[w]);
+          Buzz.feelDialog(a);
+        }
+      }).setNegativeButton("Close", null).show();
+  }
+}
+;
 /* ---- app/CalendarActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -18996,7 +20136,7 @@ class CallDutyActivity extends Base {
     seg.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
     const sick = db.num("SELECT COUNT(*) FROM duty_sick WHERE date=?", iso);
     const notes = db.num("SELECT COUNT(*) FROM duty_notes WHERE date=?", iso);
-    const labels = ["Sick case list  " + sick, "Ward issues  " + notes];
+    const labels = ["Sick case reports  " + sick, "Ward issues  " + notes];
     for (let i = 0; i < 2; i++) {
       const idx = i;
       const t = Ui.tv(this, labels[i], 14, i === this.tab ? Ui.TEAL : Ui.MUTED, true);
@@ -19055,18 +20195,22 @@ class CallDutyActivity extends Base {
       r.addView(t, Ui.weight(1));
       const ph = e.getValue()[1];
       if (!ph.isEmpty()) {
+        // 10.13: the buttons sit under the name, so the full name stays on one line (user asked)
+        const btns = Ui.h(this);
         const call = Ui.softPill(this, "📞 Call", Ui.GREEN);
         call.setOnClickListener({
           onClick: (v) => {
             try { this.startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + ph))); } catch (ignored) {}
           }
         });
-        r.addView(call);
+        btns.addView(call);
         if (WhatsApp.usable(ph)) {
           const wa = WhatsApp.pill(this, ph);
-          r.addView(wa);
+          btns.addView(wa);
           Ui.margins(wa, 6, 0, 0, 0);
         }
+        t.addView(btns);
+        Ui.margins(btns, 0, 4, 0, 0);
       }
       card.addView(r);
     }
@@ -19155,14 +20299,20 @@ class CallDutyActivity extends Base {
     page.addView(card);
   }
 
+  /** 10.13: role and full name on one line, Call and WhatsApp under it (user asked). */
   personRow(role, np) {
-    const r = Ui.h(this);
-    r.setGravity(Gravity.CENTER_VERTICAL);
-    r.setPadding(0, Ui.dp(this, 2), 0, Ui.dp(this, 2));
+    const box = Ui.v(this);
+    box.setPadding(0, Ui.dp(this, 3), 0, Ui.dp(this, 3));
+    const top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
     const rl = Ui.tv(this, role, 11, role.equals("PG") ? Ui.TEAL : Ui.ORANGE, true);
-    r.addView(rl, Ui.lp(Ui.dp(this, 36), ViewGroup.LayoutParams.WRAP_CONTENT));
+    top.addView(rl, Ui.lp(Ui.dp(this, 36), ViewGroup.LayoutParams.WRAP_CONTENT));
     const n = Ui.tv(this, np[0], 14, Ui.TEXT, true);
-    r.addView(n, Ui.weight(1));
+    top.addView(n, Ui.weight(1));
+    box.addView(top);
+    const r = Ui.h(this);
+    r.setPadding(Ui.dp(this, 36), Ui.dp(this, 3), 0, 0);
+    box.addView(r);
     const ph = np[1];
     if (!ph.isEmpty()) {
       const call = Ui.softPill(this, "Call", Ui.GREEN);
@@ -19178,7 +20328,7 @@ class CallDutyActivity extends Base {
         Ui.margins(wa, 6, 0, 0, 0);
       }
     }
-    return r;
+    return box;
   }
 
   /** Paste box for the WhatsApp message; shows what was found before saving. */
@@ -19252,22 +20402,58 @@ class CallDutyActivity extends Base {
     btns.add(Ui.button(this, "+ Add sick case", Ui.TEAL, { onClick: (v) => { this.sickDialog(null); } }));
     if (carry > 0 && db.num("SELECT COUNT(*) FROM duty_sick WHERE date=?", iso) === 0)
       btns.add(Ui.outlineButton(this, "Carry over " + carry + " from yesterday", Ui.TEAL, { onClick: (v) => { this.carryOver(prev, iso); } }));
-    else btns.add(Ui.outlineButton(this, "Share on WhatsApp", Ui.GREEN, { onClick: (v) => { ReportActivity.shareText(this, this.shareSick(iso)); } }));
+    else btns.add(Ui.outlineButton(this, "📤 Send to DAP", Ui.GREEN, { onClick: (v) => { this.sendToDap(SickReport.all(db, iso, this.ward)); } }));
     const br = Ui.buttonRow(this, btns.slice());
     page.addView(br);
     Ui.margins(br, 12, 4, 12, 4);
+    // 10.29: the fixed report format, and the night's report as PDF/Word
+    const pdf = Ui.outlineButton(this, "📄 Sick case report (PDF / Word)", SickReport.COLOR, {
+      onClick: (v) => { Hod.export(this, "Sick case report", { make: () => SickReport.doc(db, iso, this.ward) }); }
+    });
+    page.addView(pdf);
+    Ui.margins(pdf, 12, 4, 12, 4);
+    const dap = SickReport.dapName(db, iso);
+    const unseen = db.num("SELECT COUNT(*) FROM duty_sick WHERE date=? AND (ack_by IS NULL OR ack_by='')", iso);
+    const how = Ui.muted(this, "Unit PGs: report each sick patient here in the fixed format (vitals, oxygen, problem, treatment given, need from DAP) and tap Send to DAP. "
+      + (dap.isEmpty() ? "Paste the roster to know the DAP." : "DAP tonight: " + dap + ".") + (unseen > 0 ? "  " + unseen + " not seen by the DAP yet." : ""));
+    page.addView(how);
+    Ui.margins(how, 16, 2, 16, 4);
 
     const w = this.ward.equals("ALL") ? "" : " AND ward='" + this.ward.split("'").join("") + "'";
     const rows = db.rows("SELECT * FROM duty_sick WHERE date=?" + w
         + " ORDER BY CASE status WHEN 'Critical' THEN 0 WHEN 'Sick' THEN 1 ELSE 2 END, ward, id", iso);
     if (rows.isEmpty()) page.addView(this.emptyNote("No sick cases listed for this duty yet."));
     for (const r of rows) {
-      let sub = (r.get("bed").isEmpty() ? "" : "Bed " + r.get("bed") + "  ·  ") + (r.get("ip_no").isEmpty() ? "" : "IP " + r.get("ip_no"));
+      let sub = (Ui.nz(r.get("age_sex")).isEmpty() ? "" : r.get("age_sex") + "  ·  ") + (r.get("bed").isEmpty() ? "" : "Bed " + r.get("bed") + "  ·  ")
+        + (r.get("ip_no").isEmpty() ? "" : "IP " + r.get("ip_no"));
       sub = sub.replaceAllRx("  ·  $", "");
+      if (!Ui.nz(r.get("diagnosis")).isEmpty()) sub += (sub.isEmpty() ? "" : "\n") + r.get("diagnosis");
+      const vit = SickReport.vitals(r);
+      if (!vit.isEmpty()) sub += (sub.isEmpty() ? "" : "\n") + vit;
       if (!r.get("issue").isEmpty()) sub += (sub.isEmpty() ? "" : "\n") + r.get("issue");
+      if (!Ui.nz(r.get("need")).isEmpty()) sub += "\nNeed from DAP: " + r.get("need") + (Ui.nz(r.get("plan")).isEmpty() ? "" : ": " + r.get("plan"));
       sub += "\n" + (r.get("by_name").isEmpty() ? "" : r.get("by_name") + ", ") + Alerts.show(r.get("updated"));
-      page.addView(this.entryCard(r.get("status"), CallDutyActivity.statusColor(r.get("status")), r.get("patient") + "  ·  " + Db.shortName(r.get("ward")), sub,
-          "", { onClick: (v) => { this.sickDialog(r); } }));
+      const card = this.entryCard(r.get("status"), CallDutyActivity.statusColor(r.get("status")), r.get("patient") + "  ·  " + Db.shortName(r.get("ward")), sub,
+          "", { onClick: (v) => { this.sickDialog(r); } }, 9);
+      const acts2 = Ui.h(this);
+      acts2.setGravity(Gravity.CENTER_VERTICAL);
+      const send = Ui.softPill(this, "📤 Send to DAP", Ui.GREEN);
+      send.setOnClickListener({ onClick: (v) => { this.sendToDap(SickReport.text(r)); } });
+      acts2.addView(send);
+      if (!SickReport.seen(r)) {
+        const seen = Ui.softPill(this, "DAP: mark seen", Ui.PRIMARY);
+        seen.setOnClickListener({ onClick: (v) => { this.markSeen(r); } });
+        acts2.addView(seen);
+        Ui.margins(seen, 8, 0, 0, 0);
+      }
+      card.addView(acts2);
+      Ui.margins(acts2, 0, 8, 0, 0);
+      if (SickReport.seen(r)) {
+        const ok = Ui.tv(this, "✓ Seen by the DAP: " + r.get("ack_by") + ", " + Alerts.show(r.get("ack_time")), 12, Ui.GREEN, true);
+        card.addView(ok);
+        Ui.margins(ok, 0, 6, 0, 0);
+      }
+      page.addView(card);
     }
   }
 
@@ -19276,6 +20462,7 @@ class CallDutyActivity extends Base {
     for (const r of db.rows("SELECT * FROM duty_sick WHERE date=? AND status IN ('Sick','Critical')", prev)) {
       const cv = new ContentValues();
       for (const k of ["ward", "patient_id", "patient", "bed", "ip_no", "issue", "status", "by_name", "updated"]) cv.put(k, r.get(k));
+      for (const k of SickReport.FIELDS) cv.put(k, Ui.nz(r.get(k)));
       cv.put("date", iso);
       db.insert("duty_sick", cv);
     }
@@ -19304,15 +20491,35 @@ class CallDutyActivity extends Base {
     const db = this.db;
     const f = new Form(this);
     const w = r != null ? r.get("ward") : this.ward.equals("ALL") ? db.todaysUnit() : this.ward;
-    f.choice("ward", "Ward", Db.shortNames(CallDutyActivity.WARDS), CallDutyActivity.WARDS, w, null);
+    const v = (k) => r == null ? "" : Ui.nz(r.get(k));
+    // 10.29: the sick case report format, from the unit PG to the DAP
+    f.heading("Patient");
+    f.choice("ward", "Ward / unit", Db.shortNames(CallDutyActivity.WARDS), CallDutyActivity.WARDS, w, null);
     const names = [];
     for (const p of db.rows("SELECT name FROM patients WHERE status='IN' ORDER BY admit_date DESC LIMIT 400")) names.add(p.get("name"));
     f.suggest("patient", "Patient name *", r == null ? "" : r.get("patient"), names.slice());
-    f.text("bed", "Bed", r == null ? "" : r.get("bed"), Form.PLAIN);
+    f.text("age_sex", "Age / sex (filled from the patient if empty)", v("age_sex"), Form.PLAIN);
     f.text("ip_no", "IP number", r == null ? "" : r.get("ip_no"), Form.PLAIN);
-    f.multi("issue", "Problem / plan / what to watch", r == null ? "" : r.get("issue"));
+    f.text("bed", "Bed", r == null ? "" : r.get("bed"), Form.PLAIN);
+    f.text("diagnosis", "Diagnosis", v("diagnosis"), Form.PLAIN);
     f.choice("status", "Status", CallDutyActivity.STATUS, CallDutyActivity.STATUS, r == null ? "Sick" : r.get("status"), null);
-    f.text("by_name", "Updated by", CallDutyActivity.myName(this), Form.PLAIN);
+    f.heading("Vitals now");
+    f.time("vitals_time", "Time", v("vitals_time").isEmpty() ? Dates.now() : r.get("vitals_time"));
+    f.text("bp", "BP (mmHg)", v("bp"), Form.PLAIN);
+    f.text("pr", "Pulse (/min)", v("pr"), Form.NUMBER);
+    f.text("rr", "Resp. rate (/min)", v("rr"), Form.NUMBER);
+    f.text("spo2", "SpO₂ (%)", v("spo2"), Form.NUMBER);
+    f.choice("o2", "Oxygen", SickReport.OXYGEN, SickReport.OXYGEN, v("o2").isEmpty() ? SickReport.OXYGEN[0] : r.get("o2"), null);
+    f.text("temp", "Temperature (°F)", v("temp"), Form.DECIMAL);
+    f.text("grbs", "GRBS (mg/dL)", v("grbs"), Form.NUMBER);
+    f.text("gcs", "GCS (/15)", v("gcs"), Form.NUMBER);
+    f.text("urine", "Urine output", v("urine"), Form.PLAIN);
+    f.heading("Report to the DAP");
+    f.multi("issue", "Problem now", r == null ? "" : r.get("issue"));
+    f.multi("treatment", "Treatment given", v("treatment"));
+    f.choice("need", "Need from DAP", SickReport.NEED, SickReport.NEED, v("need").isEmpty() ? SickReport.NEED[0] : r.get("need"), null);
+    f.multi("plan", "Exact ask / plan", v("plan"));
+    f.text("by_name", "Reported by (PG)", CallDutyActivity.myName(this), Form.PLAIN);
     if (r != null) {
       const del = Ui.outlineButton(this, "Remove from list", Ui.RED, {
         onClick: (v) => {
@@ -19329,17 +20536,56 @@ class CallDutyActivity extends Base {
         CallDutyActivity.rememberName(this, f.get("by_name"));
         const cv = new ContentValues();
         for (const k of ["ward", "patient", "bed", "ip_no", "issue", "status", "by_name"]) cv.put(k, f.get(k));
+        for (const k of SickReport.FIELDS) cv.put(k, f.get(k).trim());
         cv.put("updated", Alerts.now());
         const p = db.row("SELECT * FROM patients WHERE status='IN' AND name=? ORDER BY id DESC LIMIT 1", f.get("patient"));
         if (p != null) {
           cv.put("patient_id", p.get("id"));
+          if (r == null && CallDutyActivity.WARDS.includes(Ui.nz(p.get("location")))) cv.put("ward", p.get("location"));
           if (f.get("bed").isEmpty()) cv.put("bed", p.get("bed"));
           if (f.get("ip_no").isEmpty()) cv.put("ip_no", p.get("ip_no"));
+          if (f.get("age_sex").trim().isEmpty())
+            cv.put("age_sex", (Ui.nz(p.get("age")) + (Ui.nz(p.get("sex")).isEmpty() ? "" : "/" + p.get("sex").substring(0, 1))).replaceAllRx("^/", ""));
+          if (f.get("diagnosis").trim().isEmpty()) cv.put("diagnosis", Ui.nz(p.get("diagnosis")));
         }
+        let rid;
         if (r == null) {
           cv.put("date", this.day.toString());
-          db.insert("duty_sick", cv);
-        } else db.update("duty_sick", cv, Long.parseLong(r.get("id")));
+          rid = db.insert("duty_sick", cv);
+        } else {
+          rid = Long.parseLong(r.get("id"));
+          db.update("duty_sick", cv, rid);
+        }
+        this.render();
+        const saved = db.row("SELECT * FROM duty_sick WHERE id=?", String(rid));
+        if (saved != null)
+          new AlertDialog.Builder(this).setTitle("Send this report to the DAP?")
+            .setMessage(SickReport.text(saved).split("*").join(""))
+            .setPositiveButton("📤 Send to DAP", { onClick: (d, x) => { this.sendToDap(SickReport.text(saved)); } })
+            .setNegativeButton("Later", null).show();
+        return true;
+      }
+    });
+  }
+
+  /** 10.29: WhatsApp straight to the DAP's number when the roster has it, otherwise the share sheet. */
+  sendToDap(text) {
+    const ph = SickReport.dapPhone(this.db, this.day.toString());
+    if (WhatsApp.usable(ph)) WhatsApp.chat(this, ph, text);
+    else ReportActivity.shareText(this, text);
+  }
+
+  markSeen(r) {
+    const f = new Form(this);
+    f.text("ack_by", "Seen by (DAP)", CallDutyActivity.myName(this), Form.TEXT);
+    Ui.formDialog(this, "Mark as seen by the DAP", f, "Seen", {
+      run: () => {
+        if (!f.require("ack_by", "Enter your name")) return false;
+        CallDutyActivity.rememberName(this, f.get("ack_by"));
+        const cv = new ContentValues();
+        cv.put("ack_by", f.get("ack_by").trim());
+        cv.put("ack_time", Alerts.now());
+        this.db.update("duty_sick", cv, Long.parseLong(r.get("id")));
         this.render();
         return true;
       }
@@ -23441,6 +24687,9 @@ class CaseSheetActivity extends Base {
   onCreate(b) {
     super.onCreate(b);
     this.id = Long.parseLong(this.getIntent().getStringExtra("id"));
+    // 10.35: the clean style of the patient page
+    this.clean = true;
+    this.pageBg = PatientDesign.PAGE;
   }
 
   render() {
@@ -23454,7 +24703,7 @@ class CaseSheetActivity extends Base {
     this.setTitle("Case sheet");
     const age = p.get("age").isEmpty() ? "" : p.get("age") + " y, ";
     this.subtitle = p.get("name") + "  ·  " + age + Base.sexLabel(p.get("sex")) + (p.get("ip_no").isEmpty() ? "" : "  ·  IP " + p.get("ip_no"));
-    this.headerColor(Ui.PRIMARY);
+    this.headerColor(PatientDesign.INK);
     this.headerAction("Summary", this.opener(DischargeActivity, "id", String(this.id)));
     const page = Ui.v(this);
 
@@ -23467,19 +24716,15 @@ class CaseSheetActivity extends Base {
       total++;
       if (CaseSheet.filled(this.data, s)) done++;
     }
-    const hero = Ui.card(this);
-    hero.setBackground(Glass.hero(this, Ui.HERO, 20));
-    hero.addView(Ui.tv(this, done + " of " + total + " sections filled", 17, Color.WHITE, true));
     const wb = CaseSheet.writtenBy(this.data);
-    if (!wb.isEmpty()) hero.addView(Ui.tv(this, "Written by " + wb, 14, 0xF2FFFFFF, true));
-    hero.addView(Ui.tv(this, (p.get("diagnosis").isEmpty() ? "" : p.get("diagnosis") + "  ·  ") + "Admitted " + Dates.nice(p.get("admit_date"))
-      + "\nShared online with your other devices and the department. Tap a section to " + (this.editable ? "fill it." : "read it."), 13, 0xD9FFFFFF, false));
-    const sums = Ui.buttonRow(this,
-      Ui.button(this, "Case summary", Ui.SKY, this.opener(DischargeActivity, "id", String(this.id), "kind", DischargeActivity.CASE)),
-      Ui.button(this, "Discharge summary", Ui.TEAL, this.opener(DischargeActivity, "id", String(this.id))));
-    hero.addView(sums);
-    Ui.margins(sums, 0, 10, 0, 0);
-    page.addView(hero);
+    const id = this.id;
+    page.addView(PatientDesign.heroFor(this, this.db, p, done + " of " + total + " sections filled",
+      (wb.isEmpty() ? "" : "Written by " + wb + " · ") + "Shared online with the department. Tap a section to " + (this.editable ? "fill it." : "read it."),
+      ["Admitted", "Filled", "Bed"], [PatientDesign.shortDate(p.get("admit_date")), done + " / " + total, Ui.nz(p.get("bed"))], [
+        PatientDesign.action(this, R.drawable.ic_people, "Patient", false, this.opener(PatientActivity, "id", String(id))),
+        PatientDesign.action(this, R.drawable.ic_event, "Timeline", false, this.opener(TimelineActivity, "id", String(id))),
+        PatientDesign.action(this, R.drawable.ic_menu, "Summary", false, this.opener(DischargeActivity, "id", String(id), "kind", DischargeActivity.CASE)),
+        PatientDesign.action(this, R.drawable.ic_approve, "Discharge", true, this.opener(DischargeActivity, "id", String(id)))]));
     const likes = Kudos.bar(this, this.db, "case_sheets", String(this.id), "case sheet", "", wb);
     if (likes != null) {
       const lc = Ui.card(this);
@@ -26342,6 +27587,10 @@ class CensusActivity extends Base {
     const lcp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     lcp.setMargins(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 2));
     page.addView(lc, lcp);
+    const tm = Ui.button(this, "🕰  Time machine  ·  the wards at any past hour", TimeMachine.COLOR, this.opener(TimeMachineActivity));
+    const tmp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    tmp.setMargins(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), Ui.dp(this, 2));
+    page.addView(tm, tmp);
 
     // which day
     const nav = Ui.card(this);
@@ -30258,6 +31507,13 @@ class CmchisActivity extends Base {
     try { credited = Double.parseDouble(cr.get("s")); } catch (ignored) {}
     if (credited > 0) over.addView(Ui.kv(this, "Amount credited this month", "₹" + money(credited)));
     page.addView(over);
+    // 10.17: claim tracker (user's pick 165): the money, claims not started and patients who may be eligible
+    page.addView(CmchisClaims.money(this, this.db));
+    CmchisClaims.sections(this, this.db, page, { run: () => { this.render(); } });
+    page.addView(this.entryCard("Packages", CmchisPackages.COLOR, "CMCHIS packages · General Medicine",
+      CmchisPackages.LIST.length + " packages with codes and rates. Search by disease, word or code.", "›", {
+        onClick: (v) => { CmchisPackages.pick(this, "", null); }
+      }));
 
     const chips = Ui.h(this);
     chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
@@ -30318,6 +31574,17 @@ class CmchisActivity extends Base {
         card.addView(h);
         Ui.margins(h, 0, 4, 0, 0);
       }
+      const pd = CmchisClaims.papersDone(r);
+      const papers = Ui.softPill(this, "📎 Papers " + pd + " / " + CmchisClaims.PAPERS.length, pd === CmchisClaims.PAPERS.length ? Ui.GREEN : CmchisClaims.COLOR);
+      papers.setOnClickListener({
+        onClick: (v) => {
+          CmchisClaims.papersDialog(this, this.db, r, { run: () => { this.render(); } });
+        }
+      });
+      const pr = Ui.h(this);
+      pr.addView(papers);
+      card.addView(pr);
+      Ui.margins(pr, 0, 6, 0, 0);
       if (st !== CmchisStages.CREDITED && st !== CmchisStages.REJECTED) {
         const next = CmchisActivity.nextStep(st);
         const b = Ui.buttonRow(this,
@@ -30381,7 +31648,25 @@ class CmchisActivity extends Base {
     f.text("ip_no", "IP number", r == null ? "" : r.get("ip_no"), Form.PLAIN);
     f.text("cmchis_no", "CMCHIS card / pre-auth no.", r == null ? "" : r.get("cmchis_no"), Form.PLAIN);
     f.text("diagnosis", "Diagnosis", r == null ? "" : r.get("diagnosis"), Form.PLAIN);
-    f.text("package", "Package / procedure", r == null ? "" : r.get("package"), Form.PLAIN);
+    f.multi("package", "Package / procedure", r == null ? "" : r.get("package"));
+    // 10.15: choose from the General Medicine package list, those that fit the diagnosis first (user asked)
+    const choose = Ui.outlineButton(this, "Choose from the CMCHIS package list", CmchisPackages.COLOR, {
+      onClick: (v) => {
+        let dx = f.get("diagnosis");
+        if (dx.isEmpty()) {
+          const p = this.db.row("SELECT diagnosis FROM patients WHERE name=? ORDER BY admit_date DESC LIMIT 1", f.get("patient"));
+          if (p != null) dx = Ui.nz(p.get("diagnosis"));
+        }
+        CmchisPackages.pick(this, dx, {
+          picked: (pkg) => {
+            f.set("package", CmchisPackages.label(pkg));
+            if (f.get("amount").isEmpty()) f.set("amount", pkg[2]);
+          }
+        });
+      }
+    });
+    f.view.addView(choose);
+    Ui.margins(choose, 0, 6, 0, 0);
     f.text("amount", "Amount ₹ (optional)", r == null ? "" : r.get("amount").replaceAllRx("\\.0$", "").replaceAllRx("^0$", ""), Form.DECIMAL);
     f.date("date", "Date put up", r == null ? Dates.todayIso() : r.get("date"));
     if (r == null) f.choice("status", "Status", CmchisStages.ALL, CmchisStages.ALL, CmchisStages.PREAUTH, null);
@@ -30418,6 +31703,7 @@ class CmchisActivity extends Base {
           if (f.get("age_sex").isEmpty()) cv.put("age_sex", (p.get("age").isEmpty() ? "" : p.get("age") + " / ") + ("F" === p.get("sex") ? "F" : "M"));
           if (f.get("diagnosis").isEmpty()) cv.put("diagnosis", p.get("diagnosis"));
           if (f.get("cmchis_no").isEmpty()) cv.put("cmchis_no", Ui.nz(p.get("cmchis_no")));
+          if (f.get("package").isEmpty()) cv.put("package", Ui.nz(p.get("cmchis_pkg")));
         }
         this.unit = f.get("unit");
         if (r == null) {
@@ -30456,6 +31742,771 @@ class CmchisActivity extends Base {
     this.render();
   }
 }
+;
+/* ---- app/CmchisClaims.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * CMCHIS claim tracker (10.17, user's pick 165): no claim is missed. Patients ticked as CMCHIS (or given a package) at admission with no
+ * claim yet are listed with a one-tap "Start claim"; in-patients whose illness has a General Medicine package but are not ticked are shown as
+ * "may be eligible"; each claim has a papers checklist; and the money is added up: approved, credited and still to come.
+ */
+class CmchisClaims {
+  static COLOR = 0xFFDB2777;
+  static PAPERS = ["CMCHIS card / Aadhaar", "Ration card / income certificate", "Patient photo at admission", "Pre-auth form signed",
+    "Investigation reports", "Case sheet / treatment copy", "Discharge (or death) summary", "Final bill and feedback form"];
+
+  static papers(claim) {
+    const out = [];
+    for (const s of Ui.nz(claim.get("papers")).jsplit("\\|")) if (!s.trim().isEmpty()) out.add(s.trim());
+    return out;
+  }
+
+  static papersDone(claim) {
+    let n = 0;
+    const got = CmchisClaims.papers(claim);
+    for (const p of CmchisClaims.PAPERS) if (got.contains(p)) n++;
+    return n;
+  }
+
+  /** CMCHIS patients of the last 60 days with no claim entered. */
+  static notStarted(db) {
+    return db.rows("SELECT * FROM patients WHERE (cmchis=1 OR cmchis='1' OR IFNULL(cmchis_pkg,'')<>'') AND admit_date>=? "
+      + "AND id NOT IN (SELECT patient_id FROM cmchis_cases WHERE patient_id IS NOT NULL AND patient_id<>'') ORDER BY admit_date DESC, id DESC LIMIT 100",
+    Dates.today().minusDays(60).toString());
+  }
+
+  /** In-patients not ticked as CMCHIS whose diagnosis has a General Medicine package. */
+  static maybe(db) {
+    const out = [];
+    for (const p of db.rows("SELECT * FROM patients WHERE status='IN' AND NOT (cmchis=1 OR cmchis='1') AND IFNULL(cmchis_pkg,'')='' "
+      + "AND id NOT IN (SELECT patient_id FROM cmchis_cases WHERE patient_id IS NOT NULL AND patient_id<>'') ORDER BY admit_date DESC, id DESC")) {
+      if (CmchisPackages.known(p.get("diagnosis"))) out.add(p);
+      if (out.size() >= 30) break;
+    }
+    return out;
+  }
+
+  /** The unit a patient's claim goes under: the admitting unit, or IMCU while there. */
+  static unitOf(p) {
+    const loc = Ui.nz(p.get("location")), home = Ui.nz(p.get("home_unit"));
+    if (Db.IMCU === loc) return Db.IMCU;
+    return Array.from(Db.CMCHIS_UNITS).contains(home) ? home : Db.CMCHIS_UNITS[0];
+  }
+
+  /** A claim entered from the patient: package (chosen, or the best fit), its rate, and the first step. Returns the claim id. */
+  static start(a, db, p) {
+    let pkg = Ui.nz(p.get("cmchis_pkg"));
+    if (pkg.isEmpty()) {
+      const s = CmchisPackages.suggest(p.get("diagnosis"), 1);
+      if (!s.isEmpty()) pkg = CmchisPackages.label(s.get(0));
+    }
+    const known = CmchisPackages.byLabel(pkg);
+    const cv = new ContentValues();
+    cv.put("unit", CmchisClaims.unitOf(p));
+    cv.put("patient", Ui.nz(p.get("name")));
+    cv.put("age_sex", (Ui.nz(p.get("age")).isEmpty() ? "" : p.get("age") + " / ") + ("F" === p.get("sex") ? "F" : "M"));
+    cv.put("ip_no", Ui.nz(p.get("ip_no")));
+    cv.put("cmchis_no", Ui.nz(p.get("cmchis_no")));
+    cv.put("diagnosis", Ui.nz(p.get("diagnosis")));
+    cv.put("package", pkg);
+    let amt = 0;
+    try { if (known != null) amt = Double.parseDouble(known[2]); } catch (ignored) { }
+    cv.put("amount", amt);
+    cv.put("date", Dates.todayIso());
+    cv.put("remarks", "");
+    cv.put("papers", "");
+    cv.put("patient_id", p.get("id"));
+    const id = db.insert("cmchis_cases", cv);
+    CmchisStages.set(db, a, id, CmchisStages.PREAUTH, Dates.todayIso(), "", 0);
+    const pv = new ContentValues();
+    pv.put("cmchis", "1");
+    if (Ui.nz(p.get("cmchis_pkg")).isEmpty()) pv.put("cmchis_pkg", pkg);
+    db.update("patients", pv, Long.parseLong(p.get("id")));
+    Sync.kick(a);
+    return id;
+  }
+
+  /** Ticks for the papers of one claim. */
+  static papersDialog(a, db, claim, done) {
+    const f = new Form(a);
+    f.view.addView(Ui.muted(a, Ui.nz(claim.get("patient")) + "  ·  tick what is ready in the claim file"));
+    const got = CmchisClaims.papers(claim);
+    for (let i = 0; i < CmchisClaims.PAPERS.length; i++) f.check("p" + i, CmchisClaims.PAPERS[i], got.contains(CmchisClaims.PAPERS[i]));
+    Ui.formDialog(a, "📎 Papers for the claim", f, "Save", {
+      run: () => {
+        const on = [];
+        for (let i = 0; i < CmchisClaims.PAPERS.length; i++) if ("1" === f.get("p" + i)) on.add(CmchisClaims.PAPERS[i]);
+        const cv = new ContentValues();
+        cv.put("papers", TextUtils.join("|", on));
+        db.update("cmchis_cases", cv, Long.parseLong(claim.get("id")));
+        Sync.kick(a);
+        if (done != null) done.run();
+        return true;
+      }
+    });
+  }
+
+  static rupees(v) {
+    return "₹" + Math.round(v).toLocaleString('en-US');   // String.format(Locale.ROOT, "%,.0f", v)
+  }
+
+  static sum(db, sql, ...args) {
+    const r = db.row(sql, ...args);
+    try {
+      return r == null ? 0 : Double.parseDouble(Ui.nz(r.get("s")).isEmpty() ? "0" : r.get("s"));
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  /** This year's money: claimed, credited and still to come (approved but not credited). */
+  static money(a, db) {
+    const y0 = Dates.today().withDayOfYear(1).toString();
+    const claimed = CmchisClaims.sum(db, "SELECT SUM(amount) AS s FROM cmchis_cases WHERE date>=? AND status<>?", y0, CmchisStages.REJECTED);
+    const credited = CmchisClaims.sum(db, "SELECT SUM(CASE WHEN credited>0 THEN credited ELSE amount END) AS s FROM cmchis_cases WHERE date>=? AND status=?", y0, CmchisStages.CREDITED);
+    const due = CmchisClaims.sum(db, "SELECT SUM(amount) AS s FROM cmchis_cases WHERE status IN (?,?,?)", CmchisStages.APPROVED, CmchisStages.DISCHARGE, CmchisStages.EXPIRED);
+    const card = Ui.card(a);
+    card.setBackground(Glass.hero(a, Ui.shades(CmchisClaims.COLOR), 18));
+    card.addView(Ui.tv(a, "💰  CMCHIS money · " + Dates.today().getYear(), 15, Color.WHITE, true));
+    const row = Ui.h(a);
+    const cells = [[CmchisClaims.rupees(claimed), "Claimed"], [CmchisClaims.rupees(credited), "Credited"], [CmchisClaims.rupees(due), "Still to come"]];
+    for (const c of cells) {
+      const b = Ui.v(a);
+      b.setGravity(Gravity.CENTER_HORIZONTAL);
+      b.addView(Ui.tv(a, c[0], 17, Color.WHITE, true));
+      b.addView(Ui.tv(a, c[1], 12, 0xD9FFFFFF, false));
+      row.addView(b, Ui.weight(1));
+    }
+    card.addView(row);
+    Ui.margins(row, 0, 8, 0, 0);
+    return card;
+  }
+
+  /** The CMCHIS section's list of patients without a claim, and those who may be eligible. */
+  static sections(a, db, page, refresh) {
+    const miss = CmchisClaims.notStarted(db);
+    if (!miss.isEmpty()) {
+      page.addView(Ui.heading(a, "⚠ Claim not started  ·  " + miss.size(), Ui.ORANGE));
+      for (const p of miss) {
+        const card = a.entryCard(Db.shortName(CmchisClaims.unitOf(p)), Ui.unitColor(CmchisClaims.unitOf(p)), Ui.nz(p.get("name")),
+          Ui.nz(p.get("diagnosis")) + (Ui.nz(p.get("cmchis_pkg")).isEmpty() ? "" : "\n" + p.get("cmchis_pkg")),
+          Dates.nice(p.get("admit_date")), a.opener(PatientActivity, "id", p.get("id")));
+        const go = Ui.button(a, "Start claim", CmchisClaims.COLOR, {
+          onClick: (v) => {
+            CmchisClaims.start(a, db, p);
+            Ui.toast(a, "Claim started: pre-auth submitted. Tick the papers next.");
+            refresh.run();
+          }
+        });
+        card.addView(go);
+        Ui.margins(go, 0, 8, 0, 0);
+        page.addView(card);
+      }
+    }
+    const may = CmchisClaims.maybe(db);
+    if (!may.isEmpty()) {
+      page.addView(Ui.heading(a, "May be eligible  ·  " + may.size(), CmchisPackages.COLOR));
+      page.addView(a.emptyNote("In the wards now, not ticked as CMCHIS, but the illness has a General Medicine package. Check the card and start the claim."));
+      for (const p of may) {
+        const s = CmchisPackages.suggest(p.get("diagnosis"), 1);
+        const card = a.entryCard(Db.shortName(CmchisClaims.unitOf(p)), Ui.unitColor(CmchisClaims.unitOf(p)), Ui.nz(p.get("name")),
+          Ui.nz(p.get("diagnosis")) + (s.isEmpty() ? "" : "\n" + CmchisPackages.label(s.get(0))),
+          Ui.nz(p.get("bed")).isEmpty() ? "" : "Bed " + p.get("bed"), a.opener(PatientActivity, "id", p.get("id")));
+        const go = Ui.outlineButton(a, "Covered: start claim", CmchisClaims.COLOR, {
+          onClick: (v) => {
+            CmchisClaims.start(a, db, p);
+            Ui.toast(a, "Marked CMCHIS and claim started");
+            refresh.run();
+          }
+        });
+        card.addView(go);
+        Ui.margins(go, 0, 8, 0, 0);
+        page.addView(card);
+      }
+    }
+  }
+
+  /** On the patient's page: the claim's step and papers, or a reminder to start it. */
+  static patientCard(a, db, p) {
+    const cm = "1" === p.get("cmchis") || !Ui.nz(p.get("cmchis_pkg")).isEmpty();
+    if (!cm) return null;
+    const claim = db.row("SELECT * FROM cmchis_cases WHERE patient_id=? ORDER BY id DESC LIMIT 1", Ui.nz(p.get("id")));
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), Ui.dp(a, 2));
+    const card = Ui.h(a);
+    card.setGravity(Gravity.CENTER_VERTICAL);
+    card.setPadding(Ui.dp(a, 14), Ui.dp(a, 10), Ui.dp(a, 10), Ui.dp(a, 10));
+    const t = Ui.v(a);
+    let btn;
+    if (claim == null) {
+      card.setBackground(Ui.outline(a, 0xFFFFF7ED, Ui.ORANGE, 14));
+      t.addView(Ui.tv(a, "⚠ CMCHIS claim not started", 15, 0xFF9A3412, true));
+      t.addView(Ui.tv(a, "Covered under CMCHIS, but no claim is entered yet.", 12, Ui.MUTED, false));
+      btn = Ui.button(a, "Start claim", CmchisClaims.COLOR, {
+        onClick: (v) => {
+          CmchisClaims.start(a, db, p);
+          a.render();
+        }
+      });
+    } else {
+      const st = CmchisStages.of(claim.get("status"));
+      card.setBackground(Ui.outline(a, 0xFFFDF2F8, CmchisStages.color(st), 14));
+      t.addView(Ui.tv(a, "CMCHIS claim: " + st, 15, CmchisStages.color(st), true));
+      t.addView(Ui.tv(a, "Papers " + CmchisClaims.papersDone(claim) + " of " + CmchisClaims.PAPERS.length + (Ui.nz(claim.get("package")).isEmpty() ? "" : "  ·  " + claim.get("package")), 12, Ui.MUTED, false));
+      btn = Ui.outlineButton(a, "📎 Papers", CmchisClaims.COLOR, {
+        onClick: (v) => {
+          CmchisClaims.papersDialog(a, db, claim, { run: () => { a.render(); } });
+        }
+      });
+    }
+    card.addView(t, Ui.weight(1));
+    card.addView(btn);
+    box.addView(card);
+    return box;
+  }
+}
+;
+/* ---- app/CmchisPackages.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * CMCHIS packages for General Medicine (10.15, from the two package lists the user sent): code, name and rate. The packages
+ * that fit a provisional diagnosis are suggested on the admission form and in the CMCHIS section; the whole list can be
+ * searched by words, abbreviation or code.
+ */
+class CmchisPackages {
+  static COLOR = 0xFFE11D48;
+
+  /** [code, name, rate in rupees] */
+  static LIST = [
+    ["CM1357 A", "Metabolic encephalopathy - management in ward", "5400"],
+    ["CMU0057-B", "PERICARDIOSTOMY", "16000"],
+    ["CMU0059", "CORONARY ARTERY FISTULA REPAIR", "77000"],
+    ["CMU0138-a", "CA HEPATO BILIARY /CA COMMON BILE DUCT/CA GALLBLADDER/ CHOLANGIOCARCINOMA - GEMCITABINE + CISPLATIN ; DAYS 1 AND 8 - CISPLATIN 25MG/M2 IV, GEMCITABINE 1, 000MG/M2 IV ; REPEAT EVERY 21 DAYS FOR 4 CYCLES, RE-EVALUATE AND CONTINUE AN ADDITIONAL 4 CYCLES IF WARRANTED", "3900"],
+    ["CMU0224-A", "HYPOPLASTIC ANEMIA", "3100"],
+    ["CMU0250 A", "ACUTE PANCREATITIS", "35000"],
+    ["CMU0250 B", "ACUTE HEPATITIS", "30000"],
+    ["CMU0252", "SNAKE BITE REQUIRING VENTILATOR", "50000"],
+    ["CMU0253", "SNAKE BITE - NON VENTILATED / COAGULOPATHY", "30000"],
+    ["CMU0331", "LESIONECTOMY FOR INTRACTABLE SEIZURES", "163000"],
+    ["CMU0496", "ACUTE MI (CONSERVATIVE MANAGEMENT WITHOUT ANGIOGRAM)", "21000"],
+    ["CMU0500", "CONGESTIVE CARDIAC FAILURE", "50000"],
+    ["CMU0501", "INFECTIVE ENDOCARDITIS", "33000"],
+    ["CMU0502", "PULMONARY EMBOLISM", "40000"],
+    ["CMU0503", "ARRYTHMIAS (SUPRAVENTRICULLAR / VENTRICULAR) - INVASIVE MANAGEMENT", "40000"],
+    ["CMU0503", "ARRYTHMIAS (SUPRAVENTRICULLAR / VENTRICULAR) - INVASIVE MANAGEMENT", "100000"],
+    ["CMU0503 A", "ARRYTHMIAS (SUPRAVENTRICULLAR / VENTRICULAR) - INVASIVE MANAGEMENT (WITHOUT 3D MAPPING)", "57800"],
+    ["CMU0504", "ARRYTHMIAS (SUPRAVENTRICULLAR / VENTRICULAR) - CONSERVATIVE MANAGEMENT", "15000"],
+    ["CMU0504", "ARRYTHMIAS (SUPRAVENTRICULLAR / VENTRICULAR) - CONSERVATIVE MANAGEMENT", "19200"],
+    ["CMU0504 A", "ARRYTHMIAS (ATRIAL FIBRILLATION) - CONSERVATIVE MANAGEMENT", "15000"],
+    ["CMU0509", "REQUIRING VENTILATORY SUPPORT -OP POISIONING / METABOLIC COMA/SCORPION STING/ SNAKE BITE / BITES & STINGS/ OTHER CAUSES - MAX 7 DAYS", "33100"],
+    ["CMU0510", "ACUTE BRONCHITIS AND PNEUMONIA WITH RESPIRATORY FAILURE", "40000"],
+    ["CMU0518", "CHRONIC PANCREATITIS WITH SEVERE PAIN-PANCREATIC DUCT STENTING- PANCRETIC DUCT LEAKS, PSEUDOCYST OF PANCREAS, PANCREATIC STRICTURE, PANCREATIC STONE DISEASE", "19600"],
+    ["CMU0519", "NON VARICEAL BLEED- HEATER PROBE (UPPER & LOWER GI BLEED) INCLUDES GAVE, ULCER, RADIATION PROCTITIS/COLITIS, POST POLYPECTOMY BLEED, DIEULAFOYS LESION, ANGIODYSPLASIA, MALLORY WEISS TEAR.", "19200"],
+    ["CMU0533 A", "HEMORRHAGIC STROKE", "31500"],
+    ["CMU0533 B", "ISCHEMIC STROKE", "19800"],
+    ["CMU0537", "THROMBOCYTOPENIA WITH BLEEDING DIATHESIS", "20000"],
+    ["CMU0539", "BRONCHIECTASIS WITH REPEATED HOSPITALISATION>6PER YEAR", "19900"],
+    ["CMU0540", "ACUTE RESPIRATORY FAILURE (WITHOUT VENTILATOR)", "28500"],
+    ["CMU0541", "ACUTE RESPIRATORY FAILURE (WITH VENTILATOR - FOR MINIMUM 5 DAYS )", "56200"],
+    ["CMU0542", "LUNG ABSCESS, NON - RESOLVING", "31600"],
+    ["CMU0543", "PNEUMOTHORAX ( LARGE / RECURRENT )", "27200"],
+    ["CMU0544", "HYDROPNEUMOTHORAX", "11000"],
+    ["CMU0545 A", "MALIGNANT PLEURAL EFFUSION", "17300"],
+    ["CMU0545 B", "MASSIVE HEMOPTYSIS", "49200"],
+    ["CMU0549", "SLE WITH COMPLICATIONS", "50000"],
+    ["CMU0551", "SJOGRENS SYNDROME- PREDNISOLONE OR METHOTREXATE OR AZATHIOPRINE OR TACROLIMUS OR HYDROXYCHLOROQUINE, PULSE CYCLOPHOSPHAMIDE THERAPY/MYCOPHENOLATE MOFETIL INDUCTION/MYCOPHENOLATE MOFETIL MAINTENANCE/ WITH GANGRENE ON IV PROSTACYCLIN/ PNEUMOCOCCAL VACCINATION", "21000"],
+    ["CMU0552", "SYSTEMIC SCLEROSIS -METHOTREXATE OR AZATHIOPRINE OR HYDROXYCHLOROQUINE/PULSE CYCLOPHOSPHAMIDE THERAPY/MYCOPHENOLATE MOFETIL INDUCTION/MYCOPHENOLATE MOFETIL MAINTENANCE/ WITH GANGRENE ON IV PROSTACYCLIN", "26300"],
+    ["CMU0553", "ACUTE RHEUMATIC FEVER / ACUTE EXACERBATION OF CHRONIC RHEUMATIC CONDITIONS", "15000"],
+    ["CMU0563", "CHRONIC LIVER DISEASE -COMPENSATED/ DECOMPENSATED", "31600"],
+    ["CMU0627", "CORTICAL VENOUS SINUS THROMBOLYSIS", "250000"],
+    ["CMU0648 A", "DENGUE SHOCK SYNDROME -(ADULT/PAEDIATRICS)", "23100"],
+    ["CMU0648 B", "DENGUE HEMORRHAGIC FEVER -(ADULT/PAEDIATRICS)", "18900"],
+    ["CMU0651-I-b", "OBSCURE BLEED - CONSERVATIVE", "11700"],
+    ["CMU0651-I-e", "NON VARICEAL BLEED - CONSERVATIVE", "11000"],
+    ["CMU0651-I-e", "NON VARICEAL BLEED - CONSERVATIVE", "18500"],
+    ["CMU0651-II-b", "OBSCURE BLEED - CONSERVATIVE", "11700"],
+    ["CMU0651-II-e", "NON VARICEAL BLEED - CONSERVATIVE", "11000"],
+    ["CMU0652 A-I-a-ii", "MIXED CONNECTIVE TISSUE DISEASE- PULSE CYCLOPHOSPHAMIDE THERAPY", "3200"],
+    ["CMU0652 A-I-b-ii", "MIXED CONNECTIVE TISSUE DISEASE-METHOTREXATE OR AZATHIOPRINE OR HYDROXY CHLOROQUINE", "3200"],
+    ["CMU0652 A-II", "MIXED CONNECTIVE TISSUE DISEASE-(METHOTREXATE OR AZATHIOPRINE OR HYDROXY CHLOROQUINE/ PULSE CYCLOPHOSPHAMIDE THERAPY", "16800"],
+    ["CMU0652 B", "MIXED CONNECTIVE TISSUE DISEASE-(METHOTREXATE OR AZATHIOPRINE OR HYDROXY CHLOROQUINE/ PULSE CYCLOPHOSPHAMIDE THERAPY/ MYCOPHENOLATE MOFETIL INDUCTION/MYCOPHENOLATE MOFETIL MAINTENANCE/ WITH GANGRENE ON IV PROSTACYCLIN/ PNEUMOCOCCAL VACCINATION )", "30000"],
+    ["CMU0652 B-II-a", "MYCOPHENOLATE MOFETIL INDUCTION", "6300"],
+    ["CMU0652 B-II-b", "MYCOPHENOLATE MOFETIL MAINTENANCE", "3200"],
+    ["CMU0652 B-II-c", "MIXED CONNECTIVE TISSUE DISEASE - WITH GANGRENE ON IV PROSTACYCLIN", "7400"],
+    ["CMU0652 B-II-d", "MIXED CONNECTIVE TISSUE DISEASE - PNEUMOCOCCAL VACCINATION", "5300"],
+    ["CMU0652 B-II-e", "MIXED CONNECTIVE TISSUE DISEASE-(METHOTREXATE OR AZATHIOPRINE OR HYDROXY CHLOROQUINE/ PULSE CYCLOPHOSPHAMIDE THERAPY/ MYCOPHENOLATE MOFETIL INDUCTION/MYCOPHENOLATE MOFETIL MAINTENANCE/ WITH GANGRENE ON IV PROSTACYCLIN/ PNEUMOCOCCAL VACCIN", "30000"],
+    ["CMU0653 A-II", "VASCULITIS (PREDNISOLONE OR METHOTREXATE OR AZATHIOPRINE/ PULSE CYCLOPHOSPHAMIDE THERAPY )", "13200"],
+    ["CMU0653 A-II-a", "VASCULITIS - PREDNISOLONE OR METHOTREXATE OR AZATHIOPRINE", "3200"],
+    ["CMU0653 A-II-b", "VASCULITIS - PULSE CYCLOPHOSPHAMIDE THERAPY", "3200"],
+    ["CMU0653 A-II-c", "VASCULITIS (PREDNISOLONE OR METHOTREXATE OR AZATHIOPRINE/ PULSE CYCLOPHOSPHAMIDE THERAPY )(INCLUDING DIAGNOSTIC EVALUATION - 1ST TIME)", "13200"],
+    ["CMU0653 B-II", "VASCULITIS (PREDNISOLONE OR METHOTREXATE OR AZATHIOPRINE/ PULSE CYCLOPHOSPHAMIDE THERAPY / INTERNAL ORGAN INVOLVEMENT REQUIRING INTRAVENOUS IMMUNOGLOBULIN/ MYCOPHENOLATE MOFETIL INDUCTION/MYCOPHENOLATE MOFETIL MAINTENANCE/ PNEUMOCOCCAL VACCINATION)", "200000"],
+    ["CMU0727", "IMMUNOGLOBULIN THERAPY", "200000"],
+    ["CMU0731-I-A", "ACUTE MILD PANCREATITIS - CONSERVATIVE MANAGEMENT", "31500"],
+    ["CMU0731-I-B", "ACUTE MODERATE PANCREATITIS - CONSERVATIVE MANAGEMENT", "42000"],
+    ["CMU0731-I-C", "ACUTE SEVERE PANCREATITIS - CONSERVATIVE MANAGEMENT", "58800"],
+    ["CMU0731-II-A", "ACUTE MILD PANCREATITIS - CONSERVATIVE MANAGEMENT", "31500"],
+    ["CMU0731-II-B", "ACUTE MODERATE PANCREATITIS - CONSERVATIVE MANAGEMENT", "42000"],
+    ["CMU0731-II-C", "ACUTE SEVERE PANCREATITIS - CONSERVATIVE MANAGEMENT", "58800"],
+    ["CMU0837", "POST BURN HYPERTROPHY SURGERY/SCAR REVISION SURGERY", "77100"],
+    ["CMU0842 A-II", "SOFT TISSUE INJURY - LACERATION (SUTURING) /WOUND DEBRIDEMENT", "700"],
+    ["CMU0842 B-II", "SOFT TISSUE INJURY - DEEP WOUND [NERVE/TENDON REPAIR]", "5500"],
+    ["CMU0845 A", "POLYTRAUMA/HEAD INJURY MINOR (ONLY LACERATIONS LESS THAN 10 CM)", "2600"],
+    ["CMU0845 B", "POLYTRAUMA/HEAD INJURY MINOR (DEEP / PITTED WOUND EXPOSING SCALP/ BONE REQUIRING DEBRIDEMENT AND SUTURING)", "7000"],
+    ["CMU0846", "POLYTRAUMA/HEAD INJURY MAJOR (WITH FRACTURES, INTRACRANIAL BLEEDING)", "26300"],
+    ["CMU0847-I", "CYANOTIC CONGENTIAL HEART DISEASE PRESENTING WITH OR WITHOUT / INFECTION / FAILURE / SEPTIC SHOCK / INFECTIVE ENDOCARDITIS/ CYANOTIC SPELL - NON VENTILATED", "42000"],
+    ["CMU0847-II", "CYANOTIC CONGENTIAL HEART DISEASE PRESENTING WITH OR WITHOUT / INFECTION / FAILURE / SEPTIC SHOCK / INFECTIVE ENDOCARDITIS/ CYANOTIC SPELL - NON VENTILATED", "42000"],
+    ["CMU0848-I", "CYANOTIC CONGENTIAL / HEART DISEASE PRESENTING WITH OR WITHOUT / INFECTION / CARDIOGENIC SHOCK / SEPTIC SHOCK / INFECTIVE ENDOCARDITIS/ CYANOTIC SPELL - VENTILATED", "50000"],
+    ["CMU0849-I", "STATUS EPILEPTICUS WITH MECHANICAL VENTILATION - (ADULT/PAEDIATRIC )", "44000"],
+    ["CMU0849-I-A", "STATUS EPILEPTICUS WITH MECHANICAL VENTILATION - ADULT", "44000"],
+    ["CMU0849-I-B", "STATUS EPILEPTICUS WITH MECHANICAL VENTILATION - PAEDIATRIC", "44000"],
+    ["CMU0850", "DIABETIC KETOACIDOSIS - TYPE I / TYPE II", "31500"],
+    ["CMU0851-I", "CHRONIC RENAL FAILURE WITH INITIATION OF HEMODIALYSIS (INCLUDING ERYTHROPOIETIN / IRON INJECTION)", "18000"],
+    ["CMU0851-II", "CHRONIC RENAL FAILURE WITH INITIATION OF HEMODIALYSIS (INCLUDING ERYTHROPOIETIN / IRON INJECTION)", "18000"],
+    ["CMU0852-I", "ACUTE RENAL FAILURE WITHOUT HEMODIALYSIS (INCLUDING ERYTHROPOIETIN / IRON INJECTION)", "11300"],
+    ["CMU0852-II", "ACUTE RENAL FAILURE WITHOUT HEMODIALYSIS (INCLUDING ERYTHROPOIETIN / IRON INJECTION)", "11300"],
+    ["CMU0853-I", "ACUTE RENAL FAILURE WITH HEMODIALYSIS (INCLUDING ERYTHROPOIETIN / IRON INJECTION)", "13200"],
+    ["CMU0854-I", "ACUTE RENAL FAILURE / CRF WITH VENTILATOR CARE", "29400"],
+    ["CMU0854-I-A", "ACUTE RENAL FAILURE WITH VENTILATOR CARE", "29400"],
+    ["CMU0854-I-B", "CHRONIC RENAL FAILURE WITH VENTILATOR CARE", "29400"],
+    ["CMU0855 A-I", "ACUTE RENAL FAILURE / CRF - CONTINUOUS RENAL REPLACEMENT THERAPY-SCUF / SLED", "59900"],
+    ["CMU0855 B-I", "ACUTE RENAL FAILURE / CRF - CONTINUOUS RENAL REPLACEMENT THERAPY - CVVH/CVVHD", "80900"],
+    ["CMU0857-I", "PYOGENIC /TB /VIRAL/ FUNGAL -MENINGITIS/ MENINGOENCEPHALITIS - NON VENTILATED", "31500"],
+    ["CMU0857-II", "PYOGENIC /TB /VIRAL/ FUNGAL -MENINGITIS/ MENINGOENCEPHALITIS - NON VENTILATED", "31500"],
+    ["CMU0858-I", "PYOGENIC /TB /VIRAL/ FUNGAL -MENINGITIS/ MENINGOENCEPHALITIS - WITH VENTILATORY SUPPORT", "52500"],
+    ["CMU0859-I", "NEURO TUBERCULOSIS/NEUROCYSTICERCOSIS/ TUBERCULOMA", "14000"],
+    ["CMU0859-II", "NEURO TUBERCULOSIS/NEUROCYSTICERCOSIS/ TUBERCULOMA", "14000"],
+    ["CMU0860 A", "IDIPOPATHIC THROMBOCYTOPENIC PURPURA", "42000"],
+    ["CMU0860 B", "TTP", "63000"],
+    ["CMU0861 A", "ANY COAGULATION DISORDERS", "52500"],
+    ["CMU0861 B", "DIC", "27500"],
+    ["CMU0862", "ECMO - EXTRACORPOREAL MEMBRANE OXYGENATION", "210000"],
+    ["CMU0863 A", "MULTI SYSTEM ORGAN FAILURE- WITHOUT VENTILATION", "77100"],
+    ["CMU0863 B", "MULTI SYSTEM ORGAN FAILURE- WITH VENTILATION", "105500"],
+    ["CMU0864", "ENTERIC ENCEPHALOPATHY", "21200"],
+    ["CMU0865", "LEPTOSPIROSIS WITH HEPATIC INVOLVEMENT", "20900"],
+    ["CMU0866", "SUBMERSION INJURY WITH VENTILATORY SUPPORT", "28400"],
+    ["CMU0867", "ARDS WITH VENTILATORY SUPPORT", "88300"],
+    ["CMU0868-I", "RESPIRATORY FAILURE OF ANY CAUSE REQUIRING HIGH FREQUENCY VENTILATION", "59000"],
+    ["CMU0868-II", "RESPIRATORY FAILURE OF ANY CAUSE REQUIRING HIGH FREQUENCY VENTILATION", "59000"],
+    ["CMU0868-III", "RESPIRATORY FAILURE OF ANY CAUSE REQUIRING HIGH FREQUENCY VENTILATION", "59000"],
+    ["CMU0907 A-I", "THALASSEMIA MAJOR /HAEMOGLOBINOPATHIES/ CHELATION THERAPY", "126000"],
+    ["CMU0907 A-I-a", "THALASSEMIA MAJOR (UPTO)", "7400"],
+    ["CMU0907 B-I", "SICKLE CELL ANAEMIA", "5300"],
+    ["CMU0908-I", "INTERSTITAL LUNG DISEASE", "29300"],
+    ["CMU0908-II", "INTERSTITAL LUNG DISEASE", "29300"],
+    ["CMU0909-I", "OESOPHAGEAL VARICES /GASTRIC VARICES/PESUDO ANEURYSM - BANDING", "10700"],
+    ["CMU0913-I", "END STAGE RENAL DISEASE", "14900"],
+    ["CMU0914-I", "GULLAIN BARRE SYNDROME", "110000"],
+    ["CMU0914-II", "GULLAIN BARRE SYNDROME", "110000"],
+    ["CMU0915-I", "OPTIC NEURITIS", "11000"],
+    ["CMU0916-I", "MYOPATHY / MUSCULAR DYSTROPHY", "14300"],
+    ["CMU0917-I", "MYASTHENIA GRAVIS", "17500"],
+    ["CMU0918", "MANAGEMENT OF COMA", "35100"],
+    ["CMU0920", "MUCORMYCOSIS", "31500"],
+    ["CMU0921", "HYPER OSMOLAR NON-KETOTIC COMA", "31500"],
+    ["CMU0957-II-A", "MANAGEMENT CHRONIC HEPATITIS B / C - TENOFOVIR 300MG 30 TABS", "1800"],
+    ["CMU0957-II-B", "MANAGEMENT CHRONIC HEPATITIS B / C - ENTECAVIR 1 MG 30 TABS", "3500"],
+    ["CMU0957-II-C", "MANAGEMENT CHRONIC HEPATITIS B / C - ENTECAVIR 0.5 MG 30 TABS", "2000"],
+    ["CMU0957-II-D", "MANAGEMENT CHRONIC HEPATITIS B / C - TELBUVUDINE 600MG 30 TABS", "6000"],
+    ["CMU0957-II-E", "MANAGEMENT CHRONIC HEPATITIS B / C - LAMIVUDINE 100MG 28 TABS", "1000"],
+    ["CMU0957-II-F", "MANAGEMENT CHRONIC HEPATITIS B / C - SOFOSBUVIR 400 MG 28 TABS", "10000"],
+    ["CMU0957-II-G", "MANAGEMENT CHRONIC HEPATITIS B / C - DACLATASVIR 60 MG 28 TABS", "4500"],
+    ["CMU0957-II-H", "MANAGEMENT CHRONIC HEPATITIS B / C - SOFOSBUVIR 400 MG 28 TABS + VELPATASVIR 100 28 TABS", "16000"],
+    ["CMU0957-II-I", "MANAGEMENT CHRONIC HEPATITIS B / C - SOFOSBUVIR 400 MG 28 TABS + LEDIPASVIR 90 28 TABS", "11000"],
+    ["CMU0957-II-J", "MANAGEMENT CHRONIC HEPATITIS B / C INTERFERON WILL BE APPROVED BASED ON DOSAGE)", "15000"],
+    ["CMU0957-II-ii", "INVESTIGATION OF CHRONIC HEPATITIS B / C (VIRAL LOAD)", "10000"],
+    ["CMU0958-I", "CIRRHOSIS OF LIVER WITH COMPLICATIONS", "33100"],
+    ["CMU0958-II", "CIRRHOSIS OF LIVER WITH COMPLICATIONS", "33100"],
+    ["CMU0961", "STAY IN GENERAL WARD - OBSERVATION FOR TRAUMA - PER DAY", "800"],
+    ["CMU0962 A", "STAY IN ICU - MILD WITHOUT VENTILATION (FOR TRAUMA)", "1100"],
+    ["CMU0962 B", "STAY IN ICU - MODERATE WITHOUT VENTILATION (FOR TRAUMA)", "15800"],
+    ["CMU0962 C", "STAY IN ICU - MODERATE WITH VENTILATION (FOR TRAUMA)", "26300"],
+    ["CMU0962 D", "STAY IN ICU - SEVERE WITHOUT VENTILATION (FOR TRAUMA / POST OP COMPLICATIONS - SEPSIS / COMA)", "26300"],
+    ["CMU0962 E", "STAY IN ICU - SEVERE WITH VENTILATION (FOR TRAUMA / POST OP COMPLICATIONS - SEPSIS / COMA)", "52500"],
+    ["CMU0972", "PYOGENIC ARTHRITIS REQUIRING IV ANTIBIOTIC", "7000"],
+    ["CMU0973", "OSTEOMYELITIS REQUIRING IV ANTIBIOTIC", "10300"],
+    ["CMU0982", "CYSTIC FIBROSIS", "38400"],
+    ["CMU0983", "SEPTIC SHOCK (ICU MANAGEMENT)", "45200"],
+    ["CMU0984-I", "WILSON'S DISEASE", "18100"],
+    ["CMU0985-I", "NEPHROTIC SYNDROME", "17700"],
+    ["CMU0986-I", "NEPHROTIC SYNDROME WITH COMPLICATIONS", "27300"],
+    ["CMU0987-I", "ACUTE DISSEMINATED ENCEPHALOMYELITIS", "58300"],
+    ["CMU0990-I", "TOXIC/DRUG INDUCED LIVER INJURY", "28200"],
+    ["CMU0990-II", "TOXIC/DRUG INCLUDED LIVER INJURY", "28200"],
+    ["CMU0991", "MALIGNANT ASCITES", "5900"],
+    ["CMU1003", "OP /ANY POISIONING - CONSERVATIVE MANAGEMENT OR WITHOUT VENTILATORY SUPPORT ( WITH POLICE OFFICIAL SIGNED AR COPY )", "18900"],
+    ["CMU1007", "ACUTE SEVERE ASTHMA WITH VENTILATION", "53800"],
+    ["CMU1008", "CRITICAL CARE ICU MANAGEMENT ( RESPIRATORY DISTRESS/ METABOLIC COMA/MULTIORGAN DYSFUNCTION/SEPTIC SHOCK/OTHERS WITH VENTILATION", "33100"],
+    ["CMU1009 A", "CRITICAL CARE ICU MANAGEMENT -CRITICAL LIMB ISCHEMIA (HEPARINISATION)", "21000"],
+    ["CMU1009 B", "CRITICAL CARE ICU MANAGEMENT -CRITICAL LIMB ISCHEMIA (SK)", "26300"],
+    ["CMU1009 C", "CRITICAL CARE ICU MANAGEMENT -CRITICAL LIMB ISCHEMIA (RTPA)", "78800"],
+    ["CMU1012", "BLOOD AND BLOOD PRODUCT TRANSFUSION (RDP, SDP, PLATELET APHERESIS)", "13000"],
+    ["CMU1016", "AUTO IMMUNE HEMOLYTIC ANEMIA-FIRST LINE TREATMENT", "30000"],
+    ["CMU1019", "PICC LINE - DEVICE WITH ACESSORIES AND MAINTENCE", "20000"],
+    ["CMU1019-II", "PICC LINE - DEVICE WITH ACESSORIES AND MAINTENCE", "20000"],
+    ["CMU1023", "ATTEMPTED HANGING REQUIRING VENTILATORY SUPPORT", "40000"],
+    ["CMU1025", "PLASMAPHERESIS PER SESSION", "10000"],
+    ["CMU1026", "BLUNT INJURY ABDOMEN LIVER /SPLEEN INJURY-OPERATIVE", "50000"],
+    ["CMU1115", "Recombinant tissue plasminogen activator for Pulmonary thromboembolism and Peripheral Arterial Thrombosis", "42000"],
+    ["CMU1191-A", "HIV with complications - Ward", "6300"],
+    ["CMU1191-B", "HIV with complications - HDU", "9900"],
+    ["CMU1191-C", "HIV with complications - ICU (without Ventilator)", "25500"],
+    ["CMU1191-D", "HIV with complications - ICU (with Ventilator)", "27000"],
+    ["CMU1198", "Pulmonary Thromboembolism", "28800"],
+    ["CMU1199", "Diffuse alveolar Hemorrhage Associated with SLE/Vasculitis/GP Syndrome", "80000"],
+    ["CMU1201-A", "Pulmonary thromboembolism - Ward", "6300"],
+    ["CMU1201-B", "Pulmonary thromboembolism - HDU", "9900"],
+    ["CMU1201-C", "Pulmonary thromboembolism - ICU (without Ventilator)", "25500"],
+    ["CMU1201-D", "Pulmonary thromboembolism - ICU (with Ventilator)", "27000"],
+    ["CMU1206-I-A", "Polytrauma - Ward", "6300"],
+    ["CMU1206-I-B", "Polytrauma - HDU", "9900"],
+    ["CMU1206-I-C", "Polytrauma - ICU (without Ventilator)", "25500"],
+    ["CMU1206-I-D", "Polytrauma - ICU (with Ventilator)", "27000"],
+    ["CMU1206-III-A", "Trauma Head injury - ICU (without Ventilator)", "25500"],
+    ["CMU1206-III-B", "Trauma Head injury - ICU (with Ventilator)", "27000"],
+    ["CMU1206-IV-A", "Trauma Rib fracture conservative - ICU (with Ventilator)", "27000"],
+    ["CMU1206-V-A", "Trauma Blunt injury conservative - ICU (with Ventilator)", "27000"],
+    ["CMU1206-VI-A", "Trauma Contusion chest injury - ICU (with Ventilator)", "27000"],
+    ["CMU1216-A", "Visceral leishmaniasis - Ward", "6300"],
+    ["CMU1216-B", "Visceral leishmaniasis - HDU", "9900"],
+    ["CMU1216-C", "Visceral leishmaniasis - ICU (without Ventilator)", "25500"],
+    ["CMU1216-D", "Visceral leishmaniasis - ICU (with Ventilator)", "27000"],
+    ["CMU1224-A", "Viral Encephalitis - Ward", "6300"],
+    ["CMU1224-B", "Viral Encephalitis - HDU", "9900"],
+    ["CMU1224-C", "Viral Encephalitis - ICU (without Ventilator)", "25500"],
+    ["CMU1224-D", "Viral Encephalitis - ICU (with Ventilator)", "27000"],
+    ["CMU1230-A", "Acute excaberation of COPD - Ward", "6300"],
+    ["CMU1230-B", "Acute excaberation of COPD - HDU", "9900"],
+    ["CMU1230-C", "Acute excaberation of COPD - ICU (with Ventilator)", "25500"],
+    ["CMU1230-D", "Acute excaberation of COPD - ICU (without Ventilator)", "25500"],
+    ["CMU1234-C", "Status asthmaticus - ICU (without Ventilator)", "25500"],
+    ["CMU1234-D", "Status asthmaticus - ICU (with Ventilator)", "27000"],
+    ["CMU1239-A", "Immune mediated CNS disorders - Ward", "6300"],
+    ["CMU1244-A", "Pneumothorax - Ward", "6300"],
+    ["CMU1244-B", "Pneumothorax - HDU", "9900"],
+    ["CMU1244-C", "Pneumothorax - ICU (without Ventilator)", "25500"],
+    ["CMU1244-D", "Pneumothorax - ICU (with Ventilator)", "27000"],
+    ["CMU1254-A", "Snake bite - Ward (ASV Management)", "6300"],
+    ["CMU1254-B", "Snake bite - HDU (ASV Management)", "9900"],
+    ["CMU1254-C", "Snake bite - ICU (without Ventilator) (ASV Management)", "25500"],
+    ["CMU1254-D", "Snake bite - ICU (with Ventilator) (ASV Management)", "27000"],
+    ["CMU1255-B", "Blood component transfusion Including Platelet concentrates, etc", "2000"],
+    ["CMU1257-A", "Peripheral Arterial Thrombosis only for LMWH - HDU", "9900"],
+    ["CMU1257-B", "Peripheral Arterial Thrombosis only for LMWH - ICU (without Ventilator)", "25500"],
+    ["CMU1257-C", "Peripheral Arterial Thrombosis only for LMWH - ICU (with Ventilator)", "27000"],
+    ["CMU1270", "Platelet pheresis", "11000"],
+    ["CMU1364A-I", "ACUTE ENCEPHALOPATHY - Acute Febrile encephalopathy - Ward", "6300"],
+    ["CMU1364A-II", "ACUTE ENCEPHALOPATHY - Acute Febrile encephalopathy - HDU", "9900"],
+    ["CMU1364A-III", "ACUTE ENCEPHALOPATHY - Acute Febrile encephalopathy - ICU (without Ventilator)", "25500"],
+    ["CMU1364A-IV", "ACUTE ENCEPHALOPATHY - Acute Febrile encephalopathy - ICU (with Ventilator)", "27000"],
+    ["CMU1365A-I", "ACUTE ENCEPHALOPATHY - hypertensive/metabolic/febrile/hepatic encephalopathy - Ward", "6300"],
+    ["CMU1365A-II", "ACUTE ENCEPHALOPATHY - hypertensive/metabolic/febrile/hepatic encephalopathy - HDU", "9900"],
+    ["CMU1365A-III", "ACUTE ENCEPHALOPATHY - hypertensive/metabolic/febrile/hepatic encephalopathy - ICU (without Ventilator)", "25500"],
+    ["CMU1365A-IV", "ACUTE ENCEPHALOPATHY - hypertensive/metabolic/febrile/hepatic encephalopathy - ICU (with Ventilator)", "27000"],
+    ["CMU1366A-I", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS. - Aseptic meningitis - Ward", "6300"],
+    ["CMU1366A-II", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS. - Aseptic meningitis - HDU", "9900"],
+    ["CMU1366A-III", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS. - Aseptic meningitis - ICU (without Ventilator)", "25500"],
+    ["CMU1366A-IV", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS. - Aseptic meningitis - ICU (with Ventilator)", "27000"],
+    ["CMU1366B-I", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS. - Tubercular meningitis - Ward", "6300"],
+    ["CMU1366B-II", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS. - Tubercular meningitis - HDU", "9900"],
+    ["CMU1366C-I", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITI - Febrile encephalopathy fungal - Ward", "6300"],
+    ["CMU1366C-II", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITI - Febrile encephalopathy fungal - HDU", "9900"],
+    ["CMU1366C-III", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITI - Febrile encephalopathy fungal - ICU (without Ventilator)", "25500"],
+    ["CMU1366C-IV", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITI - Febrile encephalopathy fungal - ICU (with Ventilator)", "27000"],
+    ["CMU1366D-I", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Hypertensive encehalopathy viral, - Ward", "6300"],
+    ["CMU1366D-II", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Hypertensive encehalopathy viral, - HDU", "9900"],
+    ["CMU1366D-III", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Hypertensive encehalopathy viral, - ICU (without Ventilator)", "25500"],
+    ["CMU1366D-IV", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Hypertensive encehalopathy viral, - ICU (with Ventilator)", "27000"],
+    ["CMU1366E-I", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Metabolic encephalopathy parasitic, - Ward", "6300"],
+    ["CMU1366E-II", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Metabolic encephalopathy parasitic, - HDU", "9900"],
+    ["CMU1366E-III", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Metabolic encephalopathy parasitic, - ICU (without Ventilator)", "25500"],
+    ["CMU1366E-IV", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Metabolic encephalopathy parasitic, - ICU (with Ventilator)", "27000"],
+    ["CMU1366G-I", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Brain abscess/Intracranial abscess/ Aseptic meningitis - Ward", "6300"],
+    ["CMU1366G-II", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Brain abscess/Intracranial abscess/ Aseptic meningitis - HDU", "9900"],
+    ["CMU1366G-III", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Brain abscess/Intracranial abscess/ Aseptic meningitis - ICU (without Ventilator)", "25500"],
+    ["CMU1366G-IV", "ACUTE INFECTIOUS MENINGITIS AND MENINGOENCEPHALITIS - Brain abscess/Intracranial abscess/ Aseptic meningitis - ICU (with Ventilator)", "27000"],
+    ["CMU1367B-I", "Meningitis - Partially treated pyogenic meningitis - Ward", "6300"],
+    ["CMU1367B-II", "Meningitis - Partially treated pyogenic meningitis - HDU", "9900"],
+    ["CMU1367B-III", "Meningitis - Partially treated pyogenic meningitis - ICU (without Ventilator)", "25500"],
+    ["CMU1367B-IV", "Meningitis - Partially treated pyogenic meningitis - ICU (with Ventilator)", "27000"],
+    ["CMU1367D-I", "Meningitis - Complicated bacterial meningitis - Ward", "6300"],
+    ["CMU1367D-II", "Meningitis - Complicated bacterial meningitis - HDU", "9900"],
+    ["CMU1367D-III", "Meningitis - Complicated bacterial meningitis - ICU (without Ventilator)", "25500"],
+    ["CMU1367D-IV", "Meningitis - Complicated bacterial meningitis - ICU (with Ventilator)", "27000"],
+    ["CMU1379A-I", "Haemolytic uremic syndrome - Ward", "6300"],
+    ["CMU1379A-II", "Haemolytic uremic syndrome - HDU", "9900"],
+    ["CMU1379A-III", "Haemolytic uremic syndrome - ICU (without Ventilator)", "25500"],
+    ["CMU1379A-IV", "Haemolytic uremic syndrome - ICU (with Ventilator)", "27000"],
+    ["CMU1391A-I", "Kawasaki Disease - Ward", "6300"],
+    ["CMU1391A-II", "Kawasaki Disease - HDU", "9900"],
+    ["CMU1391A-III", "Kawasaki Disease - ICU (without Ventilator)", "25500"],
+    ["CMU1391A-IV", "Kawasaki Disease - ICU (with Ventilator)", "27000"]
+  ];
+
+  /** [what the diagnosis says (lower case), which packages fit (lower case)] */
+  static RULES = [
+    ["dengue", "dengue"],
+    ["snake|envenom|\\basv\\b|viper|krait|cobra", "snake bite"],
+    ["\\bop\\b|organophosph|poison|ingestion|consumption|paraquat|rodenticide|oleander|kerosene|overdose|suicid|\\bdsh\\b|toxic", "poision"],
+    ["scorpion|sting|bee bite|wasp", "scorpion|bites & stings"],
+    ["hanging", "hanging"],
+    ["drown|submersion", "submersion"],
+    ["copd|chronic obstructive|aecopd", "copd"],
+    ["asthma", "asthma"],
+    ["pneumonia|\\blrti\\b|\\bcap\\b|bronchitis", "pneumonia"],
+    ["respiratory failure|type ?(1|2|i|ii) ?rf|hypercap|hypoxemi|hypoxaemi|ventilat", "respiratory failure|ventilatory support"],
+    ["\\bards\\b|respiratory distress", "ards|respiratory distress"],
+    ["isch(a)?emic stroke|cerebral infarct|lacunar|\\binfarct", "ischemic stroke"],
+    ["h(a)?emorrhagic stroke|\\bich\\b|intracerebral|\\bsah\\b|bleed in brain", "hemorrhagic stroke"],
+    ["stroke|\\bcva\\b|hemipleg|hemipar|hemipl|cerebral infarct|intracerebral|\\bich\\b|\\bsah\\b|lacunar", "stroke"],
+    ["\\bcvt\\b|venous sinus|cortical vein|cortical venous", "cortical venous"],
+    ["\\bdka\\b|ketoacidosis", "ketoacidosis"],
+    ["\\bhhs\\b|hyperosmolar|\\bhonk\\b", "hyper osmolar"],
+    ["\\bckd\\b|\\bcrf\\b|chronic kidney|chronic renal|\\besrd\\b|end stage renal|\\bmhd\\b|dialysis", "chronic renal|end stage renal|\\bcrf\\b"],
+    ["\\baki\\b|\\barf\\b|acute kidney|acute renal|uremi|uraemi", "acute renal"],
+    ["nephrotic", "nephrotic"],
+    ["\\bhus\\b|h(a)?emolytic ur(a)?emic", "haemolytic uremic"],
+    ["\\bcld\\b|\\bdcld\\b|cirrho|chronic liver|portal hypertension", "cirrhosis|chronic liver"],
+    ["encephalopathy|altered sensorium|\\bams\\b|delirium", "encephalopathy"],
+    ["varic|\\bevl\\b", "varices"],
+    ["bleed|h(a)?ematemesis|mal(a)?ena|melena|h(a)?ematochezia|\\bugi|\\blgi", "bleed"],
+    ["hepatitis|jaundice|\\balf\\b|acute liver|transaminit", "hepatitis"],
+    ["\\bhbv\\b|\\bhcv\\b|hepatitis b|hepatitis c|hbsag", "chronic hepatitis b"],
+    ["\\bdili\\b|drug induced liver|att induced|drug induced hepatitis", "drug induced liver"],
+    ["pancreatitis", "pancreatitis"],
+    ["ascites", "ascites"],
+    ["\\bmi\\b|stemi|nstemi|\\bacs\\b|myocardial infarction|acute coronary|\\bawmi\\b|\\biwmi\\b|\\balmi\\b|unstable angina", "acute mi\\b"],
+    ["\\bccf\\b|\\bchf\\b|heart failure|\\blvf\\b|cardiac failure|cardiomyopathy|\\bdcm\\b|\\bdcmp\\b|pulmonary edema|pulmonary oedema", "congestive cardiac"],
+    ["\\baf\\b|atrial fib|\\bafib\\b", "atrial fibrillation"],
+    ["\\bsvt\\b|\\bvt\\b|arrhythm|arrythm|tachycardia|bradycardia|heart block|\\bchb\\b|\\bvf\\b", "arrythmias"],
+    ["endocarditis|\\bie\\b", "endocarditis"],
+    ["rheumatic", "rheumatic"],
+    ["\\bpe\\b|\\bpte\\b|pulmonary embol|pulmonary thrombo", "pulmonary embolism|pulmonary thrombo"],
+    ["\\bdvt\\b|limb isch|arterial thrombo|gangrene|\\bpad\\b|peripheral arterial", "limb ischemia|arterial thrombosis"],
+    ["meningitis|\\btbm\\b", "meningitis"],
+    ["encephalitis|\\baes\\b|febrile encephalopathy|fever with altered", "encephalitis|febrile encephalopathy"],
+    ["brain abscess|intracranial abscess", "brain abscess"],
+    ["neurocysticercosis|\\bncc\\b|tuberculoma|neuro ?tb", "neuro tuberculosis"],
+    ["seizure|status epilepticus|convulsion|epilep|\\bgtcs\\b|\\bse\\b", "status epilepticus"],
+    ["\\bgbs\\b|guillain|gullain|\\baidp\\b|ascending paralysis", "gullain barre"],
+    ["myasthenia", "myasthenia"],
+    ["\\badem\\b|disseminated encephalomyelitis", "disseminated encephalomyelitis"],
+    ["optic neuritis", "optic neuritis"],
+    ["myopathy|dystrophy|myositis", "myopathy"],
+    ["demyelinat|\\bnmo|transverse myelitis|immune mediated", "immune mediated cns|disseminated encephalomyelitis"],
+    ["coma|unconscious|\\bgcs\\b", "coma"],
+    ["\\bitp\\b|thrombocytopeni", "thrombocytopeni"],
+    ["\\bttp\\b", "\\bttp\\b"],
+    ["\\bdic\\b|disseminated intravascular", "\\bdic\\b|coagulation"],
+    ["h(a)?emophilia|coagulopathy|bleeding disorder|willebrand", "coagulation disorders|blood component"],
+    ["aplastic|hypoplastic|pancytopeni", "hypoplastic"],
+    ["thalass", "thalassemia"],
+    ["sickle", "sickle"],
+    ["\\baiha\\b|autoimmune h(a)?emolytic|h(a)?emolytic an(a)?emia", "hemolytic anemia"],
+    ["an(a)?emia|transfusion", "blood and blood product|blood component"],
+    ["sepsis|septic|septic(a)?emia|shock", "septic shock"],
+    ["\\bmods\\b|multi ?organ|multiorgan", "multi system organ|multiorgan"],
+    ["leptospir", "leptospirosis"],
+    ["enteric|typhoid", "enteric"],
+    ["\\bhiv\\b|\\brvd\\b|retroviral|\\bplhiv\\b", "\\bhiv\\b"],
+    ["kala|leishman", "leishmaniasis"],
+    ["mucor", "mucormycosis"],
+    ["\\bsle\\b|lupus", "\\bsle\\b"],
+    ["vasculitis|\\bgpa\\b|wegener|polyarteritis|takayasu", "vasculitis"],
+    ["\\bmctd\\b|mixed connective", "mixed connective"],
+    ["sjogren", "sjogren"],
+    ["scleroderma|systemic sclerosis", "systemic sclerosis"],
+    ["pneumothorax", "pneumothorax"],
+    ["pleural effusion|malignant effusion", "pleural effusion"],
+    ["h(a)?emoptysis", "hemoptysis"],
+    ["\\bild\\b|interstitial|\\bipf\\b|pulmonary fibrosis", "interstital lung"],
+    ["bronchiectasis", "bronchiectasis"],
+    ["lung abscess", "lung abscess"],
+    ["alveolar h(a)?emorrhage|\\bdah\\b", "alveolar hemorrhage"],
+    ["wilson", "wilson"],
+    ["septic arthritis|pyogenic arthritis", "pyogenic arthritis"],
+    ["osteomyelitis", "osteomyelitis"],
+    ["head injury|polytrauma|\\brta\\b|trauma|fall from", "polytrauma|head injury|trauma"],
+    ["cholangio|gall ?bladder (ca|carcinoma)|periampullary", "ca hepato"],
+    ["pericardial effusion|tamponade", "pericardiostomy"],
+    ["cystic fibrosis", "cystic fibrosis"]
+  ];
+
+  static COMMON = " acute chronic pulmonary disease failure syndrome severe infection fever management complications "
+    + "conservative cardiac respiratory hepatic without status secondary primary multiple bilateral ";
+  static CHILD = /cyanotic congential|kawasaki|paediatric\b/;
+
+  static rules() {
+    if (CmchisPackages._compiled == null) CmchisPackages._compiled = CmchisPackages.RULES.map((r) => [new RegExp(r[0]), new RegExp(r[1])]);
+    return CmchisPackages._compiled;
+  }
+
+  static rupees(rate) {
+    return "₹" + Number(Ui.toLong(rate, 0)).toLocaleString('en-US');
+  }
+
+  /** "CMU0648 B : DENGUE HEMORRHAGIC FEVER -(ADULT/PAEDIATRICS) · ₹18,900", as saved on the patient and the CMCHIS entry. */
+  static label(p) {
+    return p[0] + " : " + p[1] + " · " + CmchisPackages.rupees(p[2]);
+  }
+
+  /** 10.17: true when the diagnosis names an illness with a General Medicine package (one of the rules fits). */
+  static known(diagnosis) {
+    const dx = " " + Ui.nz(diagnosis).toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+    if (dx.trim().isEmpty()) return false;
+    for (const rule of CmchisPackages.rules()) if (rule[0].test(dx)) return true;
+    return false;
+  }
+
+  /** The package with this code (from a saved label "CODE : NAME · ₹rate"), or null. */
+  static byLabel(label) {
+    const code = Ui.nz(label).split(" : ")[0].trim();
+    for (const p of CmchisPackages.LIST) if (p[0].equalsIgnoreCase(code)) return p;
+    return null;
+  }
+
+  /** The packages that fit a diagnosis, best first (at most max). */
+  static suggest(diagnosis, max) {
+    const L = CmchisPackages.LIST;
+    const dx = " " + Ui.nz(diagnosis).toLowerCase().replace(/[^a-z0-9]+/g, " ") + " ";
+    const out = [];
+    if (dx.trim().isEmpty()) return out;
+    const score = new Array(L.length).fill(0);
+    let any = false;
+    for (const rule of CmchisPackages.rules()) {
+      const dAt = dx.search(rule[0]);
+      if (dAt < 0) continue;
+      any = true;
+      // the disease written first is usually the main one
+      const first = dAt < 12 ? 6 : 0;
+      for (let i = 0; i < L.length; i++) {
+        const at = L[i][1].toLowerCase().search(rule[1]);
+        // a package named for it (the words near the start) comes before one that only mentions it
+        if (at >= 0) score[i] += (at < 30 ? 15 : 10) + first;
+      }
+    }
+    // nothing known: words of the diagnosis (six letters or more, not the common ones) that are in a package's name
+    if (!any) for (const w of dx.trim().split(" ")) {
+      if (w.length < 6 || CmchisPackages.COMMON.includes(" " + w + " ")) continue;
+      for (let i = 0; i < L.length; i++) if (L[i][1].toLowerCase().includes(w)) score[i] += 3;
+    }
+    // children's packages only when the diagnosis is about them
+    if (!dx.includes("congenital") && !dx.includes("kawasaki") && !dx.includes("child"))
+      for (let i = 0; i < L.length; i++) if (score[i] > 0 && CmchisPackages.CHILD.test(L[i][1].toLowerCase())) score[i] -= 8;
+    const idx = [];
+    for (let i = 0; i < L.length; i++) if (score[i] > 0) idx.push(i);
+    idx.sort((a, b) => score[a] !== score[b] ? score[b] - score[a] : a - b);
+    for (let i = 0; i < idx.length && i < max; i++) out.push(L[idx[i]]);
+    return out;
+  }
+
+  /** The whole list filtered by every word of the search (code, name or rate). */
+  static search(q) {
+    const words = Ui.nz(q).toLowerCase().trim().split(/\s+/);
+    const out = [];
+    for (const p of CmchisPackages.LIST) {
+      const hay = (p[0] + " " + p[1] + " " + p[2]).toLowerCase();
+      let all = true;
+      for (const w of words) if (!w.isEmpty() && !hay.includes(w)) { all = false; break; }
+      if (all) out.push(p);
+    }
+    return out;
+  }
+
+  /** One package as a tappable card: code and rate on top, the name under them. */
+  static row(a, p, l) {
+    const r = Ui.v(a);
+    r.setBackground(Ui.round(a, Ui.alpha(CmchisPackages.COLOR, 0x10), 12));
+    r.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), Ui.dp(a, 8));
+    const top = Ui.h(a);
+    top.addView(Ui.tv(a, p[0], 13, CmchisPackages.COLOR, true), Ui.weight(1));
+    top.addView(Ui.tv(a, CmchisPackages.rupees(p[2]), 14, Ui.GREEN, true));
+    r.addView(top);
+    r.addView(Ui.tv(a, p[1], 13, Ui.TEXT, false));
+    if (l != null) r.setOnClickListener(l);
+    r.setLayoutParams(Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+    Ui.margins(r, 0, 4, 0, 4);
+    return r;
+  }
+
+  /**
+   * The package list in a dialog: packages for the diagnosis first, then a search over all of them. With no callback it is
+   * only to look up (tap copies the package).
+   */
+  static pick(a, diagnosis, cb) {
+    const box = Ui.v(a);
+    const pd = Ui.dp(a, 12);
+    box.setPadding(pd, Ui.dp(a, 4), pd, 0);
+    const q = new EditText(a);
+    q.setHint("Search: disease, word or code (dengue, snake, CMU0850)");
+    q.setSingleLine(true);
+    q.setTextSize(15);
+    box.addView(q);
+    const count = Ui.muted(a, "");
+    box.addView(count);
+    const list = Ui.v(a);
+    const sv = new ScrollView(a);
+    sv.addView(list);
+    box.addView(sv, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(a, 420)));
+    const d = new AlertDialog.Builder(a).setTitle("CMCHIS packages · General Medicine").setView(box).setPositiveButton("Close", null).create();
+    const refresh = () => {
+      list.removeAllViews();
+      const s = q.getText().toString().trim();
+      const fit = s.isEmpty() ? CmchisPackages.suggest(diagnosis, 12) : [];
+      const all = CmchisPackages.search(s);
+      if (fit.length > 0) {
+        list.addView(Ui.tv(a, "For “" + Ui.nz(diagnosis).trim() + "”", 13, CmchisPackages.COLOR, true));
+        for (const p of fit) list.addView(CmchisPackages.row(a, p, CmchisPackages.tap(a, p, cb, d)));
+        list.addView(Ui.tv(a, "All packages", 13, Ui.MUTED, true));
+      }
+      for (const p of all) list.addView(CmchisPackages.row(a, p, CmchisPackages.tap(a, p, cb, d)));
+      count.setText(all.length + " of " + CmchisPackages.LIST.length + " packages" + (cb == null ? " · tap one to copy it" : " · tap one to choose it"));
+    };
+    refresh();
+    q.addTextChangedListener({
+      beforeTextChanged: (s, x, y, z) => {},
+      onTextChanged: (s, x, y, z) => {},
+      afterTextChanged: (e) => { refresh(); }
+    });
+    d.show();
+  }
+
+  static tap(a, p, cb, d) {
+    return {
+      onClick: (v) => {
+        if (cb != null) {
+          cb.picked(p);
+          d.dismiss();
+        } else {
+          const cm = a.getSystemService(Context.CLIPBOARD_SERVICE);
+          if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("CMCHIS package", CmchisPackages.label(p)));
+          Ui.toast(a, "Copied: " + p[0]);
+        }
+      }
+    };
+  }
+
+  /**
+   * Under the diagnosis: the packages that fit it, each one tap to choose, and a button for the whole list. Refreshed as
+   * the diagnosis is typed.
+   */
+  static fill(a, box, diagnosis, cb) {
+    box.removeAllViews();
+    const fit = CmchisPackages.suggest(diagnosis, 5);
+    if (fit.length > 0) {
+      box.addView(Ui.tv(a, "CMCHIS packages for this diagnosis (tap to choose)", 13, CmchisPackages.COLOR, true));
+      for (const p of fit) box.addView(CmchisPackages.row(a, p, { onClick: (v) => { cb.picked(p); } }));
+    }
+    const all = Ui.outlineButton(a, "Browse all " + CmchisPackages.LIST.length + " CMCHIS packages", CmchisPackages.COLOR, {
+      onClick: (v) => { CmchisPackages.pick(a, diagnosis, cb); }
+    });
+    box.addView(all);
+    Ui.margins(all, 0, 6, 0, 0);
+  }
+}
+CmchisPackages._compiled = null;
 ;
 /* ---- app/CmchisStages.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -33017,6 +35068,332 @@ class Counsel {
   }
 }
 ;
+/* ---- app/Countdown.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Countdown clocks (10.10, idea 150): everything with a time on a patient, ticking down. Protocol steps (the next dose or
+ * check), results expected back, and timers a doctor sets ("repeat K at 6 PM", stored as a task with a date and time).
+ * Each in-patient's card shows the soonest one; the "Due soon" screen lists them all with live clocks; an alarm rings when
+ * a timer is due. No AI: only the times already recorded.
+ */
+class Countdown {
+  static COLOR = 0xFFEA580C;
+  static N_TIMER = 7223;
+  static TIMER = "Timer";
+  static timer = null;
+
+  static Item = class {
+    constructor(pid, what, kind, due) {
+      this.pid = pid; this.what = what; this.kind = kind; this.due = due;
+    }
+  };
+
+  static now() {
+    return LocalDateTime.of(Dates.today(), Dates.time());
+  }
+
+  /** Everything with a time for in-patients (pid 0: all of them), soonest first. */
+  static items(db, pid) {
+    const out = [];
+    const one = pid > 0 ? " AND p.id=" + pid : "";
+    // protocol steps
+    for (const r of db.rows("SELECT r.* FROM " + Protocols.TABLE + " r JOIN patients p ON p.id=r.patient_id WHERE r.ended='' AND p.status='IN'" + one)) {
+      const p = Protocols.byId(r.get("protocol"));
+      if (p == null) continue;
+      const id = Ui.toLong(r.get("patient_id"), 0);
+      for (const t of p.tracks) {
+        const d = Protocols.due(r, p, t);
+        if (d != null) out.push(new Countdown.Item(id, t.label + " (" + p.name + ")", "⏱", d));
+      }
+    }
+    // results expected back
+    for (const r of db.rows("SELECT r.patient_id, r.test, r.due FROM inv_sent r JOIN patients p ON p.id=r.patient_id WHERE r.status='' AND r.due<>'' AND p.status='IN'" + one)) {
+      const d = Protocols.parse(r.get("due"));
+      if (d != null) out.push(new Countdown.Item(Ui.toLong(r.get("patient_id"), 0), Ui.nz(r.get("test")) + " result", "🧪", d));
+    }
+    // timers and tasks with a time
+    for (const r of db.rows("SELECT t.patient_id, t.text, t.due FROM tasks t JOIN patients p ON p.id=t.patient_id WHERE t.done='' AND length(t.due)=16 AND p.status='IN'" + one)) {
+      const d = Protocols.parse(r.get("due"));
+      if (d != null) out.push(new Countdown.Item(Ui.toLong(r.get("patient_id"), 0), Ui.nz(r.get("text")), "⏰", d));
+    }
+    out.sort((a, b) => a.due.compareTo(b.due));
+    return out;
+  }
+
+  static next(db, pid) {
+    const l = Countdown.items(db, pid);
+    return l.length === 0 ? null : l[0];
+  }
+
+  /** "in 1 h 05 min", "in 4:32" (under 10 minutes, with seconds), "DUE NOW", "OVERDUE 12 min". */
+  static left(due, now, secNow) {
+    const s = Duration.between(now, due).getSeconds() - secNow;
+    if (s <= 0 && s > -60) return "DUE NOW";
+    if (s < 0) {
+      const m = Math.trunc(-s / 60);
+      return "OVERDUE " + (m >= 60 ? Math.trunc(m / 60) + " h " + m % 60 + " min" : m + " min");
+    }
+    if (s < 600) return "in " + Math.trunc(s / 60) + ":" + jfmt("%02d", s % 60);
+    const m = Math.trunc((s + 59) / 60);
+    if (m < 60) return "in " + m + " min";
+    if (m < 24 * 60) return "in " + Math.trunc(m / 60) + " h " + jfmt("%02d", m % 60) + " min";
+    return "in " + Math.trunc(m / (24 * 60)) + " d";
+  }
+
+  static color(due, now) {
+    const m = Duration.between(now, due).toMinutes();
+    return m < 0 ? Ui.RED : m < 30 ? Countdown.COLOR : Ui.TEAL;
+  }
+
+  /** The pill on a patient's card: the soonest timed thing in the next 24 hours, or null. */
+  static pill(a, db, pid) {
+    const i = Countdown.next(db, pid);
+    const now = Countdown.now();
+    if (i == null || Duration.between(now, i.due).toHours() >= 24) return null;
+    const what = i.what.length > 22 ? i.what.substring(0, 21) + "…" : i.what;
+    return Ui.softPill(a, i.kind + " " + what + " " + Countdown.left(i.due, now, 0), Countdown.color(i.due, now));
+  }
+
+  /** "Set a timer": what, and when (in so many minutes, or at a time). Stored as a task so it shows everywhere tasks do. */
+  static timerDialog(a, db, pid) {
+    const f = new Form(a);
+    f.suggest("text", "What is due", "", ["Repeat potassium", "Repeat sugar", "Repeat ABG", "Antibiotic dose", "Check urine output", "Review BP",
+      "Repeat ECG", "Recheck GCS", "Stop the infusion", "Call relatives"]);
+    const ins = ["15", "30", "60", "120", "240", "360", "at"];
+    f.choice("in", "When", ["15 min", "30 min", "1 hour", "2 hours", "4 hours", "6 hours", "At a time"], ins, "60", {
+      changed: (v) => { f.show("at", "at" === v); }
+    });
+    f.time("at", "Time", Dates.now());
+    f.show("at", false);
+    Ui.formDialog(a, "⏰ Set a timer", f, "Start", {
+      run: () => {
+        if (!f.require("text", "Write what is due")) return false;
+        const now = Countdown.now();
+        let due;
+        if ("at" === f.get("in")) {
+          const t = LocalTime.parse(f.get("at"));
+          due = LocalDateTime.of(Dates.today(), t);
+          if (!due.isAfter(now)) due = due.plusDays(1);
+        } else due = now.plusMinutes(Ui.toInt(f.get("in"), 60));
+        const cv = new ContentValues();
+        cv.put("patient_id", pid);
+        cv.put("kind", Countdown.TIMER);
+        cv.put("text", f.get("text").trim());
+        cv.put("due", Protocols.stamp(due));
+        cv.put("by_name", CallDutyActivity.myName(a));
+        cv.put("time", Dates.todayIso() + " " + Dates.now());
+        db.insert("tasks", cv);
+        Countdown.schedule(a);
+        Ui.toast(a, "Timer set for " + due.toLocalTime());
+        a.render();
+        return true;
+      }
+    });
+  }
+
+  /** Patient page: the patient's clocks and the "Set a timer" button. */
+  static section(a, db, pid) {
+    const box = Ui.v(a);
+    const l = Countdown.items(db, pid);
+    box.addView(Ui.heading(a, "Countdown clocks" + (l.length === 0 ? "" : "  ·  " + l.length), Countdown.COLOR));
+    const card = Ui.card(a);
+    const now = Countdown.now();
+    if (l.length === 0) card.addView(Ui.muted(a, "Nothing timed yet. Set a timer (\"repeat K at 6 PM\"), or start a protocol or send a test with an expected time."));
+    for (const i of l) {
+      const row = Ui.h(a);
+      row.setPadding(0, Ui.dp(a, 4), 0, Ui.dp(a, 4));
+      const w = Ui.tv(a, i.kind + "  " + i.what, 14, Ui.TEXT, false);
+      row.addView(w, Ui.weight(1));
+      row.addView(Ui.softPill(a, Countdown.left(i.due, now, 0), Countdown.color(i.due, now)));
+      card.addView(row);
+    }
+    const add = Ui.outlineButton(a, "⏰ Set a timer", Countdown.COLOR, { onClick: () => { Countdown.timerDialog(a, db, pid); } });
+    card.addView(add);
+    Ui.margins(add, 0, 8, 0, 0);
+    box.addView(card);
+    return box;
+  }
+
+  /** Home card: how many things fall due in the next hour (and how many are overdue); null when none. */
+  static homeCard(a, db) {
+    const now = Countdown.now();
+    let soon = 0, late = 0;
+    for (const i of Countdown.items(db, 0)) {
+      const m = Duration.between(now, i.due).toMinutes();
+      if (m < 0) late++;
+      else if (m <= 60) soon++;
+    }
+    if (soon + late === 0) return null;
+    const c = late > 0 ? Ui.RED : Countdown.COLOR;
+    const card = a.entryCard("COUNTDOWN", c, "⏱ " + (soon > 0 ? soon + " due in the next hour" : "") + (soon > 0 && late > 0 ? "  ·  " : "") + (late > 0 ? late + " overdue" : ""),
+        "Protocol steps, results expected and timers, ticking live.", null, a.opener(CountdownActivity));
+    const g = Ui.round(a, Ui.mix(c, Color.WHITE, 0.92), 18);
+    g.setStroke(Ui.dp(a, 2), c);
+    card.setBackground(g);
+    return card;
+  }
+
+  // ---------------------------------------------------------------- the alarm for timers
+
+  static timers(db) {
+    return db.rows("SELECT t.*, p.location, p.bed FROM tasks t JOIN patients p ON p.id=t.patient_id WHERE t.done='' AND t.kind=? AND length(t.due)=16 AND p.status='IN' ORDER BY t.due", Countdown.TIMER);
+  }
+
+  static schedule(c) {
+    const app = c.getApplicationContext();
+    const db = Db.get(app);
+    const told = app.getSharedPreferences("countdown", Context.MODE_PRIVATE).getString("told", "");
+    let soon = null;
+    for (const t of Countdown.timers(db)) {
+      if (("," + told + ",").contains("," + t.get("id") + ",")) continue;
+      const d = Protocols.parse(t.get("due"));
+      if (d != null && (soon == null || d.isBefore(soon))) soon = d;
+    }
+    // Web: in place of AlarmManager, a timer while the page is open
+    if (Countdown.timer != null) {
+      clearTimeout(Countdown.timer);
+      Countdown.timer = null;
+    }
+    if (soon == null) return;
+    const now = Countdown.now();
+    if (soon.isBefore(now)) soon = now.plusMinutes(1);
+    const delay = Math.min(Math.max(1000, Protocols.millis(soon) - System.currentTimeMillis()), 2147483000);
+    Countdown.timer = setTimeout(() => {
+      Countdown.timer = null;
+      try {
+        new Countdown.Receiver().onReceive(app, new Intent(app, Countdown.Receiver).setAction("com.tvmchmed.app.TIMER"));
+      } catch (ignored) {
+        // the screen still shows DUE NOW
+      }
+    }, delay);
+  }
+
+  /** Timers that just fell due: one notification (bed and what, no name), each timer once. */
+  static notifyDue(c) {
+    const db = Db.get(c);
+    const p = c.getSharedPreferences("countdown", Context.MODE_PRIVATE);
+    const told = p.getString("told", "");
+    const now = Countdown.now();
+    let s = "";
+    const keep = [];
+    let first = -1;
+    for (const t of Countdown.timers(db)) {
+      const id = t.get("id");
+      const d = Protocols.parse(t.get("due"));
+      if (("," + told + ",").contains("," + id + ",")) { keep.push(id); continue; }
+      if (d == null || d.isAfter(now)) continue;
+      keep.push(id);
+      s += (s.length === 0 ? "" : "\n") + Protocols.where(t) + ": " + Ui.nz(t.get("text"));
+      if (first < 0) first = Ui.toLong(t.get("patient_id"), -1);
+    }
+    p.edit().putString("told", keep.join(",")).apply();
+    if (s.length === 0) return;
+    const open = first > 0 ? new Intent(c, PatientActivity).putExtra("id", String(first)) : new Intent(c, CountdownActivity);
+    Background.show(c, Countdown.N_TIMER, "⏰ Timer due", s, Countdown.COLOR, open);
+  }
+}
+
+Countdown.Receiver = class extends BroadcastReceiver {
+  onReceive(context, intent) {
+    try {
+      Countdown.notifyDue(context);
+    } finally {
+      Countdown.schedule(context);
+    }
+  }
+};
+;
+/* ---- app/CountdownActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** "Due soon" (10.10, idea 150): every timed thing for in-patients, soonest first, with clocks that tick each second. */
+class CountdownActivity extends Base {
+  constructor() {
+    super();
+    this.handler = new Handler(Looper.getMainLooper());
+    this.clocks = [];
+    this.dues = [];
+    this.base = null;
+    this.secs = 0;
+    this.ticker = {
+      run: () => {
+        this.secs++;
+        if (this.secs - this.start >= 30) {   // a fresh list every 30 seconds (new timers from other phones, steps done)
+          Sync.kick(this);
+          this.render();
+          return;
+        }
+        for (let i = 0; i < this.clocks.length; i++) {
+          this.clocks[i].setText(Countdown.left(this.dues[i], this.base, this.secs));
+        }
+        this.handler.postDelayed(this.ticker, 1000);
+      }
+    };
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Due soon");
+    this.subtitle = "Countdown clocks for every patient";
+    this.headerColor(Countdown.COLOR);
+  }
+
+  onPause() {
+    super.onPause();
+    this.handler.removeCallbacks(this.ticker);
+  }
+
+  render() {
+    const db = this.db;
+    this.handler.removeCallbacks(this.ticker);
+    this.clocks = [];
+    this.dues = [];
+    // Web: date-times count whole minutes, so the seconds of this minute start the clock
+    this.base = Countdown.now();
+    this.secs = new Date().getSeconds();
+    this.start = this.secs;
+    const page = Ui.v(this);
+    const all = Countdown.items(db, 0);
+    let late = 0, hour = 0;
+    for (const i of all) {
+      const m = Duration.between(this.base, i.due).toMinutes();
+      if (m < 0) late++;
+      else if (m <= 60) hour++;
+    }
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Countdown.COLOR), 20));
+    hero.addView(Ui.tv(this, all.length === 0 ? "Nothing timed" : hour + " due in the next hour  ·  " + late + " overdue", 20, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Protocol steps, results expected back and timers set on patients. Set a timer from any patient's page.", 13, 0xD9FFFFFF, false));
+    page.addView(hero);
+    // grouped by patient in order of their soonest item
+    const order = [];
+    for (const i of all) if (!order.includes(i.pid)) order.push(i.pid);
+    for (const pid of order) {
+      const p = db.row("SELECT * FROM patients WHERE id=?", String(pid));
+      if (p == null) continue;
+      const card = Ui.card(this);
+      card.addView(Ui.tv(this, Ui.nz(p.get("name")) + "  ·  " + Db.shortName(Ui.nz(p.get("location"))) + (Ui.nz(p.get("bed")).isEmpty() ? "" : " bed " + p.get("bed")), 15, Ui.TEXT, true));
+      for (const i of all) {
+        if (i.pid !== pid) continue;
+        const row = Ui.h(this);
+        row.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 4));
+        row.addView(Ui.tv(this, i.kind + "  " + i.what, 14, Ui.TEXT, false), Ui.weight(1));
+        const clock = Ui.softPill(this, Countdown.left(i.due, this.base, this.secs), Countdown.color(i.due, this.base));
+        row.addView(clock);
+        this.clocks.push(clock);
+        this.dues.push(i.due);
+        card.addView(row);
+      }
+      card.setOnClickListener(this.opener(PatientActivity, "id", String(pid)));
+      page.addView(card);
+    }
+    if (all.length === 0) page.addView(Ui.muted(this, "  Open a patient and tap ⏰ Set a timer, or start an emergency protocol."));
+    this.setPage(page);
+    this.handler.postDelayed(this.ticker, 1000);
+  }
+}
+;
 /* ---- app/Crashes.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -34701,10 +37078,13 @@ class DapActivity extends Base {
 
   /** One person on duty; tap the phone to call. */
   personRow(line) {
+    // 10.13: the full name on its own line, the phone and WhatsApp under it (user asked)
+    const box = Ui.v(this);
+    box.setPadding(0, Ui.dp(this, 3), 0, Ui.dp(this, 5));
+    box.addView(Ui.tv(this, Roster.name(line), 15, Ui.TEXT, false));
     const row = Ui.h(this);
-    row.setGravity(Gravity.CENTER_VERTICAL);
-    row.setPadding(0, Ui.dp(this, 3), 0, Ui.dp(this, 3));
-    row.addView(Ui.tv(this, Roster.name(line), 15, Ui.TEXT, false), Ui.weight(1));
+    row.setPadding(0, Ui.dp(this, 3), 0, 0);
+    box.addView(row);
     const ph = Roster.phone(line);
     if (!ph.isEmpty()) {
       const call = Ui.softPill(this, "📞 " + ph, Ui.GREEN);
@@ -34720,7 +37100,7 @@ class DapActivity extends Base {
         Ui.margins(wa, 6, 0, 0, 0);
       }
     }
-    return row;
+    return box;
   }
 }
 ;
@@ -39244,6 +41624,9 @@ class DoubtBubble extends View {
   static MAX_DOTS = 14;
   static BOKEH_N = 26;
   static RIPPLES = 6;
+  /** Edge shades from the far side (dark) to just behind the face (bright). */
+  static EDGE = [0xFF4A2F04, 0xFF6B4508, 0xFF8C5B0E, 0xFFAD7418, 0xFFCB8F26, 0xFFE3AC3E];
+  static LAYERS = 16;
 
   constructor(c) {
     super(c);
@@ -39466,6 +41849,82 @@ class DoubtBubble extends View {
     cv.restore();
   }
 
+  // ---------- 10.31: the solid 3D heart (user asked): a thick golden slab with a lit face ----------
+
+  /** The heart's outline in each edge shade, and a canvas for the lit face; made once the picture has a size. */
+  prepare3d() {
+    if (this.edges != null) return true;
+    if (this.heart == null || this.heart.getWidth() <= 0 || this.heart.getHeight() <= 0) return false;
+    if (!this.fx) {
+      this.fx = new Paint(Paint.ANTI_ALIAS_FLAG);
+      this.atop = new PorterDuffXfermode(PorterDuff.Mode.SRC_ATOP);
+      this.srcIn = new PorterDuffXfermode(PorterDuff.Mode.SRC_IN);
+    }
+    const w = Math.max(1, Math.trunc(this.heart.getWidth() / 2)), h = Math.max(1, Math.trunc(this.heart.getHeight() / 2));
+    const out = [];
+    const all = new Rect(0, 0, w, h);
+    for (let i = 0; i < DoubtBubble.EDGE.length; i++) {
+      const b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+      const c = new Canvas(b);
+      c.drawBitmap(this.heart, null, all, null);
+      this.fx.setShader(null);
+      this.fx.setXfermode(this.srcIn);
+      this.fx.setColor(DoubtBubble.EDGE[i]);
+      c.drawRect(0, 0, w, h, this.fx);
+      this.fx.setXfermode(null);
+      out.push(b);
+    }
+    this.face = Bitmap.createBitmap(this.heart.getWidth(), this.heart.getHeight(), Bitmap.Config.ARGB_8888);
+    this.faceCv = new Canvas(this.face);
+    this.edges = out;
+    return true;
+  }
+
+  /** The face for this angle: the picture, a band of light sweeping across as it turns, darker when turned away. */
+  lightFace(s, c) {
+    const w = this.face.getWidth(), h = this.face.getHeight();
+    this.faceCv.drawColor(0, PorterDuff.Mode.CLEAR);
+    this.faceCv.drawBitmap(this.heart, 0, 0, null);
+    const mid = w * (0.5 - 0.9 * s);
+    this.fx.setXfermode(this.atop);
+    this.fx.setShader(new LinearGradient(mid - w * 0.45, 0, mid + w * 0.45, h * 0.35,
+      [0x00FFFFFF, 0x00FFFFFF, 0x99FFF6DA, 0x00FFFFFF, 0x00FFFFFF], [0, 0.3, 0.5, 0.7, 1], Shader.TileMode.CLAMP));
+    this.faceCv.drawRect(0, 0, w, h, this.fx);
+    this.fx.setShader(null);
+    const dark = 0.55 * (1 - Math.abs(c)) + (c < 0 ? 0.12 : 0);
+    this.fx.setColor(Color.argb(Math.trunc(255 * Math.min(0.7, dark)), 20, 10, 0));
+    this.faceCv.drawRect(0, 0, w, h, this.fx);
+    this.fx.setXfermode(null);
+  }
+
+  /** The heart as a solid: edge layers stacked through its thickness, then the lit face that looks at you. */
+  drawSolidHeart(cv, cx, cy, u, ang) {
+    if (!this.prepare3d()) {
+      this.drawHeart(cv, cx, cy, u, ang, 255);
+      return;
+    }
+    const r = ang * Math.PI / 180;
+    const c = Math.cos(r), s = Math.sin(r);
+    const sxs = Math.abs(c) < 0.03 ? (c < 0 ? -0.03 : 0.03) : c;
+    const hh = u * 1.05, hw = hh * this.aspect, depth = hw * 0.30, sign = c < 0 ? -1 : 1;
+    const L = DoubtBubble.LAYERS;
+    this.bmp.setAlpha(255);
+    this.box.set(-hw, -hh, hw, hh);
+    for (let j = 0; j <= L; j++) {
+      const z = (j / L - 0.5) * depth * sign;   // far side first, the face last
+      cv.save();
+      cv.translate(cx + z * s, cy);
+      cv.scale(sxs, 1);
+      if (j < L) {
+        cv.drawBitmap(this.edges[Math.min(DoubtBubble.EDGE.length - 1, Math.trunc(j * DoubtBubble.EDGE.length / L))], null, this.box, this.bmp);
+      } else {
+        this.lightFace(s * sign, c);
+        cv.drawBitmap(this.face, null, this.box, this.bmp);
+      }
+      cv.restore();
+    }
+  }
+
   /** One tilted ring of golden light round the heart with a comet running round it: its front or back half. */
   ringHalf(cv, cx, cy, tilt, rx, ry, phase, front) {
     const dp = this.dp, line = this.line, plain = this.plain;
@@ -39598,7 +42057,7 @@ class DoubtBubble extends View {
       this.drawHeart(cv, cx, cy, u * pump, this.angle - this.spd * 0.020, 70 * gh);
       this.drawHeart(cv, cx, cy, u * pump, this.angle - this.spd * 0.040, 36 * gh);
     }
-    this.drawHeart(cv, cx, cy, u * pump, this.angle, 255);
+    this.drawSolidHeart(cv, cx, cy, u * pump, this.angle);
     // the light inside flares with each beat, brightest when the heart faces you
     const face = Math.abs(Math.cos(this.angle * Math.PI / 180));
     const fl = Math.min(1, (0.35 + 0.65 * b) * (0.4 + 0.6 * face));
@@ -45847,9 +48306,15 @@ class FormActivity extends Base {
     this.sendAfter = false;
     this.dietCamera = null;
     this.dietPaste = null;
+    this.quick = false;
+    this.moreBox = null;
+    this.modeBar = null;
+    this.topViews = [];
   }
 
   static UNIT_LABELS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "IMCU", "Fever ward", "CCB", "Geriatric ward", "Rheumatology ward", "Kandiyaperi", "Department (common)"];
+  static QUICK = ["name", "age", "sex", "diagnosis"];
+  static QUICK_COLOR = 0xFFEA580C;
   static REQ_IMAGE = 31;
   static REQ_DIET_CAMERA = 32;
   static REQ_DIET_PICK = 33;
@@ -45872,7 +48337,11 @@ class FormActivity extends Base {
     else if ("notice".equals(kind)) this.setTitle(edit ? "Edit notice" : "Post a notice");
     else if ("dap".equals(kind)) this.setTitle(edit ? "Edit DAP entry" : "DAP duty entry");
     else if ("callover".equals(kind)) this.setTitle(edit ? "Edit call over" : "New call over");
-    if ("patient".equals(kind) && !edit) this.headerColor(Ui.unitColor(this.getIntent().getStringExtra("unit")));
+    if ("patient".equals(kind)) {
+      // 10.34: the navy admission form from the user's picture
+      this.headerColor(AdmitDesign.NAVY);
+      this.pageBg = AdmitDesign.NAVY;
+    }
     if ("notice".equals(kind)) this.headerColor(Ui.AMBER);
     if ("callover".equals(kind)) this.headerColor(Ui.TEAL);
     if ("academic".equals(kind) || "class".equals(kind)) this.headerColor(Ui.PURPLE);
@@ -45898,6 +48367,17 @@ class FormActivity extends Base {
     else this.callOverForm();
 
     const page = Ui.v(this);
+    if ("patient".equals(kind)) {
+      page.addView(AdmitDesign.hero(this, this.id >= 0 ? "Edit Patient" : this.fromTaei ? "Receive from TAEI" : "Admission Form"));
+      const panel = AdmitDesign.panel(this);
+      panel.addView(this.form.view);
+      page.addView(panel);
+      page.addView(AdmitDesign.save(this, this.id >= 0 ? "Save changes" : "Save", { onClick: (v) => { this.save(); } }));
+      page.addView(AdmitDesign.footer(this));
+      this.setPage(page);
+      this.sharedText();
+      return;
+    }
     const card = Ui.card(this);
     card.addView(this.form.view);
     page.addView(card);
@@ -45987,7 +48467,7 @@ class FormActivity extends Base {
     let ok;
     if ("patient".equals(kind) && this.duplicate()) return;
     if ("patient".equals(kind)) ok = this.savePatient();
-    else if ("class".equals(kind)) ok = this.saveSimple("topic", "Enter the topic", ["kind", "date", "time", "topic", "taken_by", "unit", "batch", "attendance", "note"]);
+    else if ("class".equals(kind)) ok = this.saveSimple("topic", "Enter the topic", ["kind", "date", "time", "topic", "taken_by", "unit", "batch", "venue", "attendance", "note"]);
     else if ("academic".equals(kind)) ok = this.saveSimple("topic", "Enter the topic", ["kind", "date", "time", "topic", "presenter", "moderator", "unit", "attendance", "note"]);
     else if ("notice".equals(kind)) ok = this.saveNotice();
     else if ("dap".equals(kind)) ok = this.saveSimple("dap_name", "Enter the DAP's name", ["date", "dap_name", "unit", "pgs", "admissions", "abscond", "ama", "deaths", "imcu", "census", "issues", "handover"]);
@@ -46054,18 +48534,19 @@ class FormActivity extends Base {
     const bed = p != null ? p.get("bed") : Ui.nz(this.getIntent().getStringExtra("bed"));
 
     if (p == null) {
-      const wa = Ui.button(this, "💬  Paste the WhatsApp admission message", Chat.GREEN, { onClick: (v) => { this.pasteWhatsApp(); } });
+      const wa = AdmitDesign.action(this, "Paste the WhatsApp admission message", R.drawable.ic_chat, 0xFF16A34A, { onClick: (v) => { this.pasteWhatsApp(); } });
       form.view.addView(wa);
-      Ui.margins(wa, 0, 4, 0, 4);
-      const diet = Ui.button(this, "📷  Scan the diet sheet (fills name, PIN, age…)", Labs.HMIS_COLOR, { onClick: (v) => { this.dietScan(); } });
+      this.topViews.add(wa);
+      const diet = AdmitDesign.action(this, "Scan the diet sheet (fills name, PIN, age…)", R.drawable.ic_camera, 0xFF1D4ED8, { onClick: (v) => { this.dietScan(); } });
       form.view.addView(diet);
-      Ui.margins(diet, 0, 0, 0, 4);
+      this.topViews.add(diet);
       this.dietPaste = Ui.outlineButton(this, "📋  Paste the AI's answer (diet sheet)", CaseSheetActivity.AI_COLOR, { onClick: (v) => { this.dietPasteAnswer(); } });
       this.dietPaste.setVisibility(View.GONE);
       form.view.addView(this.dietPaste);
-      Ui.margins(this.dietPaste, 0, 0, 0, 4);
+      Ui.margins(this.dietPaste, 0, 8, 0, 0);
+      this.topViews.add(this.dietPaste);
     }
-    form.heading("Patient");
+    if (p != null) form.heading("Patient");
     form.text("name", "Name *", v(p, "name", Ui.nz(this.getIntent().getStringExtra("name"))), Form.TEXT);
     form.text("ip_no", "IP number", v(p, "ip_no", Ui.nz(this.getIntent().getStringExtra("ip_no"))), Form.TEXT);
     form.text("pin_no", "PIN number (TN HMIS, for lab reports)", v(p, "pin_no", ""), Form.TEXT);
@@ -46076,9 +48557,12 @@ class FormActivity extends Base {
     form.multi("diagnosis", "Diagnosis (type, or choose from the list)", v(p, "diagnosis", "")).addTextChangedListener({
       beforeTextChanged: (s, a, b, c) => {},
       onTextChanged: (s, a, b, c) => {},
-      afterTextChanged: (e) => { if (this.form.has("st_type")) this.censusVisibility(); }
+      afterTextChanged: (e) => {
+        if (this.form.has("st_type")) this.censusVisibility();
+        this.refreshPackages();
+      }
     });
-    Diagnoses.attach(this, form, "diagnosis");
+    const dxPick = Diagnoses.attach(this, form, "diagnosis");
     form.choice("category", "Admission group (hemophilia and stroke also get their own list)", Db.CATEGORY_LABELS, Db.CATEGORIES, v(p, "category", ""), {
       changed: (val) => { this.censusVisibility(); }
     });
@@ -46115,6 +48599,171 @@ class FormActivity extends Base {
     form.text("bed", "Bed number", bed, Form.TEXT);
     form.check("cmchis", "Covered under CMCHIS", p != null && "1".equals(p.get("cmchis")));
     form.text("cmchis_no", "CMCHIS / insurance ID", v(p, "cmchis_no", ""), Form.TEXT);
+    // 10.15: the CMCHIS package, suggested from the provisional diagnosis (user asked)
+    form.multi("cmchis_pkg", "CMCHIS package", v(p, "cmchis_pkg", ""));
+    this.pkgBox = Ui.v(this);
+    form.view.addView(this.pkgBox);
+    this.refreshPackages();
+    this.admitLayout(dxPick, p == null);
+  }
+
+  // ---------- 10-second admission (10.17, user's pick 195) ----------
+
+  /** On the patient's page of a quick admission: what is still missing, and a button to fill it in. */
+  static quickCard(a, p) {
+    if (!"1".equals(p.get("quick")) || !Db.IN.equals(p.get("status"))) return null;
+    const miss = [];
+    if (Ui.nz(p.get("ip_no")).isEmpty()) miss.add("IP number");
+    if (Ui.nz(p.get("mlc")).isEmpty()) miss.add("MLC / NMLC");
+    if (Ui.nz(p.get("bed")).isEmpty()) miss.add("bed");
+    if (Ui.nz(p.get("phone")).isEmpty()) miss.add("phone");
+    miss.add("census details");
+    if (Ui.clean(a)) return PatientDesign.quickCard(a, miss, a.opener(FormActivity, "kind", "patient", "id", Ui.nz(p.get("id"))));
+    const card = Ui.h(a);
+    card.setGravity(Gravity.CENTER_VERTICAL);
+    card.setBackground(Glass.hero(a, Ui.shades(FormActivity.QUICK_COLOR), 18));
+    card.setPadding(Ui.dp(a, 16), Ui.dp(a, 12), Ui.dp(a, 12), Ui.dp(a, 12));
+    const t = Ui.v(a);
+    t.addView(Ui.tv(a, "⚡ Quick admission", 16, Color.WHITE, true));
+    t.addView(Ui.tv(a, "Still to fill: " + TextUtils.join(", ", miss) + ".", 12, 0xE6FFFFFF, false));
+    card.addView(t, Ui.weight(1));
+    const fill = Ui.tv(a, "Fill now", 13, FormActivity.QUICK_COLOR, true);
+    fill.setBackground(Ui.round(a, Color.WHITE, 14));
+    fill.setPadding(Ui.dp(a, 12), Ui.dp(a, 7), Ui.dp(a, 12), Ui.dp(a, 7));
+    fill.setOnClickListener(a.opener(FormActivity, "kind", "patient", "id", Ui.nz(p.get("id"))));
+    card.addView(fill);
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), Ui.dp(a, 2));
+    box.addView(card);
+    return box;
+  }
+
+  /**
+   * 10.34 (user's picture): the fields grouped into pastel section cards (patient details, more details, admission group,
+   * daily census, toxicology, admission, coverage). A new admission puts the patient details first and the rest in a box
+   * shown only for the full form (10-second admission, 10.17).
+   */
+  admitLayout(dxPick, isNew) {
+    const form = this.form;
+    this.quick = isNew && !this.fromTaei && this.getIntent().getStringExtra("wa_text") == null && this.getSharedPreferences("quick_admit", Context.MODE_PRIVATE).getBoolean("on", true);
+    const v = form.view;
+    const cards = [
+      AdmitDesign.section(this, R.drawable.ic_people, "Patient Details", "Basic information about the patient", AdmitDesign.BLUE),
+      AdmitDesign.section(this, R.drawable.ic_doc, "More Details", "Additional patient information", AdmitDesign.GREEN),
+      AdmitDesign.section(this, R.drawable.ic_group, "Admission Group", "Hemophilia and stroke also get their own list", AdmitDesign.PURPLE),
+      AdmitDesign.section(this, R.drawable.ic_calendar, "For the daily census", "Came to medicine from", AdmitDesign.ORANGE),
+      AdmitDesign.section(this, R.drawable.ic_warn, "Toxicology", "And special cases for the census", AdmitDesign.TEAL),
+      AdmitDesign.section(this, R.drawable.ic_bed, "Admission", "Medico-legal case, unit, date and bed", AdmitDesign.INDIGO),
+      AdmitDesign.section(this, R.drawable.ic_shield, "Coverage & Insurance", "Covered under CMCHIS", 0xFF4338CA)];
+    const keys = [
+      ["name", "age", "sex", "diagnosis"],
+      ["ip_no", "pin_no", "phone", "address"],
+      ["category", "st_type", "st_window", "st_ct", "st_mri", "st_lysis"],
+      ["source", "from_dept", "dept_adm_date"],
+      ["toxic", "tox_kind", "tox_agent", "teai_reg", "sb_snake", "sb_part", "sb_daynight", "sb_delay", "sb_asv", "convict", "id_disease"],
+      ["mlc", "ar_no", "admit_to", "parent", "date", "time", "bed"],
+      ["cmchis", "cmchis_no", "cmchis_pkg"]];
+    // each field's box (or the row holding it) belongs to one card
+    const where = new Map();
+    for (let s = 0; s < keys.length; s++)
+      for (const k of keys[s]) {
+        let t = form.boxOf(k);
+        while (t != null && t.getParent() !== v) t = t.getParent() instanceof View ? t.getParent() : null;
+        if (t != null && !where.has(t)) where.set(t, s);
+      }
+    where.set(dxPick, 0);
+    where.set(this.pkgBox, 6);
+    const kids = [];
+    for (let i = 0; i < v.getChildCount(); i++) kids.push(v.getChildAt(i));
+    v.removeAllViews();
+    // side by side, as in the picture
+    const partner = new Map();
+    const pairs = [["name", "age"], ["ip_no", "pin_no"], ["phone", "address"], ["date", "time"], ["cmchis_no", "cmchis_pkg"]];
+    for (const pr of pairs) {
+      const a = form.boxOf(pr[0]), b = form.boxOf(pr[1]);
+      if (a != null && b != null && kids.includes(a) && kids.includes(b)) partner.set(a, b);
+    }
+    const placed = new Set();
+    const top = Ui.v(this);
+    for (const ch of kids) {
+      if (where.has(ch) || form.headings.includes(ch)) continue;
+      // the TAEI note and the paste / scan buttons sit above the cards
+      top.addView(ch);
+    }
+    for (const ch of kids) {
+      const s = where.get(ch);
+      if (s == null || placed.has(ch)) continue;
+      const b = partner.get(ch);
+      if (b != null) {
+        cards[s].addView(AdmitDesign.pair(this, ch, b));
+        placed.add(b);
+      } else {
+        cards[s].addView(ch);
+      }
+      placed.add(ch);
+    }
+    const icons = [R.drawable.ic_people, R.drawable.ic_calendar, R.drawable.ic_clipboard, R.drawable.ic_doc, R.drawable.ic_badge, R.drawable.ic_phone, R.drawable.ic_home,
+      R.drawable.ic_building, R.drawable.ic_calendar, R.drawable.ic_drop, R.drawable.ic_snake, R.drawable.ic_doc, R.drawable.ic_calendar, R.drawable.ic_event, R.drawable.ic_bed,
+      R.drawable.ic_shield, R.drawable.ic_clipboard];
+    const fieldKeys = ["name", "age", "diagnosis", "ip_no", "pin_no", "phone", "address", "from_dept", "dept_adm_date", "tox_agent", "sb_asv", "ar_no", "date", "time", "bed", "cmchis_no", "cmchis_pkg"];
+    const fieldCard = [0, 0, 0, 1, 1, 1, 1, 3, 3, 4, 4, 5, 5, 5, 5, 6, 6];
+    const hints = ["Enter patient name", "Enter age", "Type the diagnosis", "Enter IP number", "Enter PIN number", "Enter phone number", "Enter address",
+      "e.g. General Surgery S1", null, "e.g. paraquat", "Vials", "Enter AR number", null, null, "Enter bed number", "Enter CMCHIS / insurance ID", "Select or type the package"];
+    const colors = [AdmitDesign.BLUE, AdmitDesign.GREEN, AdmitDesign.PURPLE, AdmitDesign.ORANGE, AdmitDesign.TEAL, AdmitDesign.INDIGO, 0xFF4338CA];
+    for (let i = 0; i < fieldKeys.length; i++) AdmitDesign.field(this, form, fieldKeys[i], icons[i], colors[fieldCard[i]], hints[i]);
+    for (const ks of keys) for (const k of ks) AdmitDesign.label(form, k);
+    for (const k of ["category", "source", "toxic"]) AdmitDesign.noLabel(form, k);
+    if (dxPick instanceof TextView) dxPick.setBackground(Ui.outline(this, 0xFFF5F3FF, 0xFFC4B5FD, 12));
+    if (top.getChildCount() > 0) v.addView(top);
+    if (isNew) {
+      this.modeBar = Ui.v(this);
+      v.addView(this.modeBar, 0);
+    }
+    v.addView(cards[0]);
+    this.moreBox = Ui.v(this);
+    for (let i = 1; i < cards.length; i++) this.moreBox.addView(cards[i]);
+    v.addView(this.moreBox);
+    if (isNew) this.showQuick();
+  }
+
+  showQuick() {
+    this.moreBox.setVisibility(this.quick ? View.GONE : View.VISIBLE);
+    this.modeBar.removeAllViews();
+    const chips = Ui.h(this);
+    const labels = ["⚡ 10-second admission", "Full form"];
+    for (let i = 0; i < 2; i++) {
+      const q = i === 0;
+      const c = AdmitDesign.mode(this, labels[i], q, q === this.quick);
+      c.setAutoSizeTextTypeUniformWithConfiguration(10, 15, 1, TypedValue.COMPLEX_UNIT_SP);
+      c.setOnClickListener({ onClick: (x) => {
+        if (q === this.quick) return;
+        this.quick = q;
+        this.getSharedPreferences("quick_admit", Context.MODE_PRIVATE).edit().putBoolean("on", q).apply();
+        this.showQuick();
+      } });
+      const cp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, q ? 1.35 : 1);
+      if (!q) cp.leftMargin = Ui.dp(this, 10);
+      chips.addView(c, cp);
+    }
+    this.modeBar.addView(chips);
+    if (this.quick) {
+      const t = Ui.tv(this, "Only the name, age, sex and diagnosis are needed now. Save, and fill in the rest (IP number, MLC, bed, census details) "
+          + "later from the patient's page.", 13, Ui.MUTED, false);
+      t.setPadding(Ui.dp(this, 2), Ui.dp(this, 6), 0, Ui.dp(this, 2));
+      this.modeBar.addView(t);
+    }
+  }
+
+  /** Under the CMCHIS package: the packages that fit the diagnosis typed so far. */
+  refreshPackages() {
+    if (this.pkgBox == null) return;
+    CmchisPackages.fill(this, this.pkgBox, this.form.get("diagnosis"), {
+      picked: (pkg) => {
+        this.form.set("cmchis_pkg", CmchisPackages.label(pkg));
+        this.form.set("cmchis", "1");
+        Ui.toast(this, "Package " + pkg[0] + " chosen");
+      }
+    });
   }
 
   // ---------- WhatsApp admission message (8.70) ----------
@@ -46391,7 +49040,10 @@ class FormActivity extends Base {
   savePatient() {
     const form = this.form, db = this.db;
     if (!form.require("name", "Enter the patient's name")) return false;
-    if (form.get("mlc").isEmpty()) {
+    if (this.quick) {
+      if (!form.require("age", "Enter the age")) return false;
+      if (!form.require("diagnosis", "Enter the diagnosis (a provisional one is fine)")) return false;
+    } else if (form.get("mlc").isEmpty()) {
       Ui.toast(this, "Choose MLC or NMLC");
       return false;
     }
@@ -46400,10 +49052,12 @@ class FormActivity extends Base {
       return false;
     }
     const cv = new ContentValues();
-    for (const k of ["name", "ip_no", "pin_no", "age", "sex", "phone", "address", "diagnosis", "bed", "cmchis", "cmchis_no", "category", "mlc", "ar_no"])
+    for (const k of ["name", "ip_no", "pin_no", "age", "sex", "phone", "address", "diagnosis", "bed", "cmchis", "cmchis_no", "cmchis_pkg", "category", "mlc", "ar_no"])
       cv.put(k, form.get(k));
     this.putCensus(cv);
     if (!"MLC".equals(form.get("mlc"))) cv.put("ar_no", "");
+    // a quick admission stays marked until the full form is saved
+    cv.put("quick", this.quick && this.id < 0 ? "1" : "");
     // a group left as general medicine still picks up hemophilia / stroke from the diagnosis
     if (cv.getAsString("category").isEmpty()) cv.put("category", Db.categoryIn(cv.getAsString("diagnosis")));
     const admitTo = form.get("admit_to");
@@ -46442,15 +49096,62 @@ class FormActivity extends Base {
     const form = this.form, v = FormActivity.v;
     const r = this.existing();
     const sub = this.getIntent().getStringExtra("sub");
+    // 10.22: the class announcement from the WhatsApp group fills the form
+    const wa = Ui.button(this, "💬  Paste the WhatsApp class message", Chat.GREEN, {
+      onClick: (v) => { this.pasteClass(); }
+    });
+    form.view.addView(wa);
+    Ui.margins(wa, 0, 4, 0, 8);
     form.choice("kind", "Class for", Db.CLASS_LABELS, Db.CLASS_KINDS, r != null ? r.get("kind") : sub != null ? sub : "MBBS", null);
     form.date("date", "Date (a later date schedules it)", v(r, "date", Dates.todayIso()));
     form.time("time", "Time", v(r, "time", "").isEmpty() ? "09:00" : r.get("time"));
     form.text("topic", "Topic *", v(r, "topic", ""), Form.PLAIN);
     form.suggest("taken_by", "Taken by (faculty)", v(r, "taken_by", ""), this.teacherNames());
     form.choice("unit", "Unit", FormActivity.UNIT_LABELS, FormActivity.UNIT_VALUES, v(r, "unit", "M1"), null);
-    form.text("batch", "Batch / year (e.g. Final MBBS Part II, PG 2nd year)", v(r, "batch", ""), Form.PLAIN);
+    // 10.27: for an MBBS class the year decides which students its attendance lists
+    form.suggest("batch", "Batch / year (e.g. Final year MBBS, Second year MBBS, PG 2nd year)", v(r, "batch", ""),
+      ["Second year MBBS", "Third year MBBS (prefinal)", "Final year MBBS", "PG 1st year", "PG 2nd year", "PG final year"]);
+    form.text("venue", "Venue", v(r, "venue", ""), Form.PLAIN);
     form.text("attendance", "Students attended", v(r, "attendance", ""), Form.NUMBER);
     form.multi("note", "Notes", v(r, "note", ""));
+    if ("1" === this.getIntent().getStringExtra("paste") && r == null) {
+      this.getIntent().removeExtra("paste");
+      form.view.post({ run: () => { if (!this.isFinishing()) this.pasteClass(); } });
+    }
+  }
+
+  /** 10.22: the class message copied from WhatsApp ("Tomorrow- (29/10/26) THURSDAY -M4 unit, Time : 7:30 AM…") fills the class form. */
+  pasteClass() {
+    let clip = "";
+    try {
+      const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+      if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0)
+        clip = String(cm.getPrimaryClip().getItemAt(0).coerceToText(this));
+    } catch (ignored) {
+    }
+    const f = new Form(this);
+    f.view.addView(Ui.muted(this, "In WhatsApp, long-press the class message and tap Copy, then paste it here. The date, time, unit, class, topic, "
+        + "faculty and venue go into the form."));
+    f.multi("msg", "WhatsApp message", clip.trim());
+    Ui.formDialog(this, "💬  From WhatsApp", f, "Fill the form", {
+      run: () => {
+        const text = f.get("msg");
+        if (text.trim().isEmpty()) {
+          Ui.toast(this, "Paste the message first");
+          return false;
+        }
+        const r = WaClass.parse(text, Dates.today(), this.teacherNames());
+        for (const e of r.fields.entrySet()) {
+          if (e.getKey() === "note" && this.form.get("note").trim() !== "") continue;
+          this.form.set(e.getKey(), e.getValue());
+        }
+        const got = WaClass.summary(r);
+        new AlertDialog.Builder(this).setTitle("From WhatsApp")
+          .setMessage((got === "" ? "Nothing in the message matched the form. Type the details." : "Filled: " + got + ".") + "\n\nCheck the form before saving.")
+          .setPositiveButton("OK", null).show();
+        return true;
+      }
+    });
   }
 
   academicForm() {
@@ -47374,6 +50075,282 @@ Gold.Coin = class extends Drawable {
   setColorFilter(f) { }
   getOpacity() { return PixelFormat.TRANSLUCENT; }
 };
+;
+/* ---- app/GoldenHour.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Golden-hour scores (10.17, user's pick 131): door-to-treatment times taken from the emergency protocol timers, with no extra entry.
+ * The door is the admission time; when a protocol starts more than 6 hours after admission (sepsis in the ward, say) the clock starts with
+ * the protocol instead. Targets are the department's, from the guidelines each protocol follows. A monthly league ranks the units.
+ */
+class GoldenHour {
+  static COLOR = 0xFFB45309;
+  static DARK = 0xFF7C2D12;
+
+  /** id, name, emoji, protocols (| separated), step, target minutes, guideline. */
+  static METRICS = [
+    ["abx", "Door-to-antibiotic", "💊", "sepsis|cmc_shock", "abx", "60", "Sepsis: antibiotic within 1 hour (Surviving Sepsis 2021)"],
+    ["needle_stroke", "Door-to-needle, stroke", "🧠", "stroke", "lysis", "60", "Alteplase within 60 minutes of arrival (AHA/ASA)"],
+    ["needle_mi", "Door-to-needle, STEMI", "❤️", "acs", "lysis", "30", "Thrombolysis within 30 minutes of arrival (ESC 2023)"],
+    ["ecg", "Door-to-ECG, chest pain", "📈", "acs", "ecg", "10", "12-lead ECG within 10 minutes (ESC 2023)"],
+    ["asv", "Door-to-ASV, snake bite", "🐍", "snake", "asv", "60", "ASV within the first hour once envenomation is seen (department target)"],
+    ["adr", "Door-to-adrenaline, anaphylaxis", "🐝", "anaph|cmc_anaph", "adr", "10", "IM adrenaline at once (Resuscitation Council UK 2021)"],
+  ];
+
+  static target(metric) {
+    for (const m of GoldenHour.METRICS) if (m[0] === metric) return Integer.parseInt(m[5]);
+    return 60;
+  }
+
+  static metric(id) {
+    for (const m of GoldenHour.METRICS) if (m[0] === id) return m;
+    return GoldenHour.METRICS[0];
+  }
+
+  /** Admission date and time of a patient as a moment, or null. */
+  static admitted(db, pid) {
+    const e = db.row("SELECT date, time FROM events WHERE patient_id=? AND type=? ORDER BY id LIMIT 1", pid, Db.ADMIT);
+    if (e == null || Ui.nz(e.get("date")).isEmpty()) return null;
+    const t = Ui.nz(e.get("time"));
+    return Protocols.parse(e.get("date") + " " + (t.length >= 5 ? t.substring(0, 5) : "00:00"));
+  }
+
+  /** Every measured case whose door time falls between d0 and d1 (ISO dates, inclusive), newest first. */
+  static cases(db, d0, d1) {
+    const out = [];
+    const pts = new JMap();
+    for (const run of db.rows("SELECT * FROM " + Protocols.TABLE + " WHERE substr(started,1,10)>=? ORDER BY started DESC", Dates.parse(d0).minusDays(2).toString())) {
+      const start = Protocols.parse(run.get("started"));
+      if (start == null) continue;
+      const pid = Ui.nz(run.get("patient_id"));
+      let p = pts.get(pid);
+      if (p == null && !pts.containsKey(pid)) {
+        p = db.row("SELECT id, name, home_unit, location FROM patients WHERE id=?", pid);
+        pts.put(pid, p);
+      }
+      const adm = GoldenHour.admitted(db, pid);
+      const inWard = adm == null || Duration.between(adm, start).toMinutes() > 360 || adm.isAfter(start);
+      const door = inWard ? start : adm;
+      const day = door.toLocalDate().toString();
+      if (day.compareTo(d0) < 0 || day.compareTo(d1) > 0) continue;
+      const ev = Protocols.events(run);
+      for (const m of GoldenHour.METRICS) {
+        if (!("|" + m[3] + "|").contains("|" + run.get("protocol") + "|")) continue;
+        let first = null;
+        for (const e of Protocols.all(ev, m[4])) {
+          const at = Protocols.parse(e.optString("at"));
+          if (at != null && (first == null || at.isBefore(first))) first = at;
+        }
+        if (first == null) continue;
+        const c = new GoldenHour.Case();
+        c.metric = m[0];
+        c.patientId = pid;
+        c.name = p == null ? "" : Ui.nz(p.get("name"));
+        c.unit = p == null ? "" : Ui.nz(p.get("home_unit"));
+        c.door = door;
+        c.inWard = inWard;
+        c.minutes = Math.max(0, Duration.between(door, first).toMinutes());
+        out.add(c);
+      }
+    }
+    return out;
+  }
+
+  static median(v) {
+    if (v.isEmpty()) return 0;
+    const s = ArrayList(v);
+    s.sort((a, b) => a - b);
+    const n = s.size();
+    return n % 2 === 1 ? s.get(idiv(n, 2)) : idiv(s.get(n / 2 - 1) + s.get(n / 2), 2);
+  }
+
+  /** Units by the share of cases on target (then more cases, then a lower median). */
+  static league(cases) {
+    const m = new JMap();
+    for (const c of cases) {
+      const u = c.unit.isEmpty() ? "Other" : c.unit;
+      let x = m.get(u);
+      if (x == null) {
+        x = new GoldenHour.Unit();
+        x.unit = u;
+        m.put(u, x);
+      }
+      x.n++;
+      if (c.met()) x.met++;
+      x.mins.add(c.minutes);
+    }
+    const out = ArrayList(m.values());
+    out.sort((a, b) => {
+      if (a.pct() !== b.pct()) return b.pct() - a.pct();
+      if (a.n !== b.n) return b.n - a.n;
+      return GoldenHour.median(a.mins) - GoldenHour.median(b.mins);
+    });
+    return out;
+  }
+
+  static mins(m) {
+    return m < 120 ? m + " min" : idiv(m, 60) + " h " + (m % 60) + " min";
+  }
+
+  /** The home tile's line: this month's share on target. */
+  static homeLine(db) {
+    const per = Honours.period(0);
+    const cs = GoldenHour.cases(db, per[0], per[1]);
+    if (cs.isEmpty()) return "Door-to-treatment times";
+    let met = 0;
+    for (const c of cs) if (c.met()) met++;
+    return Math.round(100 * met / cs.size()) + "% on target this month";
+  }
+}
+
+GoldenHour.Case = class {
+  constructor() { this.metric = ""; this.patientId = ""; this.name = ""; this.unit = ""; this.minutes = 0; this.door = null; this.inWard = false; }
+
+  met() {
+    return this.minutes <= GoldenHour.target(this.metric);
+  }
+};
+
+/** One unit's line in the league. */
+GoldenHour.Unit = class {
+  constructor() { this.unit = ""; this.n = 0; this.met = 0; this.mins = []; }
+
+  pct() {
+    return this.n === 0 ? 0 : Math.round(100 * this.met / this.n);
+  }
+};
+;
+/* ---- app/GoldenHourActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Golden-hour scores (10.17): door-to-treatment times from the protocol timers, by kind of emergency and by unit. */
+class GoldenHourActivity extends Base {
+  constructor() { super(); this.mode = 0; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Golden-hour scores");
+    this.subtitle = "Door-to-treatment times from the protocol timers";
+    this.headerColor(GoldenHour.COLOR);
+  }
+
+  render() {
+    const db = this.db;
+    const per = Honours.period(this.mode);
+    const cases = GoldenHour.cases(db, per[0], per[1]);
+    const page = Ui.v(this);
+
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    const labels = ["This month", Honours.period(1)[2], "This year"];
+    for (let i = 0; i < 3; i++) {
+      const m = i;
+      const c = Ui.chip(this, labels[i], i === this.mode, GoldenHour.COLOR);
+      c.setOnClickListener({ onClick: (v) => { this.mode = m; this.render(); } });
+      chips.addView(c);
+    }
+    page.addView(Ui.hscroll(this, chips));
+
+    let met = 0;
+    const all = [];
+    for (const c of cases) {
+      if (c.met()) met++;
+      all.add(c.minutes);
+    }
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, [0xFF7C2D12, 0xFFB45309, 0xFFF59E0B], 22));
+    hero.addView(Ui.tv(this, "⏱  The golden hour  ·  " + per[2], 14, 0xE6FFFFFF, true));
+    const big = Ui.tv(this, cases.isEmpty() ? "No cases yet" : Math.round(100 * met / cases.size()) + "% on target", 30, Color.WHITE, true);
+    hero.addView(big);
+    hero.addView(Ui.tv(this, cases.isEmpty() ? "Times appear by themselves when a protocol timer is used: sepsis, stroke, STEMI, snake bite, anaphylaxis."
+      : met + " of " + cases.size() + " treatments in time  ·  median " + GoldenHour.mins(GoldenHour.median(all)), 13, 0xE6FFFFFF, false));
+    page.addView(hero);
+
+    // each kind of emergency
+    page.addView(Ui.heading(this, "By emergency", GoldenHour.COLOR));
+    let grid = null;
+    let col = 0;
+    const cols = Base.wide(this) ? 3 : 2;
+    for (const m of GoldenHour.METRICS) {
+      let n = 0, ok = 0;
+      const v = [];
+      for (const c of cases) if (c.metric === m[0]) { n++; if (c.met()) ok++; v.add(c.minutes); }
+      if (grid == null || col === cols) {
+        grid = Ui.h(this);
+        grid.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+        page.addView(grid);
+        col = 0;
+      }
+      const t = Ui.v(this);
+      t.setBackground(Ui.outline(this, 0xFFFFFBEB, n === 0 ? Ui.LINE : ok === n ? Ui.GREEN : GoldenHour.COLOR, 16));
+      t.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+      t.addView(Ui.tv(this, m[2] + "  " + m[1], 13, GoldenHour.DARK, true));
+      t.addView(Ui.tv(this, n === 0 ? "—" : GoldenHour.mins(GoldenHour.median(v)), 22, n === 0 ? Ui.MUTED : Ui.TEXT, true));
+      t.addView(Ui.tv(this, n === 0 ? "Target " + m[5] + " min" : ok + " of " + n + " within " + m[5] + " min", 12, Ui.MUTED, false));
+      if (n > 0) t.addView(Ui.bar(this, ok, n, ok === n ? Ui.GREEN : GoldenHour.COLOR));
+      const lp = Ui.weight(1);
+      lp.setMargins(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+      grid.addView(t, lp);
+      col++;
+    }
+    while (grid != null && col > 0 && col < cols) {
+      grid.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+      col++;
+    }
+
+    // the unit league
+    page.addView(Ui.heading(this, "🏆 Unit league", GoldenHour.COLOR));
+    const league = GoldenHour.league(cases);
+    if (league.isEmpty()) page.addView(this.emptyNote("The league starts with the first timed treatment this period."));
+    else {
+      const lc = Ui.card(this);
+      for (let i = 0; i < league.size(); i++) {
+        const u = league.get(i);
+        const r = Ui.h(this);
+        r.setGravity(Gravity.CENTER_VERTICAL);
+        r.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+        if (i < 3) r.addView(Honours.medal(this, i + 1, 30));
+        else {
+          const no = Ui.tv(this, String(i + 1), 15, Ui.MUTED, true);
+          no.setGravity(Gravity.CENTER);
+          r.addView(no, Ui.lp(Ui.dp(this, 30), WRAP_CONTENT));
+        }
+        const t = Ui.v(this);
+        t.setPadding(Ui.dp(this, 12), 0, 0, 0);
+        t.addView(Ui.tv(this, Db.unitName(u.unit), 15, Ui.TEXT, true));
+        t.addView(Ui.tv(this, u.met + " of " + u.n + " on time  ·  median " + GoldenHour.mins(GoldenHour.median(u.mins)), 12, Ui.MUTED, false));
+        r.addView(t, Ui.weight(1));
+        r.addView(Ui.tv(this, u.pct() + "%", 18, u.pct() >= 80 ? Ui.GREEN : u.pct() >= 50 ? GoldenHour.COLOR : Ui.RED, true));
+        lc.addView(r);
+        if (i < league.size() - 1) lc.addView(Ui.divider(this));
+      }
+      page.addView(lc);
+    }
+
+    // the cases
+    if (!cases.isEmpty()) {
+      page.addView(Ui.heading(this, "Cases  ·  " + cases.size(), GoldenHour.COLOR));
+      for (const c of cases.subList(0, Math.min(40, cases.size()))) {
+        const m = GoldenHour.metric(c.metric);
+        page.addView(this.entryCard(c.met() ? "On time" : "Late", c.met() ? Ui.GREEN : Ui.RED, c.name.isEmpty() ? "Patient" : c.name,
+          m[2] + " " + m[1] + ": " + GoldenHour.mins(c.minutes) + " (target " + m[5] + ")  ·  " + Db.shortName(c.unit)
+            + (c.inWard ? "\nTimed from the protocol start (began in the ward)" : ""),
+          Dates.nice(c.door.toLocalDate()), this.opener(PatientActivity, "id", c.patientId)));
+      }
+    }
+
+    const notes = Ui.card(this);
+    notes.addView(Ui.tv(this, "How it is measured", 14, GoldenHour.DARK, true));
+    let sb = "The clock starts at the admission time and stops at the first time the step is recorded in the protocol timer. "
+      + "A protocol started more than 6 hours after admission is timed from its own start. Targets:";
+    for (const m of GoldenHour.METRICS) sb += "\n• " + m[1] + ": " + m[5] + " min. " + m[6];
+    notes.addView(Ui.muted(this, sb));
+    page.addView(notes);
+    page.addView(Ui.buttonRow(this, Ui.outlineButton(this, "Open the protocol timers", Protocols.COLOR, this.opener(ProtocolActivity))));
+    this.setPage(page);
+  }
+}
 ;
 /* ---- app/Guide.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -49222,15 +52199,12 @@ class Hod {
     return out;
   }
 
-  /** [pg leaves waiting for the HOD, faculty leaves waiting, sign-offs waiting]. */
+  /** [pg leaves approved in the app and coming to the HOD for signature (not yet over), faculty leaves waiting, sign-offs waiting]. */
   static waiting(db) {
     let pg = 0;
-    for (const r of db.rows("SELECT * FROM pg_leaves")) {
-      if ("Awaiting approval" !== PgLeaveActivity.overall(r)) continue;
-      let before = true;
-      for (let i = 0; i < PgLeaveActivity.HOD; i++) if ("Approved" !== PgLeaveActivity.status(r, i)) before = false;
-      if (before) pg++;
-    }
+    // 10.21: the HOD signs the PG's letter in person once the Assistant Professor, the unit chief and the nodal officer approve in the app
+    for (const r of db.rows("SELECT * FROM pg_leaves WHERE to_date>=?", Dates.todayIso()))
+      if ("Approved" === PgLeaveActivity.overall(r) && Ui.nz(r.get("letter")) === "") pg++;
     const fac = db.num("SELECT COUNT(*) FROM faculty_leaves WHERE status='Applied'");
     const so = db.num("SELECT COUNT(*) FROM " + SignOff.TABLE + " WHERE status=?", SignOff.WAITING);
     return [pg, fac, so];
@@ -49325,9 +52299,9 @@ class Hod {
     }
     for (const r of db.rows("SELECT p.*, s.name, s.unit FROM pg_leaves p JOIN staff s ON s.id=p.staff_id ORDER BY p.from_date")) {
       if ("Awaiting approval" !== PgLeaveActivity.overall(r)) continue;
-      for (let i = 0; i < PgLeaveActivity.LEVEL_NAMES.length; i++) {
+      for (let i = 0; i < PgLeaveActivity.APP_STEPS; i++) {
         if ("Approved" === PgLeaveActivity.status(r, i)) continue;
-        const who = i <= 1 ? Db.shortName(Ui.nz(r.get("unit"))) + " " + (i === 0 ? "Assistant Professor" : "Professor") : PgLeaveActivity.LEVEL_NAMES[i];
+        const who = i === PgLeaveActivity.NODAL ? "Leave nodal officer" : Db.shortName(Ui.nz(r.get("unit"))) + " " + (i === 0 ? "Assistant Professor" : "unit chief");
         get(who).items.push("Approve PG leave of " + r.get("name") + " from " + Dates.nice(r.get("from_date")));
         break;
       }
@@ -49651,7 +52625,7 @@ class HodDeskActivity extends Base {
     const appr = Approvals.canApproveAny(this) ? Approvals.waitingForMe(this, db) : 0;
     page.addView(Ui.heading(this, "Waiting for you", Hod.COLOR));
     const wc = Ui.card(this);
-    wc.addView(this.link("PG leave at the HOD step", w[0], PgLeaveActivity));
+    wc.addView(this.link("PG leave letters coming for your signature", w[0], PgLeaveActivity));
     wc.addView(this.link("Faculty leave applied", w[1], LeaveRegisterActivity));
     wc.addView(this.link("Approvals (members, staff entries)", appr, ApprovalActivity));
     wc.addView(this.link("Sign-offs waiting for faculty", w[2], SignOffActivity));
@@ -49772,7 +52746,30 @@ class HomeLayout {
     HomeLayout.prefs(c).edit().putBoolean("all_open", open).apply();
   }
 
-  /** Sections opened three times or more, most opened first, then the role's usual ones: n labels from those available. */
+  /** The labels drawn under "Your sections" on the last home render. */
+  static shown = new JSet();
+
+  static shownMine(c, label) {
+    return HomeLayout.shown.contains(label) || HomeLayout.list(c, "pins").includes(label);
+  }
+
+  static list(c, key) {
+    return HomeLayout.prefs(c).getString(key, "").split("|").filter(x => x !== "");
+  }
+
+  static putList(c, key, l) {
+    HomeLayout.prefs(c).edit().putString(key, l.join("|")).apply();
+  }
+
+  /** 10.18: pin a section to "Your sections" (it stays, in pin order, ahead of the most used), or take it off for good. */
+  static pin(c, label, on) {
+    const pins = HomeLayout.list(c, "pins").filter(x => x !== label), off = HomeLayout.list(c, "unpins").filter(x => x !== label);
+    if (on) pins.push(label); else off.push(label);
+    HomeLayout.putList(c, "pins", pins);
+    HomeLayout.putList(c, "unpins", off);
+  }
+
+  /** Pinned sections first, then those opened three times or more, most opened first, then the role's usual ones: n labels (more if more are pinned). */
   static picks(c, role, available, n) {
     const avail = Array.from(available);
     const d = HomeLayout.defaults(role);
@@ -49783,10 +52780,11 @@ class HomeLayout {
       const a = d.indexOf(x), b = d.indexOf(y);
       return (a < 0 ? 99 : a) - (b < 0 ? 99 : b);
     });
-    const out = [];
-    for (const l of used) if (out.length < n) out.push(l);
-    for (const l of d) if (out.length < n && avail.includes(l) && !out.includes(l)) out.push(l);
-    for (const l of avail) if (out.length < n && !out.includes(l)) out.push(l);
+    const out = [], off = HomeLayout.list(c, "unpins");
+    for (const l of HomeLayout.list(c, "pins")) if (avail.includes(l) && !out.includes(l)) out.push(l);
+    for (const l of used) if (out.length < n && !off.includes(l) && !out.includes(l)) out.push(l);
+    for (const l of d) if (out.length < n && avail.includes(l) && !off.includes(l) && !out.includes(l)) out.push(l);
+    for (const l of avail) if (out.length < n && !off.includes(l) && !out.includes(l)) out.push(l);
     return out;
   }
 
@@ -49893,6 +52891,736 @@ class HomeLayout {
   }
 }
 HomeLayout.YOURS = 8;
+;
+/* ---- app/Honours.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Golden Honours (10.14, user asked): the PGs ranked by everything they do in the app (case sheets written and kept up,
+ * academics attended, presentations, the games, teaching posts, logbook, the days they use the app and faculty praise), with a
+ * gold podium on the home page, the month's awards, a golden board of the top 10 and certificates to share. Only to encourage:
+ * nobody is ever shown as last. Counted on each phone from shared records; only the days the app was opened are stored.
+ */
+class Honours {
+  static TABLE = "app_days";
+  static GOLD = 0xFFE6B422; static LIGHT = 0xFFFFE9A8; static DEEP = 0xFF8A5A00; static NIGHT = 0xFF120D06; static NIGHT2 = 0xFF34260A;
+  static CREAM = 0xFFFFF4D6; static SILVER = 0xFFC9D1DC; static BRONZE = 0xFFD08A4A;
+  /** Polished gold, light to deep and back, for names and titles. */
+  static SHINE = [0xFFFFF6D0, 0xFFF7CD52, 0xFFB8860B, 0xFFFFE38A, 0xFFE0A81C, 0xFFFFF6D0];
+
+  static CATS = ["Case sheets", "Academics", "Quiz & games", "Teaching", "Dedication", "Faculty praise"];
+  static AWARDS = ["Case Sheet Champion", "Academic Star", "Quiz Master", "Best Teacher", "Most Dedicated", "Faculty's Favourite"];
+  static ICONS = ["📋", "🎓", "🧠", "📖", "🔥", "🌟"];
+  /** The quickest way up in each category, for the tips on your card. */
+  static TIPS = ["Write the case sheet for each admission (15) and add progress notes (3 each)",
+    "Attend every academic session (5) and present (20)", "Play the Daily Duel and solve the Mystery case",
+    "Post on the Learning board or answer a PG question (5)", "Open the app every day (2) and log your procedures (5)",
+    "Good work earns faculty 👍 (10) and the Wall of Fame (50)"];
+  static RULES = "Case sheet written: 15 · Final diagnosis filled: 5 · Progress note: 3 · Academic session attended: 5 · "
+    + "Presentation: 20 · Exam case presented: 10 · Daily Duel: your score · Mystery case: 40/30/20/10 · Daily MCQ right: 5 · "
+    + "Learning board topic or answered PG question: 5 · Logbook procedure: 5 · Each day you use the app: 2 · Faculty 👍: 10 · Wall of Fame: 50";
+
+  static cat(part) {
+    if (part === "Case sheets" || part === "Final diagnosis" || part === "Progress notes") return 0;
+    if (part === "Academics attended" || part === "Presentations" || part === "Exam cases") return 1;
+    if (part === "Daily Duel" || part === "Mystery case" || part === "Daily MCQ") return 2;
+    if (part === "Teaching posts") return 3;
+    if (part === "Days active" || part === "Logbook") return 4;
+    return 5;
+  }
+
+  static catPts(p, cat) {
+    let t = 0;
+    for (const e of p.parts.entrySet()) if (Honours.cat(e.getKey()) === cat) t += e.getValue();
+    return t;
+  }
+
+  /** The tier for a month's points (a year's points are divided by its months). */
+  static tier(pts, months) {
+    const m = Math.floor(pts / Math.max(1, months));
+    return m >= 600 ? "💎 Diamond" : m >= 300 ? "🥇 Gold" : m >= 150 ? "🥈 Silver" : m >= 50 ? "🥉 Bronze" : "🌱 Rising";
+  }
+
+  // ---------- periods ----------
+
+  /** 0 this month, 1 last month, 2 this year: [first day, last day, label, months]. */
+  static period(mode) {
+    const t = Dates.today();
+    if (mode === 2) {
+      const y0 = LocalDate.of(t.getYear(), 1, 1);
+      return [y0.toString(), t.toString(), String(t.getYear()), String(t.getMonthValue())];
+    }
+    const m = Dates.monthStart(t).minusMonths(mode);
+    return [m.toString(), m.plusMonths(1).minusDays(1).toString(), Dates.month(m), "1"];
+  }
+
+  static monthPeriod(m) {
+    const s = Dates.monthStart(m);
+    return [s.toString(), s.plusMonths(1).minusDays(1).toString(), Dates.month(s), "1"];
+  }
+
+  // ---------- points ----------
+
+  /** Every approved PG with the points between two days, best first (kept for 30 seconds, as the home page asks often). */
+  static people(db, d0, d1) {
+    if (Array.isArray(d0)) { d1 = d0[1]; d0 = d0[0]; }
+    const key = d0 + "|" + d1;
+    const at = Honours.CACHED_AT.get(key);
+    if (at != null && System.currentTimeMillis() - at < 30000) return Honours.CACHE.get(key);
+    const byId = new LinkedHashMap();
+    const byName = new HashMap();
+    for (const s of db.rows("SELECT id, name, unit FROM staff WHERE role='Postgraduate' AND " + Approvals.APPROVED_SQL + " ORDER BY name")) {
+      const p = new League.Person(String(s.get("id")), Ui.nz(s.get("name")), Ui.nz(s.get("unit")));
+      byId.put(p.id, p);
+      const n = Wrapped.norm(p.name);
+      if (n.length >= 4) byName.put(n, p);
+    }
+    League.fill(db, d0, d1, byId, byName);
+    // case sheets: who wrote each admission's sheet, the final diagnosis, and every progress note
+    for (const r of db.rows("SELECT c.data, p.admit_date FROM case_sheets c LEFT JOIN patients p ON p.id=c.id WHERE substr(IFNULL(c.updated,''),1,10)>=?", d0)) {
+      let o;
+      try {
+        o = new JSONObject(Ui.nz(r.get("data")));
+      } catch (e) {
+        continue;
+      }
+      const adm = Ui.nz(r.get("admit_date")), by = CaseSheet.s(o, "wb_name");
+      if (!by.isEmpty() && Honours.within(adm, d0, d1)) {
+        League.add(byId, byName, "", by, "Case sheets", 15);
+        if (!CaseSheet.s(o, "final_dx").isEmpty()) League.add(byId, byName, "", by, "Final diagnosis", 5);
+      }
+      const a = o.optJSONArray(CaseSheet.PROGRESS);
+      if (a == null) continue;
+      for (let i = 0; i < a.length(); i++) {
+        const n = a.optJSONObject(i);
+        if (n == null || !Honours.within(CaseSheet.s(n, "date"), d0, d1)) continue;
+        League.add(byId, byName, "", CaseSheet.s(n, "by"), "Progress notes", 3);
+      }
+    }
+    for (const r of db.rows("SELECT staff_id, name FROM acad_attendance WHERE IFNULL(status,'Present') IN ('Present','') AND substr(time,1,10) BETWEEN ? AND ?", d0, d1))
+      League.add(byId, byName, r.get("staff_id"), r.get("name"), "Academics attended", 5);
+    for (const r of db.rows("SELECT staff_id, name FROM " + Honours.TABLE + " WHERE day BETWEEN ? AND ?", d0, d1))
+      League.add(byId, byName, r.get("staff_id"), r.get("name"), "Days active", 2);
+    const out = ArrayList(byId.values());
+    League.sort(out);
+    Honours.CACHE.put(key, out);
+    Honours.CACHED_AT.put(key, System.currentTimeMillis());
+    return out;
+  }
+
+  static within(d, d0, d1) {
+    d = Ui.nz(d);
+    if (d.length < 10) return false;
+    const x = d.substring(0, 10);
+    return x.compareTo(d0) >= 0 && x.compareTo(d1) <= 0;
+  }
+
+  /** The top scorer of a category, or null when nobody scored in it. */
+  static best(people, cat) {
+    let b = null, bp = 0;
+    for (const p of people) {
+      const v = Honours.catPts(p, cat);
+      if (v > bp) { bp = v; b = p; }
+    }
+    return b;
+  }
+
+  /** Ranks in a list by staff id, counting only those who scored. */
+  static ranks(people) {
+    const m = new HashMap();
+    for (let i = 0; i < people.size(); i++) if (people.get(i).pts > 0) m.put(people.get(i).id, i + 1);
+    return m;
+  }
+
+  /** This month's biggest climb against last month (at least 2 places), leaving out the winner, or null. */
+  static risingStar(now, before) {
+    const was = Honours.ranks(before);
+    let star = null, climb = 1;
+    for (let i = 1; i < now.size() && i < 10; i++) {
+      const p = now.get(i);
+      if (p.pts === 0) break;
+      const w = was.containsKey(p.id) ? was.get(p.id) : before.size() + 1;
+      if (w - (i + 1) > climb) { climb = w - (i + 1); star = p; }
+    }
+    return star;
+  }
+
+  /** Notes today as a day this person used the app (once a day, for the Dedication points). */
+  static markActive(c, db) {
+    const sid = Cloud.myStaff(c);
+    let id, name;
+    if (sid > 0) {
+      id = String(sid);
+      const s = db.row("SELECT name FROM staff WHERE id=?", id);
+      if (s == null) return;
+      name = Ui.nz(s.get("name"));
+    } else {
+      const m = SessionAttendance.me(c, db);
+      if (m == null) return;
+      id = Ui.nz(String(m.get("id") == null ? "" : m.get("id")));
+      name = Ui.nz(m.get("name"));
+    }
+    if (id.isEmpty()) return;
+    const day = Dates.todayIso();
+    const sp = c.getApplicationContext().getSharedPreferences("honours", Context.MODE_PRIVATE);
+    if ((day + "|" + id) === sp.getString("marked", "")) return;
+    if (db.row("SELECT id FROM " + Honours.TABLE + " WHERE staff_id=? AND day=?", id, day) == null) {
+      const cv = new ContentValues();
+      cv.put("staff_id", id);
+      cv.put("name", name);
+      cv.put("day", day);
+      db.insert(Honours.TABLE, cv);
+    }
+    sp.edit().putString("marked", day + "|" + id).apply();
+  }
+
+  static shortName(n) {
+    let s = Ui.nz(n).trim();
+    if (s.toLowerCase().startsWith("dr.")) s = s.substring(3).trim();
+    else if (s.toLowerCase().startsWith("dr ")) s = s.substring(3).trim();
+    return s;
+  }
+
+  // ---------- the look ----------
+
+  /** Black-gold velvet with a gold edge. */
+  static lux(c, radiusDp) {
+    const g = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [Honours.NIGHT2, Honours.NIGHT, 0xFF2A1E08]);
+    g.setCornerRadius(Ui.dp(c, radiusDp));
+    g.setStroke(Ui.dp(c, 2), Honours.GOLD);
+    return g;
+  }
+
+  static metal(rank) {
+    return rank === 1 ? Honours.GOLD : rank === 2 ? Honours.SILVER : Honours.BRONZE;
+  }
+
+  /**
+   * Name or title in polished gold; shimmer makes the light run across it slowly.
+   * (Java uses a TextView with a gradient shader; in the browser the same is CSS gradient text.)
+   */
+  static goldText(c, s, sp, shimmer) {
+    const t = Ui.tv(c, s, sp, Honours.GOLD, true);
+    if (!document.getElementById('hg-shine')) {
+      const st = document.createElement('style');
+      st.id = 'hg-shine';
+      st.textContent = '@keyframes hgshine{from{background-position:0% 50%}to{background-position:200% 50%}}';
+      document.head.appendChild(st);
+    }
+    const x = t.t.style;
+    x.backgroundImage = 'linear-gradient(110deg,' + Honours.SHINE.map((v) => css(v)).join(',') + ')';
+    x.backgroundSize = '200% 100%';
+    x.webkitBackgroundClip = 'text';
+    x.backgroundClip = 'text';
+    x.color = 'transparent';
+    x.webkitTextFillColor = 'transparent';
+    x.filter = 'drop-shadow(0 2px 2px rgba(0,0,0,.7))';
+    if (shimmer) x.animation = 'hgshine 4s linear infinite';
+    return t;
+  }
+
+  static medal(c, rank, sizeDp) {
+    const v = new View(c);
+    v.setBackground(new Honours.Medal(rank));
+    v.setLayoutParams(Ui.lp(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
+    return v;
+  }
+
+  /** The person's photo (or initials) inside a metal ring. */
+  static ringed(a, p, rank, sizeDp) {
+    const f = new FrameLayout(a);
+    const ring = Ui.dp(a, rank === 1 ? 4 : 3);
+    const col = Honours.metal(rank);
+    const g = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [Ui.mix(col, Color.WHITE, 0.55), col, Ui.mix(col, Color.BLACK, 0.3)]);
+    g.setShape(GradientDrawable.OVAL);
+    f.setBackground(g);
+    f.setPadding(ring, ring, ring, ring);
+    let s = a.db.row("SELECT * FROM staff WHERE id=?", p.id);
+    if (s == null) {
+      s = new HashMap();
+      s.put("name", p.name);
+    }
+    const av = Store.avatar(a, s, sizeDp, Ui.mix(col, Color.BLACK, 0.45));
+    f.addView(av, new FrameLayout.LayoutParams(Ui.dp(a, sizeDp), Ui.dp(a, sizeDp)));
+    f.setLayoutParams(Ui.lp(Ui.dp(a, sizeDp) + 2 * ring, Ui.dp(a, sizeDp) + 2 * ring));
+    return f;
+  }
+
+  /** The podium: second, first and third side by side, the winner raised and crowned. */
+  static podium(a, people, big, months) {
+    const row = Ui.h(a);
+    row.setGravity(Gravity.BOTTOM);
+    for (const rank of [2, 1, 3]) {
+      const col = Ui.v(a);
+      col.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+      const p = people.size() >= rank && people.get(rank - 1).pts > 0 ? people.get(rank - 1) : null;
+      if (p != null) {
+        if (rank === 1) {
+          const crown = Ui.tv(a, "👑", big ? 30 : 24, Color.WHITE, false);
+          crown.setGravity(Gravity.CENTER);
+          col.addView(crown);
+        }
+        const pic = new FrameLayout(a);
+        const size = rank === 1 ? (big ? 84 : 68) : (big ? 64 : 52);
+        const rg = Honours.ringed(a, p, rank, size);
+        pic.addView(rg, new FrameLayout.LayoutParams(rg.getLayoutParams().width, rg.getLayoutParams().height));
+        const md = Honours.medal(a, rank, rank === 1 ? 26 : 22);
+        const ml = new FrameLayout.LayoutParams(Ui.dp(a, rank === 1 ? 26 : 22), Ui.dp(a, rank === 1 ? 26 : 22), Gravity.BOTTOM | Gravity.END);
+        pic.addView(md, ml);
+        col.addView(pic, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        const nm = Honours.goldText(a, Honours.shortName(p.name), rank === 1 ? (big ? 17 : 15) : (big ? 14 : 12.5), rank === 1);
+        nm.setGravity(Gravity.CENTER);
+        nm.setMaxLines(2);
+        nm.setPadding(Ui.dp(a, 2), Ui.dp(a, 6), Ui.dp(a, 2), 0);
+        col.addView(nm);
+        const sub = Ui.tv(a, (p.unit.isEmpty() ? "" : Db.shortName(p.unit) + " · ") + p.pts + " pts", 11, Honours.CREAM, true);
+        sub.setGravity(Gravity.CENTER);
+        sub.setPadding(0, Ui.dp(a, 2), 0, Ui.dp(a, 6));
+        col.addView(sub);
+      }
+      const block = Ui.tv(a, String(rank), rank === 1 ? 26 : 20, 0xFF3B2A06, true);
+      block.setGravity(Gravity.CENTER);
+      const col0 = Honours.metal(rank);
+      const bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [Ui.mix(col0, Color.WHITE, 0.5), col0, Ui.mix(col0, Color.BLACK, 0.35)]);
+      const r = Ui.dp(a, 10);
+      bg.setCornerRadii([r, r, r, r, 0, 0, 0, 0]);
+      block.setBackground(bg);
+      const h = rank === 1 ? (big ? 70 : 54) : rank === 2 ? (big ? 50 : 38) : (big ? 38 : 28);
+      col.addView(block, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(a, h)));
+      row.addView(col, Ui.weight(1));
+      Ui.margins(col, 3, 0, 3, 0);
+    }
+    return row;
+  }
+
+  /** The golden section on the home page: this month's podium, your place and the awards so far. */
+  static homeSection(a, db) {
+    const per = Honours.period(0);
+    const people = Honours.people(db, per);
+    const card = Ui.card(a);
+    card.setBackground(Honours.lux(a, 22));
+    card.setPadding(Ui.dp(a, 14), Ui.dp(a, 14), Ui.dp(a, 14), Ui.dp(a, 14));
+    const top = Ui.h(a);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    const h = Honours.goldText(a, "✦ GOLDEN HONOURS ✦", 15, true);
+    h.setLetterSpacing(0.12);
+    top.addView(h, Ui.weight(1));
+    const mo = Ui.tv(a, per[2], 11, Honours.NIGHT, true);
+    mo.setBackground(Ui.gradient(a, [Honours.LIGHT, Honours.GOLD], 12));
+    mo.setPadding(Ui.dp(a, 10), Ui.dp(a, 3), Ui.dp(a, 10), Ui.dp(a, 3));
+    top.addView(mo);
+    card.addView(top);
+    const sub = Ui.tv(a, "PG of the Month · case sheets, academics, app use and more", 12, Honours.CREAM, false);
+    sub.setPadding(0, Ui.dp(a, 2), 0, Ui.dp(a, 8));
+    card.addView(sub);
+    if (people.isEmpty() || people.get(0).pts === 0) {
+      const none = Ui.tv(a, "🏆  A new month, a new crown. Write your case sheets, attend the academics and climb the golden board.", 14, Honours.LIGHT, true);
+      none.setPadding(0, Ui.dp(a, 6), 0, Ui.dp(a, 6));
+      card.addView(none);
+    } else {
+      card.addView(Honours.podium(a, people, false, 1));
+      const me = League.me(a, people);
+      if (me != null && me.pts > 0) {
+        const rank = League.rankOf(people, me);
+        const next = rank > 1 ? " · " + (people.get(rank - 2).pts - me.pts + 1) + " pts to " + Quiz.ordinal(rank - 1) : " · you lead the department 👑";
+        const you = Ui.tv(a, "You: " + Quiz.ordinal(rank) + " · " + me.pts + " pts · " + Honours.tier(me.pts, 1) + next, 13, Honours.NIGHT, true);
+        you.setBackground(Ui.gradient(a, [Honours.LIGHT, Honours.GOLD], 14));
+        you.setPadding(Ui.dp(a, 12), Ui.dp(a, 7), Ui.dp(a, 12), Ui.dp(a, 7));
+        card.addView(you);
+        Ui.margins(you, 0, 10, 0, 0);
+      }
+      const aw = Ui.h(a);
+      for (let i = 0; i < Honours.CATS.length; i++) {
+        const b = Honours.best(people, i);
+        if (b == null) continue;
+        const t = Ui.tv(a, Honours.ICONS[i] + " " + Honours.AWARDS[i] + ": " + Honours.shortName(b.name), 12, Honours.LIGHT, true);
+        const chip = Ui.round(a, 0x33E6B422, 14);
+        chip.setStroke(Ui.dp(a, 1), 0x99E6B422);
+        t.setBackground(chip);
+        t.setPadding(Ui.dp(a, 10), Ui.dp(a, 5), Ui.dp(a, 10), Ui.dp(a, 5));
+        aw.addView(t);
+        Ui.margins(t, 0, 0, 6, 0);
+      }
+      if (aw.getChildCount() > 0) {
+        const sc = Ui.hscroll(a, aw);
+        card.addView(sc);
+        Ui.margins(sc, 0, 10, 0, 0);
+      }
+    }
+    const open = Ui.tv(a, "Open the Hall of Honour  ›", 13, Honours.GOLD, true);
+    open.setGravity(Gravity.END);
+    open.setPadding(0, Ui.dp(a, 10), 0, 0);
+    card.addView(open);
+    card.setOnClickListener(a.opener(HonoursActivity));
+    return card;
+  }
+
+  static homeLine(db) {
+    const p = Honours.people(db, Honours.period(0));
+    return p.isEmpty() || p.get(0).pts === 0 ? "A new month, a new crown" : "👑 " + Honours.shortName(p.get(0).name) + " · " + p.get(0).pts + " pts";
+  }
+
+  // ---------- certificate ----------
+
+  /** The user's certificate design (10.16): the picture they sent, with its name, award and month lines cleared. */
+  static CERT_W = 1492; static CERT_H = 1054;
+
+  /**
+   * The certificate of excellence on the user's design: the name in gold on the navy banner, the award and the month
+   * under it, painted the same way on the phone and the website.
+   */
+  static paintCertificate(c, cv, w, h, name, award, when) {
+    const k = w / Honours.CERT_W;
+    const bg = BitmapFactory.decodeResource(c.getResources(), R.drawable.cert_template);
+    if (bg != null) cv.drawBitmap(bg, null, new Rect(0, 0, w, h), null);
+    const p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    p.setTextAlign(Paint.Align.CENTER);
+    const cx = 746 * k;
+    // the name: gold with a deep brown edge and a soft shadow, shrunk to fit the banner
+    p.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+    p.setTextSize(74 * k);
+    let max = 560 * k;
+    if (p.measureText(name) > max) p.setTextSize(p.getTextSize() * max / p.measureText(name));
+    const base = 519 * k - (p.descent() + p.ascent()) / 2;
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(6 * k);
+    p.setStrokeJoin(Paint.Join.ROUND);
+    p.setColor(0xFF2A1800);
+    cv.drawText(name, cx + 2 * k, base + 3 * k, p);
+    p.setColor(0xFF6B4300);
+    cv.drawText(name, cx, base, p);
+    p.setStyle(Paint.Style.FILL);
+    const top = base + p.ascent() * 0.75;
+    p.setShader(new LinearGradient(0, top, 0, base, [0xFFFFF4C2, 0xFFFFD45C, 0xFFE09A12, 0xFFFFD86B], [0, 0.4, 0.75, 1], Shader.TileMode.CLAMP));
+    cv.drawText(name, cx, base, p);
+    p.setShader(null);
+    // the award, in navy between the two stars
+    p.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+    p.setColor(0xFF14203D);
+    p.setTextSize(54 * k);
+    max = 320 * k;
+    if (p.measureText(award) > max) p.setTextSize(p.getTextSize() * max / p.measureText(award));
+    cv.drawText(award, cx, 632 * k - (p.descent() + p.ascent()) / 2, p);
+    // the month and unit
+    p.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+    p.setTextSize(30 * k);
+    max = 640 * k;
+    if (p.measureText(when) > max) p.setTextSize(p.getTextSize() * max / p.measureText(when));
+    cv.drawText(when, cx, 695 * k - (p.descent() + p.ascent()) / 2, p);
+  }
+}
+Honours.CACHE = new HashMap();
+Honours.CACHED_AT = new HashMap();
+
+/** A medal: a metal disc with its rank, a rim and a gloss. */
+Honours.Medal = class extends Drawable {
+  constructor(rank) {
+    super();
+    this.rank = rank;
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, rank = this.rank;
+    const cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2;
+    const col = rank <= 3 ? Honours.metal(rank) : 0xFF6B4F1A;
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(cx, cy - r, cx, cy + r, [Ui.mix(col, Color.WHITE, 0.45), Ui.mix(col, Color.BLACK, 0.35)], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r, p);
+    p.setShader(new RadialGradient(cx - r * 0.3, cy - r * 0.35, r * 1.3, [Ui.mix(col, Color.WHITE, 0.6), col, Ui.mix(col, Color.BLACK, 0.25)], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r * 0.82, p);
+    p.setShader(null);
+    p.setColor(rank <= 3 ? 0xFF3B2A06 : Honours.LIGHT);
+    p.setTypeface(Typeface.DEFAULT_BOLD);
+    p.setTextAlign(Paint.Align.CENTER);
+    p.setTextSize(r * (rank < 10 ? 1.0 : 0.8));
+    cv.drawText(String(rank), cx, cy - (p.descent() + p.ascent()) / 2, p);
+  }
+
+  setAlpha(a) { }
+  setColorFilter(f) { }
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+;
+/* ---- app/HonoursActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The Hall of Honour (10.14): PG of the Month (or of the year) on a gold podium, the awards of each category, the golden
+ * board of the top 10 with their climb since last month, your own place with how to go higher, the past champions and a
+ * certificate for every winner to share.
+ */
+class HonoursActivity extends Base {
+  constructor() {
+    super();
+    this.mode = 0;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Golden Honours");
+    this.subtitle = "PG ranking · case sheets, academics, app use and more";
+    this.headerColor(Honours.DEEP);
+    // web: the certificate picture loads in the background, so it is ready by the time Certificate is tapped
+    BitmapFactory.decodeResource(this.getResources(), R.drawable.cert_template);
+  }
+
+  render() {
+    const db = this.db, mode = this.mode;
+    const per = Honours.period(mode);
+    const months = Ui.toInt(per[3], 1);
+    const people = Honours.people(db, per);
+    const before = mode === 2 ? null : Honours.people(db, Honours.monthPeriod(Dates.monthStart(Dates.today()).minusMonths(mode + 1)));
+    const page = Ui.v(this);
+    page.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [Honours.NIGHT2, Honours.NIGHT, Honours.NIGHT]));
+    page.setPadding(0, 0, 0, Ui.dp(this, 24));
+
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), 0);
+    const labels = ["This month", Honours.period(1)[2], "This year"];
+    for (let i = 0; i < 3; i++) {
+      const m = i;
+      const c = Ui.tv(this, labels[i], 13, i === mode ? Honours.NIGHT : Honours.LIGHT, true);
+      const bg = i === mode ? Ui.gradient(this, [Honours.LIGHT, Honours.GOLD], 16) : Ui.round(this, 0x22E6B422, 16);
+      if (i !== mode) bg.setStroke(Ui.dp(this, 1), 0x88E6B422);
+      c.setBackground(bg);
+      c.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
+      c.setOnClickListener({ onClick: (v) => { this.mode = m; this.render(); } });
+      chips.addView(c);
+      Ui.margins(c, 0, 0, 8, 0);
+    }
+    page.addView(Ui.hscroll(this, chips));
+
+    // the crown
+    const hero = Ui.card(this);
+    hero.setBackground(Honours.lux(this, 24));
+    hero.setPadding(Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 14));
+    const t = Honours.goldText(this, mode === 2 ? "PG OF THE YEAR" : "PG OF THE MONTH", 24, true);
+    t.setGravity(Gravity.CENTER);
+    t.setLetterSpacing(0.1);
+    hero.addView(t);
+    const pl = Ui.tv(this, "✦ " + per[2] + " ✦", 13, Honours.CREAM, true);
+    pl.setGravity(Gravity.CENTER);
+    pl.setPadding(0, Ui.dp(this, 2), 0, Ui.dp(this, 12));
+    hero.addView(pl);
+    const any = !people.isEmpty() && people.get(0).pts > 0;
+    if (any) hero.addView(Honours.podium(this, people, true, months));
+    else hero.addView(this.gold("Nobody has scored yet. The first case sheet, the first academic session or the first Duel puts a name here.", 14, false));
+    page.addView(hero);
+
+    // your place
+    const me = League.me(this, people);
+    if (me != null) {
+      page.addView(this.heading("Your place"));
+      const yc = this.card();
+      const rank = League.rankOf(people, me);
+      yc.addView(this.gold(me.pts === 0 ? "Not on the board yet" : Quiz.ordinal(rank) + " · " + me.pts + " points", 22, true));
+      yc.addView(Ui.tv(this, Honours.tier(me.pts, months) + (me.pts > 0 && rank > 1 ? "  ·  " + (people.get(rank - 2).pts - me.pts + 1) + " points to pass " + Quiz.ordinal(rank - 1)
+        : me.pts > 0 ? "  ·  you lead the department 👑" : ""), 13, Honours.CREAM, true));
+      let max = 1;
+      for (let i = 0; i < Honours.CATS.length; i++) max = Math.max(max, Honours.catPts(me, i));
+      let weakest = -1, wv = Number.MAX_SAFE_INTEGER;
+      for (let i = 0; i < Honours.CATS.length; i++) {
+        const v = Honours.catPts(me, i);
+        if (v < wv) { wv = v; weakest = i; }
+        const r = Ui.h(this);
+        r.setGravity(Gravity.CENTER_VERTICAL);
+        r.setPadding(0, Ui.dp(this, 6), 0, 0);
+        r.addView(Ui.tv(this, Honours.ICONS[i] + " " + Honours.CATS[i], 13, Honours.LIGHT, false), Ui.lp(Ui.dp(this, 132), LinearLayout.LayoutParams.WRAP_CONTENT));
+        r.addView(Ui.bar(this, v, max, Honours.GOLD), Ui.weight(1));
+        r.addView(Ui.tv(this, "  " + v, 13, Honours.GOLD, true));
+        yc.addView(r);
+      }
+      if (weakest >= 0) {
+        const tip = Ui.tv(this, "💡 To climb: " + Honours.TIPS[weakest], 13, Honours.CREAM, false);
+        tip.setPadding(0, Ui.dp(this, 10), 0, 0);
+        yc.addView(tip);
+      }
+      page.addView(yc);
+    }
+
+    // the awards
+    if (any) {
+      page.addView(this.heading("The awards"));
+      const grid = Ui.v(this);
+      grid.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+      const cols = Base.wide(this) ? 3 : 2;
+      let n = 0;
+      const what = mode === 2 ? "PG of the Year" : "PG of the Month";
+      n = this.addAward(grid, n, cols, "👑", what, people.get(0), people.get(0).pts, per);
+      if (before != null) {
+        const star = Honours.risingStar(people, before);
+        if (star != null) n = this.addAward(grid, n, cols, "🚀", "Rising Star", star, star.pts, per);
+      }
+      for (let i = 0; i < Honours.CATS.length; i++) {
+        const b = Honours.best(people, i);
+        if (b != null) n = this.addAward(grid, n, cols, Honours.ICONS[i], Honours.AWARDS[i], b, Honours.catPts(b, i), per);
+      }
+      // spare places keep the last row's cards the same width as the others
+      for (; n % cols !== 0; n++) grid.getChildAt(grid.getChildCount() - 1).addView(new View(this), Ui.weight(1));
+      page.addView(grid);
+    }
+
+    // the golden board
+    if (any) {
+      page.addView(this.heading("Golden board · top 10"));
+      const bc = this.card();
+      const was = before == null ? null : Honours.ranks(before);
+      for (let i = 0; i < people.size() && i < 10; i++) {
+        const p = people.get(i);
+        if (p.pts === 0) break;
+        bc.addView(this.boardRow(i + 1, p, p === me, was, months));
+      }
+      if (me != null && me.pts > 0 && League.rankOf(people, me) > 10) {
+        bc.addView(Ui.tv(this, "⋯", 14, Honours.LIGHT, true));
+        bc.addView(this.boardRow(League.rankOf(people, me), me, true, was, months));
+      }
+      page.addView(bc);
+    }
+
+    // past champions
+    page.addView(this.heading("Hall of Champions"));
+    const hc = this.card();
+    for (let i = 1; i <= 6; i++) {
+      const mp = Honours.monthPeriod(Dates.monthStart(Dates.today()).minusMonths(i));
+      const l = Honours.people(db, mp);
+      if (l.isEmpty() || l.get(0).pts === 0) continue;
+      const r = Ui.h(this);
+      r.setGravity(Gravity.CENTER_VERTICAL);
+      r.setPadding(0, Ui.dp(this, 5), 0, Ui.dp(this, 5));
+      r.addView(Ui.tv(this, mp[2], 13, Honours.CREAM, false), Ui.lp(Ui.dp(this, 120), LinearLayout.LayoutParams.WRAP_CONTENT));
+      r.addView(Honours.goldText(this, "👑 " + Honours.shortName(l.get(0).name), 15, false), Ui.weight(1));
+      r.addView(Ui.tv(this, l.get(0).pts + " pts", 13, Honours.GOLD, true));
+      hc.addView(r);
+    }
+    if (hc.getChildCount() === 0) hc.addView(this.gold("The first PG of the Month is crowned when this month ends.", 14, false));
+    page.addView(hc);
+
+    const rules = Ui.tv(this, "How points are earned: " + Honours.RULES + ". Only PGs are ranked and only the top 10 are listed, so nobody is ever shown as last.",
+      12, 0xCCFFF4D6, false);
+    rules.setPadding(Ui.dp(this, 18), Ui.dp(this, 14), Ui.dp(this, 18), 0);
+    page.addView(rules);
+    this.setPage(page);
+  }
+
+  gold(s, sp, bold) {
+    return bold ? Honours.goldText(this, s, sp, false) : Ui.tv(this, s, sp, Honours.LIGHT, false);
+  }
+
+  card() {
+    const c = Ui.card(this);
+    c.setBackground(Honours.lux(this, 18));
+    c.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+    return c;
+  }
+
+  heading(s) {
+    const h = Honours.goldText(this, "✦  " + s.toUpperCase(), 14, false);
+    h.setLetterSpacing(0.1);
+    h.setPadding(Ui.dp(this, 18), Ui.dp(this, 18), Ui.dp(this, 18), Ui.dp(this, 2));
+    return h;
+  }
+
+  /** One award card, placed in rows of two (three on a tablet); returns the new count. */
+  addAward(grid, n, cols, icon, award, p, pts, per) {
+    let row;
+    if (n % cols === 0) {
+      row = Ui.h(this);
+      row.setGravity(Gravity.TOP);
+      grid.addView(row);
+    } else {
+      row = grid.getChildAt(grid.getChildCount() - 1);
+    }
+    const c = Ui.v(this);
+    c.setGravity(Gravity.CENTER_HORIZONTAL);
+    c.setBackground(Honours.lux(this, 18));
+    c.setPadding(Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12));
+    const ic = Ui.tv(this, icon, 30, Color.WHITE, false);
+    ic.setGravity(Gravity.CENTER);
+    c.addView(ic);
+    const aw = Ui.tv(this, award.toUpperCase(), 11, Honours.CREAM, true);
+    aw.setGravity(Gravity.CENTER);
+    aw.setLetterSpacing(0.08);
+    c.addView(aw);
+    const nm = Honours.goldText(this, Honours.shortName(p.name), 16, award.startsWith("PG of"));
+    nm.setGravity(Gravity.CENTER);
+    nm.setPadding(0, Ui.dp(this, 4), 0, 0);
+    c.addView(nm);
+    const sub = Ui.tv(this, (p.unit.isEmpty() ? "" : Db.shortName(p.unit) + " · ") + pts + " pts", 12, Honours.LIGHT, false);
+    sub.setGravity(Gravity.CENTER);
+    c.addView(sub);
+    const share = Ui.tv(this, "🎖 Certificate", 12, Honours.NIGHT, true);
+    share.setGravity(Gravity.CENTER);
+    share.setBackground(Ui.gradient(this, [Honours.LIGHT, Honours.GOLD], 12));
+    share.setPadding(Ui.dp(this, 10), Ui.dp(this, 5), Ui.dp(this, 10), Ui.dp(this, 5));
+    share.setOnClickListener({ onClick: (v) => { this.shareCertificate(p, award, per); } });
+    c.addView(share);
+    Ui.margins(share, 0, 8, 0, 0);
+    row.addView(c, Ui.weight(1));
+    Ui.margins(c, 4, 6, 4, 6);
+    return n + 1;
+  }
+
+  boardRow(rank, p, mine, was, months) {
+    const r = Ui.h(this);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(this, 6), Ui.dp(this, 7), Ui.dp(this, 6), Ui.dp(this, 7));
+    if (mine) r.setBackground(Ui.round(this, 0x33E6B422, 12));
+    r.addView(Honours.medal(this, rank, 30));
+    const av = Honours.ringed(this, p, rank <= 3 ? rank : 3, 34);
+    r.addView(av);
+    Ui.margins(av, 8, 0, 8, 0);
+    const mid = Ui.v(this);
+    mid.addView(rank <= 3 ? Honours.goldText(this, Honours.shortName(p.name) + (mine ? "  · you" : ""), 15, false)
+      : Ui.tv(this, Honours.shortName(p.name) + (mine ? "  · you" : ""), 15, Honours.CREAM, true));
+    let trend = "";
+    if (was != null) {
+      const w = was.get(p.id);
+      trend = w == null ? "  ·  ✨ new" : w > rank ? "  ·  ▲ " + (w - rank) : w < rank ? "  ·  ▼ " + (rank - w) : "  ·  ＝";
+    }
+    mid.addView(Ui.tv(this, (p.unit.isEmpty() ? "" : Db.shortName(p.unit) + "  ·  ") + Honours.tier(p.pts, months) + trend, 12, 0xCCFFF4D6, false));
+    r.addView(mid, Ui.weight(1));
+    r.addView(Ui.tv(this, p.pts + "", 17, Honours.GOLD, true));
+    r.setOnClickListener({ onClick: (v) => { this.breakdown(p); } });
+    return r;
+  }
+
+  breakdown(p) {
+    let s = "";
+    for (let i = 0; i < Honours.CATS.length; i++) {
+      const v = Honours.catPts(p, i);
+      if (v > 0) s += Honours.ICONS[i] + " " + Honours.CATS[i] + ": " + v + "\n";
+    }
+    s += "\n";
+    for (const e of p.parts.entrySet()) s += e.getKey() + ": " + e.getValue() + "\n";
+    new AlertDialog.Builder(this).setTitle(p.name + " · " + p.pts + " pts").setMessage(s.trim())
+      .setPositiveButton("OK", null).show();
+  }
+
+  /** The certificate as a PNG picture shared to WhatsApp or anywhere. */
+  shareCertificate(p, award, per) {
+    try {
+      const w = Honours.CERT_W, h = Honours.CERT_H;
+      const bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+      const nm = p.name.toLowerCase().startsWith("dr") ? p.name : "Dr. " + p.name;
+      Honours.paintCertificate(this, new Canvas(bmp), w, h, nm, award, per[2] + (p.unit.isEmpty() ? "" : "  ·  " + Db.shortName(p.unit) + " unit"));
+      const rel = SummaryExport.DIR + "/certificate_" + System.currentTimeMillis() + ".png";
+      const f = this.db.file(rel);
+      if (f.getParentFile() != null) f.getParentFile().mkdirs();
+      const out = new FileOutputStream(f);
+      try { bmp.compress(Bitmap.CompressFormat.PNG, 100, out); } finally { out.close(); }
+      const u = DocProvider.uri(rel);
+      const i = new Intent(Intent.ACTION_SEND);
+      i.setType("image/png");
+      i.putExtra(Intent.EXTRA_STREAM, u);
+      i.putExtra(Intent.EXTRA_TEXT, "🏆 " + award + " · " + per[2] + ": " + nm + ". Congratulations from the Department of Medicine, TVMCH!");
+      i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+      this.startActivity(Intent.createChooser(i, "Share the certificate"));
+    } catch (e) {
+      Ui.toast(this, "Could not make the certificate: " + e.getMessage());
+    }
+  }
+}
 ;
 /* ---- app/Icd11.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -52370,26 +56098,527 @@ Intercom.RealAudio = class {
 /* ---- app/IntercomActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
-/** Intercom: who is online, a Call button for each, and the recent calls. Web: the Intercom works in the Android app only. */
+/**
+ * Intercom: who is online, a Call button for each, the call log and a keypad for extensions (10.31: the dark "Department
+ * Intercom" design). Web: the same screen to look at; the calls themselves work in the Android app only.
+ */
 class IntercomActivity extends Base {
   static $clinit() { IntercomActivity.COLOR = IntercomNotes.COLOR; }
+  static members = [];
+  static NAVY = 0xFF061433;
+  static NAVY_CARD = 0xFF0C2152;
+  static LINE = 0xFF1D3B7A;
+  static GOLD = 0xFFF5C451;
+  static CALL = 0xFF22C55E;
+  static SOFT = 0xB3FFFFFF;
+  static FILTERS = ["All", "Doctors", "Staff", "Others"];
+  static LOG_FILTERS = ["All", "Missed", "Outgoing", "Incoming"];
+  static TABS = ["Members", "Call log", "Keypad"];
+  static tab = 0;
+  static filter = 0;
+  static logFilter = 0;
+  static query = "";
+  static digits = "";
 
   onCreate(b) {
     super.onCreate(b);
     this.setTitle("Intercom");
     this.subtitle = "Call any member of the department inside the app";
     this.headerColor(IntercomActivity.COLOR);
+    this.loading = false;
+  }
+
+  onResume() {
+    super.onResume();
+    if (Cloud.active(this)) this.loadMembers();
   }
 
   changed() {
+    if (!this.isFinishing()) this.render();
+  }
+
+  loadMembers() {
+    if (this.loading) return;
+    this.loading = true;
+    new Thread({
+      run: () => {
+        try {
+          const a = Cloud.members(this);
+          const out = [];
+          const all = [];
+          for (let i = 0; i < a.length(); i++) {
+            const m = a.getJSONObject(i);
+            const role = m.optString("role");
+            all.push(m.optString("user_id"));
+            if (role.equals("pending") || role.equals("blocked")) continue;
+            out.push([m.optString("user_id"), m.optString("name"), role]);
+          }
+          IntercomActivity.numberAll(all);
+          IntercomActivity.members = out;
+          this.runOnUiThread({ run: () => { if (!this.isFinishing()) this.render(); } });
+        } catch (ignored) {
+        }
+        this.loading = false;
+      }
+    }).start();
+  }
+
+  static membersNow() {
+    return IntercomActivity.members;
+  }
+
+  static roleLabel(role) {
+    for (let i = 0; i < Cloud.ROLES.length; i++) if (Cloud.ROLES[i] === role) return Cloud.ROLE_LABELS[i];
+    return role;
+  }
+
+  /** Doctors (faculty, PGs, CRMIs), staff, or others (students and the rest). */
+  static group(role) {
+    if (["admin", "hod", "registrar", "professor", "faculty", "pg", "crmi"].includes(role)) return 1;
+    if ("staff" === role) return 2;
+    return 3;
+  }
+
+  static EXT = new Map();
+
+  /** A member's 3-digit intercom extension, the same on every phone: from the account id, the next free number on a clash. */
+  static ext(uid) {
+    const e = IntercomActivity.EXT.get(uid);
+    return e != null ? e : String(IntercomActivity.hashExt(uid));
+  }
+
+  static hashExt(uid) {
+    let h = 0;
+    for (let i = 0; i < uid.length; i++) h = (Math.imul(31, h) + uid.charCodeAt(i)) | 0;
+    return Math.abs(h % 900) + 100;
+  }
+
+  /** Gives every member a different extension (account ids in order, so all phones agree). */
+  static numberAll(uids) {
+    const sorted = uids.slice().sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+    const taken = new Set();
+    IntercomActivity.EXT.clear();
+    for (const u of sorted) {
+      let e = IntercomActivity.hashExt(u);
+      while (taken.has(e)) e = e >= 999 ? 100 : e + 1;
+      taken.add(e);
+      IntercomActivity.EXT.set(u, String(e));
+    }
+  }
+
+  static avatarColor(name) {
+    const pal = [0xFF6366F1, 0xFF8B5CF6, 0xFFEC4899, 0xFFF43F5E, 0xFF0EA5E9, 0xFF14B8A6, 0xFFF59E0B, 0xFF22C55E];
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (Math.imul(31, h) + name.charCodeAt(i)) | 0;
+    return pal[Math.abs(h % pal.length)];
   }
 
   render() {
+    const I = IntercomActivity;
+    this.pageBg = I.NAVY;
+    this.headerColor(0xFF0B1F4D);
     const page = Ui.v(this);
-    page.addView(this.emptyNote("The Intercom (calls and pages between members) works in the TVMCHMED Android app. Open the app on your phone to use it."));
+    if (Cloud.active(this) && !AdminControl.intercomOn(this.db)) {
+      page.addView(this.note("The admin has switched the Intercom off for now."));
+      this.setPage(page);
+      return;
+    }
+    const ic = Intercom.get(this);
+    page.addView(this.hero(ic.problem().isEmpty() ? ic.isConnected() ? "Connected · you can call and be called" : "Connecting…" : ic.problem(), ic.isConnected()));
+    page.addView(this.tabs());
+    if (I.tab === 0) this.membersList(page, ic);
+    else if (I.tab === 1) this.callLog(page, ic);
+    else this.keypad(page, ic);
     this.setPage(page);
   }
+
+  note(s) {
+    const t = Ui.tv(this, s, 14, IntercomActivity.SOFT, false);
+    t.setGravity(Gravity.CENTER);
+    t.setPadding(Ui.dp(this, 24), Ui.dp(this, 40), Ui.dp(this, 24), Ui.dp(this, 40));
+    return t;
+  }
+
+  /** "Department Intercom" with the golden hexagon phone and the status line. */
+  hero(status, connected) {
+    const I = IntercomActivity;
+    const h = Ui.v(this);
+    h.setGravity(Gravity.CENTER_HORIZONTAL);
+    const bg = Ui.gradient(this, [0xFF10306E, 0xFF081A42], 22);
+    bg.setStroke(Ui.dp(this, 1), 0x664F8BFF);
+    h.setBackground(bg);
+    h.setPadding(Ui.dp(this, 16), Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 14));
+    const hex = new ImageView(this);
+    hex.setImageDrawable(new IntercomActivity.HexPhone(this));
+    h.addView(hex, Ui.lp(Ui.dp(this, 76), Ui.dp(this, 76)));
+    const t = Ui.h(this);
+    t.setGravity(Gravity.CENTER);
+    t.addView(Ui.tv(this, "Department ", 22, Color.WHITE, true));
+    t.addView(Ui.tv(this, "Intercom", 22, I.GOLD, true));
+    h.addView(t);
+    Ui.margins(t, 0, 8, 0, 0);
+    const tag = Ui.tv(this, "Connect  ·  Communicate  ·  Care", 12, I.SOFT, false);
+    tag.setGravity(Gravity.CENTER);
+    h.addView(tag);
+    const st = Ui.tv(this, (connected ? "● " : "○ ") + status, 12, connected ? 0xFF4ADE80 : 0xFFFBBF24, true);
+    st.setGravity(Gravity.CENTER);
+    h.addView(st);
+    Ui.margins(st, 0, 8, 0, 0);
+    const p = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    p.setMargins(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), 0);
+    h.setLayoutParams(p);
+    return h;
+  }
+
+  tabs() {
+    const I = IntercomActivity;
+    const row = Ui.h(this);
+    row.setBackground(Ui.outline(this, I.NAVY_CARD, I.LINE, 22));
+    row.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+    for (let i = 0; i < I.TABS.length; i++) {
+      const k = i;
+      const t = Ui.tv(this, I.TABS[i], 14, i === I.tab ? 0xFF0B1F4D : I.SOFT, true);
+      t.setGravity(Gravity.CENTER);
+      t.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
+      if (i === I.tab) t.setBackground(Ui.round(this, I.GOLD, 18));
+      t.setOnClickListener({ onClick: (v) => { I.tab = k; this.render(); } });
+      row.addView(t, Ui.weight(1));
+    }
+    const p = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    p.setMargins(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 4));
+    row.setLayoutParams(p);
+    return row;
+  }
+
+  chips(names, on, log) {
+    const I = IntercomActivity;
+    const row = Ui.h(this);
+    row.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 4));
+    for (let i = 0; i < names.length; i++) {
+      const k = i;
+      const c = Ui.tv(this, names[i], 13, i === on ? 0xFF0B1F4D : I.SOFT, true);
+      c.setBackground(i === on ? Ui.round(this, I.GOLD, 18) : Ui.outline(this, I.NAVY_CARD, I.LINE, 18));
+      c.setPadding(Ui.dp(this, 16), Ui.dp(this, 7), Ui.dp(this, 16), Ui.dp(this, 7));
+      c.setOnClickListener({
+        onClick: (v) => {
+          if (log) I.logFilter = k;
+          else I.filter = k;
+          this.render();
+        }
+      });
+      row.addView(c);
+      Ui.margins(c, 0, 0, 8, 0);
+    }
+    return Ui.hscroll(this, row);
+  }
+
+  membersList(page, ic) {
+    const I = IntercomActivity;
+    const search = new EditText(this);
+    search.setHint("🔍  Search member…");
+    search.setHintTextColor(0x80FFFFFF);
+    search.setTextColor(Color.WHITE);
+    search.setSingleLine(true);
+    search.setText(I.query);
+    search.setBackground(Ui.outline(this, I.NAVY_CARD, 0xFF2F5BB7, 24));
+    search.setPadding(Ui.dp(this, 18), Ui.dp(this, 11), Ui.dp(this, 18), Ui.dp(this, 11));
+    search.addTextChangedListener({
+      beforeTextChanged: () => {}, onTextChanged: () => {},
+      afterTextChanged: (e) => {
+        const q = String(e);
+        if (q === I.query) return;
+        I.query = q;
+        this.render();
+        if (this.searchEdit) this.searchEdit.requestFocus();
+      }
+    });
+    this.searchEdit = search;
+    page.addView(search);
+    Ui.margins(search, 14, 10, 14, 0);
+    page.addView(this.chips(I.FILTERS, I.filter, false));
+
+    const online = ic.peers();
+    const onlineIds = new Set();
+    const all = [];   // uid, name, role, online(1/0), busy(1/0)
+    for (const p of online) {
+      onlineIds.add(p.uid);
+      all.push([p.uid, p.name, p.role, "1", p.busy ? "1" : "0"]);
+    }
+    for (const m of I.members) if (!onlineIds.has(m[0]) && m[0] !== ic.uid) all.push([m[0], m[1].isEmpty() ? "Member" : m[1], m[2], "0", "0"]);
+    const q = I.query.trim().toLowerCase();
+    const list = Ui.v(this);
+    list.setBackground(Ui.outline(this, 0xFF0A1C47, I.LINE, 18));
+    let n = 0;
+    for (const m of all) {
+      if (I.filter > 0 && I.group(m[2]) !== I.filter) continue;
+      if (!q.isEmpty() && !(m[1].toLowerCase().includes(q) || I.roleLabel(m[2]).toLowerCase().includes(q) || I.ext(m[0]).startsWith(q))) continue;
+      if (n > 0) list.addView(this.divider());
+      list.addView(this.row(m[0], m[1], m[2], "1" === m[3], "1" === m[4], ic));
+      n++;
+    }
+    if (n === 0) page.addView(this.note(all.length === 0 ? (Cloud.active(this) ? "Loading the members…" : "Sign in to the shared online version to see the members.") : "No member matches."));
+    else {
+      page.addView(list);
+      Ui.margins(list, 14, 8, 14, 0);
+      const cnt = Ui.tv(this, online.length + " online now  ·  a call rings only on phones that have the app open or standby on", 11, 0x80FFFFFF, false);
+      cnt.setGravity(Gravity.CENTER);
+      page.addView(cnt);
+      Ui.margins(cnt, 16, 6, 16, 0);
+    }
+  }
+
+  divider() {
+    const d = new View(this);
+    d.setBackgroundColor(0xFF15306A);
+    d.setLayoutParams(Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, 1));
+    return d;
+  }
+
+  /** A round avatar with initials and the online dot. */
+  avatar(name, online, sizeDp) {
+    const I = IntercomActivity;
+    const f = new FrameLayout(this);
+    const a = Ui.tv(this, CallActivity.initials(name), sizeDp / 3, Color.WHITE, true);
+    a.setGravity(Gravity.CENTER);
+    const col = I.avatarColor(name);
+    const g = Ui.gradient(this, [Ui.mix(col, Color.WHITE, 0.25), Ui.mix(col, Color.BLACK, 0.25)], sizeDp);
+    g.setStroke(Ui.dp(this, 2), 0x55FFFFFF);
+    a.setBackground(g);
+    f.addView(a, new FrameLayout.LayoutParams(Ui.dp(this, sizeDp), Ui.dp(this, sizeDp)));
+    const dot = new View(this);
+    const dg = Ui.round(this, online ? I.CALL : 0xFF64748B, 8);
+    dg.setStroke(Ui.dp(this, 2), I.NAVY);
+    dot.setBackground(dg);
+    f.addView(dot, new FrameLayout.LayoutParams(Ui.dp(this, 13), Ui.dp(this, 13), Gravity.BOTTOM | Gravity.END));
+    return f;
+  }
+
+  /** The round green call button (grey when the person cannot be called now). */
+  callButton(uid, name, can, ic) {
+    const b = new ImageView(this);
+    b.setImageResource(R.drawable.ic_phone);
+    b.setColorFilter(can ? 0xFF4ADE80 : 0xFF64748B);
+    b.setPadding(Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10));
+    b.setBackground(Ui.round(this, can ? 0x3322C55E : 0x2264748B, 24));
+    b.setLayoutParams(Ui.lp(Ui.dp(this, 42), Ui.dp(this, 42)));
+    b.setOnClickListener({ onClick: (v) => { this.dial(uid, name, ic); } });
+    return b;
+  }
+
+  dial(uid, name, ic) {
+    if (!Intercom.available(this)) {
+      Ui.toast(this, "Calls work in the TVMCHMED Android app");
+      return;
+    }
+    if (ic.state() !== Intercom.State.IDLE) {
+      Ui.toast(this, "Finish the current call first");
+      return;
+    }
+    let on = false;
+    for (const p of ic.peers()) if (p.uid === uid) on = !p.busy;
+    if (!on) {
+      Ui.toast(this, name + " is not online now (the app is closed and standby is off)");
+      return;
+    }
+    this.startActivity(new Intent(this, CallActivity).putExtra("dial_uid", uid).putExtra("dial_name", name));
+  }
+
+  row(uid, name, role, online, busy, ic) {
+    const I = IntercomActivity;
+    const r = Ui.h(this);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+    r.addView(this.avatar(name, online, 44));
+    const mid = Ui.v(this);
+    mid.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 8), 0);
+    const nm = Ui.tv(this, name, 15, online ? Color.WHITE : 0xCCFFFFFF, true);
+    nm.setSingleLine(true);
+    nm.setEllipsize(TextUtils.TruncateAt.END);
+    mid.addView(nm);
+    mid.addView(Ui.tv(this, I.roleLabel(role) + "  ·  Ext " + I.ext(uid) + (busy ? "  ·  on a call" : ""), 12, busy ? 0xFFFBBF24 : 0x99FFFFFF, false));
+    r.addView(mid, Ui.weight(1));
+    r.addView(this.callButton(uid, name, online && !busy, ic));
+    return r;
+  }
+
+  callLog(page, ic) {
+    const I = IntercomActivity;
+    page.addView(this.chips(I.LOG_FILTERS, I.logFilter, true));
+    const log = Intercom.log(this);
+    const list = Ui.v(this);
+    list.setBackground(Ui.outline(this, 0xFF0A1C47, I.LINE, 18));
+    let n = 0;
+    const time = (d) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const day = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const today = day(new Date()), yest = day(new Date(Date.now() - 86400000));
+    for (const f of log) {
+      const out = "out" === f[1];
+      const missed = !out && f[4].startsWith("Missed");
+      if (I.logFilter === 1 && !missed || I.logFilter === 2 && !out || I.logFilter === 3 && (out || missed)) continue;
+      const uid = this.uidOf(f[2], ic);
+      const d = new Date(Number(f[0]));
+      const when = day(d) === today ? time(d) : day(d) === yest ? "Yesterday" : day(d) + ", " + time(d);
+      const r = Ui.h(this);
+      r.setGravity(Gravity.CENTER_VERTICAL);
+      r.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
+      const nm0 = f[2].split("Dr.").join("").trim();
+      const a = Ui.tv(this, nm0.isEmpty() ? "?" : nm0.substring(0, 1).toUpperCase(), 16, Color.WHITE, true);
+      a.setGravity(Gravity.CENTER);
+      a.setBackground(Ui.round(this, I.avatarColor(f[2]), 20));
+      r.addView(a, Ui.lp(Ui.dp(this, 38), Ui.dp(this, 38)));
+      const mid = Ui.v(this);
+      mid.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 8), 0);
+      mid.addView(Ui.tv(this, f[2], 15, Color.WHITE, true));
+      const secs = Number(f[3]);
+      const kind = missed ? "✕ Missed" : out ? "↗ Outgoing" : "↙ Incoming";
+      mid.addView(Ui.tv(this, kind + "  ·  " + when + (secs > 0 ? "  ·  " + CallActivity.clock(secs * 1000) : ""), 12, missed ? 0xFFF87171 : 0x99FFFFFF, false));
+      r.addView(mid, Ui.weight(1));
+      r.addView(this.callButton(uid == null ? "" : uid, f[2], uid != null && this.isOnline(uid, ic), ic));
+      if (n > 0) list.addView(this.divider());
+      list.addView(r);
+      n++;
+    }
+    if (n === 0) page.addView(this.note(log.length === 0 ? "No calls yet." : "No calls of this kind."));
+    else {
+      page.addView(list);
+      Ui.margins(list, 14, 8, 14, 0);
+    }
+  }
+
+  uidOf(name, ic) {
+    for (const p of ic.peers()) if (p.name === name) return p.uid;
+    for (const m of IntercomActivity.members) if (m[1] === name) return m[0];
+    return null;
+  }
+
+  isOnline(uid, ic) {
+    for (const p of ic.peers()) if (p.uid === uid) return !p.busy;
+    return false;
+  }
+
+  /** Dial a member's 3-digit extension. */
+  keypad(page, ic) {
+    const I = IntercomActivity;
+    const box = Ui.v(this);
+    box.setGravity(Gravity.CENTER_HORIZONTAL);
+    box.setBackground(Ui.outline(this, 0xFF0A1C47, I.LINE, 22));
+    box.setPadding(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 16));
+    const shown = Ui.tv(this, I.digits.isEmpty() ? "Ext ___" : "Ext " + I.digits, 26, I.digits.isEmpty() ? 0x66FFFFFF : Color.WHITE, true);
+    shown.setGravity(Gravity.CENTER);
+    box.addView(shown);
+    let who = "Each member's extension is shown beside their name";
+    const match = [null, null];
+    if (I.digits.length === 3) {
+      who = "No member has extension " + I.digits;
+      for (const m of I.members) if (I.ext(m[0]) === I.digits) { match[0] = m[0]; match[1] = m[1]; who = m[1] + "  ·  " + I.roleLabel(m[2]); }
+      for (const p of ic.peers()) if (I.ext(p.uid) === I.digits) { match[0] = p.uid; match[1] = p.name; who = p.name + "  ·  " + I.roleLabel(p.role); }
+    }
+    const w = Ui.tv(this, who, 13, match[0] != null ? I.GOLD : 0x99FFFFFF, match[0] != null);
+    w.setGravity(Gravity.CENTER);
+    box.addView(w);
+    Ui.margins(w, 0, 4, 0, 10);
+    const keys = [["1", ""], ["2", "ABC"], ["3", "DEF"], ["4", "GHI"], ["5", "JKL"], ["6", "MNO"], ["7", "PQRS"], ["8", "TUV"], ["9", "WXYZ"], ["⌫", ""], ["0", "+"], ["C", ""]];
+    let r = null;
+    for (let i = 0; i < keys.length; i++) {
+      if (i % 3 === 0) {
+        r = Ui.h(this);
+        r.setGravity(Gravity.CENTER);
+        box.addView(r);
+      }
+      const k = keys[i][0];
+      const key = Ui.v(this);
+      key.setGravity(Gravity.CENTER);
+      const g = Ui.round(this, 0xFF0F2A63, 40);
+      g.setStroke(Ui.dp(this, 1), 0xFF24489A);
+      key.setBackground(g);
+      const kt = Ui.tv(this, k, 24, Color.WHITE, false);
+      kt.setGravity(Gravity.CENTER);
+      key.addView(kt);
+      if (!keys[i][1].isEmpty()) {
+        const kl = Ui.tv(this, keys[i][1], 9, 0x99FFFFFF, true);
+        kl.setGravity(Gravity.CENTER);
+        key.addView(kl);
+      }
+      key.setOnClickListener({
+        onClick: (v) => {
+          if (k === "⌫") I.digits = I.digits.isEmpty() ? "" : I.digits.substring(0, I.digits.length - 1);
+          else if (k === "C") I.digits = "";
+          else if (I.digits.length < 3) I.digits += k;
+          this.render();
+        }
+      });
+      const kp = Ui.lp(Ui.dp(this, 66), Ui.dp(this, 66));
+      kp.setMargins(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+      r.addView(key, kp);
+    }
+    const call = new ImageView(this);
+    call.setImageResource(R.drawable.ic_phone);
+    call.setColorFilter(Color.WHITE);
+    call.setPadding(Ui.dp(this, 18), Ui.dp(this, 18), Ui.dp(this, 18), Ui.dp(this, 18));
+    call.setBackground(Ui.round(this, match[0] != null ? I.CALL : 0xFF334155, 40));
+    call.setOnClickListener({
+      onClick: (v) => {
+        if (match[0] == null) Ui.toast(this, "Type a member's 3-digit extension");
+        else this.dial(match[0], match[1], ic);
+      }
+    });
+    const cp = Ui.lp(Ui.dp(this, 68), Ui.dp(this, 68));
+    cp.topMargin = Ui.dp(this, 10);
+    box.addView(call, cp);
+    page.addView(box);
+    Ui.margins(box, 14, 10, 14, 0);
+  }
 }
+
+/** The golden hexagon with a phone and sound waves (the picture's badge). */
+IntercomActivity.HexPhone = class extends Drawable {
+  constructor(c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.phone = c.getResources().getDrawable(R.drawable.ic_phone, null).mutate();
+    this.phone.setColorFilter(new PorterDuffColorFilter(IntercomActivity.GOLD, PorterDuff.Mode.SRC_IN));
+  }
+
+  draw(cv) {
+    const b = this.getBounds();
+    const p = this.p;
+    const cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2;
+    const hex = new Path();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 3 * i - Math.PI / 2;
+      const x = cx + Math.cos(a) * r * 0.92, y = cy + Math.sin(a) * r * 0.92;
+      if (i === 0) hex.moveTo(x, y);
+      else hex.lineTo(x, y);
+    }
+    hex.close();
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new RadialGradient(cx, cy, r, [0xFF173A80, 0xFF0A1C47], null, Shader.TileMode.CLAMP));
+    cv.drawPath(hex, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(r * 0.16);
+    p.setColor(0x44F5C451);
+    cv.drawPath(hex, p);
+    p.setStrokeWidth(r * 0.07);
+    p.setColor(IntercomActivity.GOLD);
+    cv.drawPath(hex, p);
+    const s = Math.trunc(r * 0.95);
+    this.phone.setBounds(Math.trunc(cx - s / 2 - r * 0.08), Math.trunc(cy - s / 2 + r * 0.06), Math.trunc(cx + s / 2 - r * 0.08), Math.trunc(cy + s / 2 + r * 0.06));
+    this.phone.draw(cv);
+    p.setStrokeWidth(r * 0.07);
+    p.setStrokeCap(Paint.Cap.ROUND);
+    const o = new RectF();
+    for (let k = 1; k <= 2; k++) {
+      const rr = r * (0.22 + 0.16 * k);
+      o.set(cx + r * 0.12 - rr, cy - r * 0.18 - rr, cx + r * 0.12 + rr, cy - r * 0.18 + rr);
+      cv.drawArc(o, -80, 70, false, p);
+    }
+  }
+
+  setAlpha(a) {}
+  setColorFilter(f) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
 ;
 /* ---- app/IntercomNotes.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -54883,6 +59112,18 @@ class League {
       const n = Wrapped.norm(p.name);
       if (n.length >= 4) byName.put(n, p);
     }
+    League.fill(db, d0, d1, byId, byName);
+    const out = ArrayList(byId.values());
+    League.sort(out);
+    return out;
+  }
+
+  static sort(out) {
+    Collections.sort(out, { compare: (a, b) => a.pts !== b.pts ? b.pts - a.pts : a.name.compareTo(b.name) });
+  }
+
+  /** The points from games, logbook, presentations, teaching and faculty praise between two days (also used by Golden Honours). */
+  static fill(db, d0, d1, byId, byName) {
     const add = (id, name, what, pts) => League.add(byId, byName, id, name, what, pts);
     for (const r of db.rows("SELECT staff_id, name, score FROM duel_scores WHERE day BETWEEN ? AND ?", d0, d1))
       add(r.get("staff_id"), r.get("name"), "Daily Duel", Ui.toInt(r.get("score"), 0));
@@ -54904,9 +59145,6 @@ class League {
       add(r.get("to_staff"), r.get("to_name"), "Faculty 👍", Kudos.POINTS);
     for (const r of db.rows("SELECT staff_id, name FROM " + Fame.TABLE + " WHERE substr(created,1,10) BETWEEN ? AND ?", d0, d1))
       add(r.get("staff_id"), r.get("name"), "Wall of Fame", Fame.POINTS);
-    const out = ArrayList(byId.values());
-    Collections.sort(out, { compare: (a, b) => a.pts !== b.pts ? b.pts - a.pts : a.name.compareTo(b.name) });
-    return out;
   }
 
   static add(byId, byName, id, name, what, pts) {
@@ -56303,7 +60541,7 @@ class LeaveForm {
     const t = new StringBuilder();
     t.append('To\n      The Professor & Head of the Department\n      ').append(f.dept)
         .append('\n      ').append(f.college).append(', Tirunelveli\n\n');
-    t.append('Through: The Assistant Professor and the Unit Chief, Unit ').append(u).append('\n');
+    t.append('Through: The Assistant Professor and the Unit Chief, Unit ').append(u).append(', and the Leave Nodal Officer\n');
     t.append('Subject: Request for grant of ').append(one ? 'one day leave' : 'leave for ' + span).append('\n\n');
     t.append('Respected Sir/Madam,\n\n');
     t.append('I respectfully request you to kindly grant me leave for ').append(span)
@@ -56320,16 +60558,15 @@ class LeaveForm {
     const s = f.block('SIGNATURES', HEAD, 0.16, 0.21, 0.21, 0.21, 0.21);
     s.row(16, lbl(''), hd('Applicant'), hd('Doing-Duty PG'), hd('Assistant Professor'), hd('Unit Chief'));
     s.row(20, lbl('Name'), c(name), c(duty), c(Ui.nz(r.get('ap_by'))), c(Ui.nz(r.get('prof_by'))));
-    s.row(30, lbl('Signature'), c(''), c(''), LeaveForm.sig(r, 'ap'), LeaveForm.sig(r, 'prof'));
+    s.row(40, lbl('Signature'), c(''), c(''), LeaveForm.sig(r, 'ap'), LeaveForm.sig(r, 'prof'));
     s.row(18, lbl('Date'), c(nice(r.get('applied'))), c(''), c(nice(r.get('ap_date'))), c(nice(r.get('prof_date'))));
 
-    const ns = Ui.nz(r.get('nodal_status'));
-    if (!ns.isEmpty()) {
-      const nb = f.block('LEAVE NODAL OFFICER', HEAD, 1);
+    // 10.21: the leave nodal officer approves in the app after the unit chief (left out of letters from before 9.00)
+    if (!Ui.nz(r.get('nodal_status')).isEmpty()) {
+      const nb = f.block('LEAVE NODAL OFFICER', HEAD, 0.16, 0.42, 0.42);
       nb.keep = true;
-      nb.row(20, c('Dr. S. Rajkumar, Assistant Professor:   ' + (ns.equals('Approved') || ns.equals('Not approved')
-        ? ns.toLowerCase() + ' in the app by ' + Ui.nz(r.get('nodal_by')) + ' on ' + or(nice(r.get('nodal_date')), '')
-        : '______________________   Date: ______________')));
+      nb.row(16, lbl(''), hd('Name'), hd('Signature'));
+      nb.row(40, lbl('Nodal officer'), c(or(r.get('nodal_by'), 'Dr. S. Rajkumar, Assistant Professor')).center(), LeaveForm.sig(r, 'nodal'));
     }
     const hs = Ui.nz(r.get('hod_status'));
     const yes = hs.equals('Approved'), no = hs.equals('Not approved');
@@ -56348,9 +60585,19 @@ class LeaveForm {
   /** An approval given in the app, shown in the signature box; the box stays blank for a wet signature otherwise. */
   static sig(r, level) {
     const st = Ui.nz(r.get(level + '_status'));
-    if (st.equals('Approved')) return LeaveForm.c('Approved in the app').color(LeaveForm.OK).center();
-    if (st.equals('Not approved')) return LeaveForm.c('Not approved in the app').color(LeaveForm.NO).center();
+    const when = (Ui.nz(r.get(level + '_date')).isEmpty() ? '' : '\non ' + LeaveForm.nice(r.get(level + '_date')))
+        + (Ui.nz(r.get(level + '_time')).isEmpty() ? '' : '\nat ' + LeaveForm.clock(r.get(level + '_time')));
+    if (st.equals('Approved')) return LeaveForm.c('Approved in the app' + when).color(LeaveForm.OK).center();
+    if (st.equals('Not approved')) return LeaveForm.c('Not approved in the app' + when).color(LeaveForm.NO).center();
     return LeaveForm.c('');
+  }
+
+  /** "18:05" as "6:05 PM" (10.21). */
+  static clock(hhmm) {
+    const m = /^(\d{1,2}):(\d{2})/.exec(Ui.nz(hhmm));
+    if (m == null) return Ui.nz(hhmm);
+    const h = parseInt(m[1], 10);
+    return (h % 12 === 0 ? 12 : h % 12) + ':' + m[2] + (h < 12 ? ' AM' : ' PM');
   }
 
   /** Makes the PDF or Word file and offers to share or open it. */
@@ -57976,7 +62223,7 @@ class Live {
   static EVENT = "sync";
   static LOBBY = "tvm:lobby";
   static NOTIFY = new Set(["chat_messages", "alerts", "crit_alerts", "pgc_msgs", "signoffs", "pg_leaves", "faculty_leaves", "handovers", "issues",
-    "memos", "swaps", "doubts", "doubt_answers", "notices", "staff", "harrison", "callover", "opinions", "duty_roster", "dap", "charts", "labs", "kudos", "fame", "mysteries"]);
+    "memos", "swaps", "doubts", "doubt_answers", "notices", "staff", "harrison", "callover", "opinions", "duty_roster", "dap", "charts", "labs", "kudos", "fame", "mysteries", "code_blues", "teach_points", "patients", "tasks"]);
   static SEND_GAP_MS = 15000;
   static SYNC_GAP_MS = 6000;
   static ws = null;
@@ -59716,6 +63963,10 @@ class LogbookActivity extends Base {
       tabs.addView(c);
       if (sign) Ui.margins(b, 8, 0, 0, 0);
       page.addView(tabs);
+      // 10.17: the monthly work record that fills itself (user's pick 201)
+      page.addView(this.entryCard("📄", MyMonth.COLOR, "My month (fills itself)", MyMonth.line(this, this.db), "PDF", {
+        onClick: (v) => { MyMonth.offer(this, this.db); }
+      }));
     }
     if (this.progress) this.renderProgress(page);
     else if (this.toSign && sign) this.renderToSign(page);
@@ -60257,6 +64508,13 @@ Look.LABELS = ["Light", "Dark", "Same as the phone"];
 'use strict';
 /** The home screen with its five tabs: Home, Patients, Wards, Board and Menu. */
 class MainActivity extends Base {
+  /** Census legend groups (10.30): general wards, special wards, isolation, ICU / high dependency. */
+  static GEN = 0xFF3B82F6;
+  static SPECIAL = 0xFFE11D48;
+  static ISOLATION = 0xFFF59E0B;
+  static ICU = 0xFF8B5CF6;
+  static NAVY = 0xFF0E1A4F;
+  static NAVY_DEEP = 0xFF081033;
   static REQ_BACKUP = 11;
   static REQ_RESTORE = 12;
   static REQ_HOD_PICK = 13;
@@ -60278,6 +64536,8 @@ class MainActivity extends Base {
     this.renderGen = 0;
     this.homeLater = null; this.allGrid = null; this.allSearch = null;
     this.allQuery = "";
+    /** The folder opened in place on the home page (10.18), or null. */
+    this.openFolder = null;
   }
 
   liveRefresh() {
@@ -60348,12 +64608,13 @@ class MainActivity extends Base {
 
     const root = this.root;
     root.removeAllViews();
-    root.addView(this.header(), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    const top = Ui.v(this);
+    top.addView(this.header(), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     const off = Net.bar(this);
-    if (off != null) root.addView(off, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    if (off != null) top.addView(off, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     this.current = Ui.scroll(this, Base.capped(this, page, this.maxWidthDp));
-    root.addView(this.current, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-    root.addView(this.tabBar(), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    // 10.19: header and tabs slide away while scrolling down, back on scrolling up
+    root.addView(this.floatingBars(this.current, top, this.tabBar()), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
     Undo.attach(this);
     const y = this.scrollY[tab];
     const sv = this.current;
@@ -60663,8 +64924,9 @@ class MainActivity extends Base {
       cols.addView(teach, Ui.weight(1));
       page.addView(cols);
     }
-    for (const card of [AiReturn.homeCard(this, db), UnitMoves.homeCard(this, db), HandoverActivity.homeCard(this, db), MorningBrief.homeCard(this, db),
-      Ews.homeCard(this, db), ProtocolActivity.homeCard(this, db), Outbreak.homeCard(this, db), CriticalLabs.homeCard(this, db), Watch.homeCard(this, db),
+    // 10.20: NMC biometric attendance for faculty: open the AEBAS app at check-in and check-out time
+    for (const card of [AiReturn.homeCard(this, db), NmcAttendance.homeCard(this, db), UnitMoves.homeCard(this, db), HandoverActivity.homeCard(this, db), MorningBrief.homeCard(this, db),
+      Ews.homeCard(this, db), ProtocolActivity.homeCard(this, db), Countdown.homeCard(this, db), Outbreak.homeCard(this, db), CriticalLabs.homeCard(this, db), Watch.homeCard(this, db),
       ShiftCheck.homeCard(this, db), Results.homeCard(this, db), Docs.homeCard(this, db), Swaps.homeCard(this, db), Logbook.homeCard(this, db)]) if (card != null) duty.addView(card);
     duty.addView(Ui.heading(this, "On duty today", Ui.unitColor(db.todaysUnit())));
     duty.addView(this.admissionDayCard(Dates.admitDay().toString()));
@@ -60674,9 +64936,22 @@ class MainActivity extends Base {
     ab.addView(Ui.button(this, "+  Admit a patient", Ui.PRIMARY, this.opener(FormActivity, "kind", "patient", "unit", db.todaysUnit())));
     duty.addView(ab);
     duty.addView(this.dapCard(Dates.admitDay().toString()));
+    // 10.11: the department album fills the space under the DAP card (10.12: one big frame, on phones too; user asked)
+    if (!AdminControl.isHidden(db, "Album")) duty.addView(Album.homeSection(this, db));
 
+    // 10.17: a golden pop-up with clapping for a faculty 👍 not seen yet (user's pick 214)
+    Applause.check(this, db);
+    // 10.14: Golden Honours, the PG ranking, heads the teaching column (user asked: the most special section)
+    if (!AdminControl.isHidden(db, "Golden Honours")) {
+      Honours.markActive(this, db);
+      teach.addView(Honours.homeSection(this, db));
+    }
     teach.addView(Ui.heading(this, "Teaching today", Ui.PURPLE));
     for (const s of SessionAttendance.open(db)) teach.addView(AcademicActivity.attendanceBanner(this, db, s));
+    const tp = TeachPoints.homeCard(this, db);
+    if (tp != null) teach.addView(tp);
+    const rc = RareCase.homeCard(this, db);
+    if (rc != null) teach.addView(rc);
     const bub = Doubts.homeBubble(this, db);
     if (bub != null) teach.addView(bub);
     if (!AdminControl.isHidden(db, "PG Arena")) teach.addView(Arena.homeCard(this, db));
@@ -60707,41 +64982,44 @@ class MainActivity extends Base {
     page.addView(Ui.heading(this, "Your sections", Ui.PRIMARY));
     const mine = [];
     for (const l of HomeLayout.picks(this, Cloud.role(this), byLabel.keySet(), HomeLayout.YOURS)) mine.push(byLabel.get(l));
+    HomeLayout.shown.clear();
+    for (const m of mine) HomeLayout.shown.add(m.label);
     page.addView(this.tilePanel(mine));
     page.addView(this.allSections(mods));
     this.homeLater = Ui.v(this);
     page.addView(this.homeLater);
   }
 
-  /** "All sections": folded by default; open, it has a search box and the grouped grid. */
+  /** "All sections" (10.18): a search box on top, then eight folders that open in place; "List" shows every folder opened. */
   allSections(mods) {
     const box = Ui.v(this);
     const open = HomeLayout.allOpen(this);
     const head = Ui.h(this);
     head.setGravity(Gravity.CENTER_VERTICAL);
-    head.setPadding(Ui.dp(this, 18), Ui.dp(this, 12), Ui.dp(this, 18), Ui.dp(this, 12));
-    head.setBackground(Ui.round(this, Ui.CARD, 18));
-    head.setElevation(Ui.dp(this, 1));
-    head.addView(Ui.tv(this, "All sections  ·  " + mods.length, 16, Ui.PRIMARY, true), new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
-    head.addView(Ui.tv(this, open ? "Hide ▲" : "Show ▼", 13, Ui.MUTED, true));
-    head.setOnClickListener({ onClick: (v) => {
+    head.setPadding(Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 18), Ui.dp(this, 4));
+    const bar = new View(this);
+    bar.setBackground(Ui.round(this, Ui.PRIMARY, 2));
+    head.addView(bar, Ui.lp(Ui.dp(this, 4), Ui.dp(this, 18)));
+    const t = Ui.tv(this, "All sections  ·  " + mods.length, 16, Ui.TEXT, true);
+    t.setPadding(Ui.dp(this, 10), 0, 0, 0);
+    head.addView(t, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    const sw = Ui.tv(this, open ? "▦  Folders" : "☰  List", 13, Ui.PRIMARY, true);
+    sw.setPadding(Ui.dp(this, 12), Ui.dp(this, 5), Ui.dp(this, 12), Ui.dp(this, 5));
+    sw.setBackground(Ui.round(this, Ui.alpha(Ui.PRIMARY, 0x1A), 14));
+    sw.setOnClickListener({ onClick: (v) => {
       HomeLayout.setAllOpen(this, !open);
       this.render();
     } });
-    const hp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    hp.setMargins(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 4));
-    box.addView(head, hp);
-    this.allSearch = null;
-    this.allGrid = null;
-    if (!open) return box;
+    head.addView(sw);
+    box.addView(head);
     const search = this.allSearch = new EditText(this);
-    search.setHint("Search sections");
+    search.setHint("🔍  Search " + mods.length + " sections");
     search.setSingleLine(true);
     search.setText(this.allQuery);
-    search.setBackground(Ui.outline(this, Ui.CARD, Ui.LINE, 14));
-    search.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
+    search.setBackground(Ui.outline(this, Ui.CARD, Ui.LINE, 22));
+    search.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 16), Ui.dp(this, 10));
     const sp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    sp.setMargins(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), Ui.dp(this, 4));
+    sp.setMargins(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 4));
     box.addView(search, sp);
     const grid = this.allGrid = Ui.v(this);
     grid.addView(this.moduleGrid(mods, this.allQuery));
@@ -60770,44 +65048,10 @@ class MainActivity extends Base {
         page.addView(this.noticeCard(n, true));
     }
 
-    // ward census in an outlined box so it stands out on the home page
-    const box = Ui.v(this);
-    const frame = Ui.round(this, Ui.mix(Ui.TEAL, Color.WHITE, 0.93), 20);
-    frame.setStroke(Ui.dp(this, 2), Ui.TEAL);
-    box.setBackground(frame);
-    box.setPadding(Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 8));
-    const bh = Ui.h(this);
-    bh.setGravity(Gravity.CENTER_VERTICAL);
-    bh.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), Ui.dp(this, 4));
-    const bt = Ui.v(this);
-    bt.addView(Ui.tv(this, "Ward census", 18, Ui.mix(Ui.TEAL, Color.BLACK, 0.45), true));
-    bt.addView(Ui.tv(this, "Inpatients now at TVMCH, by ward", 12, Ui.MUTED, false));
-    bh.addView(bt, Ui.weight(1));
-    const tot = Ui.tv(this, String(db.totalInpatients()), 22, Color.WHITE, true);
-    tot.setGravity(Gravity.CENTER);
-    tot.setBackground(Ui.round(this, Ui.TEAL, 14));
-    tot.setPadding(Ui.dp(this, 14), Ui.dp(this, 4), Ui.dp(this, 14), Ui.dp(this, 4));
-    bh.addView(tot);
-    box.addView(bh);
-    const liveBtn = Ui.button(this, "●  Open live census  ·  all wards in one table", LiveCensusActivity.COLOR, this.opener(LiveCensusActivity));
-    box.addView(liveBtn);
-    Ui.margins(liveBtn, 5, 6, 5, 4);
-    const grid = Ui.v(this);
-    let gr = null;
-    for (let i = 0; i < Db.CENSUS_WARDS.length; i++) {
-      if (i % Base.censusCols(this) === 0) {
-        gr = Ui.h(this);
-        gr.setGravity(Gravity.TOP);
-        grid.addView(gr);
-      }
-      const tp = Ui.weight(1);
-      tp.setMargins(Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5));
-      gr.addView(this.censusTile(Db.CENSUS_WARDS[i]), tp);
-    }
-    box.addView(grid);
+    // 10.30: ward census on a navy panel (user's design): hero with totals and beds, legend, white ward cards
     const bp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-    bp.setMargins(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 6));
-    page.addView(box, bp);
+    bp.setMargins(Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 6));
+    page.addView(this.censusPanel(), bp);
 
     page.addView(this.scheduleCard()); page.addView(Copyright.footer(this, Ui.MUTED));
   }
@@ -61048,6 +65292,8 @@ class MainActivity extends Base {
     m.add(new Module("Charts", onCharts + " on charts", R.drawable.ic_chart, ChartsActivity.COLOR, this.opener(ChartsActivity)));
     m.add(new Module("Virtual rounds", "Ward-by-ward summary", R.drawable.ic_clipboard, VirtualRoundsActivity.COLOR, this.opener(VirtualRoundsActivity)));
     m.add(new Module("MBBS theory papers", "IA marks by Assistant Professor", R.drawable.ic_school, MbbsMarks.COLOR, this.opener(MbbsMarksActivity)));
+    const post = Posting.current(db);
+    m.add(new Module("MBBS clinical posting", post == null ? "Attendance and end-posting marks" : Posting.label(post), R.drawable.ic_school, Posting.COLOR, this.opener(PostingActivity)));
     m.add(new Module("ID ward", db.census(Db.IDW, null) + " · " + db.rotationUnit() + " in charge", R.drawable.ic_shield, Ui.unitColor(Db.IDW), this.opener(UnitActivity, "code", Db.IDW)));
     m.add(new Module("Convict cases", db.num("SELECT COUNT(*) FROM patients WHERE status='IN' AND convict='1'") + " · ward " + db.rotationUnit(), R.drawable.ic_lock, ConvictActivity.COLOR, this.opener(ConvictActivity)));
     const ob = ObstetricActivity.duty(db, YearMonth.from(Dates.today()));
@@ -61066,6 +65312,10 @@ class MainActivity extends Base {
     m.add(new Module("Notice board", db.num("SELECT COUNT(*) FROM notices") + " notices", R.drawable.ic_notice, Ui.AMBER, {
       onClick: (v) => { this.switchTab(3); }
     }));
+    if (NmcAttendance.forMe(this) || Cloud.isAdmin(this)) {
+      const nd = NmcAttendance.due(this, db);
+      m.add(new Module("NMC attendance", nd.isEmpty() ? "AEBAS biometric" : "1 " + NmcAttendance.label(nd) + " due", R.drawable.ic_verified, NmcAttendance.COLOR, this.opener(NmcAttendanceActivity)));
+    }
     m.add(new Module("Attendance", db.num("SELECT COUNT(*) FROM leaves WHERE status='Applied'") + " requests", R.drawable.ic_event, Ui.GREEN, this.opener(AttendanceActivity)));
     m.add(new Module("Academic", "Classes & JC", R.drawable.ic_school, Ui.PURPLE, this.opener(AcademicActivity)));
     const cal = CalendarActivity.thisWeek(this, db);
@@ -61104,6 +65354,7 @@ class MainActivity extends Base {
     m.add(new Module("Infusion calculator", "Dose to ml/hr", R.drawable.ic_drop, Infusion.COLOR, this.opener(InfusionActivity)));
     const running = Protocols.active(db).size();
     m.add(new Module("Protocol timers", running > 0 ? running + " running now" : "Snake bite, OP, DKA, K, fits", R.drawable.ic_warn, Protocols.COLOR, this.opener(ProtocolActivity)));
+    m.add(new Module("Golden-hour scores", GoldenHour.homeLine(db), R.drawable.ic_trophy, GoldenHour.COLOR, this.opener(GoldenHourActivity)));
     const dm = db.num("SELECT COUNT(*) FROM dama WHERE date>=?", Dates.today().withDayOfMonth(1).toString());
     m.add(new Module("DAMA forms", dm > 0 ? dm + " this month · blank form" : "Against advice · blank form", R.drawable.ic_doc, Dama.COLOR, this.opener(DamaActivity)));
     m.add(new Module("Death certificate", "MCCD Form 4 helper", R.drawable.ic_doc, Mccd.COLOR, {
@@ -61172,6 +65423,7 @@ class MainActivity extends Base {
     m.add(new Module("Shortages", shOpen > 0 ? shOpen + " open" : "Equipment, drugs", R.drawable.ic_task, Issues.SHORTAGE_COLOR, this.opener(IssuesActivity, "board", Issues.SHORTAGE)));
     m.add(new Module("Mortality review", DeathReview.pendingList(db).length + " to review", R.drawable.ic_notice, DeathReview.COLOR, this.opener(DeathReviewActivity)));
     m.add(new Module("MD exam planner", ExamPlan.homeLine(this, db), R.drawable.ic_book, ExamPlan.COLOR, this.opener(ExamPlanActivity)));
+    m.add(new Module("Golden Honours", Honours.homeLine(db), R.drawable.ic_trophy, Honours.DEEP, this.opener(HonoursActivity)));
     m.add(new Module("PG Arena", Duel.homeLine(this, db), R.drawable.ic_trophy, Arena.COLOR, this.opener(ArenaActivity)));
     if (Approvals.canApproveAny(this)) m.add(new Module("Approvals", Approvals.waitingForMe(this, db) + " awaiting", R.drawable.ic_approve, Ui.AMBER, this.opener(ApprovalActivity)));
     const hoDay = Dates.admitDay().toString(), hoPrev = Dates.admitDay().minusDays(1).toString();
@@ -61185,6 +65437,11 @@ class MainActivity extends Base {
     m.add(new Module("Antibiogram", db.num("SELECT COUNT(*) FROM cultures WHERE growth='Growth'") + " isolates", R.drawable.ic_shield, Antibiogram.COLOR, this.opener(AntibiogramActivity)));
     m.add(new Module("Wall screen", "For the duty room TV", R.drawable.ic_building, 0xFF0F172A, this.opener(WallActivity)));
     m.add(new Module("Live census", db.totalInpatients() + " inpatients now", R.drawable.ic_trend, LiveCensusActivity.COLOR, this.opener(LiveCensusActivity)));
+    m.add(new Module("Album", db.num("SELECT COUNT(*) FROM " + Album.TABLE) + " photos", R.drawable.ic_camera, Album.NAVY, this.opener(AlbumActivity)));
+    m.add(new Module("Time machine", "Any past date and hour", R.drawable.ic_calendar, TimeMachine.COLOR, this.opener(TimeMachineActivity)));
+    m.add(new Module("Due soon", "Countdown clocks", R.drawable.ic_task, Countdown.COLOR, this.opener(CountdownActivity)));
+    m.add(new Module("Teaching moments", TeachPoints.recent(db, 7).length + " this week", R.drawable.ic_bulb, TeachPoints.COLOR, this.opener(TeachActivity)));
+    m.add(new Module("Rare cases", RareCase.inWards(db).length + " in the wards", R.drawable.ic_star, RareCase.COLOR, this.opener(RareCaseActivity)));
     m.add(new Module("Bed board", db.totalInpatients() + " in beds", R.drawable.ic_bed, BedBoardActivity.COLOR, this.opener(BedBoardActivity)));
     const toSign = Logbook.waitingToSign(this, db);
     m.add(new Module("Logbook", toSign > 0 ? toSign + " awaiting signature" : db.num("SELECT COUNT(*) FROM logbook") + " procedures", R.drawable.ic_book, Logbook.COLOR, this.opener(LogbookActivity)));
@@ -61200,21 +65457,37 @@ class MainActivity extends Base {
   /** Every home section's label and screen, for the admin's "Hide sections" list in Settings (9.71). */
   static CATALOG = new JMap();
 
-  /** Home sections, grouped like an iPhone home screen: four glass icons to a row inside frosted panels. */
-  static GROUPS = [
-    ["AI assistant", "Ask TVMCHMED", "Department memory", "Morning brief", "Deterioration watch", "Viva coach", "Virtual patient", "AI OSCE", "Debate partner", "ECG reader", "Kidney doses", "Wrapped"],
-    ["Wards & critical care", "Ward round", "Code blue", "7:30 checklist", "Missing notes", "Search", "Critical labs", "Clinical scores", "ABG interpreter", "Outbreak watch", "Protocol timers", "Infusion calculator", "DAMA forms", "Consent forms", "Death certificate", "Live census", "Wall screen", "Census", "Bed board", "Tasks", "Pending results", "Antibiogram", "Charts", "Fever ward", "Critical care", "IMCU", "Kandiyaperi", "Geriatric", "Rheumatology"],
-    ["Duty & coordination", "Incidents", "Shortages", "Duty hours", "PG Connect", "PG questions", "Intercom", "Handover", "Faculty chat", "DAP register", "Call duty", "Call over", "VIP cases"],
-    ["Approvals & leave", "HOD desk", "Unit scorecard", "Leave calendar", "Mortality review", "Approvals", "Sign-off queue", "CMCHIS", "Attendance", "PG leave", "Duty swaps", "Leave register"],
-    ["Academics, people & tools", "How to use", "PG Arena", "Harrison's topic", "Flashcards", "Competency map", "Library", "University questions", "MD exam planner", "Presentations", "Latest journals", "Verify a document", "Conduct reports", "Memo", "Crash reports", "Virtual rounds", "MBBS theory papers", "Exam cases", "Dashboard", "Clinical audit", "Learning board", "Topic of the day", "Academic", "Calendar", "Daily MCQ", "Live quiz", "Achievements", "Faculty", "Students", "Logbook", "Dissertation", "Phone book", "Monthly report", "Reports", "Notice board", "Import file"]];
+  /**
+   * Home folders (10.18), named for the job in hand, most used first: what a doctor reaches for on the ward,
+   * in an emergency, on duty, for paperwork, for teaching, as a PG, with AI, and as HOD. Sections not listed go in the last one.
+   */
+  static FOLDERS = [
+    ["Wards", "Census", "Live census", "Bed board", "Ward round", "Charts", "Tasks", "Pending results", "Missing notes", "7:30 checklist", "Due soon", "Search",
+      "Triage ward", "Step-down", "TAEI ward", "Fever ward", "Critical care", "IMCU", "ID ward", "Geriatric", "Rheumatology", "Kandiyaperi",
+      "Convict cases", "Obstetric physician", "Rare cases", "Time machine", "Wall screen"],
+    ["Emergency", "Code blue", "Protocol timers", "Golden-hour scores", "Critical labs", "Deterioration watch", "Clinical scores", "ABG interpreter",
+      "Infusion calculator", "Kidney doses", "ECG reader", "Antibiogram", "Outbreak watch"],
+    ["Duty & team", "DAP register", "Call duty", "Call over", "Handover", "VIP cases", "Intercom", "PG Connect", "Faculty chat", "Notice board",
+      "Calendar", "Phone book", "Faculty", "Students", "Duty hours", "Duty swaps", "Incidents", "Shortages", "Album", "How to use"],
+    ["Paperwork", "Approvals", "Sign-off queue", "PG leave", "Leave register", "Leave calendar", "NMC attendance", "Attendance", "CMCHIS", "DAMA forms", "Consent forms",
+      "Death certificate", "Monthly report", "Reports", "Memo", "Verify a document", "Import file"],
+    ["Teaching", "Academic", "Topic of the day", "Learning board", "Daily MCQ", "Live quiz", "Exam cases", "Presentations", "Teaching moments",
+      "Virtual rounds", "MBBS theory papers", "MBBS clinical posting", "Latest journals", "Library", "Harrison's topic"],
+    ["PG corner", "PG Arena", "Golden Honours", "PG questions", "Flashcards", "University questions", "MD exam planner", "Competency map",
+      "Logbook", "Dissertation", "Achievements"],
+    ["AI assistant", "Ask TVMCHMED", "Morning brief", "Department memory", "Viva coach", "Virtual patient", "AI OSCE", "Debate partner", "Wrapped"],
+    ["HOD & admin", "HOD desk", "Dashboard", "Clinical audit", "Unit scorecard", "Mortality review", "Conduct reports", "Crash reports"]];
+
+  /** One colour per folder, in the order above. */
+  static FOLDER_COLORS = [0xFF0F766E, 0xFFDC2626, 0xFF4F46E5, 0xFFB45309, 0xFF7C3AED, 0xFFCA8A04, 0xFF0891B2, 0xFF334155];
 
   /** Bright, distinct colours for the home icons, so neighbours in a row never share a colour. */
   static TILE_COLORS = (() => {
     const m = new JMap();
     const k = ["Fever ward", "Critical care", "IMCU", "Kandiyaperi", "DAP register", "Call duty", "Call over", "VIP cases",
-      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Leave register", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports", "DAMA forms", "Sign-off queue", "University questions", "MD exam planner", "Library", "Critical labs", "Clinical scores", "Outbreak watch", "ABG interpreter", "Flashcards", "Ward round", "Duty hours", "Competency map", "Harrison's topic", "HOD desk", "Incidents", "Shortages", "Mortality review", "PG Arena", "Virtual patient", "AI OSCE", "Debate partner", "Department memory", "Code blue", "Consent forms", "7:30 checklist", "Missing notes", "Unit scorecard", "Leave calendar", "How to use"];
+      "Geriatric", "Rheumatology", "Approvals", "CMCHIS", "Attendance", "PG leave", "Leave register", "Academic", "Faculty", "Students", "Reports", "Notice board", "Import file", "Daily MCQ", "Faculty chat", "Calendar", "Phone book", "Dissertation", "Census", "Charts", "Achievements", "Handover", "Tasks", "Bed board", "Logbook", "Monthly report", "Live quiz", "Live census", "Learning board", "PG Connect", "Exam cases", "Clinical audit", "Intercom", "Search", "Duty swaps", "Dashboard", "PG questions", "Verify a document", "Crash reports", "Virtual rounds", "MBBS theory papers", "Topic of the day", "Ask TVMCHMED", "Morning brief", "Deterioration watch", "Viva coach", "ECG reader", "Kidney doses", "Wrapped", "Protocol timers", "Infusion calculator", "Death certificate", "Pending results", "Antibiogram", "Wall screen", "Presentations", "Latest journals", "Conduct reports", "DAMA forms", "Sign-off queue", "University questions", "MD exam planner", "Library", "Critical labs", "Clinical scores", "Outbreak watch", "ABG interpreter", "Flashcards", "Ward round", "Duty hours", "Competency map", "Harrison's topic", "HOD desk", "Incidents", "Shortages", "Mortality review", "PG Arena", "Virtual patient", "AI OSCE", "Debate partner", "Department memory", "Code blue", "Consent forms", "7:30 checklist", "Missing notes", "Unit scorecard", "Leave calendar", "How to use", "Time machine", "Due soon", "Rare cases", "Teaching moments", "Album"];
     const c = [0xFFF97316, 0xFFEC4899, 0xFFEF4444, 0xFF10B981, 0xFF6366F1, 0xFF8B5CF6, 0xFF14B8A6, 0xFFF59E0B,
-      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C, 0xFFB7372B, 0xFF0F766E, 0xFF7C2D12, 0xFF9333EA, 0xFF8B5E34, 0xFFDC2626, 0xFF0E7490, 0xFFB45309, 0xFF0369A1, 0xFF6D28D9, 0xFF0E7490, 0xFF9333EA, 0xFF4338CA, 0xFF9F1239, 0xFFB91C1C, 0xFFEA580C, 0xFF0891B2, 0xFF475569, 0xFF7C3AED, 0xFF0D9488, 0xFFB45309, 0xFF7C3AED, 0xFF9333EA, 0xFFDC2626, 0xFF0F766E, 0xFF0D9488, 0xFFBE123C, 0xFF7C3AED, 0xFFD97706, 0xFF4F46E5];
+      0xFF0EA5E9, 0xFF8B5CF6, 0xFFF59E0B, 0xFFE11D48, 0xFF22C55E, 0xFFA855F7, 0xFF0EA5E9, 0xFFD946EF, 0xFF3B82F6, 0xFF06B6D4, 0xFF84CC16, 0xFFFBBF24, 0xFFF43F5E, 0xFF7C3AED, 0xFF16A34A, 0xFF0891B2, 0xFF2563EB, 0xFF4F46E5, 0xFF0F766E, 0xFFDC2626, 0xFFCA8A04, 0xFF0D9488, 0xFFEA580C, 0xFF0369A1, 0xFF4338CA, 0xFF1E3A8A, 0xFF46178F, 0xFF0E7490, 0xFFC026D3, 0xFF25D366, 0xFFEA580C, 0xFFE11D48, 0xFF0891B2, 0xFF4F46E5, 0xFF0E7490, 0xFF0F766E, 0xFFF26B1D, 0xFF0D3B66, 0xFFB91C1C, 0xFF0F766E, 0xFF9333EA, 0xFFDB2777, 0xFF4F46E5, 0xFFEA580C, 0xFFB45309, 0xFF0F766E, 0xFFDB2777, 0xFF0E7490, 0xFF7C3AED, 0xFFDC2626, 0xFF0891B2, 0xFF475569, 0xFF1D4ED8, 0xFF15803D, 0xFF334155, 0xFFC2410C, 0xFF0F766E, 0xFFB91C1C, 0xFFB7372B, 0xFF0F766E, 0xFF7C2D12, 0xFF9333EA, 0xFF8B5E34, 0xFFDC2626, 0xFF0E7490, 0xFFB45309, 0xFF0369A1, 0xFF6D28D9, 0xFF0E7490, 0xFF9333EA, 0xFF4338CA, 0xFF9F1239, 0xFFB91C1C, 0xFFEA580C, 0xFF0891B2, 0xFF475569, 0xFF7C3AED, 0xFF0D9488, 0xFFB45309, 0xFF7C3AED, 0xFF9333EA, 0xFFDC2626, 0xFF0F766E, 0xFF0D9488, 0xFFBE123C, 0xFF7C3AED, 0xFFD97706, 0xFF4F46E5, 0xFF4338CA, 0xFFEA580C, 0xFF7C3AED, 0xFFCA8A04, 0xFF0F2A5C];
     for (let i = 0; i < k.length; i++) m.put(k[i], c[i]);
     return m;
   })();
@@ -61237,42 +65510,185 @@ class MainActivity extends Base {
     return panel;
   }
 
+  /** The modules of each folder, in folder order; sections no folder names go in the last one. */
+  folderModules(mods) {
+    const FOLDERS = MainActivity.FOLDERS;
+    const byLabel = new JMap();
+    for (const m of mods) byLabel.put(m.label, m);
+    const out = [];
+    for (let g = 0; g < FOLDERS.length; g++) {
+      const inn = [];
+      for (let k = 1; k < FOLDERS[g].length; k++) {
+        const m = byLabel.remove(FOLDERS[g][k]);
+        if (m != null) inn.push(m);
+      }
+      out.push(inn);
+    }
+    out[FOLDERS.length - 1].addAll(byLabel.values());
+    return out;
+  }
+
   moduleGrid(all, query) {
-    const GROUPS = MainActivity.GROUPS;
+    const FOLDERS = MainActivity.FOLDERS;
     const mods = all.filter(m => HomeLayout.matches(query, m.label, m.sub));
     if (mods.isEmpty()) return this.emptyNote("No section matches \"" + query.trim() + "\"");
     if (!Ui.nz(query).trim().isEmpty()) return this.tilePanel(mods);
-    const cols = Base.tileCols(this);
-    const byLabel = new JMap();
-    for (const m of mods) byLabel.put(m.label, m);
+    const folders = this.folderModules(mods);
+    if (!HomeLayout.allOpen(this)) return this.folderGrid(folders);
     const out = Ui.v(this);
-    for (let g = 0; g < GROUPS.length; g++) {
-      const inn = [];
-      for (let k = 1; k < GROUPS[g].length; k++) {
-        const m = byLabel.remove(GROUPS[g][k]);
-        if (m != null) inn.add(m);
-      }
-      if (g === GROUPS.length - 1) inn.addAll(byLabel.values());
-      if (inn.isEmpty()) continue;
-      const h = Ui.tv(this, GROUPS[g][0].toUpperCase(), 11, Ui.MUTED, true);
-      h.setLetterSpacing(0.1);
-      h.setPadding(Ui.dp(this, 26), Ui.dp(this, g === 0 ? 4 : 12), 0, Ui.dp(this, 2));
-      out.addView(h);
-      const panel = Ui.card(this);
-      panel.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 6));
-      let row = null;
-      for (let i = 0; i < inn.size(); i++) {
-        if (i % cols === 0) {
-          row = Ui.h(this);
-          row.setGravity(Gravity.TOP);
-          panel.addView(row);
-        }
-        row.addView(this.moduleTile(inn.get(i)), Ui.weight(1));
-      }
-      for (let i = inn.size() % cols; i > 0 && i < cols; i++) row.addView(new View(this), Ui.weight(1));
-      out.addView(panel);
+    for (let g = 0; g < FOLDERS.length; g++) {
+      if (folders[g].isEmpty()) continue;
+      out.addView(this.folderPanel(g, folders[g], false));
     }
     return out;
+  }
+
+  /** The eight folders, four to a row on a phone; the open one unfolds right under its row. */
+  folderGrid(folders) {
+    const FOLDERS = MainActivity.FOLDERS;
+    const cols = Base.tileCols(this);
+    const out = Ui.v(this);
+    const panel = Ui.card(this);
+    panel.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 6));
+    out.addView(panel);
+    const shown = [];
+    for (let g = 0; g < FOLDERS.length; g++) if (!folders[g].isEmpty()) shown.push(g);
+    let row = null;
+    let openRowEnd = -1, openG = -1;
+    for (let i = 0; i < shown.length; i++) {
+      const g = shown[i];
+      if (i % cols === 0) {
+        row = Ui.h(this);
+        row.setGravity(Gravity.TOP);
+        panel.addView(row);
+      }
+      const isOpen = FOLDERS[g][0] === this.openFolder;
+      if (isOpen) openG = g;
+      row.addView(this.folderTile(g, folders[g], isOpen), Ui.weight(1));
+      if ((i % cols === cols - 1 || i === shown.length - 1) && openG >= 0 && openRowEnd < 0) {
+        openRowEnd = i;
+        // the open folder unfolds inside the panel, under the row of its icon
+        panel.addView(this.folderPanel(openG, folders[openG], true));
+      }
+    }
+    for (let i = shown.length % cols; i > 0 && i < cols; i++) row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+    return out;
+  }
+
+  /** A folder icon: a tinted rounded square showing its first nine section icons, a red count when something waits. */
+  folderTile(g, inn, isOpen) {
+    const FOLDERS = MainActivity.FOLDERS, TILE_COLORS = MainActivity.TILE_COLORS;
+    const color = MainActivity.FOLDER_COLORS[g];
+    const tile = Ui.v(this);
+    tile.setGravity(Gravity.CENTER_HORIZONTAL);
+    tile.setPadding(Ui.dp(this, 2), Ui.dp(this, 4), Ui.dp(this, 2), Ui.dp(this, 8));
+    const icon = new FrameLayout(this);
+    icon.setClipChildren(false);
+    icon.setPadding(Ui.dp(this, 6), Ui.dp(this, 4), Ui.dp(this, 6), 0);
+    const sq = Ui.v(this);
+    sq.setGravity(Gravity.CENTER);
+    const bg = Ui.round(this, Ui.mix(color, Color.WHITE, isOpen ? 0.70 : 0.84), 18);
+    bg.setStroke(Ui.dp(this, isOpen ? 3 : 1), isOpen ? color : Ui.alpha(color, 0x55));
+    sq.setBackground(bg);
+    sq.setPadding(Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5), Ui.dp(this, 5));
+    for (let r = 0; r < 3; r++) {
+      const mr = Ui.h(this);
+      mr.setGravity(Gravity.CENTER);
+      for (let k = 0; k < 3; k++) {
+        const i = r * 3 + k;
+        let v;
+        if (i < inn.length) {
+          const m = inn[i];
+          v = Ui.iconBadge(this, m.icon, TILE_COLORS.containsKey(m.label) ? TILE_COLORS.get(m.label) : m.color, 15);
+        } else {
+          v = new View(this);
+        }
+        const mp = Ui.lp(Ui.dp(this, 15), Ui.dp(this, 15));
+        mp.setMargins(Ui.dp(this, 1), Ui.dp(this, 1), Ui.dp(this, 1), Ui.dp(this, 1));
+        mr.addView(v, mp);
+      }
+      sq.addView(mr);
+    }
+    icon.addView(sq, new FrameLayout.LayoutParams(Ui.dp(this, 62), Ui.dp(this, 62), Gravity.CENTER_HORIZONTAL));
+    let waiting = 0;
+    for (const m of inn) waiting += MainActivity.badgeOf(m.sub);
+    if (waiting > 0) {
+      const b = Ui.tv(this, waiting > 99 ? "99+" : String(waiting), 11, Color.WHITE, true);
+      b.setGravity(Gravity.CENTER);
+      const bd = Ui.round(this, 0xFFEF4444, 11);
+      bd.setStroke(Ui.dp(this, 2), Color.WHITE);
+      b.setBackground(bd);
+      b.setMinWidth(Ui.dp(this, 22));
+      b.setPadding(Ui.dp(this, 5), 0, Ui.dp(this, 5), 0);
+      const bp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 22), Gravity.TOP | Gravity.END);
+      bp.setMargins(0, -Ui.dp(this, 4), -Ui.dp(this, 6), 0);
+      icon.addView(b, bp);
+    }
+    tile.addView(icon, Ui.lp(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    const l = Ui.tv(this, FOLDERS[g][0], 12.5, isOpen ? color : Ui.TEXT, true);
+    l.setGravity(Gravity.CENTER);
+    l.setSingleLine(true);
+    l.setAutoSizeTextTypeUniformWithConfiguration(9, 13, 1, TypedValue.COMPLEX_UNIT_SP);
+    tile.addView(l, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 18)));
+    Ui.margins(l, 0, 2, 0, 0);
+    const s = Ui.tv(this, waiting > 0 ? waiting + " waiting" : inn.length + " sections", 10, waiting > 0 ? 0xFFDC2626 : Ui.MUTED, waiting > 0);
+    s.setGravity(Gravity.CENTER);
+    s.setSingleLine(true);
+    tile.addView(s, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 15)));
+    tile.setBackground(Ui.round(this, 0x00FFFFFF, 16));
+    Ui.ripple(tile, Ui.alpha(color, 0x26));
+    const name = FOLDERS[g][0];
+    tile.setOnClickListener({ onClick: (v) => {
+      this.openFolder = name === this.openFolder ? null : name;
+      if (this.allGrid == null) { this.render(); return; }
+      this.allGrid.removeAllViews();
+      this.allGrid.addView(this.moduleGrid(this.modules(), this.allQuery));
+    } });
+    return tile;
+  }
+
+  /** A folder's sections under a coloured title: unfolded on the home page, or one of the panels of the List view. */
+  folderPanel(g, inn, inPlace) {
+    const cols = Base.tileCols(this);
+    const color = MainActivity.FOLDER_COLORS[g];
+    const box = Ui.v(this);
+    const bg = Ui.round(this, Ui.mix(color, Color.WHITE, 0.93), 18);
+    bg.setStroke(Ui.dp(this, 1), Ui.alpha(color, 0x66));
+    box.setBackground(bg);
+    box.setPadding(Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 4));
+    const head = Ui.h(this);
+    head.setGravity(Gravity.CENTER_VERTICAL);
+    head.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 8), Ui.dp(this, 4));
+    const h = Ui.tv(this, MainActivity.FOLDERS[g][0].toUpperCase() + "  ·  " + inn.length, 12, Ui.mix(color, Color.BLACK, 0.25), true);
+    h.setLetterSpacing(0.08);
+    head.addView(h, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    if (inPlace) {
+      const x = Ui.tv(this, "✕", 16, Ui.MUTED, true);
+      x.setPadding(Ui.dp(this, 10), Ui.dp(this, 2), Ui.dp(this, 6), Ui.dp(this, 2));
+      x.setOnClickListener({ onClick: (v) => {
+        this.openFolder = null;
+        if (this.allGrid == null) { this.render(); return; }
+        this.allGrid.removeAllViews();
+        this.allGrid.addView(this.moduleGrid(this.modules(), this.allQuery));
+      } });
+      head.addView(x);
+    }
+    box.addView(head);
+    let row = null;
+    for (let i = 0; i < inn.length; i++) {
+      if (i % cols === 0) {
+        row = Ui.h(this);
+        row.setGravity(Gravity.TOP);
+        box.addView(row);
+      }
+      row.addView(this.moduleTile(inn[i]), Ui.weight(1));
+    }
+    for (let i = inn.length % cols; i > 0 && i < cols; i++) row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+    const lp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    if (inPlace) lp.setMargins(Ui.dp(this, 4), Ui.dp(this, 2), Ui.dp(this, 4), Ui.dp(this, 8));
+    else lp.setMargins(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
+    box.setLayoutParams(lp);
+    return box;
   }
 
   moduleTile(m) {
@@ -61320,6 +65736,18 @@ class MainActivity extends Base {
       HomeLayout.tapped(this, m.label);
       call(m.l, 'onClick', v);
     } });
+    // 10.18: press and hold to pin a section to "Your sections", or take it off
+    tile.setOnLongClickListener({ onLongClick: (v) => {
+      const pinned = HomeLayout.shownMine(this, m.label);
+      new AlertDialog.Builder(this)
+        .setTitle(m.label)
+        .setItems([pinned ? "Remove from Your sections" : "📌  Pin to Your sections", "Open"], (d, which) => {
+          if (which === 1) { call(m.l, 'onClick', null); return; }
+          HomeLayout.pin(this, m.label, !pinned);
+          this.render();
+        }).show();
+      return true;
+    } });
     return tile;
   }
 
@@ -61331,32 +65759,240 @@ class MainActivity extends Base {
     return m.find() ? Integer.parseInt(m.group(1)) : 0;
   }
 
+  static censusGroup(code) {
+    if (Db.isWardUnit(code)) return MainActivity.GEN;
+    if (Db.IMCU === code || Db.CCB === code) return MainActivity.ICU;
+    if (Db.FEVER === code || Db.IDW === code) return MainActivity.ISOLATION;
+    return MainActivity.SPECIAL;
+  }
+
+  censusPanel() {
+    const box = Ui.v(this);
+    box.setBackground(Ui.gradient(this, [MainActivity.NAVY, MainActivity.NAVY_DEEP], 22));
+    box.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 10));
+    box.addView(this.censusHero());
+
+    const hd = Ui.h(this);
+    hd.setGravity(Gravity.CENTER_VERTICAL);
+    hd.setPadding(Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 4));
+    hd.addView(Ui.tv(this, "🏥  Ward-wise census", 17, Color.WHITE, true));
+    const rule = new View(this);
+    rule.setBackgroundColor(0x33FFFFFF);
+    const rp = new LinearLayoutParams(0, Ui.dp(this, 1), 1);
+    rp.leftMargin = Ui.dp(this, 12);
+    hd.addView(rule, rp);
+    box.addView(hd);
+    const legend = Ui.h(this);
+    legend.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), Ui.dp(this, 4));
+    const ln = ["General ward", "Special ward", "Isolation", "ICU / High dependency"];
+    const lc = [MainActivity.GEN, MainActivity.SPECIAL, MainActivity.ISOLATION, MainActivity.ICU];
+    for (let i = 0; i < ln.length; i++) {
+      const dot = new View(this);
+      dot.setBackground(Ui.round(this, lc[i], 6));
+      const dp = Ui.lp(Ui.dp(this, 10), Ui.dp(this, 10));
+      dp.leftMargin = Ui.dp(this, i === 0 ? 0 : 12);
+      legend.addView(dot, dp);
+      const t = Ui.tv(this, ln[i], 11, 0xDDFFFFFF, false);
+      t.setPadding(Ui.dp(this, 5), 0, 0, 0);
+      legend.addView(t);
+      legend.setGravity(Gravity.CENTER_VERTICAL);
+    }
+    box.addView(Ui.hscroll(this, legend));
+
+    const grid = Ui.v(this);
+    let gr = null;
+    const cols = Base.censusCols(this);
+    const n = Db.CENSUS_WARDS.length + 1;
+    for (let i = 0; i < n; i++) {
+      if (i % cols === 0) {
+        gr = Ui.h(this);
+        grid.addView(gr);
+      }
+      const tp = new LinearLayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1);
+      tp.setMargins(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+      gr.addView(i < Db.CENSUS_WARDS.length ? this.censusTile(Db.CENSUS_WARDS[i]) : this.allWardsTile(), tp);
+    }
+    for (let k = n % cols === 0 ? cols : n % cols; k < cols; k++) gr.addView(new View(this), new LinearLayoutParams(0, 1, 1));
+    box.addView(grid);
+    return box;
+  }
+
+  /** Totals, occupied and vacant beds, and the Live census button. */
+  censusHero() {
+    const db = this.db;
+    const hero = Ui.v(this);
+    hero.setBackground(Ui.gradient(this, [0xFF2A3FB8, 0xFF16206E], 18));
+    hero.setPadding(Ui.dp(this, 14), Ui.dp(this, 14), Ui.dp(this, 14), Ui.dp(this, 14));
+    const tr = Ui.h(this);
+    tr.setGravity(Gravity.CENTER_VERTICAL);
+    tr.addView(Ui.iconBadge(this, R.drawable.ic_bed, MainActivity.GEN, 44));
+    const tt = Ui.v(this);
+    tt.setPadding(Ui.dp(this, 12), 0, 0, 0);
+    tt.addView(Ui.tv(this, "Ward Census", 22, Color.WHITE, true));
+    tt.addView(Ui.tv(this, "Inpatients now at TVMCH, by ward", 13, 0xCCFFFFFF, false));
+    tr.addView(tt, Ui.weight(1));
+    hero.addView(tr);
+
+    const total = db.totalInpatients();
+    let cap = 0, occ = 0;
+    for (const c of Db.CENSUS_WARDS) {
+      const k = db.capacity(c);
+      if (k <= 0) continue;
+      cap += k;
+      occ += db.census(c, null);
+    }
+    const vac = Math.max(0, cap - occ);
+    const stats = Ui.h(this);
+    stats.setBackground(Ui.outline(this, 0x1AFFFFFF, 0x40FFFFFF, 16));
+    stats.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10));
+    stats.addView(this.heroStat("Total inpatients", String(total), null), Ui.weight(1));
+    stats.addView(this.heroRule());
+    stats.addView(this.heroStat("Occupied beds", String(occ), cap > 0 ? "(" + Math.round(occ * 100 / cap) + "%)" : null), Ui.weight(1));
+    stats.addView(this.heroRule());
+    stats.addView(this.heroStat("Vacant beds", String(vac), cap > 0 ? "(" + Math.round(vac * 100 / cap) + "%)" : null), Ui.weight(1));
+    hero.addView(stats);
+    Ui.margins(stats, 0, 12, 0, 0);
+
+    const live = Ui.h(this);
+    live.setGravity(Gravity.CENTER_VERTICAL);
+    live.setBackground(Ui.outline(this, 0x3314B8A6, 0xFF2DD4BF, 30));
+    live.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
+    live.addView(Ui.tv(this, "((●))", 15, 0xFF5EEAD4, true));
+    const lt = Ui.v(this);
+    lt.setPadding(Ui.dp(this, 12), 0, 0, 0);
+    lt.addView(Ui.tv(this, "Live Census", 15, Color.WHITE, true));
+    lt.addView(Ui.tv(this, "Open and view all wards in one table", 12, 0xCCFFFFFF, false));
+    live.addView(lt, Ui.weight(1));
+    live.addView(Ui.tv(this, "›", 24, Color.WHITE, true));
+    Ui.ripple(live, 0x332DD4BF);
+    live.setOnClickListener(this.opener(LiveCensusActivity));
+    hero.addView(live);
+    Ui.margins(live, 0, 12, 0, 0);
+    return hero;
+  }
+
+  heroStat(label, value, pct) {
+    const v = Ui.v(this);
+    v.setGravity(Gravity.CENTER);
+    const l = Ui.tv(this, label, 11, 0xCCFFFFFF, false);
+    l.setGravity(Gravity.CENTER);
+    v.addView(l);
+    const r = Ui.h(this);
+    r.setGravity(Gravity.CENTER | Gravity.BOTTOM);
+    r.addView(Ui.tv(this, value, 26, Color.WHITE, true));
+    if (pct != null) r.addView(Ui.tv(this, " " + pct, 12, 0xFF93C5FD, true));
+    v.addView(r);
+    return v;
+  }
+
+  heroRule() {
+    const v = new View(this);
+    v.setBackgroundColor(0x40FFFFFF);
+    v.setLayoutParams(new LinearLayoutParams(Ui.dp(this, 1), LinearLayout.LayoutParams.MATCH_PARENT));
+    return v;
+  }
+
   censusTile(code) {
     const db = this.db;
     const color = Ui.unitColor(code);
-    const t = Ui.card(this);
-    t.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+    const group = MainActivity.censusGroup(code);
+    const t = Ui.v(this);
+    const bg = Ui.gradient(this, [Color.WHITE, Ui.mix(color, Color.WHITE, 0.90)], 16);
+    bg.setStroke(Ui.dp(this, 1), Ui.mix(color, Color.WHITE, 0.75));
+    t.setBackground(bg);
+    t.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 8));
+    const total = db.census(code, null), cap = db.capacity(code);
+
     const top = Ui.h(this);
-    top.addView(Ui.pill(this, Db.shortName(code), color));
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    const code1 = Ui.tv(this, Db.shortName(code), 14, Color.WHITE, true);
+    code1.setBackground(Ui.gradient(this, [Ui.mix(color, Color.WHITE, 0.12), Ui.mix(color, Color.BLACK, 0.12)], 12));
+    code1.setPadding(Ui.dp(this, 11), Ui.dp(this, 4), Ui.dp(this, 11), Ui.dp(this, 4));
+    top.addView(code1);
     const sp = new View(this);
     top.addView(sp, new LinearLayoutParams(0, 1, 1));
-    const total = db.census(code, null);
-    top.addView(Ui.tv(this, String(total), 22, Ui.TEXT, true));
+    const occ = Ui.h(this);
+    occ.setGravity(Gravity.BOTTOM);
+    occ.setBackground(Ui.round(this, Ui.alpha(color, 0x1F), 14));
+    occ.setPadding(Ui.dp(this, 9), Ui.dp(this, 2), Ui.dp(this, 9), Ui.dp(this, 3));
+    occ.addView(Ui.tv(this, String(total), 18, Ui.mix(color, Color.BLACK, 0.2), true));
+    if (cap > 0) occ.addView(Ui.tv(this, " /" + cap, 12, Ui.mix(color, Color.BLACK, 0.2), false));
+    top.addView(occ);
     t.addView(top);
+    const name = Db.unitName(code);
+    if (!name.equals(Db.shortName(code))) {
+      const nm = Ui.tv(this, name, 12, Ui.MUTED, false);
+      nm.setSingleLine(true);
+      nm.setEllipsize(TextUtils.TruncateAt.END);
+      t.addView(nm);
+      Ui.margins(nm, 0, 4, 0, 0);
+    }
     const m = db.census(code, "M"), f = db.census(code, "F");
-    t.addView(Ui.muted(this, "Male " + m + "  ·  Female " + f));
-    t.addView(Ui.bar(this, total, db.capacity(code), color));
+    const mf = Ui.tv(this, "👤 Male " + m + "   |   Female " + f, 13, Ui.TEXT, false);
+    t.addView(mf);
+    Ui.margins(mf, 0, 4, 0, 0);
+    if (cap > 0) {
+      const b = Ui.bar(this, total, cap, color);
+      t.addView(b);
+      Ui.margins(b, 0, 6, 0, 0);
+    }
     const tasks = Tasks.inWard(db, code);
     if (tasks > 0) t.addView(Ui.tv(this, "⏳ " + tasks + " pending " + (tasks === 1 ? "task" : "tasks"), 12, Tasks.COLOR, true));
-    const u = db.unit(code);
+    t.addView(new View(this), new LinearLayoutParams(1, 0, 1));   // status line sits at the bottom of every card
+    const line = new View(this);
+    line.setBackgroundColor(Ui.mix(color, Color.WHITE, 0.82));
+    t.addView(line, Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 1)));
+    Ui.margins(line, 0, 7, 0, 5);
+    const st = Ui.h(this);
+    st.setGravity(Gravity.CENTER_VERTICAL);
+    let status, sc;
     if (Db.isWardUnit(code)) {
       const away = db.awayFrom(code);
-      t.addView(Ui.tv(this, away > 0 ? away + " in special wards" : "Admits " + Dates.DAYS[Ui.toInt(u.get("admit_day"), 0)], 12, away > 0 ? Ui.RED : Ui.MUTED, false));
+      const u = db.unit(code);
+      status = away > 0 ? "★ " + away + " in special wards" : "● Open  ·  admits " + Dates.DAYS[Ui.toInt(u.get("admit_day"), 0)].substring(0, 3);
+      sc = away > 0 ? MainActivity.SPECIAL : Ui.GREEN;
+    } else if (Db.CCB === code) {
+      status = "↻ " + Math.max(0, 12 - total) + " beds free";
+      sc = MainActivity.ICU;
     } else {
-      t.addView(Ui.tv(this, Db.CCB === code ? (12 - total) + " beds free" : "Admits daily", 12, Ui.MUTED, false));
+      status = "↻ Admits daily";
+      sc = group;
     }
+    const stt = Ui.tv(this, status, 12, sc, true);
+    stt.setSingleLine(true);
+    stt.setEllipsize(TextUtils.TruncateAt.END);
+    st.addView(stt, Ui.weight(1));
+    const go = Ui.tv(this, "›", 16, Ui.mix(color, Color.BLACK, 0.2), true);
+    go.setGravity(Gravity.CENTER);
+    go.setBackground(Ui.round(this, Ui.alpha(color, 0x1A), 12));
+    st.addView(go, Ui.lp(Ui.dp(this, 24), Ui.dp(this, 24)));
+    t.addView(st);
     Ui.ripple(t, Ui.alpha(color, 0x22));
     t.setOnClickListener(this.opener(UnitActivity, "code", code));
+    return t;
+  }
+
+  /** The last cell: every ward's detailed census and beds. */
+  allWardsTile() {
+    const t = Ui.v(this);
+    t.setGravity(Gravity.CENTER_VERTICAL);
+    t.setBackground(Ui.outline(this, 0x14FFFFFF, 0x4D60A5FA, 16));
+    t.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12));
+    const r = Ui.h(this);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    const plus = Ui.tv(this, "+", 24, Color.WHITE, true);
+    plus.setGravity(Gravity.CENTER);
+    plus.setBackground(Ui.round(this, MainActivity.GEN, 22));
+    r.addView(plus, Ui.lp(Ui.dp(this, 40), Ui.dp(this, 40)));
+    const tx = Ui.v(this);
+    tx.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 4), 0);
+    tx.addView(Ui.tv(this, "View all wards", 14, Color.WHITE, true));
+    tx.addView(Ui.tv(this, "Detailed census & bed status", 11, 0xCCFFFFFF, false));
+    r.addView(tx, Ui.weight(1));
+    r.addView(Ui.tv(this, "›", 22, Color.WHITE, true));
+    t.addView(r);
+    Ui.ripple(t, 0x3360A5FA);
+    t.setOnClickListener(this.opener(BedBoardActivity));
     return t;
   }
 
@@ -65453,6 +70089,202 @@ class MorningBriefActivity extends Base {
   }
 }
 ;
+/* ---- app/MyMonth.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * My month (10.17, user's pick 201): a PG's monthly work record that fills itself from what they already entered: the case sheets they
+ * wrote, progress notes, procedures in the logbook, academics attended, presentations, exam cases presented and faculty likes. A PDF or
+ * Word file to submit, with places for the unit Assistant Professor's and the HOD's signatures. No patient names, only IP numbers.
+ */
+class MyMonth {
+  static COLOR = 0xFF4338CA;
+  static HEAD = 0xFF312E81;
+
+  static within(d, d0, d1) {
+    if (Ui.nz(d).length < 10) return false;
+    const x = d.substring(0, 10);
+    return x.compareTo(d0) >= 0 && x.compareTo(d1) <= 0;
+  }
+
+  static same(name, me) {
+    return !me.isEmpty() && Wrapped.names(name, me);
+  }
+
+  /** Everything this person did between d0 and d1 (inclusive, ISO dates). */
+  static collect(db, staffId, name, d0, d1) {
+    const out = new MyMonth.Data();
+    const me = Wrapped.norm(name);
+    const sid = Ui.nz(staffId);
+    for (const r of db.rows("SELECT c.data, p.admit_date, p.ip_no, p.age, p.sex, p.diagnosis, p.home_unit FROM case_sheets c LEFT JOIN patients p ON p.id=c.id "
+      + "WHERE substr(IFNULL(c.updated,''),1,10)>=? ORDER BY p.admit_date", d0)) {
+      let o;
+      try {
+        o = new JSONObject(Ui.nz(r.get("data")));
+      } catch (e) {
+        continue;
+      }
+      if (MyMonth.same(CaseSheet.s(o, "wb_name"), me) && MyMonth.within(r.get("admit_date"), d0, d1)) {
+        const fdx = CaseSheet.s(o, "final_dx");
+        if (!fdx.isEmpty()) out.finalDx++;
+        out.cases.add([Dates.nice(r.get("admit_date")), Ui.nz(r.get("ip_no")), Ui.nz(r.get("age")) + " " + Ui.nz(r.get("sex")),
+          fdx.isEmpty() ? Ui.nz(r.get("diagnosis")) : fdx, Db.shortName(Ui.nz(r.get("home_unit")))]);
+      }
+      const a = o.optJSONArray(CaseSheet.PROGRESS);
+      if (a == null) continue;
+      for (let i = 0; i < a.length(); i++) {
+        const n = a.optJSONObject(i);
+        if (n != null && MyMonth.within(CaseSheet.s(n, "date"), d0, d1) && MyMonth.same(CaseSheet.s(n, "by"), me)) out.notes++;
+      }
+    }
+    for (const r of db.rows("SELECT * FROM logbook WHERE date BETWEEN ? AND ? ORDER BY date, id", d0, d1)) {
+      if (!(sid.length > 0 && sid === r.get("staff_id") || MyMonth.same(r.get("pg"), me))) continue;
+      out.procs.add([Dates.nice(r.get("date")), Ui.nz(r.get("procedure")), Ui.nz(r.get("role")), Ui.nz(r.get("supervisor")), Ui.nz(r.get("status"))]);
+    }
+    for (const r of db.rows("SELECT t.staff_id, t.name, t.time, a.date, a.kind, a.topic FROM acad_attendance t LEFT JOIN academics a ON a.id=t.academic_id "
+      + "WHERE IFNULL(t.status,'Present') IN ('Present','') ORDER BY t.time")) {
+      const day = Ui.nz(r.get("date")).isEmpty() ? Ui.nz(r.get("time")) : r.get("date");
+      if (!MyMonth.within(day, d0, d1)) continue;
+      if (!(sid.length > 0 && sid === r.get("staff_id") || MyMonth.same(r.get("name"), me))) continue;
+      const k = Array.from(Db.ACAD_KINDS).indexOf(Ui.nz(r.get("kind")));
+      out.acads.add([Dates.nice(day.substring(0, 10)), k >= 0 ? Db.ACAD_LABELS[k] : Ui.nz(r.get("kind")), Ui.nz(r.get("topic"))]);
+    }
+    for (const r of db.rows("SELECT date, title, kind, presenter FROM acad_files WHERE date BETWEEN ? AND ? ORDER BY date", d0, d1))
+      if (MyMonth.same(r.get("presenter"), me)) out.pres.add([Dates.nice(r.get("date")), Ui.nz(r.get("kind")), Ui.nz(r.get("title"))]);
+    // exam cases presented, by the student's name
+    for (const r of db.rows("SELECT a.date, a.student, a.faculty, e.kind, e.system FROM exam_allots a LEFT JOIN exam_cases e ON e.id=a.case_id "
+      + "WHERE a.date BETWEEN ? AND ? AND a.presented='1' ORDER BY a.date", d0, d1))
+      if (MyMonth.same(r.get("student"), me)) out.exams.add([Dates.nice(r.get("date")), (Ui.nz(r.get("kind")) + " " + Ui.nz(r.get("system"))).trim(), Ui.nz(r.get("faculty"))]);
+    for (const r of db.rows("SELECT to_staff, to_name FROM " + Kudos.TABLE + " WHERE substr(time,1,10) BETWEEN ? AND ?", d0, d1))
+      if (sid.length > 0 && sid === r.get("to_staff") || MyMonth.same(r.get("to_name"), me)) out.likes++;
+    return out;
+  }
+
+  static c(t) { return new FormDoc.Cell(t).size(8.5); }
+  static h(t) { return new FormDoc.Cell(t).b().size(8.5).fill(0xFFE0E7FF).color(MyMonth.HEAD); }
+
+  static build(db, staffId, name, unit, ym) {
+    const c = MyMonth.c, h = MyMonth.h, HEAD = MyMonth.HEAD;
+    const d0 = ym.atDay(1).toString(), d1 = ym.atEndOfMonth().toString();
+    const d = MyMonth.collect(db, staffId, name, d0, d1);
+    const f = new FormDoc();
+    f.college = db.setting("college", "Tirunelveli Medical College");
+    f.address = "Tirunelveli";
+    f.dept = db.setting("dept", "Department of General Medicine");
+    const month = Dates.month(ym.atDay(1));
+    f.title = "PG MONTHLY WORK RECORD  —  " + month.toUpperCase();
+    f.footer = "Filled from the entries in TVMCHMED  •  " + f.dept + ", " + f.college;
+    f.fileBase = "My_month_" + Ui.nz(name).replaceAllRx("[^A-Za-z0-9]+", "_") + "_" + ym;
+    const a = f.block("POSTGRADUATE", HEAD, 0.2, 0.3, 0.2, 0.3);
+    a.row(16, h("Name"), c(name).b(), h("Unit"), c(Db.unitName(unit)));
+    a.row(16, h("Month"), c(month), h("PG year"), c(MyMonth.pgYear(db, staffId)));
+    const s = f.block("SUMMARY", HEAD, 0.25, 0.25, 0.25, 0.25);
+    s.row(16, h("Cases clerked"), c(String(d.cases.size())), h("Final diagnosis written"), c(String(d.finalDx)));
+    s.row(16, h("Progress notes"), c(String(d.notes)), h("Procedures"), c(String(d.procs.size())));
+    s.row(16, h("Academics attended"), c(String(d.acads.size())), h("Presentations"), c(String(d.pres.size())));
+    s.row(16, h("Exam cases presented"), c(String(d.exams.size())), h("Faculty likes"), c(String(d.likes)));
+
+    const cb = f.block("CASES CLERKED (case sheets written)", HEAD, 0.06, 0.14, 0.14, 0.12, 0.44, 0.1);
+    cb.row(15, h("No."), h("Admitted"), h("IP number"), h("Age / sex"), h("Diagnosis"), h("Unit"));
+    if (d.cases.isEmpty()) cb.row(15, c("None this month").span(6));
+    for (let i = 0; i < d.cases.size(); i++) {
+      const x = d.cases.get(i);
+      cb.row(15, c(String(i + 1)), c(x[0]), c(x[1]), c(x[2]), c(x[3]), c(x[4]));
+    }
+    const pb = f.block("PROCEDURES (logbook)", HEAD, 0.06, 0.14, 0.28, 0.22, 0.18, 0.12);
+    pb.row(15, h("No."), h("Date"), h("Procedure"), h("Role"), h("Supervisor"), h("Status"));
+    if (d.procs.isEmpty()) pb.row(15, c("None this month").span(6));
+    for (let i = 0; i < d.procs.size(); i++) {
+      const x = d.procs.get(i);
+      pb.row(15, c(String(i + 1)), c(x[0]), c(x[1]), c(x[2]), c(x[3]), c(x[4]));
+    }
+    const ab = f.block("ACADEMICS ATTENDED", HEAD, 0.06, 0.16, 0.26, 0.52);
+    ab.row(15, h("No."), h("Date"), h("Activity"), h("Topic"));
+    if (d.acads.isEmpty()) ab.row(15, c("None marked this month").span(4));
+    for (let i = 0; i < d.acads.size(); i++) {
+      const x = d.acads.get(i);
+      ab.row(15, c(String(i + 1)), c(x[0]), c(x[1]), c(x[2]));
+    }
+    if (!d.pres.isEmpty() || !d.exams.isEmpty()) {
+      const xb = f.block("PRESENTATIONS AND EXAM CASES", HEAD, 0.06, 0.16, 0.26, 0.52);
+      xb.row(15, h("No."), h("Date"), h("Kind"), h("Title / presented to"));
+      let i = 0;
+      for (const x of d.pres) xb.row(15, c(String(++i)), c(x[0]), c(x[1].isEmpty() ? "Presentation" : x[1]), c(x[2]));
+      for (const x of d.exams) xb.row(15, c(String(++i)), c(x[0]), c("Exam case " + x[1]), c(x[2]));
+    }
+    const sg = f.block("SIGNATURES", HEAD, 0.34, 0.33, 0.33);
+    sg.row(15, h("Postgraduate"), h("Unit Assistant Professor"), h("Head of the Department"));
+    sg.row(46, c("").bottom(), c("").bottom(), c("").bottom());
+    sg.keep = true;
+    return f;
+  }
+
+  static pgYear(db, staffId) {
+    const s = db.row("SELECT batch FROM staff WHERE id=?", Ui.nz(staffId));
+    const y = s == null ? 0 : CaseSheet.pgYear(Ui.nz(s.get("batch")), Dates.today());
+    return y <= 0 ? "—" : y === 1 ? "1st year" : y === 2 ? "2nd year" : "3rd year (final)";
+  }
+
+  /** From the logbook: the person (a PG themselves, or any PG for faculty), the month and PDF or Word, then shares the file. */
+  static offer(a, db) {
+    const mine = Logbook.myPg(a, db);
+    const pgs = mine > 0 ? db.rows("SELECT id, name, unit FROM staff WHERE id=?", String(mine))
+      : Logbook.canSign(a) ? db.rows("SELECT id, name, unit FROM staff WHERE role IN ('Postgraduate','CRMI') AND " + Approvals.APPROVED_SQL + " ORDER BY name") : [];
+    if (pgs.isEmpty()) {
+      Ui.toast(a, "Only for PGs and CRMIs (and faculty, for their PGs). Link your account to your name in Students first.");
+      return;
+    }
+    const f = new Form(a);
+    f.view.addView(Ui.muted(a, "Filled from what is already in the app: case sheets you wrote, progress notes, logbook procedures, "
+      + "academics attended, presentations and exam cases. Patient names are left out."));
+    const ids = new Array(pgs.size()).fill(null), names = new Array(pgs.size()).fill(null);
+    for (let i = 0; i < pgs.size(); i++) { ids[i] = pgs.get(i).get("id"); names[i] = Ui.nz(pgs.get(i).get("name")); }
+    f.choice("pg", "PG / CRMI", names, ids, ids[0], null);
+    if (pgs.size() === 1) f.show("pg", false);
+    const now = YearMonth.from(Dates.today());
+    const mv = new Array(4).fill(null), ml = new Array(4).fill(null);
+    for (let i = 0; i < 4; i++) { mv[i] = now.minusMonths(i).toString(); ml[i] = Dates.month(now.minusMonths(i).atDay(1)); }
+    f.choice("month", "Month", ml, mv, Dates.today().getDayOfMonth() <= 5 ? mv[1] : mv[0], null);
+    f.segment("fmt", "File", ["PDF", "Word"], "PDF");
+    Ui.formDialog(a, "📄 My month", f, "Make it", {
+      run: () => {
+        let who = null;
+        for (const p of pgs) if (p.get("id") === f.get("pg")) who = p;
+        if (who == null) who = pgs.get(0);
+        try {
+          const doc = MyMonth.build(db, who.get("id"), Ui.nz(who.get("name")), Ui.nz(who.get("unit")), YearMonth.parse(f.get("month")));
+          const rel = "Word" === f.get("fmt") ? doc.docx(a) : doc.pdf(a);
+          Store.share(a, rel, "Monthly work record");
+        } catch (e) {
+          Ui.toast(a, "Could not make it: " + e.getMessage());
+        }
+        return true;
+      }
+    });
+  }
+
+  /** One line for the logbook screen: this month so far. */
+  static line(c, db) {
+    const mine = Logbook.myPg(c, db);
+    if (mine <= 0) return "Fills itself from your entries: cases, notes, procedures, academics";
+    const s = db.row("SELECT name FROM staff WHERE id=?", String(mine));
+    const ym = YearMonth.from(Dates.today());
+    const d = MyMonth.collect(db, String(mine), s == null ? "" : Ui.nz(s.get("name")), ym.atDay(1).toString(), ym.atEndOfMonth().toString());
+    return "This month so far: " + d.cases.size() + " cases, " + d.notes + " notes, " + d.procs.size() + " procedures, " + d.acads.size() + " academics";
+  }
+}
+
+MyMonth.Data = class {
+  constructor() {
+    this.cases = []; this.procs = []; this.acads = []; this.pres = []; this.exams = [];
+    this.notes = 0; this.likes = 0; this.finalDx = 0;
+  }
+
+  total() {
+    return this.cases.size() + this.procs.size() + this.acads.size() + this.pres.size() + this.exams.size() + this.notes;
+  }
+};
+;
 /* ---- app/Mystery.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -65960,6 +70792,275 @@ class NightlyBackup {
   }
 }
 ;
+/* ---- app/NmcAttendance.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * NMC biometric attendance (10.20, user asked). The attendance itself can only be marked in NMC's own Aadhaar app (AEBAS, face
+ * or fingerprint checked by UIDAI), so TVMCHMED does not mark it: it opens that app with one tap, reminds the faculty at check-in
+ * and check-out time, and keeps its own note of "marked" (table nmc_marks, synced) when the doctor comes back and says so,
+ * for the HOD's view. The note is the department's record only, never NMC's.
+ */
+class NmcAttendance {
+  static PKG = "com.aebas.aebas_client";
+  static PLAY = "https://play.google.com/store/apps/details?id=com.aebas.aebas_client";
+  static TABLE = "nmc_marks";
+  static COLOR = 0xFF1E40AF;
+  static IN = "in";
+  static OUT = "out";
+
+  /** Faculty (and HOD, registrar, admin) mark NMC attendance; PGs and students do not. */
+  static forMe(c) {
+    return SessionAttendance.canRun(c);
+  }
+
+  /** No NMC attendance on Sundays, government holidays and second Saturdays. */
+  static workday(db, d) {
+    return d.getDayOfWeek() !== DayOfWeek.SUNDAY && !LeaveRules.holiday(db, d);
+  }
+
+  /** Check-in and check-out reminder times, "HH:mm"; the admin or HOD can change them. */
+  static at(db, kind) {
+    const def = NmcAttendance.IN === kind ? "09:00" : "16:00";
+    try {
+      return LocalTime.parse(db.setting("nmc_" + kind, def));
+    } catch (e) {
+      return LocalTime.parse(def);
+    }
+  }
+
+  static label(kind) {
+    return NmcAttendance.IN === kind ? "check-in" : "check-out";
+  }
+
+  static clock(t) {
+    const h = t.getHour() % 12 === 0 ? 12 : t.getHour() % 12;
+    return h + ":" + (t.getMinute() < 10 ? "0" : "") + t.getMinute() + (t.getHour() < 12 ? " AM" : " PM");
+  }
+
+  static me(c) {
+    return Cloud.myStaff(c);
+  }
+
+  /** This person's mark of a kind on a day, or null. */
+  static mark(c, db, iso, kind) {
+    const sid = NmcAttendance.me(c);
+    if (sid > 0) return db.row("SELECT * FROM " + NmcAttendance.TABLE + " WHERE day=? AND kind=? AND staff_id=?", iso, kind, String(sid));
+    return db.row("SELECT * FROM " + NmcAttendance.TABLE + " WHERE day=? AND kind=? AND name=?", iso, kind, Reminders.myName(c, db));
+  }
+
+  /** "in" before check-out time until checked in, then "out" from check-out time until checked out; "" when nothing is due. */
+  static due(c, db) {
+    if (!NmcAttendance.forMe(c) || !NmcAttendance.workday(db, Dates.today())) return "";
+    const iso = Dates.todayIso();
+    const now = Dates.time();
+    if (now.isBefore(NmcAttendance.at(db, NmcAttendance.OUT))) return NmcAttendance.mark(c, db, iso, NmcAttendance.IN) == null && !now.isBefore(LocalTime.of(6, 0)) ? NmcAttendance.IN : "";
+    return NmcAttendance.mark(c, db, iso, NmcAttendance.OUT) == null && now.isBefore(LocalTime.of(22, 0)) ? NmcAttendance.OUT : "";
+  }
+
+  static prefs(c) {
+    return c.getSharedPreferences("nmc", Context.MODE_PRIVATE);
+  }
+
+  /** Opens the NMC app's Play Store page (a browser cannot start an Android app by itself) and remembers which mark the doctor went to make. */
+  static open(a, kind) {
+    NmcAttendance.prefs(a).edit().putString("pending", kind + "|" + Dates.todayIso()).apply();
+    a.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(NmcAttendance.PLAY)));
+  }
+
+  /** The mark the doctor left TVMCHMED to make today and has not confirmed yet, or "". */
+  static pending(c) {
+    const p = NmcAttendance.prefs(c).getString("pending", "");
+    const bar = p.indexOf('|');
+    return bar > 0 && p.substring(bar + 1) === Dates.todayIso() ? p.substring(0, bar) : "";
+  }
+
+  static clearPending(c) {
+    NmcAttendance.prefs(c).edit().remove("pending").apply();
+  }
+
+  /** Notes this person's mark for today (once per kind). */
+  static save(c, db, kind) {
+    NmcAttendance.clearPending(c);
+    const iso = Dates.todayIso();
+    if (NmcAttendance.mark(c, db, iso, kind) != null) return;
+    const cv = new ContentValues();
+    const sid = NmcAttendance.me(c);
+    cv.put("staff_id", sid > 0 ? String(sid) : "");
+    cv.put("name", Reminders.myName(c, db));
+    cv.put("day", iso);
+    cv.put("kind", kind);
+    const t = Dates.time();
+    cv.put("time", pad2(t.getHour()) + ":" + pad2(t.getMinute()));
+    db.insert(NmcAttendance.TABLE, cv);
+  }
+
+  /** The home card for faculty: the mark that is due, the question after coming back from the NMC app, or today's marks. */
+  static homeCard(a, db) {
+    const N = NmcAttendance;
+    if (!N.forMe(a) || !N.workday(db, Dates.today())) return null;
+    const iso = Dates.todayIso();
+    const back = N.pending(a), due = N.due(a, db);
+    const inn = N.mark(a, db, iso, N.IN), out = N.mark(a, db, iso, N.OUT);
+    const card = Ui.card(a);
+    card.setBackground(Ui.outline(a, Ui.mix(N.COLOR, Color.WHITE, 0.92), Ui.alpha(N.COLOR, 0x55), 18));
+    card.setPadding(Ui.dp(a, 16), Ui.dp(a, 12), Ui.dp(a, 16), Ui.dp(a, 12));
+    card.addView(Ui.tv(a, "🖐  NMC attendance", 15, N.COLOR, true));
+    if (!back.isEmpty() && N.mark(a, db, iso, back) == null) {
+      card.addView(Ui.tv(a, "Did the NMC app accept your " + N.label(back) + "?", 14, Ui.TEXT, false));
+      const row = Ui.h(a);
+      const yes = Ui.button(a, "✓  Yes, marked", Ui.GREEN, { onClick: () => { N.save(a, db, back); a.render(); } });
+      const again = Ui.button(a, "Open NMC app again", N.COLOR, { onClick: () => { N.open(a, back); } });
+      row.addView(yes, Ui.weight(1));
+      row.addView(again, Ui.weight(1));
+      Ui.margins(yes, 0, 8, 4, 0);
+      Ui.margins(again, 4, 8, 0, 0);
+      card.addView(row);
+    } else if (!due.isEmpty()) {
+      const t = N.at(db, due);
+      const late = Dates.time().isAfter(t);
+      card.addView(Ui.tv(a, (N.IN === due ? "Check-in" : "Check-out") + (late ? " was due at " : " due at ") + N.clock(t)
+        + (inn != null && N.OUT === due ? "  ·  checked in " + N.clock(LocalTime.parse(inn.get("time"))) : ""), 13, late ? 0xFFB91C1C : Ui.MUTED, late));
+      const go = Ui.button(a, "Open NMC app to " + (N.IN === due ? "check in" : "check out"), N.COLOR, { onClick: () => { N.open(a, due); } });
+      card.addView(go);
+      Ui.margins(go, 0, 8, 0, 0);
+    } else {
+      const s = (inn == null ? "No check-in noted" : "✓ Checked in " + N.clock(LocalTime.parse(inn.get("time"))))
+        + (out == null ? "" : "  ·  ✓ checked out " + N.clock(LocalTime.parse(out.get("time"))));
+      card.addView(Ui.tv(a, s, 13, Ui.GREEN, true));
+    }
+    card.setOnClickListener(a.opener(NmcAttendanceActivity));
+    const lp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(Ui.dp(a, 12), Ui.dp(a, 10), Ui.dp(a, 12), Ui.dp(a, 2));
+    card.setLayoutParams(lp);
+    return card;
+  }
+
+  /** For the background job: the reminder to show now ("in"/"out"), once a day each, or "". */
+  static remind(c, db, p, e) {
+    const due = NmcAttendance.due(c, db);
+    if (due.isEmpty() || Dates.time().isBefore(NmcAttendance.at(db, due))) return "";
+    const key = "nmc_" + due + "_" + Dates.todayIso();
+    if (p.getBoolean(key, false)) return "";
+    e.putBoolean(key, true);
+    return due;
+  }
+}
+;
+/* ---- app/NmcAttendanceActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** NMC attendance (10.20): opens NMC's AEBAS app, and shows the department's own note of who checked in and out each day. */
+class NmcAttendanceActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.day = Dates.today();
+    this.setTitle("NMC attendance");
+    this.subtitle = "Aadhaar biometric (AEBAS) · faculty";
+    this.headerColor(NmcAttendance.COLOR);
+  }
+
+  render() {
+    const N = NmcAttendance, db = this.db;
+    const page = Ui.v(this);
+    const mine = N.homeCard(this, db);
+    if (mine != null) page.addView(mine);
+    if (N.forMe(this)) {
+      const row = Ui.h(this);
+      row.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+      for (const k of [N.IN, N.OUT]) {
+        const t = Ui.button(this, (k === N.IN ? "Check in" : "Check out") + " in NMC app", N.COLOR, { onClick: () => { N.open(this, k); } });
+        row.addView(t, Ui.weight(1));
+        Ui.margins(t, k === N.IN ? 0 : 4, 0, k === N.IN ? 4 : 0, 0);
+      }
+      page.addView(row);
+    }
+    const note = Ui.tv(this, "Attendance is marked only in NMC's own app (face or fingerprint checked by Aadhaar). TVMCHMED opens it, reminds you at "
+      + N.clock(N.at(db, N.IN)) + " and " + N.clock(N.at(db, N.OUT))
+      + ", and keeps the department's own note when you say it was marked.", 12, Ui.MUTED, false);
+    note.setPadding(Ui.dp(this, 18), Ui.dp(this, 10), Ui.dp(this, 18), 0);
+    page.addView(note);
+
+    // the day's list of faculty
+    const nav = Ui.h(this);
+    nav.setGravity(Gravity.CENTER_VERTICAL);
+    nav.setPadding(Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 4));
+    const prev = Ui.tv(this, "‹", 26, N.COLOR, true);
+    prev.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+    prev.setOnClickListener({ onClick: () => { this.day = this.day.minusDays(1); this.render(); } });
+    const d = Ui.tv(this, (this.day.equals(Dates.today()) ? "Today, " : "") + Dates.nice(this.day), 16, Ui.TEXT, true);
+    d.setGravity(Gravity.CENTER);
+    const next = Ui.tv(this, "›", 26, this.day.isBefore(Dates.today()) ? N.COLOR : Ui.LINE, true);
+    next.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+    next.setOnClickListener({ onClick: () => { if (this.day.isBefore(Dates.today())) { this.day = this.day.plusDays(1); this.render(); } } });
+    nav.addView(prev);
+    nav.addView(d, Ui.weight(1));
+    nav.addView(next);
+    page.addView(nav);
+    const iso = this.day.toString();
+    if (!N.workday(db, this.day)) page.addView(this.emptyNote("Holiday: no NMC attendance"));
+    const list = Ui.card(this);
+    let n = 0, marked = 0;
+    for (const s of db.rows("SELECT id, name, role FROM staff WHERE role IN ('Professor','Associate Professor','Assistant Professor') AND "
+      + Approvals.APPROVED_SQL + " ORDER BY CASE role WHEN 'Professor' THEN 0 WHEN 'Associate Professor' THEN 1 ELSE 2 END, name")) {
+      const inn = db.row("SELECT time FROM " + N.TABLE + " WHERE day=? AND kind='in' AND staff_id=?", iso, s.get("id"));
+      const out = db.row("SELECT time FROM " + N.TABLE + " WHERE day=? AND kind='out' AND staff_id=?", iso, s.get("id"));
+      const away = Away.on(db, s.get("id"), iso);
+      n++;
+      if (inn != null) marked++;
+      const r = Ui.h(this);
+      r.setGravity(Gravity.CENTER_VERTICAL);
+      r.setPadding(Ui.dp(this, 14), Ui.dp(this, 9), Ui.dp(this, 14), Ui.dp(this, 9));
+      const t = Ui.v(this);
+      t.addView(Ui.tv(this, Ui.nz(s.get("name")), 14, Ui.TEXT, true));
+      t.addView(Ui.tv(this, Ui.nz(s.get("role")) + (away.isEmpty() ? "" : "  ·  " + away), 11, Ui.MUTED, false));
+      r.addView(t, Ui.weight(1));
+      const txt = (inn == null ? "—" : "In " + N.clock(LocalTime.parse(inn.get("time")))) + (out == null ? "" : "\nOut " + N.clock(LocalTime.parse(out.get("time"))));
+      const m = Ui.tv(this, txt, 12, inn == null ? (away.isEmpty() ? Ui.MUTED : 0xFFB45309) : Ui.GREEN, inn != null);
+      m.setGravity(Gravity.END);
+      r.addView(m);
+      list.addView(r);
+    }
+    page.addView(Ui.heading(this, "Faculty  ·  " + marked + " of " + n + " noted in", N.COLOR));
+    if (n === 0) page.addView(this.emptyNote("No faculty in the staff list yet"));
+    else page.addView(list);
+
+    if (Cloud.isAdmin(this) || !Cloud.active(this)) {
+      const times = Ui.button(this, "Change reminder times", Ui.SLATE, { onClick: () => { this.timesDialog(); } });
+      page.addView(times);
+      Ui.margins(times, 12, 14, 12, 0);
+    }
+    this.setPage(page);
+  }
+
+  timesDialog() {
+    const db = this.db;
+    const box = Ui.v(this);
+    box.setPadding(Ui.dp(this, 20), Ui.dp(this, 8), Ui.dp(this, 20), 0);
+    const inn = new EditText(this), out = new EditText(this);
+    inn.setHint("Check-in, e.g. 09:00");
+    out.setHint("Check-out, e.g. 16:00");
+    inn.setText(db.setting("nmc_in", "09:00"));
+    out.setText(db.setting("nmc_out", "16:00"));
+    box.addView(Ui.tv(this, "Check-in reminder (24-hour HH:mm)", 13, Ui.MUTED, false));
+    box.addView(inn);
+    box.addView(Ui.tv(this, "Check-out reminder", 13, Ui.MUTED, false));
+    box.addView(out);
+    new AlertDialog.Builder(this).setTitle("NMC reminder times").setView(box)
+      .setPositiveButton("Save", (dlg, w) => {
+        try {
+          const a = LocalTime.parse(inn.getText().toString().trim()), b = LocalTime.parse(out.getText().toString().trim());
+          if (!a.isBefore(b)) throw new IllegalArgumentException();
+          db.setSetting("nmc_in", a.toString());
+          db.setSetting("nmc_out", b.toString());
+        } catch (e) {
+          Ui.toast(this, "Type times like 09:00 and 16:00 (check-in first)");
+        }
+        this.render();
+      }).setNegativeButton("Cancel", null).show();
+  }
+}
+;
 /* ---- app/Notify.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -66132,6 +71233,122 @@ class ObstetricActivity extends Base {
   }
 }
 ;
+/* ---- app/OfflineShare.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Offline sharing (10.10, idea 139): when the internet is down, one phone hands its new entries and the census to a phone
+ * next to it as a small ZIP file sent by Bluetooth (or Quick Share). The receiving phone adds them as if they had come
+ * from the server, and keeps them in its own outbox too, so whichever phone gets the internet first puts them online.
+ * Chats, PG Connect, crash reports and settings never travel this way; photos stay behind (records only).
+ */
+class OfflineShare {
+  static COLOR = 0xFF2563EB;
+  static KIND = "TVMCHMED-offline"; static ENTRY = "tvmchmed-offline.json";
+  static REQ_IMPORT = 7311;
+  static NEVER = new Set(["settings", "chat_messages", "chat_reads", "chat_keys", "chats", "pgc_msgs", "crashes"]);   // Web: PgConnect.TABLE (loads later)
+
+  static travels(t, data) {
+    return Sync.known(t) && !OfflineShare.NEVER.has(t) && (data == null || !E2e.isSealed(t, data));
+  }
+
+  static Summary = class {
+    constructor() {
+      this.from = ""; this.time = "";
+      this.mine = 0; this.census = 0; this.added = 0; this.skipped = 0;
+    }
+  };
+
+  /** The file to send: this phone's entries not yet online ("new") and every in-patient with their events ("census"). */
+  static write(c, db) {
+    const mine = new JSONArray(), census = new JSONArray();
+    for (const r of db.rows("SELECT tbl, pk FROM outbox ORDER BY id")) {
+      const rec = Sync.record(db, r.get("tbl"), String(r.get("pk")));
+      if (OfflineShare.travels(r.get("tbl"), rec.isNull("data") ? null : rec.getJSONObject("data"))) mine.put(rec);
+    }
+    for (const p of db.rows("SELECT id FROM patients WHERE status=?", Db.IN)) {
+      census.put(Sync.record(db, "patients", String(p.get("id"))));
+      for (const e of db.rows("SELECT id FROM events WHERE patient_id=?", String(p.get("id")))) census.put(Sync.record(db, "events", String(e.get("id"))));
+    }
+    const o = new JSONObject().put("kind", OfflineShare.KIND).put("v", 1).put("url", Cloud.url(c)).put("from", CallDutyActivity.myName(c))
+      .put("time", Dates.todayIso() + " " + Dates.now()).put("new", mine).put("census", census);
+    const rel = SummaryExport.DIR + "/TVMCHMED-offline-" + Dates.todayIso() + "-" + Dates.now().replace(":", "") + ".zip";
+    const f = db.file(rel);
+    f.getParentFile().mkdirs();
+    const os = new FileOutputStream(f);
+    const z = new ZipOutputStream(os);
+    try {
+      z.putNextEntry(new ZipEntry(OfflineShare.ENTRY));
+      z.write(jbytes(o.toString()));
+      z.closeEntry();
+    } finally {
+      z.close();
+    }
+    return rel;
+  }
+
+  /** Reads a received file; throws with a plain message when it is not one of ours or belongs to another hospital's server. */
+  static read(c, inp) {
+    const z = new ZipInputStream(inp);
+    try {
+      let e;
+      while ((e = z.getNextEntry()) != null) {
+        if (OfflineShare.ENTRY !== e.getName()) continue;
+        const o = new JSONObject(jstr(Backup.readAll(z)));
+        if (OfflineShare.KIND !== o.optString("kind")) break;
+        if (Cloud.url(c) !== o.optString("url")) throw new IOException("This file is from a phone joined to another server");
+        return o;
+      }
+    } finally {
+      z.close();
+    }
+    throw new IOException("This is not a TVMCHMED offline file");
+  }
+
+  static peek(o) {
+    const s = new OfflineShare.Summary();
+    s.from = o.optString("from");
+    s.time = o.optString("time");
+    s.mine = o.optJSONArray("new") == null ? 0 : o.optJSONArray("new").length();
+    s.census = o.optJSONArray("census") == null ? 0 : o.optJSONArray("census").length();
+    return s;
+  }
+
+  /**
+   * Adds a received file. The sender's new entries go in (unless this phone changed the same record and has not sent it
+   * yet) and into this phone's outbox; census records only fill in what this phone does not have at all.
+   */
+  static apply(c, db, o) {
+    const s = OfflineShare.peek(o);
+    const w = db.getWritableDatabase();
+    w.beginTransaction();
+    try {
+      const mine = o.optJSONArray("new");
+      for (let i = 0; mine != null && i < mine.length(); i++) {
+        const r = mine.getJSONObject(i);
+        if (!OfflineShare.travels(r.optString("tbl"), r.isNull("data") ? null : r.optJSONObject("data"))) { s.skipped++; continue; }
+        if (Sync.apply(db, w, r)) s.added++;
+        else s.skipped++;
+      }
+      w.execSQL("INSERT INTO sync_mute VALUES (1)");
+      const census = o.optJSONArray("census");
+      for (let i = 0; census != null && i < census.length(); i++) {
+        const r = census.getJSONObject(i);
+        const t = r.optString("tbl");
+        if (!("patients" === t || "events" === t) || r.optBoolean("deleted")) continue;
+        if (db.num("SELECT COUNT(*) FROM " + t + " WHERE id=?", r.optString("pk")) > 0) continue;
+        if (Sync.apply(db, w, r)) s.added++;
+      }
+      w.execSQL("DELETE FROM sync_mute");
+      w.setTransactionSuccessful();
+    } finally {
+      w.endTransaction();
+    }
+    Sync.kick(c);
+    return s;
+  }
+}
+;
 /* ---- app/Opinions.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -66280,6 +71497,45 @@ class Opinions {
         return true;
       }
     });
+  }
+}
+;
+/* ---- app/OrderScan.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Posting order photo to text (10.28). The AI copies the printed MBBS posting order off one or more JPG pages as plain lines
+ * ("Sl.No NAME M-1"), which the faculty member checks in the paste box before Posting.importOrder makes the posting.
+ */
+class OrderScan {
+  constructor() {}
+
+  static FILE_PREFIX = "orderscan_";
+  static MAX_PAGES = 6;
+
+  /** The same text goes to Gemini and, for the free route, to the AI chat app with the pictures. */
+  static prompt() {
+    return "These are photos of an MBBS clinical posting order from a medical college (one or more pages). Copy it as plain text and nothing else:\n"
+      + "First line: the heading with the MBBS year, the batch and the posting dates, e.g. "
+      + "\"Second MBBS A batch clinical posting 02.11.2026 to 29.11.2026\".\n"
+      + "Then one line per student in this exact form: serial number, name, unit, e.g. \"29 ANUSHKA R M-1\".\n"
+      + "Write the unit as M-1 to M-7 (it may be printed as M1, M I, Unit 1 or similar). Keep the names exactly as printed, in capitals. "
+      + "Do every student on every page, in order. Leave out signatures, office lines and notes. Never guess a name or unit; "
+      + "if a unit cannot be read, leave it off that line. No other words.";
+  }
+
+  /** Gemini reads the pages with the doctor's own key; plain text answer. */
+  static read(c, pages) {
+    return Ai.visionPages(c, pages, OrderScan.prompt(), null, false);
+  }
+
+  /** Removes the photo copies left in the imaging folder (they are never synced or kept). */
+  static clean(db) {
+    try {
+      const fs = db.file(Imaging.DIR).listFiles();
+      if (fs != null) for (const f of fs) if (f.getName().startsWith(OrderScan.FILE_PREFIX)) f.delete();
+    } catch (ignored) {
+    }
   }
 }
 ;
@@ -67201,6 +72457,9 @@ class PatientActivity extends Base {
   onCreate(b) {
     super.onCreate(b);
     this.id = Long.parseLong(this.getIntent().getStringExtra("id"));
+    // 10.35: the clean patient page of the user's picture
+    this.clean = true;
+    this.pageBg = PatientDesign.PAGE;
   }
 
   /** Exam case: mark this patient for case presentations, or see and edit the mark. */
@@ -67257,69 +72516,58 @@ class PatientActivity extends Base {
     const loc = p.get("location"), home = p.get("home_unit");
     const inn = Db.IN.equals(p.get("status"));
     const color = Db.DIED.equals(p.get("status")) ? Ui.SLATE : Ui.unitColor(loc);
-    this.setTitle(p.get("name"));
-    const age = p.get("age").isEmpty() ? "" : p.get("age") + " y, ";
-    this.subtitle = age + Base.sexLabel(p.get("sex")) + (p.get("ip_no").isEmpty() ? "" : "  ·  IP " + p.get("ip_no"))
-        + (Ui.nz(p.get("pin_no")).isEmpty() ? "" : "  ·  PIN " + p.get("pin_no"));
-    const mlc = Ui.nz(p.get("mlc"));
-    if (!mlc.isEmpty()) this.subtitle += "  ·  " + mlc + ("MLC".equals(mlc) && !Ui.nz(p.get("ar_no")).isEmpty() ? " (AR " + p.get("ar_no") + ")" : "");
-    this.headerColor(color);
+    const unitName = Db.isWardUnit(home) ? home + " unit" : Db.unitName(home);
+    this.setTitle(unitName + " · Medicine");
+    this.subtitle = null;
+    this.headerColor(PatientDesign.INK);
     this.headerAction("Edit", this.opener(FormActivity, "kind", "patient", "id", String(id)));
     const page = Ui.v(this);
 
-    const hero = Ui.card(this);
-    hero.setBackground(Glass.hero(this, Ui.shades(color), 20));
     let state;
     if (Db.DIED.equals(p.get("status"))) state = "Died on " + Dates.nice(p.get("outcome_date"));
     else if (Db.DISCHARGED.equals(p.get("status"))) state = "Discharged on " + Dates.nice(p.get("outcome_date"));
-    else state = "Now in " + Base.where(p) + (p.get("bed").isEmpty() ? "" : ", bed " + p.get("bed"));
-    hero.addView(Ui.tv(this, state, 17, Color.WHITE, true));
-    hero.addView(Ui.tv(this, "Admitted " + Dates.nice(p.get("admit_date")) + (p.get("diagnosis").isEmpty() ? "" : "  ·  " + p.get("diagnosis")), 13, 0xD9FFFFFF, false));
+    else state = "Now in " + Base.where(p);
     const cs = CaseSheet.load(db, id);
     let filled = 0;
     for (const s of CaseSheet.SECTIONS) if (CaseSheet.filled(cs, s)) filled++;
-    const sheet = Ui.button(this, filled === 0 ? "Case sheet" : "Case sheet (" + filled + " filled)", Ui.PRIMARY, this.opener(CaseSheetActivity, "id", String(id)));
-    const sum = Ui.button(this, "Discharge summary", Ui.TEAL, this.opener(DischargeActivity, "id", String(id)));
-    const cs1 = Ui.button(this, "Case summary", Ui.SKY, this.opener(DischargeActivity, "id", String(id), "kind", DischargeActivity.CASE));
-    sheet.setBackground(Glass.frost(this, 14));
-    sum.setBackground(Glass.frost(this, 14));
-    cs1.setBackground(Glass.frost(this, 14));
-    const tlBtn = Ui.button(this, "Timeline", PatientTimeline.COLOR, this.opener(TimelineActivity, "id", String(id)));
-    tlBtn.setBackground(Glass.frost(this, 14));
-    const docs = Ui.buttonRow(this, sheet, tlBtn);
-    hero.addView(docs);
-    Ui.margins(docs, 0, 12, 0, 0);
-    const docs2 = Ui.buttonRow(this, cs1, sum);
-    hero.addView(docs2);
-    Ui.margins(docs2, 0, 8, 0, 0);
     const wb = CaseSheet.writtenBy(cs);
-    if (!wb.isEmpty()) {
-      const w = Ui.tv(this, "Case written by " + wb, 13, 0xE6FFFFFF, false);
-      hero.addView(w);
-      Ui.margins(w, 0, 8, 0, 0);
-    }
-    page.addView(hero);
+    const note = (filled === 0 ? "Case sheet not started" : "Case sheet: " + filled + " of " + CaseSheet.SECTIONS.length + " sections filled")
+        + (wb.isEmpty() ? "" : " · written by " + wb);
+    page.addView(PatientDesign.heroFor(this, db, p, state, note, ["Admitted", "Bed", "CMCHIS"],
+        [PatientDesign.shortDate(p.get("admit_date")), Ui.nz(p.get("bed")), "1".equals(p.get("cmchis")) ? "Yes" : "No"], [
+          PatientDesign.action(this, R.drawable.ic_doc, "Case sheet", false, this.opener(CaseSheetActivity, "id", String(id))),
+          PatientDesign.action(this, R.drawable.ic_event, "Timeline", false, this.opener(TimelineActivity, "id", String(id))),
+          PatientDesign.action(this, R.drawable.ic_menu, "Summary", false, this.opener(DischargeActivity, "id", String(id), "kind", DischargeActivity.CASE)),
+          PatientDesign.action(this, R.drawable.ic_approve, "Discharge", true, this.opener(DischargeActivity, "id", String(id)))]));
+
+    const quickCard = FormActivity.quickCard(this, p);
+    if (quickCard != null) page.addView(quickCard);
+    if (inn) page.addView(ProtocolActivity.patientCard(this, db, id));
+    page.addView(CodeBlueActivity.patientCard(this, db, id, inn));
 
     // bedside charts: the ones the diagnosis calls for are filled; tap any to open
     let onCharts = 0;
     for (const k of Charts.KINDS) onCharts += Charts.count(db, id, k.code);
     if (Db.IN.equals(p.get("status")) || onCharts > 0) {
-      page.addView(Ui.heading(this, "Bedside charts", 0xFFDC2626));
+      page.addView(PatientDesign.heading(this, "Bedside charts", Charts.KINDS.length + " charts"));
       const flow = new Bands.Flow(this);
-      flow.setPadding(Ui.dp(this, 16), Ui.dp(this, 4), Ui.dp(this, 16), Ui.dp(this, 4));
+      flow.setPadding(Ui.dp(this, 16), Ui.dp(this, 2), Ui.dp(this, 16), Ui.dp(this, 4));
+      let darkDone = false;
       for (const k of Charts.KINDS) {
         const n = Charts.count(db, id, k.code);
-        const sug = Charts.suggested(p, k.code);
-        const label = k.name + (n > 0 ? " · " + n : sug ? " · start" : "");
-        const b = n > 0 || sug ? Ui.button(this, label, k.color, this.opener(ChartActivity, "id", String(id), "kind", k.code))
-            : Ui.outlineButton(this, label, k.color, this.opener(ChartActivity, "id", String(id), "kind", k.code));
-        b.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
-        flow.addView(b);
+        const start = n === 0 && Charts.suggested(p, k.code) && !darkDone;
+        if (start) darkDone = true;
+        const label = start ? "Start " + k.name.toLowerCase() : k.name + (n > 0 ? " · " + n : "");
+        // the chart to start comes first, as in the picture
+        if (start) flow.addView(PatientDesign.chartPill(this, label, k.color, true, this.opener(ChartActivity, "id", String(id), "kind", k.code)), 0);
+        else flow.addView(PatientDesign.chartPill(this, label, k.color, false, this.opener(ChartActivity, "id", String(id), "kind", k.code)));
       }
       page.addView(flow);
       const news = Ews.patientLine(this, this.db, id);
       if (news != null) page.addView(news);
     }
+    const claim = CmchisClaims.patientCard(this, db, p);
+    if (claim != null) page.addView(claim);
     const readmit = Readmit.card(this, db, p);
     if (readmit != null) page.addView(readmit);
     const crit = CriticalLabs.patientCard(this, db, id);
@@ -67327,45 +72575,65 @@ class PatientActivity extends Base {
     if (inn) {
       const watch = Watch.patientCard(this, db, id);
       if (watch != null) page.addView(watch);
-      const kd = KidneyDoseActivity.patientCard(this, db, id, p);
-      if (kd != null) page.addView(kd);
-      page.addView(EcgActivity.patientCard(this, db, id));
-      page.addView(ProtocolActivity.patientCard(this, db, id));
+      page.addView(Countdown.section(this, db, id));
     }
-
-    if (Db.DIED.equals(p.get("status"))) page.addView(MccdActivity.patientCard(this, db, id));
-
-    // pending tasks, lab trends and the 7:30 AM handover
+    // pending tasks and results, then the investigations
     if (inn || Tasks.pending(db, id) > 0) page.addView(Tasks.section(this, db, id));
     if (inn || Results.waitingFor(db, id) > 0) page.addView(Results.section(this, db, id));
-    if (inn || !Antibiogram.forPatient(db, id).isEmpty()) page.addView(CultureActivity.patientCard(this, db, id));
     page.addView(Labs.section(this, db, id));
+    if (inn || !Antibiogram.forPatient(db, id).isEmpty()) page.addView(CultureActivity.patientCard(this, db, id));
     page.addView(Imaging.section(this, db, id));
     page.addView(Imaging.clinicalSection(this, db, id));
+    // bedside tools
+    if (inn) page.addView(EcgActivity.patientCard(this, db, id));
+    if (inn) {
+      const kd = KidneyDoseActivity.patientCard(this, db, id, p);
+      if (kd != null) page.addView(kd);
+    }
     page.addView(ScoresActivity.patientCard(this, db, id));
     page.addView(AbgActivity.patientCard(this, db, id));
-    page.addView(PillCardActivity.patientButton(this, db, id));
-    page.addView(CasePresentationActivity.patientButton(this, db, id));
-    page.addView(CaseReportActivity.patientButton(this, db, p));
     if (inn) {
       const gl = Guidelines.section(this, db, id, p);
       if (gl != null) page.addView(gl);
-    }
-    if (inn) {
       const hw = Ui.v(this);
       hw.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
       const onList = db.num("SELECT COUNT(*) FROM handovers WHERE day=? AND patient_id=?", Dates.admitDay().toString(), String(id));
       hw.addView(Ui.outlineButton(this, onList > 0 ? "✓ On tonight's handover (open)" : "Add to the 7:30 AM handover", HandoverActivity.COLOR,
           onList > 0 ? this.opener(HandoverActivity) : this.opener(HandoverActivity, "patient", String(id))));
       page.addView(hw);
-      page.addView(this.examRow());
     }
-    page.addView(CodeBlueActivity.patientCard(this, db, id, inn));
+    // teaching
+    const tps = TeachPoints.section(this, db, p);
+    if (tps != null) page.addView(tps);
+    const rare = RareCase.patientCard(this, db, p);
+    if (rare != null) page.addView(rare);
+    if (inn) page.addView(this.examRow());
+    page.addView(CasePresentationActivity.patientButton(this, db, id));
+    page.addView(CaseReportActivity.patientButton(this, db, p));
+    // patient and family
     if (inn || !Counsel.forPatient(db, id).isEmpty()) page.addView(Counsel.section(this, db, p));
+    page.addView(PillCardActivity.patientButton(this, db, id));
+    page.addView(TamilCard.patientButton(this, db, id));
     if (Dama.show(db, p)) page.addView(Dama.section(this, db, id));
+    if (Db.DIED.equals(p.get("status"))) page.addView(MccdActivity.patientCard(this, db, id));
+
+    const ops = db.rows("SELECT * FROM opinions WHERE patient_id=? ORDER BY date DESC, id DESC", String(id));
+    if (inn || !ops.isEmpty()) {
+      page.addView(PatientDesign.heading(this, "Opinions", ops.isEmpty() ? "None requested" : ops.size() + " asked"));
+      for (const o of ops) page.addView(Opinions.card(this, db, o, false, { run: () => { this.render(); } }));
+      if (inn) {
+        const ask = Ui.outlineButton(this, "+ Ask another department", Ui.TEAL, {
+          onClick: (v) => {
+            Opinions.dialog(this, db, null, p, { run: () => { this.render(); } });
+          }
+        });
+        page.addView(ask);
+        Ui.margins(ask, 14, 4, 14, 4);
+      }
+    }
 
     if (inn) {
-      page.addView(Ui.heading(this, "Move or close", color));
+      page.addView(PatientDesign.heading(this, "Move or close", "From " + Base.where(p)));
       const ask = UnitMoves.open(db, id);
       if (ask != null) page.addView(UnitMoves.banner(this, db, ask, { run: () => { this.render(); } }));
       const act = Ui.card(this);
@@ -67418,7 +72686,7 @@ class PatientActivity extends Base {
       page.addView(act);
     }
 
-    page.addView(Ui.heading(this, "Details", Ui.PRIMARY));
+    page.addView(PatientDesign.heading(this, "Details", null));
     const det = Ui.card(this);
     det.addView(Ui.kv(this, "Parent unit", Db.unitName(home)));
     det.addView(Ui.kv(this, "Admitted on", Dates.nice(p.get("admit_date"))));
@@ -67453,6 +72721,7 @@ class PatientActivity extends Base {
     det.addView(Ui.kv(this, "Phone", p.get("phone")));
     det.addView(Ui.kv(this, "Address", p.get("address")));
     det.addView(Ui.kv(this, "CMCHIS", "1".equals(p.get("cmchis")) ? "Yes" + (p.get("cmchis_no").isEmpty() ? "" : " (" + p.get("cmchis_no") + ")") : "No"));
+    if (!Ui.nz(p.get("cmchis_pkg")).isEmpty()) det.addView(Ui.kv(this, "CMCHIS package", p.get("cmchis_pkg")));
     if (!inn) det.addView(Ui.kv(this, Db.DIED.equals(p.get("status")) ? "Cause / notes" : "Discharge notes", p.get("outcome_note")));
     if (!p.get("phone").isEmpty()) {
       const call = Ui.outlineButton(this, "Call " + p.get("phone"), Ui.GREEN, {
@@ -67468,24 +72737,9 @@ class PatientActivity extends Base {
     }
     page.addView(det);
 
-    const ops = db.rows("SELECT * FROM opinions WHERE patient_id=? ORDER BY date DESC, id DESC", String(id));
-    if (inn || !ops.isEmpty()) {
-      page.addView(Ui.heading(this, "Opinions from other departments", Ui.TEAL));
-      for (const o of ops) page.addView(Opinions.card(this, db, o, false, { run: () => { this.render(); } }));
-      if (inn) {
-        const ask = Ui.outlineButton(this, "+ Ask another department", Ui.TEAL, {
-          onClick: (v) => {
-            Opinions.dialog(this, db, null, p, { run: () => { this.render(); } });
-          }
-        });
-        page.addView(ask);
-        Ui.margins(ask, 14, 4, 14, 4);
-      }
-    }
-
-    page.addView(Ui.heading(this, "Timeline", Ui.PURPLE));
-    const tl = Ui.card(this);
     const ev = db.rows("SELECT * FROM events WHERE patient_id=?" + Db.EVENT_ORDER, String(id));
+    page.addView(PatientDesign.heading(this, "Timeline", ev.size() === 1 ? "1 event" : ev.size() + " events"));
+    const tl = Ui.card(this);
     for (const e of ev) {
       const row = Ui.h(this);
       row.setGravity(Gravity.TOP);
@@ -67698,6 +72952,257 @@ class PatientActivity extends Base {
 }
 /** Set by the DAMA form's "Discharge as DAMA": the patient screen opens the discharge with that type chosen. */
 PatientActivity.damaDischarge = 0;
+;
+/* ---- app/PatientDesign.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.35 (user sent a patient page picture): a dark hero with the patient's initials, the "now in" card with the day of stay,
+ * Admitted / Bed / CMCHIS tiles and four big action tiles, on a warm grey page with small caps headings and flat white cards.
+ * The case sheet uses the same style.
+ */
+class PatientDesign {
+  static INK = 0xFF151A24; static INK2 = 0xFF222834; static PAGE = 0xFFF4F3EF; static RED = 0xFFC8102E; static LABEL = 0xFF4B5563;
+
+  /** A small caps heading with an optional note at the right ("6 charts", "Nothing pending"). */
+  static heading(c, s, right) {
+    const row = Ui.h(c);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    const t = Ui.tv(c, s.toUpperCase(), 13, PatientDesign.LABEL, true);
+    t.setLetterSpacing(0.12);
+    row.addView(t, Ui.weight(1));
+    if (right != null) row.addView(Ui.tv(c, right, 13, 0xFF6B7280, false));
+    const p = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    p.setMargins(Ui.dp(c, 20), Ui.dp(c, 22), Ui.dp(c, 20), Ui.dp(c, 8));
+    row.setLayoutParams(p);
+    return row;
+  }
+
+  /** The patient's initials: first letters of the first two words. */
+  static initials(name) {
+    const w = Ui.nz(name).trim().split(/\s+/);
+    let b = "";
+    for (const x of w) {
+      if (x.isEmpty() || !/\p{L}/u.test(x.charAt(0))) continue;
+      b += x.charAt(0).toUpperCase();
+      if (b.length === 2) break;
+    }
+    // one word: its first two letters
+    if (b.length === 1) for (const x of w) if (x.length > 1 && /\p{L}/u.test(x.charAt(1))) return (b + x.charAt(1)).toUpperCase();
+    return b.length === 0 ? "?" : b;
+  }
+
+  static tile(c, label, value) {
+    const t = Ui.v(c);
+    t.setBackground(Ui.round(c, 0xFF2A303C, 12));
+    t.setPadding(Ui.dp(c, 12), Ui.dp(c, 8), Ui.dp(c, 8), Ui.dp(c, 8));
+    t.addView(Ui.tv(c, label, 12, 0xFFA3AAB8, false));
+    const v = Ui.tv(c, value.isEmpty() ? "–" : value, 15, Color.WHITE, false);
+    v.setTypeface(Typeface.MONOSPACE);
+    v.setMaxLines(1);
+    v.setEllipsize(TextUtils.TruncateAt.END);
+    t.addView(v);
+    return t;
+  }
+
+  /** One of the four big tiles under the hero. */
+  static action(c, icon, label, red, l) {
+    const t = Ui.v(c);
+    t.setGravity(Gravity.CENTER);
+    t.setBackground(Ui.round(c, red ? PatientDesign.RED : PatientDesign.INK2, 16));
+    t.setPadding(Ui.dp(c, 4), Ui.dp(c, 12), Ui.dp(c, 4), Ui.dp(c, 12));
+    const iv = new ImageView(c);
+    iv.setImageResource(icon);
+    iv.setColorFilter(Color.WHITE);
+    t.addView(iv, Ui.lp(Ui.dp(c, 22), Ui.dp(c, 22)));
+    const tv = Ui.tv(c, label, 13, Color.WHITE, true);
+    tv.setGravity(Gravity.CENTER);
+    tv.setMaxLines(1);
+    tv.setAutoSizeTextTypeUniformWithConfiguration(9, 13, 1, TypedValue.COMPLEX_UNIT_SP);
+    t.addView(tv, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    Ui.margins(tv, 0, 6, 0, 0);
+    Ui.ripple(t, 0x33FFFFFF);
+    t.setOnClickListener(l);
+    return t;
+  }
+
+  /**
+   * The dark hero. state is "Now in Triage" (or discharged / died), when is "Day 0 · 18:01", note is an extra line
+   * (who wrote the case), actions are the big tiles.
+   */
+  static hero(c, name, line, live, state, when, diagnosis, labels, values, note, actions) {
+    const h = Ui.v(c);
+    const bg = new GradientDrawable();
+    bg.setColor(PatientDesign.INK);
+    const r = Ui.dp(c, 30);
+    bg.setCornerRadii([0, 0, 0, 0, r, r, r, r]);
+    h.setBackground(bg);
+    h.setPadding(Ui.dp(c, 16), Ui.dp(c, 16), Ui.dp(c, 16), Ui.dp(c, 18));
+
+    const who = Ui.h(c);
+    who.setGravity(Gravity.CENTER_VERTICAL);
+    who.setBackground(new PatientDesign.Pulse(c));
+    const av = Ui.tv(c, PatientDesign.initials(name), 24, Color.WHITE, true);
+    av.setGravity(Gravity.CENTER);
+    av.setBackground(Ui.round(c, live ? PatientDesign.RED : 0xFF475569, 18));
+    who.addView(av, Ui.lp(Ui.dp(c, 64), Ui.dp(c, 64)));
+    const nm = Ui.v(c);
+    nm.setPadding(Ui.dp(c, 14), 0, 0, 0);
+    const n = Ui.tv(c, name, 26, Color.WHITE, true);
+    n.setMaxLines(2);
+    nm.addView(n);
+    nm.addView(Ui.tv(c, line, 14, 0xFFC2C8D3, false));
+    who.addView(nm, Ui.weight(1));
+    h.addView(who);
+
+    const st = Ui.v(c);
+    st.setBackground(Ui.outline(c, 0xFF1C212C, 0xFF333A47, 18));
+    st.setPadding(Ui.dp(c, 14), Ui.dp(c, 12), Ui.dp(c, 14), Ui.dp(c, 14));
+    const top = Ui.h(c);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    const dot = new View(c);
+    const dg = new GradientDrawable();
+    dg.setShape(GradientDrawable.OVAL);
+    dg.setColor(live ? 0xFFF43F5E : 0xFF94A3B8);
+    dg.setStroke(Ui.dp(c, 3), live ? 0x55F43F5E : 0x5594A3B8);
+    dot.setBackground(dg);
+    top.addView(dot, Ui.lp(Ui.dp(c, 14), Ui.dp(c, 14)));
+    const s = Ui.tv(c, state.toUpperCase(), 13, live ? 0xFFFB7185 : 0xFFCBD5E1, true);
+    s.setLetterSpacing(0.12);
+    s.setPadding(Ui.dp(c, 8), 0, Ui.dp(c, 6), 0);
+    s.setMaxLines(1);
+    s.setEllipsize(TextUtils.TruncateAt.END);
+    top.addView(s, Ui.weight(1));
+    const w = Ui.tv(c, when, 13, 0xFFA3AAB8, false);
+    w.setTypeface(Typeface.MONOSPACE);
+    top.addView(w);
+    st.addView(top);
+    const dx = Ui.tv(c, diagnosis.isEmpty() ? "No diagnosis yet" : diagnosis, 19, diagnosis.isEmpty() ? 0xFF8B93A1 : Color.WHITE, true);
+    st.addView(dx);
+    Ui.margins(dx, 0, 6, 0, 0);
+    const ts = [];
+    for (let i = 0; i < labels.length; i++) ts.push(PatientDesign.tile(c, labels[i], values[i]));
+    const tiles = Ui.buttonRow(c, ts);
+    st.addView(tiles);
+    Ui.margins(tiles, 0, 12, 0, 0);
+    h.addView(st);
+    Ui.margins(st, 0, 16, 0, 0);
+
+    if (note != null && !note.isEmpty()) {
+      const nt = Ui.tv(c, note, 12, 0xFFA3AAB8, false);
+      h.addView(nt);
+      Ui.margins(nt, 4, 8, 0, 0);
+    }
+    const row = Ui.buttonRow(c, actions);
+    h.addView(row);
+    Ui.margins(row, 0, 14, 0, 0);
+    const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    // the page starts 8 dp below the header; the hero meets the header
+    m.setMargins(0, -Ui.dp(c, 8), 0, Ui.dp(c, 6));
+    h.setLayoutParams(m);
+    return h;
+  }
+
+  /** The hero for a patient (the patient page and the case sheet): the name line, the day of stay and the admission time worked out here. */
+  static heroFor(a, db, p, state, note, labels, values, actions) {
+    const inn = Db.IN.equals(p.get("status"));
+    const adm = db.row("SELECT * FROM events WHERE patient_id=? AND type=?", Ui.nz(p.get("id")), Db.ADMIT);
+    const ad = Dates.parse(p.get("admit_date"));
+    const until = inn || Dates.parse(p.get("outcome_date")) == null ? Dates.today() : Dates.parse(p.get("outcome_date"));
+    const dayAt = (ad == null ? "" : "Day " + Math.max(0, ChronoUnit.DAYS.between(ad, until)))
+        + (adm == null || Ui.nz(adm.get("time")).isEmpty() ? "" : " · " + adm.get("time"));
+    let line = "";
+    if (!Ui.nz(p.get("age")).isEmpty()) line += p.get("age") + " y · ";
+    line += Base.sexLabel(p.get("sex")) + " · IP " + (Ui.nz(p.get("ip_no")).isEmpty() ? "–" : p.get("ip_no"));
+    if (!Ui.nz(p.get("pin_no")).isEmpty()) line += " · PIN " + p.get("pin_no");
+    const mlc = Ui.nz(p.get("mlc"));
+    if (!mlc.isEmpty()) line += " · " + mlc + ("MLC".equals(mlc) && !Ui.nz(p.get("ar_no")).isEmpty() ? " (AR " + p.get("ar_no") + ")" : "");
+    return PatientDesign.hero(a, Ui.nz(p.get("name")), line, inn, state, dayAt, Ui.nz(p.get("diagnosis")), labels, values, note, actions);
+  }
+
+  /** "30 Oct" for an ISO date. */
+  static shortDate(iso) {
+    const d = Dates.parse(iso);
+    return d == null ? "" : d.getDayOfMonth() + " " + d.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
+  }
+
+  /** The quick admission reminder in the picture's cream style: amber bolt, what is left, a dark "Fill now". */
+  static quickCard(c, miss, fill) {
+    const card = Ui.h(c);
+    card.setGravity(Gravity.CENTER_VERTICAL);
+    card.setBackground(Ui.outline(c, 0xFFFFF8EC, 0xFFF3D9A4, 18));
+    card.setPadding(Ui.dp(c, 12), Ui.dp(c, 12), Ui.dp(c, 12), Ui.dp(c, 12));
+    const bolt = Ui.tv(c, "⚡", 20, Color.WHITE, true);
+    bolt.setGravity(Gravity.CENTER);
+    bolt.setBackground(Ui.round(c, 0xFFF59E0B, 12));
+    card.addView(bolt, Ui.lp(Ui.dp(c, 42), Ui.dp(c, 42)));
+    const t = Ui.v(c);
+    t.setPadding(Ui.dp(c, 12), 0, Ui.dp(c, 8), 0);
+    t.addView(Ui.tv(c, "Quick admission · " + miss.size() + " left", 16, 0xFF78350F, true));
+    t.addView(Ui.tv(c, TextUtils.join(", ", miss), 13, 0xFF92400E, false));
+    card.addView(t, Ui.weight(1));
+    const f = Ui.tv(c, "Fill now", 14, Color.WHITE, true);
+    f.setGravity(Gravity.CENTER);
+    f.setBackground(Ui.round(c, PatientDesign.INK, 14));
+    f.setPadding(Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10));
+    f.setOnClickListener(fill);
+    card.addView(f);
+    const box = Ui.v(c);
+    box.setPadding(Ui.dp(c, 12), Ui.dp(c, 8), Ui.dp(c, 12), Ui.dp(c, 2));
+    box.addView(card);
+    return box;
+  }
+
+  /** A chart pill: white with a coloured dot, or dark for the chart to start first. */
+  static chartPill(c, label, color, dark, l) {
+    const p = Ui.h(c);
+    p.setGravity(Gravity.CENTER_VERTICAL);
+    p.setBackground(dark ? Ui.round(c, PatientDesign.INK, 24) : Ui.outline(c, Color.WHITE, 0xFFE5E2DC, 24));
+    p.setPadding(Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 16), Ui.dp(c, 10));
+    const dot = new View(c);
+    const g = new GradientDrawable();
+    g.setShape(GradientDrawable.OVAL);
+    g.setColor(dark ? 0xFFF43F5E : color);
+    dot.setBackground(g);
+    p.addView(dot, Ui.lp(Ui.dp(c, 9), Ui.dp(c, 9)));
+    const t = Ui.tv(c, label, 15, dark ? Color.WHITE : PatientDesign.INK, true);
+    t.setPadding(Ui.dp(c, 9), 0, 0, 0);
+    p.addView(t);
+    Ui.ripple(p, 0x22000000);
+    p.setOnClickListener(l);
+    return p;
+  }
+}
+
+/** A faint red ECG line behind the patient's name. */
+PatientDesign.Pulse = class extends Drawable {
+  constructor(c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.dp = Ui.dp(c, 1);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp;
+    const y = b.exactCenterY() + 6 * dp, x = b.left + b.width() * 0.33, u = 7 * dp;
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(1.4 * dp);
+    p.setStrokeJoin(Paint.Join.ROUND);
+    p.setColor(0x66C8102E);
+    const e = new Path();
+    e.moveTo(b.left - 16 * dp, y);
+    e.lineTo(x, y);
+    e.lineTo(x + u, y - 2 * u);
+    e.lineTo(x + 2 * u, y + 2.6 * u);
+    e.lineTo(x + 3 * u, y - 0.6 * u);
+    e.lineTo(x + 3.6 * u, y);
+    e.lineTo(b.right + 16 * dp, y);
+    cv.drawPath(e, p);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
 ;
 /* ---- app/PatientPick.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -68102,6 +73607,12 @@ class People {
     return out;
   }
 
+  /** 10.33: the dark board of the user's picture: navy glass, gold headings and neon rings around each person. */
+  static NIGHT = 0xFF0B1442;
+  static GOLD = 0xFFF5C451;
+  static NEON = [0xFFA855F7, 0xFF3B82F6, 0xFF22C55E, 0xFFD946EF, 0xFF06B6D4, 0xFFF97316, 0xFFEC4899];
+  static GROUP_ICONS = ["👑", "🎓", "🎓", "🎓", "🎓", "🩺", "🎓"];
+
   /** The colourful team board shown first on a unit's or special ward's page. */
   static board(a, db, code) {
     let teamOf = code;
@@ -68111,77 +73622,137 @@ class People {
       teamOf = db.rotationUnit();
       note = "In charge this month: " + Db.unitName(teamOf);
     }
-    const people = People.team(db, teamOf);
+    let people = new ArrayList();
+    // 10.27: MBBS students have their own card under the board, by year (Posting.unitCard)
+    for (const s of People.team(db, teamOf)) if (People.group(s.get("role")) !== 6) people.add(s);
     Away.mirror(a, db);
-    const th = People.theme(code);
-    const color = th.c[0];
-    const outer = Ui.card(a);
-    // 9.20: every unit and special ward has its own colour theme: a gradient band and a pastel board
-    outer.setBackground(Ui.gradient(a, [Ui.mix(th.c[1], Color.WHITE, 0.88), Ui.mix(th.c[2], Color.WHITE, 0.9), Ui.mix(th.c[0], Color.WHITE, 0.92)], 20));
-    outer.setPadding(0, 0, 0, Ui.dp(a, 14));
-    const band = new FrameLayout(a);
-    band.setBackground(Ui.gradient(a, th.c, 20));
-    const motif = Ui.tv(a, th.motif, 54, Color.WHITE, false);
-    motif.setAlpha(0.28);
-    band.addView(motif, new FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.END | Gravity.CENTER_VERTICAL));
-    const head = Ui.h(a);
+    let th = People.theme(code);
+    let card = Ui.card(a);
+    // 9.20: every unit and special ward keeps its own colour theme, now as the band and the glow on a navy board
+    card.setBackground(new People.Night(a, th.c));
+    card.setElevation(0);
+    card.setPadding(Ui.dp(a, 12), Ui.dp(a, 16), Ui.dp(a, 12), Ui.dp(a, 16));
+
+    // the unit's name in gold with its admission day, as in the picture
+    let top = Ui.h(a);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    let tl = Ui.v(a);
+    let title = Honours.goldText(a, Db.isWardUnit(code) ? Db.shortName(code) + " Unit" : Db.unitName(code), 30, true);
+    title.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+    tl.addView(title);
+    let day = Ui.toInt(db.unit(code).get("admit_day"), 0);
+    let adm = Ui.tv(a, day === 0 ? "Admits every day" : "Admits every " + Dates.DAYS[day], 16, 0xFFF3D27A, false);
+    adm.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+    tl.addView(adm);
+    top.addView(tl, Ui.weight(1));
+    let tr = Ui.v(a);
+    tr.setGravity(Gravity.CENTER_HORIZONTAL);
+    let ecg = new View(a);
+    ecg.setBackground(new PgLeaveActivity.HeartEcg());
+    tr.addView(ecg, Ui.lp(Ui.dp(a, 120), Ui.dp(a, 26)));
+    let motto = Ui.tv(a, "LEARN  •  HEAL  •  SERVE", 10, 0xFFE9D9A6, true);
+    motto.setLetterSpacing(0.12);
+    tr.addView(motto);
+    top.addView(tr);
+    card.addView(top);
+    Ui.margins(top, 6, 0, 0, 10);
+
+    // the team band: theme gradient with waves, a gold ring with the team icon
+    let band = new FrameLayout(a);
+    band.setBackground(new People.Wave(a, th.c));
+    let motif = Ui.tv(a, th.motif, 40, Color.WHITE, false);
+    motif.setAlpha(0.35);
+    band.addView(motif, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.CENTER_VERTICAL));
+    let head = Ui.h(a);
     head.setGravity(Gravity.CENTER_VERTICAL);
-    head.setPadding(Ui.dp(a, 16), Ui.dp(a, 14), Ui.dp(a, 16), Ui.dp(a, 14));
-    const badge = Ui.tv(a, Db.shortName(code), 14, color, true);
-    badge.setBackground(Ui.round(a, Color.WHITE, 12));
-    badge.setPadding(Ui.dp(a, 10), Ui.dp(a, 4), Ui.dp(a, 10), Ui.dp(a, 4));
-    head.addView(badge);
-    const tt = Ui.v(a);
-    tt.setPadding(Ui.dp(a, 10), 0, 0, 0);
-    tt.addView(Ui.tv(a, "Team board", 18, Color.WHITE, true));
-    tt.addView(Ui.tv(a, th.name + " theme  ·  " + people.size() + (people.size() === 1 ? " member" : " members"), 12, 0xE6FFFFFF, true));
+    head.setPadding(Ui.dp(a, 10), Ui.dp(a, 10), Ui.dp(a, 60), Ui.dp(a, 10));
+    let ring = new FrameLayout(a);
+    let rd = Ui.round(a, People.NIGHT, 26);
+    rd.setStroke(Ui.dp(a, 2), People.GOLD);
+    ring.setBackground(rd);
+    let ic = new ImageView(a);
+    ic.setImageResource(R.drawable.ic_people);
+    ic.setColorFilter(People.GOLD);
+    ring.addView(ic, new FrameLayout.LayoutParams(Ui.dp(a, 26), Ui.dp(a, 26), Gravity.CENTER));
+    head.addView(ring, Ui.lp(Ui.dp(a, 52), Ui.dp(a, 52)));
+    let tt = Ui.v(a);
+    tt.setPadding(Ui.dp(a, 12), 0, 0, 0);
+    tt.addView(Ui.tv(a, "Team board", 20, Color.WHITE, true));
+    tt.addView(Ui.tv(a, th.name + " theme  ·  " + people.size() + (people.size() === 1 ? " member" : " members"), 13, 0xF2FFFFFF, false));
     head.addView(tt, Ui.weight(1));
     band.addView(head);
-    outer.addView(band, Ui.lp(MATCH_PARENT, WRAP_CONTENT));
-    const card = Ui.v(a);
-    card.setPadding(Ui.dp(a, 16), Ui.dp(a, 4), Ui.dp(a, 16), 0);
-    outer.addView(card);
-    if (note != null) card.addView(Ui.tv(a, note, 13, Ui.mix(color, Color.BLACK, 0.3), true));
-    const chief = db.unitHead(teamOf);
+    card.addView(band, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    let inner = Ui.v(a);
+    inner.setPadding(Ui.dp(a, 6), Ui.dp(a, 4), Ui.dp(a, 6), 0);
+    card.addView(inner);
+    let outer = card;
+    card = inner;
+    if (note !== null) {
+      let nt = Ui.tv(a, note, 13, People.GOLD, true);
+      card.addView(nt);
+      Ui.margins(nt, 0, 8, 0, 0);
+    }
+    let chief = db.unitHead(teamOf);
     let chiefListed = false;
     for (const s of people) if (s.get("name").equalsIgnoreCase(chief)) chiefListed = true;
     if (!chief.isEmpty() && !chiefListed) {
-      const ch = Ui.tv(a, (Db.isWardUnit(teamOf) ? "Unit chief: " : "In charge: ") + chief, 14, Ui.TEXT, true);
+      let ch = Ui.tv(a, (Db.isWardUnit(teamOf) ? "Unit chief: " : "In charge: ") + chief, 14, Color.WHITE, true);
       card.addView(ch);
       Ui.margins(ch, 0, 8, 0, 0);
     }
-    const away = People.awayCard(a, db, people);
-    if (away != null) {
+    let away = People.awayCard(a, db, people);
+    if (away !== null) {
       card.addView(away);
       Ui.margins(away, 0, 10, 0, 0);
     }
     if (people.isEmpty()) {
-      const e = Ui.muted(a, "No team members listed for " + Db.unitName(teamOf) + " yet. Add them in Faculty or Students with the unit set to "
-        + Db.shortName(teamOf) + ", and they appear here with their photos.");
+      let e = Ui.tv(a, "No team members listed for " + Db.unitName(teamOf) + " yet. Add them in Faculty or Students with the unit set to "
+          + Db.shortName(teamOf) + ", and they appear here with their photos.", 13, 0xCCFFFFFF, false);
       card.addView(e);
-      Ui.margins(e, 0, 8, 0, 0);
+      Ui.margins(e, 0, 10, 0, 0);
       return outer;
     }
-    let last = -1;
+    let last = -1, n = 0;
     let flow = null;
     for (const s of people) {
-      const g = People.group(s.get("role"));
+      let g = People.group(s.get("role"));
       if (g !== last) {
         last = g;
-        const gl = Ui.tv(a, People.GROUPS[g][1], 12, Ui.mix(th.c[0], Color.BLACK, 0.15), true);
-        gl.setAllCaps(true);
-        gl.setLetterSpacing(0.06);
+        let gl = People.groupHeading(a, People.GROUP_ICONS[g], People.GROUPS[g][1]);
         card.addView(gl);
-        Ui.margins(gl, 0, 12, 0, 2);
+        Ui.margins(gl, 0, 14, 0, 6);
         flow = new Bands.Flow(a);
-        card.addView(flow, Ui.lp(MATCH_PARENT, WRAP_CONTENT));
+        card.addView(flow, Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
       }
-      flow.addView(People.chip(a, s, th.c[g % 3 === 1 ? 1 : 0]));
+      flow.addView(People.chip(a, s, People.NEON[n++ % People.NEON.length]));
     }
-    const hint = Ui.muted(a, "Tap your own picture to add your photo.");
-    card.addView(hint);
-    Ui.margins(hint, 0, 10, 0, 0);
+    let foot = Ui.h(a);
+    foot.setGravity(Gravity.CENTER_VERTICAL);
+    let hint = Ui.tv(a, "📷  Tap your own picture to add your photo.", 12, 0xB3FFFFFF, false);
+    foot.addView(hint, Ui.weight(1));
+    let good = Ui.tv(a, "Good Doctors Build\na Healthy Tomorrow ♥", 14, 0xFFF3D27A, false);
+    good.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+    good.setGravity(Gravity.END);
+    foot.addView(good);
+    card.addView(foot);
+    Ui.margins(foot, 0, 14, 0, 0);
     return outer;
+  }
+
+  /** A gold heading with its icon and a thin gold line running to the right. */
+  static groupHeading(a, icon, s) {
+    let r = Ui.h(a);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    let t = Ui.tv(a, icon + "  " + s.toUpperCase(), 13, People.GOLD, true);
+    t.setLetterSpacing(0.06);
+    r.addView(t);
+    let dot = Ui.tv(a, "◆", 7, People.GOLD, false);
+    dot.setPadding(Ui.dp(a, 10), 0, Ui.dp(a, 2), 0);
+    r.addView(dot);
+    let line = new View(a);
+    line.setBackground(Ui.gradient(a, [0xCCF5C451, 0x00F5C451], 1));
+    r.addView(line, new LinearLayoutParams(0, Ui.dp(a, 1), 1));
+    return r;
   }
 
   /**
@@ -68251,41 +73822,142 @@ class People {
     return {name: "Classic", motif: "⭐", c: [c, Ui.mix(c, 0xFFDB2777, 0.35), Ui.mix(c, Color.WHITE, 0.3)]};
   }
 
-  /** One person on the board: photo, name, and their year or role. */
+  /** One person on the board: a dark glass pill with a neon ring, the photo, the name, and their year or role. */
   static chip(a, s, color) {
-    const c = Ui.h(a);
+    let c = Ui.h(a);
     c.setGravity(Gravity.CENTER_VERTICAL);
     // 9.72: someone away today: a sunny dashed card, a faded photo with a 🌴 / ✈️ badge and the day they are back
-    const away = Away.on(a.db, s.get("id"), Dates.todayIso());
-    if (away.isEmpty()) c.setBackground(Ui.outline(a, Color.WHITE, Ui.mix(color, Color.WHITE, 0.55), 24));
-    else {
-      const d = Ui.round(a, Ui.mix(Away.LEAVE, Color.WHITE, 0.86), 24);
-      d.setStroke(Ui.dp(a, 2), Away.LEAVE, Ui.dp(a, 5), Ui.dp(a, 3));
-      c.setBackground(d);
+    let away = Away.on(a.db, s.get("id"), Dates.todayIso());
+    let d = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+        [Ui.mix(color, People.NIGHT, 0.72), 0xFF121C4E, 0xFF0E1640]);
+    d.setCornerRadius(Ui.dp(a, 30));
+    if (away.isEmpty()) d.setStroke(Ui.dp(a, 2), Ui.mix(color, Color.WHITE, 0.15));
+    else d.setStroke(Ui.dp(a, 2), Away.LEAVE, Ui.dp(a, 5), Ui.dp(a, 3));
+    c.setBackground(d);
+    c.setElevation(Ui.dp(a, 3));
+    c.setPadding(Ui.dp(a, 4), Ui.dp(a, 4), Ui.dp(a, 16), Ui.dp(a, 4));
+    let f = new FrameLayout(a);
+    let ring = Ui.round(a, 0x00000000, 24);
+    ring.setStroke(Ui.dp(a, 2), 0xE6FFFFFF);
+    f.setBackground(ring);
+    f.setPadding(Ui.dp(a, 3), Ui.dp(a, 3), Ui.dp(a, 3), Ui.dp(a, 3));
+    let av = People.avatar(a, s, 40, Ui.mix(color, Color.WHITE, 0.1));
+    if (!away.isEmpty()) av.setAlpha(0.45);
+    f.addView(av);
+    if (!away.isEmpty()) {
+      let badge = Ui.tv(a, Away.icon(away), 15, Ui.TEXT, false);
+      f.addView(badge, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.BOTTOM));
     }
-    c.setPadding(Ui.dp(a, 4), Ui.dp(a, 4), Ui.dp(a, 12), Ui.dp(a, 4));
-    const av = People.avatar(a, s, 38, color);
-    if (away.isEmpty()) c.addView(av);
-    else {
-      const f = new FrameLayout(a);
-      av.setAlpha(0.45);
-      f.addView(av);
-      const badge = Ui.tv(a, Away.icon(away), 15, Ui.TEXT, false);
-      f.addView(badge, new FrameLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT, Gravity.END | Gravity.BOTTOM));
-      c.addView(f, Ui.lp(Ui.dp(a, 42), Ui.dp(a, 42)));
+    c.addView(f, Ui.lp(Ui.dp(a, 48), Ui.dp(a, 48)));
+    let t = Ui.v(a);
+    t.setPadding(Ui.dp(a, 10), 0, 0, 0);
+    t.addView(Ui.tv(a, "👤  " + s.get("name"), 14, Color.WHITE, true));
+    let y = "Postgraduate".equals(s.get("role")) ? CaseSheet.pgYear(s.get("batch"), Dates.today()) : 0;
+    let sub = y > 0 ? (y === 3 ? "Final year" : y === 2 ? "2nd year" : "1st year") : Ui.nz(s.get("role")).startsWith("MBBS") ? s.get("role").split("MBBS ").join("") : "";
+    if (!sub.isEmpty()) {
+      let st = Ui.tv(a, sub, 11, Ui.mix(color, Color.WHITE, 0.55), true);
+      st.setPadding(Ui.dp(a, 22), 0, 0, 0);
+      t.addView(st);
     }
-    const t = Ui.v(a);
-    t.setPadding(Ui.dp(a, 8), 0, 0, 0);
-    t.addView(Ui.tv(a, s.get("name"), 14, Ui.TEXT, true));
-    const y = "Postgraduate" === s.get("role") ? CaseSheet.pgYear(s.get("batch"), Dates.today()) : 0;
-    const sub = y > 0 ? (y === 3 ? "Final year" : y === 2 ? "2nd year" : "1st year") : Ui.nz(s.get("role")).startsWith("MBBS") ? s.get("role").split("MBBS ").join("") : "";
-    if (!sub.isEmpty()) t.addView(Ui.tv(a, sub, 11, color, true));
     if (!away.isEmpty()) t.addView(Ui.tv(a, (away.equals("On duty") ? "On duty elsewhere" : away.equals("Week off") ? "Week off" : "On leave") + " · back "
-      + Away.day(Away.backOn(a.db, s.get("id"), Dates.today())), 11, Ui.mix(Away.LEAVE, Color.BLACK, 0.4), true));
+        + Away.day(Away.backOn(a.db, s.get("id"), Dates.today())), 11, 0xFFFCD34D, true));
     c.addView(t);
     return c;
   }
 }
+
+/** The navy board: deep blue gradient, the theme's glow along the edge and its waves in the lower right corner. */
+People.Night = class extends Drawable {
+  constructor(ctx, c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.c = c;
+    this.dp = Ui.dp(ctx, 1);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, c = this.c, dp = this.dp;
+    const rad = 22 * dp, w = b.width(), h = b.height();
+    const r = new RectF(b.left + dp, b.top + dp, b.right - dp, b.bottom - dp);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, [0xFF0A1440, People.NIGHT, 0xFF160F4A], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    // waves in the lower right, in the theme's colours
+    cv.save();
+    const clip = new Path();
+    clip.addRoundRect(r, rad, rad, Path.Direction.CW);
+    cv.clipPath(clip);
+    for (let k = 0; k < 3; k++) {
+      const wv = new Path();
+      const base = b.bottom - h * (0.05 + 0.045 * k), x0 = b.left + w * (0.45 + 0.08 * k), amp = 10 * dp * (1 + k * 0.3);
+      wv.moveTo(x0, b.bottom);
+      wv.lineTo(x0, base);
+      for (let i = 0; i <= 24; i++) {
+        const x = x0 + (b.right - x0) * i / 24;
+        wv.lineTo(x, base - amp * Math.sin(i / 24 * Math.PI * 2.2 + k) - (x - x0) * 0.06 * (k + 1));
+      }
+      wv.lineTo(b.right, b.bottom);
+      wv.close();
+      p.setShader(new LinearGradient(x0, base - 40 * dp, b.right, b.bottom, [Ui.alpha(c[k % c.length], 0x00), Ui.alpha(c[k % c.length], 0x55)], null, Shader.TileMode.CLAMP));
+      cv.drawPath(wv, p);
+    }
+    cv.restore();
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(2 * dp);
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, [Ui.alpha(c[1], 0xCC), Ui.alpha(c[0], 0x66), Ui.alpha(People.GOLD, 0xAA)], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(null);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** The team band: the theme's gradient with two soft white waves and a light rim. */
+People.Wave = class extends Drawable {
+  constructor(ctx, c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.c = c;
+    this.dp = Ui.dp(ctx, 1);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, c = this.c, dp = this.dp;
+    const rad = b.height() / 2, w = b.width(), h = b.height();
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(b.left, 0, b.right, 0, [Ui.mix(c[0], People.NIGHT, 0.35), c[0], c[1], c[2]], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    cv.save();
+    const clip = new Path();
+    clip.addRoundRect(r, rad, rad, Path.Direction.CW);
+    cv.clipPath(clip);
+    p.setShader(null);
+    for (let k = 0; k < 2; k++) {
+      const wv = new Path();
+      const base = b.top + h * (0.62 + 0.16 * k), x0 = b.left + w * 0.4;
+      wv.moveTo(x0, b.bottom);
+      wv.lineTo(x0, base);
+      for (let i = 0; i <= 20; i++) {
+        const x = x0 + (b.right - x0) * i / 20;
+        wv.lineTo(x, base - h * 0.12 * Math.sin(i / 20 * Math.PI * 3 + k * 1.3));
+      }
+      wv.lineTo(b.right, b.bottom);
+      wv.close();
+      p.setColor(k === 0 ? 0x2EFFFFFF : 0x40FFFFFF);
+      cv.drawPath(wv, p);
+    }
+    cv.restore();
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(1.5 * dp);
+    p.setColor(0x66FFFFFF);
+    cv.drawRoundRect(new RectF(b.left + dp, b.top + dp, b.right - dp, b.bottom - dp), rad, rad, p);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
 ;
 /* ---- app/PgChatActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -69047,14 +74719,22 @@ class PgConnectActivity extends Base {
 /* ---- app/PgLeaveActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
-/** PG leave: applications with the leave letter, approved in turn by the unit Assistant Professor, the unit Professor, the leave nodal officer (the admin, 9.00) and the HOD. */
+/**
+ * PG leave (10.23, the department's rule): the PG applies in the app with the dates, reason and the doing-duty PG; any one
+ * Assistant Professor, then the unit chief, then the leave nodal officer approve in the app, and their boxes on the form print
+ * "Approved in the app on .. at ..". The PG then downloads the form, signs it with the doing-duty PG, gets the HOD's signature in
+ * person, submits it in the medicine office and uploads the signed letter here. The HOD step of 9.00 is no longer in the app.
+ */
 class PgLeaveActivity extends Base {
   constructor() { super(); this.filter = 0; }
 
   static LEVELS = ["ap", "prof", "nodal", "hod"];
-  static LEVEL_NAMES = ["Unit Assistant Professor", "Unit Professor", "Leave nodal officer (Dr. S. Rajkumar)", "HOD"];
+  static LEVEL_NAMES = ["Assistant Professor (any one)", "Unit Chief", "Leave nodal officer (Dr. S. Rajkumar)", "HOD"];
   static NODAL = 2;
   static HOD = 3;
+  /** The steps approved in the app: the Assistant Professor, the unit chief and the leave nodal officer. */
+  static APP_STEPS = 3;
+  static NEXT = "Approved in the app. Next: download the form, sign it with the doing-duty PG, get the HOD's signature in person, submit it in the medicine office and upload the signed letter here.";
   static FILTERS = ["Awaiting approval", "Approved", "Not approved", "All"];
 
   onCreate(b) {
@@ -69075,10 +74755,10 @@ class PgLeaveActivity extends Base {
     return s;
   }
 
-  /** Overall state: Approved once all three approve, Not approved if anyone declines, else Awaiting. */
+  /** Overall state in the app: Approved once the Assistant Professor, the unit chief and the nodal officer approve, Not approved if any declines, else Awaiting. */
   static overall(r) {
     let all = true;
-    for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) {
+    for (let i = 0; i < PgLeaveActivity.APP_STEPS; i++) {
       const s = PgLeaveActivity.status(r, i);
       if (s.equals("Not approved")) return "Not approved";
       if (!s.equals("Approved")) all = false;
@@ -69098,46 +74778,92 @@ class PgLeaveActivity extends Base {
     return false;
   }
 
+  // 10.32: the look of the user's PG Leave picture: navy banner with a gold title, a blue-violet stats panel,
+  // a gradient apply button, counted filter chips, and leave cards with the approval steps side by side.
+
+  static NAVY = 0xFF0A1A4A;
+  static GOLD = 0xFFF5C451;
+  static INDIGO = 0xFF4F46E5;
+  static VIOLET = 0xFF7C3AED;
+  static LAVENDER = 0xFFF1EEFF;
+  static FILTER_ICONS = ["⏱", "✓", "✕", "☰"];
+
   render() {
-    const page = Ui.v(this);
-    const iso = Dates.todayIso();
-    const all = this.db.rows("SELECT l.*, s.name, s.unit FROM pg_leaves l LEFT JOIN staff s ON s.id=l.staff_id ORDER BY l.from_date DESC, l.id DESC");
+    this.pageBg = 0xFFF4F5FB;
+    let page = Ui.v(this);
+    let iso = Dates.todayIso();
+    let all = this.db.rows("SELECT l.*, s.name, s.unit FROM pg_leaves l LEFT JOIN staff s ON s.id=l.staff_id ORDER BY l.from_date DESC, l.id DESC");
     let waiting = 0, today = 0;
-    const atLevel = new Array(PgLeaveActivity.LEVELS.length).fill(0);
+    let atLevel = new Array(PgLeaveActivity.LEVELS.length).fill(0);
+    let counts = new Array(PgLeaveActivity.FILTERS.length).fill(0);
     for (const r of all) {
-      const o = PgLeaveActivity.overall(r);
+      let o = PgLeaveActivity.overall(r);
+      for (let i = 0; i < 3; i++) if (o.equals(PgLeaveActivity.FILTERS[i])) counts[i]++;
       if (o.equals("Awaiting approval")) {
         waiting++;
-        for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) if (!("Approved" === PgLeaveActivity.status(r, i))) { atLevel[i]++; break; }
+        for (let i = 0; i < PgLeaveActivity.APP_STEPS; i++) if ("Approved" !== PgLeaveActivity.status(r, i)) { atLevel[i]++; break; }
       }
       if (o.equals("Approved") && iso.compareTo(r.get("from_date")) >= 0 && iso.compareTo(r.get("to_date")) <= 0) today++;
     }
-    const hero = Ui.card(this);
-    hero.setBackground(Glass.hero(this, Ui.shades(Ui.PURPLE), 20));
-    hero.addView(Ui.statRow(this, this.white(String(today), "PGs on leave today"), this.white(String(waiting), "Awaiting approval"),
-      this.white(String(all.size()), "Applications")));
-    const lv = Ui.tv(this, "Waiting with: Asst. Prof " + atLevel[0] + "  ·  Professor " + atLevel[1] + "  ·  Nodal officer " + atLevel[PgLeaveActivity.NODAL] + "  ·  HOD " + atLevel[PgLeaveActivity.HOD], 12, 0xE6FFFFFF, false);
-    lv.setGravity(Gravity.CENTER);
-    hero.addView(lv);
-    Ui.margins(lv, 0, 10, 0, 0);
-    const apply = Ui.tv(this, "+  Apply for leave", 15, Ui.PURPLE, true);
-    apply.setGravity(Gravity.CENTER);
-    apply.setBackground(Ui.round(this, 0xFFFFFFFF, 12));
-    apply.setPadding(0, Ui.dp(this, 11), 0, Ui.dp(this, 11));
-    apply.setOnClickListener(this.opener(PgLeaveFormActivity));
-    hero.addView(apply);
-    Ui.margins(apply, 0, 12, 0, 0);
-    page.addView(hero);
+    counts[3] = all.size();
+    page.addView(this.banner());
 
-    const chips = Ui.h(this);
-    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
+    let stats = Ui.v(this);
+    stats.setBackground(Ui.gradient(this, [0xFF2563EB, PgLeaveActivity.INDIGO, PgLeaveActivity.VIOLET], 20));
+    stats.setElevation(Ui.dp(this, 4));
+    stats.setPadding(Ui.dp(this, 10), Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 14));
+    let row = Ui.h(this);
+    row.addView(this.stat(R.drawable.ic_doc, String(today), "PGs on leave today"), Ui.weight(1));
+    row.addView(this.vline(0x4DFFFFFF), Ui.lp(Ui.dp(this, 1), Ui.dp(this, 70)));
+    row.addView(this.stat(R.drawable.ic_calendar, String(waiting), "Awaiting approval"), Ui.weight(1));
+    row.addView(this.vline(0x4DFFFFFF), Ui.lp(Ui.dp(this, 1), Ui.dp(this, 70)));
+    row.addView(this.stat(R.drawable.ic_clipboard, String(all.size()), "Applications"), Ui.weight(1));
+    stats.addView(row);
+    let rule = this.vline(0x40FFFFFF);
+    stats.addView(rule, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 1)));
+    Ui.margins(rule, 8, 14, 8, 10);
+    let wl = Ui.h(this);
+    wl.setGravity(Gravity.CENTER);
+    wl.addView(this.icon(R.drawable.ic_people, 0xFFFFFFFF, 16));
+    let w = Ui.tv(this, "Waiting with: Asst.\u00A0Professor\u00A0" + atLevel[0] + "  •  Unit\u00A0chief\u00A0" + atLevel[1] + "  •  Nodal\u00A0officer\u00A0" + atLevel[2], 12, 0xF2FFFFFF, true);
+    w.setGravity(Gravity.CENTER);
+    wl.addView(w);
+    Ui.margins(w, 6, 0, 0, 0);
+    stats.addView(wl);
+    let hl = Ui.h(this);
+    hl.setGravity(Gravity.CENTER_VERTICAL);
+    hl.addView(this.vline(0x59FFFFFF), new LinearLayoutParams(0, Ui.dp(this, 1), 1));
+    let hod = Ui.tv(this, "Then the HOD signs the letter in person", 12, 0xD9FFFFFF, false);
+    hod.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+    hl.addView(hod);
+    hl.addView(this.vline(0x59FFFFFF), new LinearLayoutParams(0, Ui.dp(this, 1), 1));
+    stats.addView(hl);
+    Ui.margins(hl, 0, 6, 0, 0);
+    page.addView(stats);
+    Ui.margins(stats, 12, 10, 12, 0);
+
+    let apply = Ui.h(this);
+    apply.setGravity(Gravity.CENTER_VERTICAL);
+    apply.setBackground(Ui.gradient(this, [0xFF6D28D9, 0xFF9333EA], 28));
+    apply.setElevation(Ui.dp(this, 3));
+    apply.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10));
+    apply.addView(new View(this), Ui.lp(Ui.dp(this, 30), 1));
+    let at = Ui.tv(this, "✎  + Apply for leave", 16, 0xFFFFFFFF, true);
+    at.setGravity(Gravity.CENTER);
+    apply.addView(at, Ui.weight(1));
+    apply.addView(this.chevron(0x33FFFFFF, 0xFFFFFFFF));
+    apply.setOnClickListener(this.opener(PgLeaveFormActivity));
+    page.addView(apply);
+    Ui.margins(apply, 12, 12, 12, 0);
+
+    let chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 4));
     for (let i = 0; i < PgLeaveActivity.FILTERS.length; i++) {
-      const idx = i;
-      const c = Ui.chip(this, PgLeaveActivity.FILTERS[i], i === this.filter, Ui.PURPLE);
-      c.setOnClickListener({
-        onClick: (v) => { this.filter = idx; this.render(); }
-      });
+      let idx = i;
+      let c = this.filterChip(PgLeaveActivity.FILTER_ICONS[i] + "  " + PgLeaveActivity.FILTERS[i], counts[i], i === this.filter);
+      c.setOnClickListener({ onClick: (v) => { this.filter = idx; this.render(); } });
       chips.addView(c);
+      Ui.margins(c, 0, 0, 8, 0);
     }
     page.addView(Ui.hscroll(this, chips));
 
@@ -69148,36 +74874,299 @@ class PgLeaveActivity extends Base {
       shown++;
     }
     if (shown === 0) page.addView(this.emptyNote(this.filter === 0 ? "No leave waiting for approval." : "Nothing here yet."));
+    page.addView(this.footer());
     this.setPage(page);
   }
 
+  /** Navy banner: "PG Leave" in gold script, the subtitle with a gold bar, a gold document badge and the motto over an ECG line. */
+  banner() {
+    let b = Ui.v(this);
+    b.setBackground(new PgLeaveActivity.Banner(this));
+    b.setPadding(Ui.dp(this, 20), Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 14));
+    let top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    let t = Ui.v(this);
+    let title = Honours.goldText(this, "PG Leave", 34, true);
+    title.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+    t.addView(title);
+    let sub = Ui.tv(this, "Leave letters and approvals", 14, 0xFFFFFFFF, false);
+    t.addView(sub);
+    let bar = new View(this);
+    bar.setBackground(Ui.round(this, PgLeaveActivity.GOLD, 2));
+    t.addView(bar, Ui.lp(Ui.dp(this, 44), Ui.dp(this, 3)));
+    Ui.margins(bar, 0, 8, 0, 0);
+    top.addView(t, Ui.weight(1));
+    let badge = new FrameLayout(this);
+    badge.setBackground(Ui.outline(this, 0x26F5C451, PgLeaveActivity.GOLD, 30));
+    let doc = this.icon(R.drawable.ic_doc, PgLeaveActivity.GOLD, 30);
+    badge.addView(doc, new FrameLayout.LayoutParams(Ui.dp(this, 30), Ui.dp(this, 30), Gravity.CENTER));
+    top.addView(badge, Ui.lp(Ui.dp(this, 60), Ui.dp(this, 60)));
+    b.addView(top);
+    let motto = Ui.tv(this, "For a Better Tomorrow", 13, 0xFFE9C46A, false);
+    motto.setTypeface(Typeface.create(Typeface.SERIF, Typeface.ITALIC));
+    b.addView(motto);
+    Ui.margins(motto, 0, 14, 0, 0);
+    let m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    m.setMargins(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
+    b.setLayoutParams(m);
+    return b;
+  }
+
+  /** One number of the stats panel under a white ring icon. */
+  stat(ic, v, label) {
+    let l = Ui.v(this);
+    l.setGravity(Gravity.CENTER_HORIZONTAL);
+    let ring = new FrameLayout(this);
+    ring.setBackground(Ui.outline(this, 0x1FFFFFFF, 0xE6FFFFFF, 22));
+    ring.addView(this.icon(ic, 0xFFFFFFFF, 20), new FrameLayout.LayoutParams(Ui.dp(this, 20), Ui.dp(this, 20), Gravity.CENTER));
+    l.addView(ring, Ui.lp(Ui.dp(this, 42), Ui.dp(this, 42)));
+    let n = Ui.tv(this, v, 24, 0xFFFFFFFF, true);
+    n.setGravity(Gravity.CENTER);
+    l.addView(n);
+    Ui.margins(n, 0, 4, 0, 0);
+    let t = Ui.tv(this, label, 11, 0xE6FFFFFF, false);
+    t.setGravity(Gravity.CENTER);
+    l.addView(t);
+    return l;
+  }
+
+  vline(color) {
+    let v = new View(this);
+    v.setBackgroundColor(color);
+    return v;
+  }
+
+  icon(ic, color, sizeDp) {
+    let iv = new ImageView(this);
+    iv.setImageResource(ic);
+    iv.setColorFilter(color);
+    iv.setLayoutParams(Ui.lp(Ui.dp(this, sizeDp), Ui.dp(this, sizeDp)));
+    return iv;
+  }
+
+  chevron(bg, fg) {
+    let c = Ui.tv(this, "›", 20, fg, true);
+    c.setGravity(Gravity.CENTER);
+    c.setPadding(0, 0, 0, Ui.dp(this, 3));
+    c.setBackground(Ui.round(this, bg, 15));
+    c.setLayoutParams(Ui.lp(Ui.dp(this, 30), Ui.dp(this, 30)));
+    return c;
+  }
+
+  /** A rounded filter chip with its count in a small badge; the chosen one is filled indigo. */
+  filterChip(s, count, on) {
+    let c = Ui.h(this);
+    c.setGravity(Gravity.CENTER_VERTICAL);
+    c.setBackground(on ? Ui.gradient(this, [PgLeaveActivity.INDIGO, PgLeaveActivity.VIOLET], 20) : Ui.outline(this, 0xFFFFFFFF, 0xFFE2E8F0, 20));
+    c.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+    let t = Ui.tv(this, s, 13, on ? 0xFFFFFFFF : Ui.TEXT, true);
+    c.addView(t);
+    let n = Ui.tv(this, String(count), 11, on ? PgLeaveActivity.INDIGO : PgLeaveActivity.INDIGO, true);
+    n.setGravity(Gravity.CENTER);
+    n.setBackground(Ui.round(this, on ? 0xFFFFFFFF : 0xFFEEF2FF, 10));
+    n.setPadding(Ui.dp(this, 7), Ui.dp(this, 1), Ui.dp(this, 7), Ui.dp(this, 1));
+    c.addView(n);
+    Ui.margins(n, 8, 0, 0, 0);
+    return c;
+  }
+
+  /** The step whose turn it is (-1 when none is waiting). */
+  static current(r) {
+    if (!PgLeaveActivity.overall(r).equals("Awaiting approval")) return -1;
+    for (let i = 0; i < PgLeaveActivity.APP_STEPS; i++) if ("Approved" !== PgLeaveActivity.status(r, i)) return i;
+    return -1;
+  }
+
   leaveCard(r) {
-    const o = PgLeaveActivity.overall(r);
-    const col = o.equals("Approved") ? Ui.GREEN : o.equals("Not approved") ? Ui.RED : Ui.ORANGE;
-    const range = Dates.nice(r.get("from_date")) + (r.get("to_date").equals(r.get("from_date")) ? "" : " to " + Dates.nice(r.get("to_date")));
-    const days = r.get("days").replaceAllRx("\\.0$", "");
-    const card = this.entryCard(o, col, Ui.nz(r.get("name")).isEmpty() ? "(PG removed)" : r.get("name"),
-      range + "  ·  " + days + (days.equals("1") ? " day" : " days") + "\nReason: " + r.get("reason"),
-      Db.shortName(Ui.nz(r.get("unit"))), this.opener(PgLeaveFormActivity, "id", r.get("id")));
-    for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) card.addView(PgLeaveActivity.approvalRow(this, r, i, {
-      run: () => { this.render(); }
-    }));
-    const form = Ui.tv(this, "📄  " + LeaveForm.name(r) + " (PDF / Word)", 13, Ui.PURPLE, true);
-    form.setPadding(0, Ui.dp(this, 10), 0, 0);
-    form.setOnClickListener({
-      onClick: (v) => { LeaveForm.choose(this, r); }
-    });
-    card.addView(form);
-    if (!Ui.nz(r.get("letter")).isEmpty()) {
-      const letter = Ui.tv(this, "📎  View leave letter", 13, Ui.PURPLE, true);
-      letter.setPadding(0, Ui.dp(this, 10), 0, 0);
-      letter.setOnClickListener({
-        onClick: (v) => { this.viewLetter(r); }
-      });
-      card.addView(letter);
+    let o = PgLeaveActivity.overall(r);
+    let col = o.equals("Approved") ? Ui.GREEN : o.equals("Not approved") ? Ui.RED : Ui.ORANGE;
+    let range = Dates.nice(r.get("from_date")) + (r.get("to_date").equals(r.get("from_date")) ? "" : " to " + Dates.nice(r.get("to_date")));
+    let days = r.get("days").replaceAllRx("\\.0$", "");
+    let name = Ui.nz(r.get("name")).isEmpty() ? "(PG removed)" : r.get("name");
+    let card = Ui.card(this);
+    card.setBackground(Ui.round(this, 0xFFFFFFFF, 18));
+    card.setPadding(0, 0, 0, 0);
+    let outer = Ui.h(this);
+    let accent = new View(this);
+    accent.setBackground(Ui.round(this, col, 3));
+    outer.addView(accent, Ui.lp(Ui.dp(this, 5), ViewGroup.LayoutParams.MATCH_PARENT));
+    Ui.margins(accent, 0, 14, 0, 14);
+    let inner = Ui.v(this);
+    inner.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 14));
+    outer.addView(inner, Ui.weight(1));
+    card.addView(outer);
+
+    let top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.addView(Ui.softPill(this, (o.equals("Approved") ? "✓  " : o.equals("Not approved") ? "✕  " : "⏱  ") + o, col));
+    top.addView(new View(this), new LinearLayoutParams(0, 1, 1));
+    let unit = Db.shortName(Ui.nz(r.get("unit")));
+    if (!unit.isEmpty()) {
+      let u = Ui.tv(this, unit, 12, PgLeaveActivity.INDIGO, true);
+      u.setBackground(Ui.round(this, 0xFFEEF2FF, 8));
+      u.setPadding(Ui.dp(this, 10), Ui.dp(this, 3), Ui.dp(this, 10), Ui.dp(this, 3));
+      top.addView(u);
     }
+    inner.addView(top);
+
+    let cur = PgLeaveActivity.current(r);
+    let mine = cur >= 0 && PgLeaveActivity.canApprove(this, cur);
+    let who = Ui.h(this);
+    who.setGravity(Gravity.CENTER_VERTICAL);
+    let av = Ui.tv(this, CallActivity.initials(name), 15, 0xFFFFFFFF, true);
+    av.setGravity(Gravity.CENTER);
+    av.setBackground(Ui.gradient(this, [0xFF1E3A8A, PgLeaveActivity.NAVY], 23));
+    who.addView(av, Ui.lp(Ui.dp(this, 46), Ui.dp(this, 46)));
+    let t = Ui.v(this);
+    t.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 6), 0);
+    t.addView(Ui.tv(this, name, 16, Ui.TEXT, true));
+    t.addView(Ui.tv(this, range + "  ·  " + days + (days.equals("1") ? " day" : " days"), 13, Ui.MUTED, false));
+    let why = Ui.tv(this, "Reason: " + Ui.nz(r.get("reason")), 13, 0xFF475569, false);
+    why.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.ITALIC));
+    why.setMaxLines(3);
+    t.addView(why);
+    who.addView(t, Ui.weight(1));
+    if (mine) {
+      let btns = Ui.v(this);
+      let ok = Ui.softPill(this, "✓ Approve", Ui.GREEN);
+      ok.setGravity(Gravity.CENTER);
+      ok.setOnClickListener({ onClick: (v) => { PgLeaveActivity.sign(this, r, cur, "Approved", this.rerender()); } });
+      btns.addView(ok);
+      let no = Ui.softPill(this, "✕ Not approve", Ui.RED);
+      no.setGravity(Gravity.CENTER);
+      no.setOnClickListener({ onClick: (v) => { PgLeaveActivity.sign(this, r, cur, "Not approved", this.rerender()); } });
+      btns.addView(no);
+      Ui.margins(no, 0, 6, 0, 0);
+      who.addView(btns);
+    }
+    inner.addView(who);
+    Ui.margins(who, 0, 10, 0, 0);
+    if (mine) {
+      // 9.98: others of the unit away, the admission day and roster duties in those days
+      let clash = Hod.clashText(this.db, Ui.nz(r.get("staff_id")), Ui.nz(r.get("from_date")), Ui.nz(r.get("to_date")));
+      if (!clash.isEmpty()) {
+        let warn = Ui.tv(this, clash, 12, 0xFFB45309, false);
+        warn.setBackground(Ui.round(this, 0xFFFEF3C7, 8));
+        warn.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+        inner.addView(warn);
+        Ui.margins(warn, 0, 8, 0, 0);
+      }
+    }
+
+    let div = this.vline(0xFFE2E8F0);
+    inner.addView(div, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 1)));
+    Ui.margins(div, 0, 12, 0, 10);
+    let steps = Ui.h(this);
+    steps.setBaselineAligned(false);
+    steps.setGravity(Gravity.TOP);
+    let first = true;
+    for (let i = 0; i < PgLeaveActivity.APP_STEPS; i++) {
+      // an application from before the nodal officer step: no column for it
+      if (i === PgLeaveActivity.NODAL && Ui.nz(r.get("nodal_status")).isEmpty()) continue;
+      if (!first) steps.addView(this.vline(0xFFE2E8F0), Ui.lp(Ui.dp(this, 1), ViewGroup.LayoutParams.MATCH_PARENT));
+      steps.addView(this.stepColumn(r, i, i === cur && mine), Ui.weight(1));
+      first = false;
+    }
+    inner.addView(steps);
+
+    if (o.equals("Approved")) {
+      let done = !Ui.nz(r.get("letter")).isEmpty();
+      let next = Ui.tv(this, done ? "✓ Signed letter submitted in the office and uploaded" : PgLeaveActivity.NEXT, 12, Ui.GREEN, true);
+      next.setBackground(Ui.round(this, 0xFFDCFCE7, 10));
+      next.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6));
+      inner.addView(next);
+      Ui.margins(next, 0, 12, 0, 0);
+    }
+    let form = this.linkBox(R.drawable.ic_doc, (o.equals("Approved") ? "Download the approved form" : LeaveForm.name(r)) + " (PDF / Word)", { onClick: (v) => { LeaveForm.choose(this, r); } });
+    inner.addView(form);
+    Ui.margins(form, 0, 12, 0, 0);
+    if (!Ui.nz(r.get("letter")).isEmpty()) {
+      let letter = this.linkBox(R.drawable.ic_verified, "View the signed letter", { onClick: (v) => { this.viewLetter(r); } });
+      inner.addView(letter);
+      Ui.margins(letter, 0, 8, 0, 0);
+    }
+    Ui.ripple(card, Ui.alpha(col, 0x1A));
+    card.setOnClickListener(this.opener(PgLeaveFormActivity, "id", r.get("id")));
     return card;
   }
+
+  rerender() {
+    return { run: () => { this.render(); } };
+  }
+
+  /** One approval step as a column: numbered purple circle (green tick or red cross once signed), who, and the state. */
+  stepColumn(r, level, mine) {
+    let k = PgLeaveActivity.LEVELS[level];
+    let st = PgLeaveActivity.status(r, level);
+    if (st.isEmpty()) st = "Pending";
+    let c = Ui.v(this);
+    c.setGravity(Gravity.CENTER_HORIZONTAL);
+    c.setPadding(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
+    let col = st.equals("Approved") ? Ui.GREEN : st.equals("Not approved") ? Ui.RED : PgLeaveActivity.VIOLET;
+    let dot = Ui.tv(this, st.equals("Approved") ? "✓" : st.equals("Not approved") ? "✕" : String(level + 1), 13, 0xFFFFFFFF, true);
+    dot.setGravity(Gravity.CENTER);
+    dot.setBackground(Ui.gradient(this, [Ui.mix(col, 0xFFFFFFFF, 0.15), Ui.mix(col, 0xFF000000, 0.15)], 14));
+    c.addView(dot, Ui.lp(Ui.dp(this, 28), Ui.dp(this, 28)));
+    let n = Ui.tv(this, PgLeaveActivity.LEVEL_NAMES[level], 12, Ui.TEXT, true);
+    n.setGravity(Gravity.CENTER);
+    c.addView(n);
+    Ui.margins(n, 0, 6, 0, 0);
+    let by = Ui.nz(r.get(k + "_by"));
+    let tm = Ui.nz(r.get(k + "_time"));
+    let s = st.equals("Pending") ? (mine ? "Waiting for your approval" : "Pending")
+        : st + (by.isEmpty() ? "" : " by " + by) + "\n" + Dates.nice(Ui.nz(r.get(k + "_date"))) + (tm.isEmpty() ? "" : " at " + LeaveForm.clock(tm));
+    let v = Ui.tv(this, s, 11, st.equals("Pending") ? (mine ? Ui.ORANGE : Ui.MUTED) : col, mine);
+    v.setGravity(Gravity.CENTER);
+    c.addView(v);
+    Ui.margins(v, 0, 2, 0, 0);
+    return c;
+  }
+
+  /** A lavender rounded link with an icon and a chevron, like the form link in the picture. */
+  linkBox(ic, s, l) {
+    let b = Ui.h(this);
+    b.setGravity(Gravity.CENTER_VERTICAL);
+    b.setBackground(Ui.round(this, PgLeaveActivity.LAVENDER, 14));
+    b.setPadding(Ui.dp(this, 10), Ui.dp(this, 9), Ui.dp(this, 10), Ui.dp(this, 9));
+    let f = new FrameLayout(this);
+    f.setBackground(Ui.round(this, 0xFFFFFFFF, 16));
+    f.addView(this.icon(ic, PgLeaveActivity.VIOLET, 18), new FrameLayout.LayoutParams(Ui.dp(this, 18), Ui.dp(this, 18), Gravity.CENTER));
+    b.addView(f, Ui.lp(Ui.dp(this, 32), Ui.dp(this, 32)));
+    let t = Ui.tv(this, s, 13, 0xFF5B21B6, true);
+    t.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 6), 0);
+    b.addView(t, Ui.weight(1));
+    b.addView(this.chevron(0xFFFFFFFF, PgLeaveActivity.VIOLET));
+    Ui.ripple(b, 0x227C3AED);
+    b.setOnClickListener(l);
+    return b;
+  }
+
+  /** Gold heart-ECG, "Together We Serve" between gold lines and the college name. */
+  footer() {
+    let f = Ui.v(this);
+    f.setGravity(Gravity.CENTER_HORIZONTAL);
+    f.setPadding(0, Ui.dp(this, 18), 0, Ui.dp(this, 24));
+    let ecg = new View(this);
+    ecg.setBackground(new PgLeaveActivity.HeartEcg());
+    f.addView(ecg, Ui.lp(Ui.dp(this, 150), Ui.dp(this, 30)));
+    let l = Ui.h(this);
+    l.setGravity(Gravity.CENTER);
+    l.addView(this.vline(0x99C9A13B), Ui.lp(Ui.dp(this, 40), Ui.dp(this, 1)));
+    let t = Ui.tv(this, "Together We Serve", 17, 0xFFB8860B, false);
+    t.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+    t.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+    l.addView(t);
+    l.addView(this.vline(0x99C9A13B), Ui.lp(Ui.dp(this, 40), Ui.dp(this, 1)));
+    f.addView(l);
+    Ui.margins(l, 0, 4, 0, 0);
+    let col = Ui.tv(this, "TIRUNELVELI MEDICAL COLLEGE", 10, 0xFF64748B, true);
+    col.setLetterSpacing(0.18);
+    col.setGravity(Gravity.CENTER);
+    f.addView(col);
+    Ui.margins(col, 0, 4, 0, 0);
+    return f;
+  }
+
 
   viewLetter(r) {
     if (!this.db.file(r.get("letter")).exists()) {
@@ -69210,9 +75199,11 @@ class PgLeaveActivity extends Base {
     let turn = st.equals("Pending");
     for (let i = 0; i < level; i++) if (!("Approved" === PgLeaveActivity.status(r, i))) turn = false;
     const mine = turn && PgLeaveActivity.canApprove(a, level);
-    t.addView(Ui.tv(a, st.equals("Pending") ? (mine ? "Waiting for your approval" : "Pending") : st + (by.isEmpty() ? "" : " by " + by) + "  ·  " + Dates.nice(Ui.nz(r.get(k + "_date"))), 12, (col | 0) === (0xFF94A3B8 | 0) ? Ui.MUTED : col, false));
+    const tm = Ui.nz(r.get(k + "_time"));
+    t.addView(Ui.tv(a, st.equals("Pending") ? (mine ? "Waiting for your approval" : "Pending") : st + (by.isEmpty() ? "" : " by " + by) + "  ·  " + Dates.nice(Ui.nz(r.get(k + "_date")))
+      + (tm.isEmpty() ? "" : " at " + LeaveForm.clock(tm)), 12, (col | 0) === (0xFF94A3B8 | 0) ? Ui.MUTED : col, false));
     row.addView(t, Ui.weight(1));
-    // Each level signs in turn: the Professor after the Assistant Professor, the HOD after both.
+    // Each level signs in turn: the unit chief after the Assistant Professor, the nodal officer after the unit chief.
     if (mine) {
       const ok = Ui.softPill(a, "Approve", Ui.GREEN);
       ok.setOnClickListener({
@@ -69245,6 +75236,7 @@ class PgLeaveActivity extends Base {
     const db = a.db;
     const f = new Form(a);
     const role = level === 0 ? "AND role='Assistant Professor'" : level === 1 ? "AND role IN ('Professor','Associate Professor')" : "";
+    const now = String(Dates.time().getHour()).padStart(2, "0") + ":" + String(Dates.time().getMinute()).padStart(2, "0");
     const unit = Ui.nz(r.get("unit"));
     // the signer's name as on the Faculty list when the account is linked, else the account name
     let me = Cloud.active(a) && Cloud.myStaff(a) > 0 ? Chat.myName(a, db) : "";
@@ -69265,33 +75257,110 @@ class PgLeaveActivity extends Base {
         cv.put(k + "_status", status);
         cv.put(k + "_by", f.get("by"));
         cv.put(k + "_date", Dates.todayIso());
+        cv.put(k + "_time", now);
         db.update("pg_leaves", cv, Long.parseLong(r.get("id")));
         r.put(k + "_status", status);
         r.put(k + "_by", f.get("by"));
         r.put(k + "_date", Dates.todayIso());
+        r.put(k + "_time", now);
         after.run();
         return true;
       }
     });
   }
-
-  white(v, label) {
-    const l = Ui.v(this);
-    l.setGravity(Gravity.CENTER_HORIZONTAL);
-    const n = Ui.tv(this, v, 22, 0xFFFFFFFF, true);
-    n.setGravity(Gravity.CENTER);
-    l.addView(n);
-    const t = Ui.tv(this, label, 11, 0xD9FFFFFF, false);
-    t.setGravity(Gravity.CENTER);
-    l.addView(t);
-    return l;
-  }
 }
+
+/** The banner: navy gradient, a soft light at the top right and a faint gold ECG along the bottom. */
+PgLeaveActivity.Banner = class extends Drawable {
+  constructor(c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.dp = Ui.dp(c, 1);
+    this.rad = 22 * this.dp;
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp, rad = this.rad;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, [0xFF06123A, 0xFF0F2A6E, 0xFF1E3A8A], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(new RadialGradient(b.right - b.width() * 0.2, b.top + b.height() * 0.25, b.width() * 0.45,
+      [0x553B82F6, 0x003B82F6], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(1.6 * dp);
+    p.setStrokeJoin(Paint.Join.ROUND);
+    p.setColor(0x99F5C451);
+    const y = b.bottom - 22 * dp, x0 = b.left + b.width() * 0.52, x1 = b.right - 14 * dp, u = 6 * dp;
+    const e = new Path();
+    e.moveTo(x0, y);
+    const mid = x0 + (x1 - x0) * 0.45;
+    e.lineTo(mid, y);
+    e.lineTo(mid + u, y - 2 * u);
+    e.lineTo(mid + 2 * u, y + 2.2 * u);
+    e.lineTo(mid + 3 * u, y - 0.8 * u);
+    e.lineTo(mid + 3.6 * u, y);
+    e.lineTo(x1, y);
+    cv.drawPath(e, p);
+    p.setStrokeWidth(dp);
+    p.setColor(0x33F5C451);
+    cv.drawRoundRect(new RectF(b.left + dp / 2, b.top + dp / 2, b.right - dp / 2, b.bottom - dp / 2), rad, rad, p);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** A gold ECG line with a small heart in the middle, for the footer. */
+PgLeaveActivity.HeartEcg = class extends Drawable {
+  constructor() {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p;
+    const w = b.width(), h = b.height(), cx = b.exactCenterX(), cy = b.exactCenterY(), u = h / 6;
+    p.setShader(new LinearGradient(b.left, 0, b.right, 0, [0x00C9A13B, 0xFFD4A73A, 0xFFF5C451, 0xFFD4A73A, 0x00C9A13B], null, Shader.TileMode.CLAMP));
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(h / 16);
+    p.setStrokeJoin(Paint.Join.ROUND);
+    const e = new Path();
+    e.moveTo(b.left, cy);
+    e.lineTo(cx - w * 0.22, cy);
+    e.lineTo(cx - w * 0.18, cy - 2 * u);
+    e.lineTo(cx - w * 0.14, cy + 2 * u);
+    e.lineTo(cx - w * 0.11, cy);
+    e.lineTo(cx - u * 2.2, cy);
+    e.moveTo(cx + u * 2.2, cy);
+    e.lineTo(cx + w * 0.11, cy);
+    e.lineTo(cx + w * 0.14, cy - 2 * u);
+    e.lineTo(cx + w * 0.18, cy + 2 * u);
+    e.lineTo(cx + w * 0.22, cy);
+    e.lineTo(b.right, cy);
+    cv.drawPath(e, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFFE0B040);
+    const heart = new Path();
+    const s = u * 2;
+    heart.moveTo(cx, cy + s);
+    heart.cubicTo(cx - 2.2 * s, cy - 0.2 * s, cx - 0.9 * s, cy - 1.7 * s, cx, cy - 0.6 * s);
+    heart.cubicTo(cx + 0.9 * s, cy - 1.7 * s, cx + 2.2 * s, cy - 0.2 * s, cx, cy + s);
+    heart.close();
+    cv.drawPath(heart, p);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
 ;
 /* ---- app/PgLeaveFormActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
-/** Apply for (or edit) a PG's leave: dates, reason and the leave letter. */
+/** Apply for (or edit) a PG's leave: dates, reason and the doing-duty PG; the signed letter is uploaded at the end (10.23). */
 class PgLeaveFormActivity extends Base {
   constructor() {
     super();
@@ -69321,7 +75390,7 @@ class PgLeaveFormActivity extends Base {
       this.pendingScan = b.getString("pendingScan");
     }
     this.setTitle(this.r == null ? "Apply for PG leave" : "PG leave");
-    this.subtitle = "Approval: unit Asst. Professor → Professor → Nodal officer → HOD";
+    this.subtitle = "In the app: Asst. Professor → Unit chief → Nodal officer · then HOD in person";
     this.headerColor(Ui.PURPLE);
     this.headerAction("Save", {
       onClick: (v) => { this.save(); }
@@ -69331,10 +75400,12 @@ class PgLeaveFormActivity extends Base {
   /** The approval steps, with Approve / Not approve for whoever's turn it is. */
   drawApprovals(ap) {
     ap.removeAllViews();
-    for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) ap.addView(PgLeaveActivity.approvalRow(this, this.r, i, {
+    for (let i = 0; i < PgLeaveActivity.APP_STEPS; i++) ap.addView(PgLeaveActivity.approvalRow(this, this.r, i, {
       run: () => { this.drawApprovals(ap); }
     }));
-    const note = Ui.muted(this, "Each step approves in turn: unit Assistant Professor, then Professor, then the leave nodal officer (Dr. S. Rajkumar), then HOD. Changing the dates resets all approvals.");
+    const done = "Approved" === PgLeaveActivity.overall(this.r);
+    const note = Ui.muted(this, done ? PgLeaveActivity.NEXT
+      : "Any one Assistant Professor approves, then the unit chief, then the leave nodal officer. Each approval is printed on the form as \"Approved in the app on .. at ..\". Then download the form, sign it with the doing-duty PG, get the HOD's signature in person, submit it in the medicine office and upload the signed letter. Changing the dates resets the approvals.");
     note.setPadding(0, Ui.dp(this, 10), 0, 0);
     ap.addView(note);
   }
@@ -69398,15 +75469,11 @@ class PgLeaveFormActivity extends Base {
     Ui.margins(rule, 0, 10, 0, 0);
     page.addView(card);
 
-    page.addView(Ui.heading(this, "Leave letter", Ui.PURPLE));
-    this.letterBox = Ui.card(this);
-    page.addView(this.letterBox);
-    this.drawLetter();
-
     if (r != null) {
       page.addView(Ui.heading(this, LeaveForm.name(r), Ui.PURPLE));
       const fm = Ui.card(this);
-      fm.addView(Ui.muted(this, (LeaveForm.oneDay(r) ? "The one day leave application" : "The leave application for more than one day") + ", filled in from this entry, with the approvals given so far."));
+      fm.addView(Ui.muted(this, "Approved" === PgLeaveActivity.overall(r) ? "Download the form, sign it with the doing-duty PG, get the HOD's signature in person and submit it in the medicine office."
+        : (LeaveForm.oneDay(r) ? "The one day leave application" : "The leave application for more than one day") + ", filled in from this entry, with the approvals given so far."));
       fm.addView(Ui.buttonRow(this,
         Ui.outlineButton(this, "Download PDF", Ui.PURPLE, {
           onClick: (v) => { LeaveForm.make(this, r, true); }
@@ -69419,6 +75486,11 @@ class PgLeaveFormActivity extends Base {
       const ap = Ui.card(this);
       this.drawApprovals(ap);
       page.addView(ap);
+      // 10.23: last step, the letter signed by the PG, the doing-duty PG and the HOD, as submitted in the medicine office
+      page.addView(Ui.heading(this, "Signed letter", Ui.PURPLE));
+      this.letterBox = Ui.card(this);
+      page.addView(this.letterBox);
+      this.drawLetter();
       const del = Ui.outlineButton(this, "Withdraw this application", Ui.RED, {
         onClick: (v) => {
           Ui.confirm(this, "Withdraw leave application?", "It will be deleted with its letter.", "Withdraw", {
@@ -69458,7 +75530,7 @@ class PgLeaveFormActivity extends Base {
       row.addView(v);
       this.letterBox.addView(row);
     } else {
-      this.letterBox.addView(Ui.muted(this, "Attach the signed leave letter: a PDF, a photo, or scan it with the camera."));
+      this.letterBox.addView(Ui.muted(this, "After the HOD signs and the letter is submitted in the medicine office, upload the signed letter here: a PDF, a photo, or scan it with the camera."));
     }
     this.letterBox.addView(Ui.buttonRow(this,
       Ui.outlineButton(this, has ? "Replace with file" : "Choose PDF / photo", Ui.PURPLE, {
@@ -69475,6 +75547,14 @@ class PgLeaveFormActivity extends Base {
   setLetter(rel) {
     if (!this.letter.isEmpty() && !this.letter.equals(rel) && (this.r == null || !this.letter.equals(this.r.get("letter")))) this.db.forgetFile(this.letter);
     this.letter = rel;
+    // an existing application keeps the uploaded letter at once
+    if (this.r != null) {
+      const cv = new ContentValues();
+      cv.put("letter", this.letter);
+      this.db.update("pg_leaves", cv, this.id);
+      this.r.put("letter", this.letter);
+      Ui.toast(this, "Signed letter uploaded");
+    }
     this.drawLetter();
   }
 
@@ -69503,6 +75583,7 @@ class PgLeaveFormActivity extends Base {
     if (a == null || b == null || b.isBefore(a)) { Ui.toast(this, "“Leave to” must be on or after “Leave from”"); return; }
     if (!one && !b.isAfter(a)) { Ui.toast(this, "For a single day choose “One day”, or set “Leave to” after “Leave from”"); return; }
     if (!form.require("reason", "Enter the reason")) return;
+    if (Ui.nz(form.get("duty_pg")).isEmpty()) { Ui.toast(this, "Choose the doing-duty PG"); return; }
     const limit = LeaveRules.pgCheck(this.db, r == null ? -1 : this.id, form.get("staff_id"), form.get("leave_type"), a, ChronoUnit.DAYS.between(a, b) + 1);
     if (limit != null) { Ui.toast(this, limit); return; }
     const cv = new ContentValues();
@@ -69522,10 +75603,13 @@ class PgLeaveFormActivity extends Base {
     const datesChanged = r == null || !a.toString().equals(r.get("from_date")) || !b.toString().equals(r.get("to_date"))
       || !form.get("staff_id").equals(r.get("staff_id"));
     if (datesChanged) {
-      for (const k of PgLeaveActivity.LEVELS) {
-        cv.put(k + "_status", "Pending");
+      for (let i = 0; i < PgLeaveActivity.LEVELS.length; i++) {
+        const k = PgLeaveActivity.LEVELS[i];
+        // 10.21: the Assistant Professor, the unit chief and the nodal officer approve in the app; the HOD signs in person
+        cv.put(k + "_status", i < PgLeaveActivity.APP_STEPS ? "Pending" : "");
         cv.put(k + "_by", "");
         cv.put(k + "_date", "");
+        if (i < PgLeaveActivity.APP_STEPS) cv.put(k + "_time", "");
       }
     }
     if (r == null) {
@@ -70581,6 +76665,1229 @@ Places.Place = class {
   }
 };
 ;
+/* ---- app/Posting.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * MBBS clinical posting (10.26, user asked): the department's posting list (for example "Second MBBS clinical posting, A batch,
+ * 02.11.2026 to 29.11.2026") puts each student in a unit M1 to M7. The unit's faculty and PGs mark the students' daily
+ * attendance there, the unit's faculty enter the end-posting evaluation marks, and the students themselves join the app
+ * by picking their own name from their unit's list (approved by that unit's faculty) and then see only their own
+ * attendance and marks. Tables: postings, posting_members, posting_att, posting_marks (all synced). Plain logic.
+ */
+class Posting {
+  static COLOR = 0xFF0E7490;
+  static PRESENT = "Present";
+  static ABSENT = "Absent";
+  static LEAVE = "Leave";
+  /** The end-posting evaluation parts, "name:max" each; faculty can change them for a posting. */
+  static DEFAULT_PARTS = "Case presentation:20; Clinical examination:15; Viva voce:10; Log book:5";
+
+  /** The three MBBS years as the department says them, matching Db.MBBS_ROLES. */
+  static YEAR_LABELS = ["Second year", "Third year (prefinal)", "Final year"];
+
+  static yearLabel(role) {
+    for (let i = 0; i < Db.MBBS_ROLES.length; i++) if (Db.MBBS_ROLES[i] === role) return Posting.YEAR_LABELS[i];
+    return Ui.nz(role);
+  }
+
+  /** "MBBS Final year" etc. from text such as "Final year OP class", "SECOND MBBS", "III MBBS", "Pre-final"; "" when it says no year. */
+  static yearOf(text) {
+    const t = " " + Ui.nz(text).toLowerCase().replaceAllRx("[^a-z0-9]+", " ") + " ";
+    if (t.contains(" prefinal ") || t.contains(" pre final ") || t.contains(" third ") || t.contains(" 3rd ") || t.contains(" iii ")) return Db.MBBS_ROLES[1];
+    if (t.contains(" final ")) return Db.MBBS_ROLES[2];
+    if (t.contains(" second ") || t.contains(" 2nd ") || t.contains(" ii ")) return Db.MBBS_ROLES[0];
+    return "";
+  }
+
+  static postings(db) {
+    return db.rows("SELECT * FROM postings ORDER BY from_date DESC, id DESC");
+  }
+
+  static posting(db, id) {
+    return db.row("SELECT * FROM postings WHERE id=?", String(id));
+  }
+
+  /** "Second MBBS · A batch" style line under the title. */
+  static label(p) {
+    const s = Ui.nz(p.get("title"));
+    const b = Ui.nz(p.get("batch"));
+    return b.isEmpty() || s.toLowerCase().contains(b.toLowerCase()) ? s : s + " – " + b;
+  }
+
+  static dates(p) {
+    return MbbsMarks.dot(p.get("from_date")) + " to " + MbbsMarks.dot(p.get("to_date"));
+  }
+
+  /** True while today is inside the posting. */
+  static running(p) {
+    const f = Dates.parse(p.get("from_date")), t = Dates.parse(p.get("to_date")), d = Dates.today();
+    return f != null && t != null && !d.isBefore(f) && !d.isAfter(t);
+  }
+
+  /** The posting that runs today, else the latest one, or null. */
+  static current(db) {
+    const all = Posting.postings(db);
+    for (const p of all) if (Posting.running(p)) return p;
+    return all.isEmpty() ? null : all.get(0);
+  }
+
+  // ---------- students ----------
+
+  /** The students of a posting in one unit (or every unit when unit is null), by serial number, with their staff fields. */
+  static students(db, postingId, unit) {
+    const sql = "SELECT s.*, m.sl AS sl, m.unit AS post_unit, m.id AS member_id FROM posting_members m JOIN staff s ON s.id = CAST(m.staff_id AS INTEGER) "
+      + "WHERE m.posting_id=?" + (unit == null ? "" : " AND m.unit=?") + " ORDER BY CAST(m.sl AS INTEGER), s.name";
+    return unit == null ? db.rows(sql, String(postingId)) : db.rows(sql, String(postingId), unit);
+  }
+
+  static count(db, postingId, unit) {
+    return unit == null ? db.num("SELECT COUNT(*) FROM posting_members WHERE posting_id=?", String(postingId))
+      : db.num("SELECT COUNT(*) FROM posting_members WHERE posting_id=? AND unit=?", String(postingId), unit);
+  }
+
+  /** {serial no, name, unit} for each line of a pasted posting list such as "29  ANUSHKA R  M-1"; unit "" when the line has none. */
+  static parse(text) {
+    const out = [];
+    const unitAtEnd = Pattern.compile("[\\s,|\\t]+M\\s*-?\\s*([1-7])\\s*$", Pattern.CASE_INSENSITIVE);
+    for (const raw of text.jsplit("\\r?\\n")) {
+      let line = raw.split(' ').join(' ').trim();
+      if (line.isEmpty() || line.toLowerCase().startsWith("sl")) continue;
+      let unit = "";
+      const m = unitAtEnd.matcher(line);
+      if (m.find()) {
+        unit = "M" + m.group(1);
+        line = line.substring(0, m.start()).trim();
+      }
+      let sl = "";
+      const n = Pattern.compile("^(\\d{1,4})[.)]?[\\s,|\\t]+(.+)$").matcher(line);
+      if (n.find()) {
+        sl = n.group(1);
+        line = n.group(2);
+      }
+      const name = line.replaceAllRx("[|,\\t]", " ").replaceAllRx("\\s+", " ").trim();
+      if (name.isEmpty() || !name.matches(".*[A-Za-z].*")) continue;
+      out.add([sl, name, unit]);
+    }
+    return out;
+  }
+
+  /** Lower-case letters only, so "DEVA NANDHA  S A" and "Deva Nandha S.A." match. */
+  static norm(name) {
+    return Ui.nz(name).toLowerCase().replaceAllRx("[^a-z]", "");
+  }
+
+  /**
+   * Adds the pasted students to the posting: each becomes (or stays) an MBBS student entry in the Students list with the
+   * posting's year and their unit, and a member of the posting. Returns {added to the posting, already there, without a unit}.
+   */
+  static importList(db, c, postingId, lines, defaultUnit) {
+    const p = Posting.posting(db, postingId);
+    const year = Ui.nz(p.get("year")).isEmpty() ? Db.MBBS_ROLES[0] : p.get("year");
+    const byName = new HashMap();
+    for (const s of db.rows("SELECT * FROM staff WHERE role LIKE 'MBBS%'")) byName.put(Posting.norm(s.get("name")), s);
+    let added = 0, there = 0, noUnit = 0;
+    for (const l of lines) {
+      const unit = l[2].isEmpty() ? Ui.nz(defaultUnit) : l[2];
+      if (unit.isEmpty()) {
+        noUnit++;
+        continue;
+      }
+      const s = byName.get(Posting.norm(l[1]));
+      let sid;
+      const cv = new ContentValues();
+      cv.put("role", year);
+      cv.put("unit", unit);
+      if (!Ui.nz(p.get("batch")).isEmpty()) cv.put("batch", p.get("batch"));
+      if (s == null) {
+        cv.put("name", l[1]);
+        cv.put("reg_no", l[0]);
+        cv.put("phone", "");
+        sid = db.insert("staff", cv);
+      } else {
+        sid = Long.parseLong(s.get("id"));
+        if (Ui.nz(s.get("reg_no")).isEmpty() && !l[0].isEmpty()) cv.put("reg_no", l[0]);
+        db.update("staff", cv, sid);
+      }
+      const m = db.row("SELECT id FROM posting_members WHERE posting_id=? AND staff_id=?", String(postingId), String(sid));
+      const mv = new ContentValues();
+      mv.put("unit", unit);
+      mv.put("sl", l[0]);
+      if (m != null) {
+        db.update("posting_members", mv, Long.parseLong(m.get("id")));
+        there++;
+      } else {
+        mv.put("posting_id", String(postingId));
+        mv.put("staff_id", String(sid));
+        db.insert("posting_members", mv);
+        added++;
+      }
+    }
+    return [added, there, noUnit];
+  }
+
+  /**
+   * 10.27 (user asked): the whole posting order pasted at once, as the department sends it: the heading ("SECOND MBBS CLINICAL
+   * POSTING – A BATCH From 02.11.2026 to 29.11.2026") makes or finds the posting, and every "Sl.No  Name  M-1" line puts
+   * the student in that unit. Returns {posting id, added, already there}, or null when no line names a unit.
+   */
+  static importOrder(db, c, text) {
+    const lines = [];
+    for (const l of Posting.parse(text)) if (!l[2].isEmpty()) lines.add(l);
+    if (lines.isEmpty()) return null;
+    let h = "";
+    for (const raw of text.jsplit("\\r?\\n")) {
+      const l = raw.toLowerCase();
+      if (l.contains("posting") || l.contains("batch") || l.contains("mbbs")) h += raw + "\n";
+    }
+    let year = Posting.yearOf(h);
+    if (year.isEmpty()) year = Db.MBBS_ROLES[0];
+    let batch = "";
+    const b = Pattern.compile("\\b([A-Za-z])\\s*[-–]?\\s*batch\\b", Pattern.CASE_INSENSITIVE).matcher(h);
+    if (b.find()) batch = b.group(1).toUpperCase() + " batch";
+    let from = "", to = "";
+    const d = Pattern.compile("(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})\\s*(?:to|till|-|–)\\s*(\\d{1,2})[./-](\\d{1,2})[./-](\\d{2,4})",
+      Pattern.CASE_INSENSITIVE).matcher(h);
+    if (d.find()) {
+      from = Posting.iso(d.group(1), d.group(2), d.group(3));
+      to = Posting.iso(d.group(4), d.group(5), d.group(6));
+    }
+    if (from.isEmpty() || to.isEmpty() || to.compareTo(from) < 0) {
+      from = Dates.todayIso();
+      to = Dates.today().plusDays(27).toString();
+    }
+    const old = db.row("SELECT id FROM postings WHERE year=? AND batch=? AND from_date=?", year, batch, from);
+    let pid;
+    if (old != null) {
+      pid = Long.parseLong(old.get("id"));
+    } else {
+      const cv = new ContentValues();
+      const y = Db.MBBS_ROLES.indexOf(year);
+      cv.put("title", (y === 2 ? "Final" : y === 1 ? "Third" : "Second") + " MBBS clinical posting");
+      cv.put("year", year);
+      cv.put("batch", batch);
+      cv.put("from_date", from);
+      cv.put("to_date", to);
+      cv.put("parts", Posting.DEFAULT_PARTS);
+      cv.put("created", Dates.todayIso());
+      cv.put("by_name", Approvals.me(c));
+      pid = db.insert("postings", cv);
+    }
+    const n = Posting.importList(db, c, pid, lines, "");
+    return [pid, n[0], n[1]];
+  }
+
+  /** dd, mm, yy(yy) to yyyy-MM-dd, or "" when it is not a date. */
+  static iso(dd, mm, yy) {
+    try {
+      let y = Integer.parseInt(yy);
+      if (y < 100) y += 2000;
+      return LocalDate.of(y, Integer.parseInt(mm), Integer.parseInt(dd)).toString();
+    } catch (e) {
+      return "";
+    }
+  }
+
+  /** 10.27: a unit's MBBS students under a heading for each year, shown on the unit's page. */
+  static unitCard(a, db, unit) {
+    let all = db.rows("SELECT * FROM staff WHERE role LIKE 'MBBS%' AND unit=? AND " + Approvals.APPROVED_SQL
+        + " ORDER BY CAST(reg_no AS INTEGER), name", unit);
+    if (all.isEmpty()) return null;
+    // 10.33: the dark card of the team board picture: gold-ringed cap, a year pill and a numbered list in two columns
+    let card = Ui.card(a);
+    card.setBackground(new People.Night(a, People.theme(unit).c));
+    card.setElevation(0);
+    card.setPadding(Ui.dp(a, 16), Ui.dp(a, 14), Ui.dp(a, 16), Ui.dp(a, 16));
+    let hr = Ui.h(a);
+    hr.setGravity(Gravity.CENTER_VERTICAL);
+    let ring = new FrameLayout(a);
+    let rd = Ui.round(a, People.NIGHT, 24);
+    rd.setStroke(Ui.dp(a, 2), People.GOLD);
+    ring.setBackground(rd);
+    let ic = new ImageView(a);
+    ic.setImageResource(R.drawable.ic_school);
+    ic.setColorFilter(People.GOLD);
+    ring.addView(ic, new FrameLayout.LayoutParams(Ui.dp(a, 26), Ui.dp(a, 26), Gravity.CENTER));
+    hr.addView(ring, Ui.lp(Ui.dp(a, 48), Ui.dp(a, 48)));
+    let ht = Ui.v(a);
+    ht.setPadding(Ui.dp(a, 12), 0, 0, 0);
+    ht.addView(Ui.tv(a, "MBBS students", 19, 0xFFF3D27A, true));
+    ht.addView(Ui.tv(a, all.size() + " on clinical posting in " + Db.shortName(unit) + "  ·  tap for attendance and marks", 12, 0xD9FFFFFF, false));
+    hr.addView(ht, Ui.weight(1));
+    card.addView(hr);
+    for (let y = 0; y < Db.MBBS_ROLES.length; y++) {
+      let yr = new ArrayList();
+      for (const s of all) if (Db.MBBS_ROLES[y].equals(s.get("role"))) yr.add(s);
+      if (yr.isEmpty()) continue;
+      let gl = Ui.tv(a, "👥  " + Posting.YEAR_LABELS[y].toUpperCase() + "  ·  " + yr.size(), 12, Color.WHITE, true);
+      gl.setLetterSpacing(0.06);
+      let pd = Ui.round(a, 0x33A855F7, 18);
+      pd.setStroke(Ui.dp(a, 1), 0xFFC084FC);
+      gl.setBackground(pd);
+      gl.setPadding(Ui.dp(a, 14), Ui.dp(a, 5), Ui.dp(a, 14), Ui.dp(a, 5));
+      let pl = Ui.h(a);
+      pl.addView(gl);
+      card.addView(pl);
+      Ui.margins(pl, 0, 12, 0, 8);
+      let list = Ui.h(a);
+      list.setBaselineAligned(false);
+      list.setBackground(Ui.outline(a, 0x66060C2E, 0x403B82F6, 14));
+      list.setPadding(Ui.dp(a, 8), Ui.dp(a, 6), Ui.dp(a, 8), Ui.dp(a, 6));
+      let half = Math.floor((yr.size() + 1) / 2);
+      for (let col = 0; col < 2; col++) {
+        if (col === 1) {
+          let div = new View(a);
+          div.setBackgroundColor(0x333B82F6);
+          list.addView(div, Ui.lp(Ui.dp(a, 1), ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        let cl = Ui.v(a);
+        cl.setPadding(Ui.dp(a, col === 0 ? 0 : 8), 0, Ui.dp(a, col === 0 ? 6 : 0), 0);
+        for (let i = col * half; i < Math.min(yr.size(), (col + 1) * half); i++) cl.addView(Posting.studentRow(a, yr.get(i), i < Math.min(yr.size(), (col + 1) * half) - 1));
+        list.addView(cl, Ui.weight(1));
+      }
+      card.addView(list);
+    }
+    let grow = Ui.tv(a, "Together We Grow ♥", 15, 0xFFF3D27A, false);
+    grow.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
+    grow.setGravity(Gravity.END);
+    card.addView(grow, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    Ui.margins(grow, 0, 10, 0, 0);
+    card.setOnClickListener(a.opener(PostingActivity));
+    return card;
+  }
+
+  /** One student: the roll number yr a violet ring and the name yr capitals, with a faint line under it. */
+  static studentRow(a, s, line) {
+    let r = Ui.h(a);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(0, Ui.dp(a, 5), 0, Ui.dp(a, 5));
+    let reg = Ui.nz(s.get("reg_no"));
+    let n = Ui.tv(a, reg.isEmpty() ? "•" : reg, 11, Color.WHITE, true);
+    n.setGravity(Gravity.CENTER);
+    let nd = Ui.round(a, 0x557C3AED, 13);
+    nd.setStroke(Ui.dp(a, 1), 0xFFC084FC);
+    n.setBackground(nd);
+    r.addView(n, Ui.lp(Ui.dp(a, 30), Ui.dp(a, 22)));
+    let t = Ui.tv(a, Ui.nz(s.get("name")).toUpperCase(), 13, Color.WHITE, false);
+    t.setPadding(Ui.dp(a, 10), 0, 0, 0);
+    t.setMaxLines(2);
+    r.addView(t, Ui.weight(1));
+    if (!line) return r;
+    let box = Ui.v(a);
+    box.addView(r);
+    let l = new View(a);
+    l.setBackgroundColor(0x263B82F6);
+    box.addView(l, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 1));
+    return box;
+  }
+
+  // ---------- who may do what ----------
+
+  /** Creating postings and their lists: the faculty, HOD, Medical Registrar and admin (the people who add MBBS students). */
+  static canManage(c) {
+    return Approvals.mayChange(c, Db.MBBS_ROLES[0]);
+  }
+
+  static ofUnit(c, unit) {
+    const mine = Cloud.unitOf(Db.get(c), Cloud.myStaff(c));
+    return mine != null && mine.equals(unit);
+  }
+
+  /** Daily attendance: the unit's faculty and PGs, and the admin, HOD and Medical Registrar. */
+  static canMarkAttendance(c, unit) {
+    if (!Cloud.active(c) || Cloud.isAdmin(c)) return true;
+    const r = Cloud.role(c);
+    return (r.equals("professor") || r.equals("faculty") || r.equals("pg")) && Posting.ofUnit(c, unit);
+  }
+
+  /** End-posting marks: the unit's faculty, and the admin, HOD and Medical Registrar. */
+  static canMark(c, unit) {
+    if (!Cloud.active(c) || Cloud.isAdmin(c)) return true;
+    const r = Cloud.role(c);
+    return (r.equals("professor") || r.equals("faculty")) && Posting.ofUnit(c, unit);
+  }
+
+  // ---------- attendance ----------
+
+  /** The posting's working days (not Sundays or holidays) from its start up to today or its end. */
+  static days(db, p) {
+    const out = [];
+    const f = Dates.parse(p.get("from_date")), t = Dates.parse(p.get("to_date"));
+    if (f == null || t == null) return out;
+    const end = t.isAfter(Dates.today()) ? Dates.today() : t;
+    for (let d = f; !d.isAfter(end); d = d.plusDays(1)) if (NmcAttendance.workday(db, d)) out.add(d);
+    return out;
+  }
+
+  /** Status by staff id on one day. */
+  static day(db, postingId, iso) {
+    const out = new HashMap();
+    for (const r of db.rows("SELECT staff_id, status FROM posting_att WHERE posting_id=? AND day=?", String(postingId), iso))
+      out.put(Ui.nz(r.get("staff_id")), Ui.nz(r.get("status")));
+    return out;
+  }
+
+  static setAttendance(db, c, postingId, staffId, iso, status) {
+    const old = db.row("SELECT id FROM posting_att WHERE posting_id=? AND staff_id=? AND day=?", String(postingId), staffId, iso);
+    const cv = new ContentValues();
+    cv.put("status", status);
+    cv.put("by_name", Approvals.me(c));
+    cv.put("time", LocalDateTime.now().withNano(0).toString());
+    if (old != null) {
+      db.update("posting_att", cv, Long.parseLong(old.get("id")));
+      return;
+    }
+    cv.put("posting_id", String(postingId));
+    cv.put("staff_id", staffId);
+    cv.put("day", iso);
+    db.insert("posting_att", cv);
+  }
+
+  /** {present, absent, leave, days marked} for one student. */
+  static tally(db, p, staffId) {
+    const n = [0, 0, 0, 0];
+    for (const r of db.rows("SELECT status FROM posting_att WHERE posting_id=? AND staff_id=?", p.get("id"), staffId)) {
+      const s = Ui.nz(r.get("status"));
+      if (s.equals(Posting.PRESENT)) n[0]++;
+      else if (s.equals(Posting.ABSENT)) n[1]++;
+      else if (s.equals(Posting.LEAVE)) n[2]++;
+    }
+    n[3] = n[0] + n[1] + n[2];
+    return n;
+  }
+
+  /** Attendance as a whole percentage of the days marked so far ("–" before the first one). */
+  static percent(t) {
+    return t[3] === 0 ? "–" : Math.round(t[0] * 100 / t[3]) + "%";
+  }
+
+  // ---------- end-posting marks ----------
+
+  /** The evaluation parts: names and maximum marks. */
+  static parts(p) {
+    let s = Ui.nz(p == null ? null : p.get("parts"));
+    if (s.trim().isEmpty()) s = Posting.DEFAULT_PARTS;
+    const out = [];
+    for (const bit of s.jsplit("[;\\n]")) {
+      const b = bit.trim();
+      if (b.isEmpty()) continue;
+      const colon = b.lastIndexOf(':');
+      const name = colon > 0 ? b.substring(0, colon).trim() : b;
+      const max = colon > 0 ? b.substring(colon + 1).trim().replaceAllRx("[^0-9.]", "") : "";
+      out.add([name, max.isEmpty() ? "10" : max]);
+    }
+    return out;
+  }
+
+  static maxTotal(p) {
+    let t = 0;
+    for (const x of Posting.parts(p)) t += Posting.num(x[1]);
+    return Posting.fmt(t);
+  }
+
+  static num(s) {
+    const v = Number(Ui.nz(s).trim());
+    return Ui.nz(s).trim().isEmpty() || isNaN(v) ? 0 : v;
+  }
+
+  static fmt(d) {
+    return d === Math.round(d) ? String(Math.round(d)) : String(Math.round(d * 10) / 10);
+  }
+
+  static marks(db, postingId, staffId) {
+    return db.row("SELECT * FROM posting_marks WHERE posting_id=? AND staff_id=?", String(postingId), staffId);
+  }
+
+  /** Saves one student's scores (one per part, "" when not given) and remarks; the total is worked out here. */
+  static saveMarks(db, c, postingId, staffId, scores, remarks) {
+    let total = 0;
+    let any = false;
+    let sb = "";
+    for (let i = 0; i < scores.size(); i++) {
+      const s = Ui.nz(scores.get(i)).trim();
+      if (i > 0) sb += '|';
+      sb += s;
+      if (!s.isEmpty()) {
+        total += Posting.num(s);
+        any = true;
+      }
+    }
+    const cv = new ContentValues();
+    cv.put("scores", sb);
+    cv.put("total", any ? Posting.fmt(total) : "");
+    cv.put("remarks", Ui.nz(remarks).trim());
+    cv.put("by_name", Approvals.me(c));
+    cv.put("time", LocalDateTime.now().withNano(0).toString());
+    const old = Posting.marks(db, postingId, staffId);
+    if (old != null) {
+      db.update("posting_marks", cv, Long.parseLong(old.get("id")));
+      return;
+    }
+    cv.put("posting_id", String(postingId));
+    cv.put("staff_id", staffId);
+    db.insert("posting_marks", cv);
+  }
+
+  static scores(m, n) {
+    const out = [];
+    const s = m == null ? [] : Ui.nz(m.get("scores")).split("|");
+    for (let i = 0; i < n; i++) out.push(i < s.length ? s[i] : "");
+    return out;
+  }
+
+  // ---------- the printed report ----------
+
+  /** The end-posting report for one unit or the whole batch: attendance and each evaluation part, with signature boxes. */
+  static doc(db, p, unit) {
+    const pid = Long.parseLong(p.get("id"));
+    const parts = Posting.parts(p);
+    const f = new FormDoc();
+    f.upper = "";
+    f.college = db.setting("college", "Tirunelveli Medical College & Hospital, Tirunelveli");
+    f.address = "";
+    f.dept = db.setting("dept", "Department of General Medicine");
+    f.title = "END POSTING EVALUATION";
+    f.footer = Posting.label(p) + "  •  " + Posting.dates(p) + (unit == null ? "" : "  •  " + Db.unitName(unit));
+    f.fileBase = "Posting_" + Posting.label(p).replaceAllRx("[^A-Za-z0-9]+", "_") + (unit == null ? "" : "_" + unit);
+
+    const top = f.plain(0.75, 0.25);
+    top.row(16, new FormDoc.Cell(Posting.label(p) + ", " + Posting.dates(p) + (unit == null ? "" : "  ·  " + Db.unitName(unit))).b().size(9),
+      new FormDoc.Cell("Date: " + MbbsMarks.dot(Dates.todayIso())).b().size(9));
+
+    const n = parts.size();
+    const w = new Array(5 + n).fill(0);
+    w[0] = 0.06;
+    w[1] = 0.30 - Math.min(0.08, n * 0.01);
+    w[2] = 0.07;
+    w[3] = 0.09;
+    const rest = 1 - w[0] - w[1] - w[2] - w[3];
+    for (let i = 0; i <= n; i++) w[4 + i] = rest / (n + 1);
+    const t = f.block(null, Posting.COLOR, ...w);
+    t.border = 0xFF334155;
+    const head = [];
+    head[0] = Posting.hd("Sl.No");
+    head[1] = Posting.hd("Student name");
+    head[2] = Posting.hd("Unit");
+    head[3] = Posting.hd("Attend.");
+    for (let i = 0; i < n; i++) head[4 + i] = Posting.hd(parts.get(i)[0] + " (" + parts.get(i)[1] + ")");
+    head[4 + n] = Posting.hd("Total (" + Posting.maxTotal(p) + ")");
+    t.row(30, ...head);
+    for (const s of Posting.students(db, pid, unit)) {
+      const sid = s.get("id");
+      const m = Posting.marks(db, pid, sid);
+      const sc = Posting.scores(m, n);
+      const r = [];
+      r[0] = Posting.cell(Ui.nz(s.get("sl"))).center();
+      r[1] = Posting.cell(Ui.nz(s.get("name")));
+      r[2] = Posting.cell(Db.shortName(s.get("post_unit"))).center();
+      r[3] = Posting.cell(Posting.percent(Posting.tally(db, p, sid))).center();
+      for (let i = 0; i < n; i++) r[4 + i] = Posting.cell(sc[i]).center();
+      r[4 + n] = Posting.cell(m == null ? "" : Ui.nz(m.get("total"))).b().center();
+      t.row(20, ...r);
+    }
+    const sign = f.plain(0.5, 0.5);
+    sign.row(44, new FormDoc.Cell(unit == null ? "Unit Chief" : "Unit Chief, " + Db.unitName(unit)).b().size(9).bottom(),
+      new FormDoc.Cell("Professor & HOD of Medicine").b().size(9).bottom());
+    return f;
+  }
+
+  static hd(s) {
+    return new FormDoc.Cell(s).b().size(8.5).center().color(0xFFFFFFFF).fill(Posting.COLOR);
+  }
+
+  static cell(s) {
+    return new FormDoc.Cell(s).size(9);
+  }
+}
+;
+/* ---- app/PostingActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * MBBS clinical posting (10.26): the list of postings, and one posting's students by unit with three tabs: daily
+ * attendance, end-posting marks and the students waiting to join the app. See Posting.
+ */
+class PostingActivity extends Base {
+  static TABS = ["Attendance", "Marks", "Join requests"];
+  static REQ_ORDER_PICK = 4101;
+  static REQ_ORDER_CAMERA = 4102;
+
+  onCreate(b) {
+    super.onCreate(b);
+    const sid = this.getIntent().getStringExtra("id");
+    this.id = sid == null || !String(sid).matches("\\d+") ? 0 : Long.parseLong(sid);
+    this.tab = b == null ? 0 : b.getInt("tab", 0);
+    this.unit = b == null ? null : b.getString("unit");
+    this.day = null;
+    this.members = null;
+    this.membersError = null;
+    this.loading = false;
+    this.orderCamera = null;     // 10.28: camera photo of the posting order, until it comes back
+    this.orderWaiting = false;   // 10.28: the order went to a free AI app; show "Paste the AI's answer"
+    if (b == null && this.id > 0) {
+      const mine = Cloud.unitOf(this.db, Cloud.myStaff(this));
+      if (mine != null && Posting.count(this.db, this.id, mine) > 0) this.unit = mine;
+    }
+    this.setTitle("MBBS clinical posting");
+    this.headerColor(Posting.COLOR);
+    if (b == null && this.id > 0 && "1" === this.getIntent().getStringExtra("paste")) {
+      // Web: the Android version posts this to the window; a short timer does the same after the first render.
+      setTimeout(() => { if (!this.isFinishing()) this.pasteDialog(this.id); }, 50);
+    }
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putInt("tab", this.tab);
+    out.putString("unit", this.unit);
+  }
+
+  render() {
+    if (this.id <= 0) this.renderList();
+    else this.renderPosting();
+  }
+
+  // ---------- the list of postings ----------
+
+  renderList() {
+    const db = this.db;
+    const all = Posting.postings(db);
+    this.subtitle = all.size() + (all.size() === 1 ? " posting" : " postings") + "  ·  attendance and end-posting marks";
+    const can = Posting.canManage(this);
+    if (can) this.headerAction("+ New", { onClick: (v) => { this.editDialog(null); } });
+    else this.headerAction(null, null);
+    const page = Ui.v(this);
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Posting.COLOR), 20));
+    hero.addView(Ui.tv(this, "Students on clinical posting", 18, Color.WHITE, true));
+    hero.addView(Ui.tv(this, "Paste the department's posting list once. Each unit's faculty and PGs mark the daily attendance, the unit's faculty enter "
+      + "the end-posting marks, and the students join the app by picking their own name from their unit's list. Students see only their own attendance and marks.",
+      13, 0xE6FFFFFF, false));
+    page.addView(hero);
+    if (can) {
+      // 10.27: paste the whole posting order; the posting, its students and their units are made from it
+      const order = Ui.card(this);
+      order.setBackground(Ui.outline(this, Ui.mix(Posting.COLOR, Color.WHITE, 0.92), Ui.alpha(Posting.COLOR, 0x55), 18));
+      order.addView(Ui.tv(this, "📋  Paste the posting order", 16, Posting.COLOR, true));
+      order.addView(Ui.muted(this, "Copy the whole order (heading with year, batch and dates, then Sl.No, name and unit on each line) and paste it here. "
+        + "The posting, the students and their units are made by themselves, and each unit's page lists its MBBS students by year."));
+      const paste = Ui.button(this, "Paste the posting order", Posting.COLOR, { onClick: (v) => { this.orderDialog(); } });
+      order.addView(paste);
+      Ui.margins(paste, 0, 10, 0, 0);
+      // 10.28: or pick the order's JPG pages from the gallery; the AI copies them into the paste box to check
+      if (this.orderWaiting) {
+        const back = Ui.button(this, "📋  Paste the AI's answer", Ui.GREEN, { onClick: (v) => { this.orderPasteAnswer(); } });
+        order.addView(back);
+        Ui.margins(back, 0, 8, 0, 0);
+      }
+      const photos = Ui.h(this);
+      const gallery = Ui.outlineButton(this, "🖼  Gallery: order photo(s)", Posting.COLOR, { onClick: (v) => { this.orderPhotos(false); } });
+      const camera = Ui.outlineButton(this, "📷  Camera", Posting.COLOR, { onClick: (v) => { this.orderPhotos(true); } });
+      photos.addView(gallery, Ui.weight(1));
+      photos.addView(camera);
+      camera.getLayoutParams().leftMargin = Ui.dp(this, 8);
+      order.addView(photos);
+      Ui.margins(photos, 0, 8, 0, 0);
+      const add = Ui.outlineButton(this, "+ New posting by hand", Posting.COLOR, { onClick: (v) => { this.editDialog(null); } });
+      order.addView(add);
+      Ui.margins(add, 0, 8, 0, 0);
+      page.addView(order);
+    }
+    if (all.isEmpty()) page.addView(this.emptyNote(can ? "No postings yet. Tap Paste the posting order above." : "No postings yet. Faculty add them."));
+    for (const p of all) {
+      const c = Ui.card(this);
+      const r = Ui.h(this);
+      r.setGravity(Gravity.CENTER_VERTICAL);
+      r.addView(Ui.iconBadge(this, R.drawable.ic_school, Posting.COLOR, 44));
+      const t = Ui.v(this);
+      t.setPadding(Ui.dp(this, 12), 0, 0, 0);
+      t.addView(Ui.tv(this, Posting.label(p), 15, Ui.TEXT, true));
+      const pid = Long.parseLong(p.get("id"));
+      t.addView(Ui.muted(this, Posting.dates(p) + "  ·  " + Posting.count(db, pid, null) + " students"));
+      r.addView(t, Ui.weight(1));
+      if (Posting.running(p)) r.addView(Ui.softPill(this, "Running", Ui.GREEN));
+      c.addView(r);
+      c.setOnClickListener(this.opener(PostingActivity, "id", p.get("id")));
+      page.addView(c);
+    }
+    this.setPage(page);
+  }
+
+  /** 10.27: the whole posting order in one paste. */
+  orderDialog(prefill = "") {
+    const f = new Form(this);
+    if (!prefill.isEmpty()) f.heading("Read from the photo by AI. Check the names and units against the order, correct any mistake, then tap Add.");
+    f.multi("text", "Paste the posting order here", prefill);
+    Ui.formDialog(this, "Paste the posting order", f, "Add", {
+      run: () => {
+        const r = Posting.importOrder(this.db, this, f.get("text"));
+        if (r == null) {
+          Ui.toast(this, "No student lines with a unit (M-1 to M-7) were found");
+          return false;
+        }
+        const p = Posting.posting(this.db, r[0]);
+        Ui.toast(this, Posting.label(p) + ": " + r[1] + " students added" + (r[2] > 0 ? ", " + r[2] + " already there" : ""));
+        this.open(PostingActivity, "id", String(r[0]));
+        return true;
+      }
+    });
+  }
+
+  // ---------- posting order photos (10.28) ----------
+
+  /** Gallery (one or more JPG pages) or camera; the pictures are read by Gemini (own key) or a free AI app. */
+  orderPhotos(camera) {
+    OrderScan.clean(this.db);
+    this.orderWaiting = false;
+    if (camera) {
+      this.orderCamera = Imaging.DIR + "/" + OrderScan.FILE_PREFIX + System.currentTimeMillis() + ".jpg";
+      if (!Store.capture(this, this.orderCamera, PostingActivity.REQ_ORDER_CAMERA)) this.orderCamera = null;
+      return;
+    }
+    const i = new Intent(Intent.ACTION_GET_CONTENT);
+    i.setType("image/*");
+    i.addCategory(Intent.CATEGORY_OPENABLE);
+    i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+    try {
+      this.startActivityForResult(Intent.createChooser(i, "Choose the posting order page(s)"), PostingActivity.REQ_ORDER_PICK);
+    } catch (e) {
+      Ui.toast(this, "No photo picker found");
+    }
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req !== PostingActivity.REQ_ORDER_PICK && req !== PostingActivity.REQ_ORDER_CAMERA) return;
+    const db = this.db;
+    if (res !== RESULT_OK) {
+      this.orderCamera = null;
+      OrderScan.clean(db);
+      return;
+    }
+    try {
+      const rels = [];
+      if (req === PostingActivity.REQ_ORDER_CAMERA) {
+        if (this.orderCamera != null) rels.push(this.orderCamera);
+        this.orderCamera = null;
+      } else if (data != null) {
+        const uris = [];
+        if (data.getClipData() != null) {
+          for (let k = 0; k < data.getClipData().getItemCount(); k++) {
+            const u = data.getClipData().getItemAt(k).getUri();
+            if (u != null) uris.push(u);
+          }
+        } else if (data.getData() != null) uris.push(data.getData());
+        if (uris.length > OrderScan.MAX_PAGES) Ui.toast(this, "Only the first " + OrderScan.MAX_PAGES + " pages are read");
+        for (let k = 0; k < uris.length && k < OrderScan.MAX_PAGES; k++)
+          rels.push(Store.importUri(this, uris[k], Imaging.DIR, OrderScan.FILE_PREFIX + (k + 1)));
+      }
+      const pages = [];
+      const good = [];
+      for (const rel of rels) {
+        const f = db.file(rel);
+        const jpg = f.exists() ? LabScan.jpeg(f) : null;
+        if (jpg == null) continue;
+        const out = new FileOutputStream(f);
+        try { out.write(jpg); } finally { out.close(); }
+        pages.push(jpg);
+        good.push(rel);
+      }
+      if (pages.length === 0) {
+        OrderScan.clean(db);
+        Ui.toast(this, "Pick the posting order as a photo (JPG or PNG)");
+        return;
+      }
+      if (Ai.geminiKey(this).isEmpty()) {
+        this.orderChooseApp(good);
+        return;
+      }
+      const wait = new AlertDialog.Builder(this).setTitle("Gemini is reading the posting order…")
+        .setMessage(pages.length + (pages.length === 1 ? " page" : " pages") + ". Keep the app open.").setCancelable(false).show();
+      new Thread({
+        run: () => {
+          let got = null, err = null;
+          try {
+            got = OrderScan.read(this, pages);
+          } catch (e) {
+            if (e instanceof Ai.Failure) err = e.getMessage();
+            else err = "Could not read it: " + e.getMessage();
+          }
+          const text = got, error = err;
+          this.runOnUiThread({
+            run: () => {
+              OrderScan.clean(db);
+              if (this.isFinishing()) return;
+              try { wait.dismiss(); } catch (ignored) { }
+              if (error != null) {
+                new AlertDialog.Builder(this).setTitle("Posting order not read").setMessage(error).setPositiveButton("OK", null).show();
+                return;
+              }
+              this.orderDialog(Ui.nz(text).trim());
+            }
+          });
+        }
+      }).start();
+    } catch (e) {
+      OrderScan.clean(db);
+      Ui.toast(this, "Could not use the picture: " + e.getMessage());
+    }
+  }
+
+  orderChooseApp(rels) {
+    const apps = DischargeActivity.CHAT_APPS;
+    const items = [];
+    for (const a of apps) items.add("Free: " + a[0] + " app");
+    items.add("Use Gemini inside the app: add a free key");
+    new AlertDialog.Builder(this).setTitle("Which AI app reads the order?")
+      .setItems(items, {
+        onClick: (d, w) => {
+          if (w < apps.length) this.orderShareTo(apps[w], rels);
+          else {
+            OrderScan.clean(this.db);
+            this.open(SettingsActivity);
+          }
+        }
+      }).setNegativeButton("Cancel", { onClick: (d, w) => { OrderScan.clean(this.db); } }).show();
+  }
+
+  orderShareTo(app, rels) {
+    const prompt = OrderScan.prompt();
+    const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Posting order question", prompt));
+    const uris = [];
+    for (const rel of rels) uris.push(DocProvider.uri(rel));
+    const i = new Intent(uris.length === 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
+    i.setType("image/jpeg");
+    if (uris.length === 1) i.putExtra(Intent.EXTRA_STREAM, uris[0]);
+    else i.putExtra(Intent.EXTRA_STREAM, uris);
+    i.putExtra(Intent.EXTRA_TEXT, prompt);
+    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+    i.setPackage(app[1]);
+    this.orderWaiting = true;
+    try {
+      this.startActivity(i);
+      Ui.toast(this, "In " + app[0] + " send the pages with the question (it is copied too), copy the answer, come back and tap Paste the AI's answer");
+    } catch (noApp) {
+      try {
+        i.setPackage(null);
+        this.startActivity(Intent.createChooser(i, "Send the posting order to " + app[0]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        Ui.toast(this, "Choose " + app[0] + ", send the pages, copy the answer, then come back and tap Paste the AI's answer");
+      } catch (e) {
+        this.orderWaiting = false;
+        OrderScan.clean(this.db);
+        Ui.toast(this, app[0] + " is not installed on this phone");
+      }
+    }
+    this.render();
+  }
+
+  orderPasteAnswer() {
+    let text = "";
+    try {
+      const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+      if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0)
+        text = String(cm.getPrimaryClip().getItemAt(0).coerceToText(this));
+    } catch (ignored) {
+    }
+    if (text.trim().isEmpty() || text.trim() === OrderScan.prompt().trim()) {
+      Ui.toast(this, "Copy the AI's answer first (tap Copy under its answer), then tap Paste the AI's answer");
+      return;
+    }
+    this.orderWaiting = false;
+    OrderScan.clean(this.db);
+    this.render();
+    this.orderDialog(text.trim());
+  }
+
+  /** New posting or edit: title, year, batch, dates and the evaluation parts. */
+  editDialog(p) {
+    const db = this.db;
+    const f = new Form(this);
+    f.text("title", "Title", p == null ? "Second MBBS clinical posting" : p.get("title"), Form.TEXT);
+    f.choice("year", "Students' year", ["2nd year", "Prefinal year", "Final year"], Db.MBBS_ROLES,
+      p == null ? Db.MBBS_ROLES[0] : p.get("year"), null);
+    f.text("batch", "Batch", p == null ? "A batch" : p.get("batch"), Form.TEXT);
+    f.date("from_date", "From", p == null ? Dates.todayIso() : p.get("from_date"));
+    f.date("to_date", "To", p == null ? Dates.today().plusDays(27).toString() : p.get("to_date"));
+    f.multi("parts", "End-posting evaluation parts (name:max marks; …)", p == null ? Posting.DEFAULT_PARTS : Ui.nz(p.get("parts")));
+    Ui.formDialog(this, p == null ? "New posting" : "Edit posting", f, "Save", {
+      run: () => {
+        if (f.get("title").trim().isEmpty()) { Ui.toast(this, "Enter a title"); return false; }
+        if (f.get("to_date").compareTo(f.get("from_date")) < 0) { Ui.toast(this, "The end date is before the start"); return false; }
+        const cv = new ContentValues();
+        for (const k of ["title", "year", "batch", "from_date", "to_date", "parts"]) cv.put(k, f.get(k).trim());
+        if (p == null) {
+          cv.put("created", Dates.todayIso());
+          cv.put("by_name", Approvals.me(this));
+          const nid = db.insert("postings", cv);
+          this.open(PostingActivity, "id", String(nid), "paste", "1");
+        } else {
+          db.update("postings", cv, Long.parseLong(p.get("id")));
+          this.render();
+        }
+        return true;
+      }
+    });
+  }
+
+  /** Paste the posting list: "Sl.No  Name  M-1" per line, as on the department's printed list. */
+  pasteDialog(pid) {
+    const f = new Form(this);
+    f.multi("lines", "One student per line: serial no, name, unit (e.g. 29  ANUSHKA R  M-1)", "");
+    const labels = new Array(Db.WARD_UNITS.length + 1), values = new Array(Db.WARD_UNITS.length + 1);
+    labels[0] = "Unit is on each line";
+    values[0] = "";
+    for (let i = 0; i < Db.WARD_UNITS.length; i++) {
+      labels[i + 1] = Db.unitName(Db.WARD_UNITS[i]);
+      values[i + 1] = Db.WARD_UNITS[i];
+    }
+    f.choice("unit", "Unit for lines without one", labels, values, "", null);
+    Ui.formDialog(this, "Paste the posting list", f, "Add", {
+      run: () => {
+        const lines = Posting.parse(f.get("lines"));
+        if (lines.isEmpty()) { Ui.toast(this, "Paste at least one name"); return false; }
+        const n = Posting.importList(this.db, this, pid, lines, f.get("unit"));
+        Ui.toast(this, n[0] + " added" + (n[1] > 0 ? ", " + n[1] + " already on the list (updated)" : "")
+          + (n[2] > 0 ? ", " + n[2] + " skipped: no unit" : ""));
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  // ---------- one posting ----------
+
+  renderPosting() {
+    const db = this.db, id = this.id;
+    const p = Posting.posting(db, id);
+    if (p == null) {
+      this.setPage(this.emptyNote("This posting was removed."));
+      return;
+    }
+    this.subtitle = Posting.label(p) + "  ·  " + Posting.dates(p);
+    const can = Posting.canManage(this);
+    this.headerAction("Report", {
+      onClick: (v) => {
+        Hod.export(this, "End posting evaluation", { make: () => Posting.doc(db, Posting.posting(db, id), this.unit) });
+      }
+    });
+    const page = Ui.v(this);
+
+    const hero = Ui.card(this);
+    hero.setBackground(Ui.gradient(this, [Ui.mix(Posting.COLOR, Color.WHITE, 0.82), Ui.mix(Posting.COLOR, Color.WHITE, 0.93)], 20));
+    hero.addView(Ui.tv(this, Posting.label(p), 16, Ui.mix(Posting.COLOR, Color.BLACK, 0.4), true));
+    hero.addView(Ui.muted(this, Posting.dates(p) + "  ·  " + Db.label(Db.MBBS_ROLES, ["MBBS 2nd year", "MBBS prefinal year", "MBBS final year"], p.get("year"))
+      + "  ·  " + Posting.count(db, id, null) + " students  ·  marks out of " + Posting.maxTotal(p)));
+    if (can) {
+      const shown = "1" === p.get("marks_shown");
+      const b = Ui.h(this);
+      const paste = Ui.button(this, "Paste the list", Posting.COLOR, { onClick: (v) => { this.pasteDialog(id); } });
+      const edit = Ui.outlineButton(this, "Edit posting", Posting.COLOR, { onClick: (v) => { this.editDialog(p); } });
+      b.addView(paste, Ui.weight(1));
+      b.addView(edit, Ui.weight(1));
+      Ui.margins(edit, 8, 0, 0, 0);
+      hero.addView(b);
+      Ui.margins(b, 0, 10, 0, 0);
+      const show = Ui.outlineButton(this, shown ? "✓ Students can see their marks  ·  hide" : "Show the marks to the students", shown ? Ui.GREEN : Ui.MUTED, {
+        onClick: (v) => {
+          const cv = new ContentValues();
+          cv.put("marks_shown", shown ? "" : "1");
+          db.update("postings", cv, id);
+          this.render();
+        }
+      });
+      hero.addView(show);
+      Ui.margins(show, 0, 8, 0, 0);
+    }
+    page.addView(hero);
+
+    // units
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), Ui.dp(this, 4));
+    const allc = Ui.chip(this, "All  " + Posting.count(db, id, null), this.unit == null, Posting.COLOR);
+    allc.setOnClickListener({ onClick: (v) => { this.unit = null; this.render(); } });
+    chips.addView(allc);
+    for (const u of Db.WARD_UNITS) {
+      const c = Ui.chip(this, u + "  " + Posting.count(db, id, u), u.equals(this.unit), Posting.COLOR);
+      c.setOnClickListener({ onClick: (v) => { this.unit = u; this.render(); } });
+      chips.addView(c);
+    }
+    page.addView(Ui.hscroll(this, chips));
+    const tabs = Ui.h(this);
+    tabs.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), Ui.dp(this, 4));
+    for (let i = 0; i < PostingActivity.TABS.length; i++) {
+      const k = i;
+      const t = Ui.chip(this, PostingActivity.TABS[i], i === this.tab, Ui.TEXT);
+      t.setOnClickListener({ onClick: (v) => { this.tab = k; this.render(); } });
+      tabs.addView(t);
+    }
+    page.addView(Ui.hscroll(this, tabs));
+
+    const list = Posting.students(db, id, this.unit);
+    if (list.isEmpty() && this.tab !== 2) page.addView(this.emptyNote(can ? "No students " + (this.unit == null ? "" : "in " + this.unit + " ") + "yet. Tap Paste the list." : "No students listed yet."));
+    else if (this.tab === 0) this.attendance(page, p, list);
+    else if (this.tab === 1) this.marks(page, p, list);
+    else this.joinRequests(page);
+    this.setPage(page);
+  }
+
+  attendance(page, p, list) {
+    const db = this.db, id = this.id;
+    const days = Posting.days(db, p);
+    if (days.isEmpty()) {
+      page.addView(this.emptyNote("The posting starts on " + Dates.nice(p.get("from_date")) + "."));
+      return;
+    }
+    if (this.day == null || days.indexOfObj(this.day) < 0) this.day = days.get(days.size() - 1);
+    const at = days.indexOfObj(this.day);
+    const nav = Ui.h(this);
+    nav.setGravity(Gravity.CENTER_VERTICAL);
+    nav.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 4));
+    const prev = Ui.tv(this, "‹", 26, at > 0 ? Posting.COLOR : Ui.LINE, true);
+    prev.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+    prev.setOnClickListener({ onClick: (v) => { if (at > 0) { this.day = days.get(at - 1); this.render(); } } });
+    const d = Ui.tv(this, (this.day.equals(Dates.today()) ? "Today, " : "") + Dates.nice(this.day) + "  ·  day " + (at + 1), 15, Ui.TEXT, true);
+    d.setGravity(Gravity.CENTER);
+    const next = Ui.tv(this, "›", 26, at < days.size() - 1 ? Posting.COLOR : Ui.LINE, true);
+    next.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+    next.setOnClickListener({ onClick: (v) => { if (at < days.size() - 1) { this.day = days.get(at + 1); this.render(); } } });
+    nav.addView(prev);
+    nav.addView(d, Ui.weight(1));
+    nav.addView(next);
+    page.addView(nav);
+
+    const iso = this.day.toString();
+    const st = Posting.day(db, id, iso);
+    const n = [0, 0, 0];
+    let anyMine = false;
+    for (const s of list) {
+      const v = Ui.nz(st.get(s.get("id")));
+      for (let k = 0; k < 3; k++) if (StudentAttendance.STATUSES[k].equals(v)) n[k]++;
+      if (Posting.canMarkAttendance(this, s.get("post_unit"))) anyMine = true;
+    }
+    const stats = Ui.h(this);
+    stats.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 12), 0);
+    for (let k = 0; k < 3; k++) {
+      const t = Ui.tv(this, n[k] + "\n" + StudentAttendance.STATUSES[k], 13, StudentAttendance.COLORS[k], true);
+      t.setGravity(Gravity.CENTER);
+      t.setBackground(Ui.round(this, Color.WHITE, 14));
+      t.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
+      const lp = Ui.weight(1);
+      lp.setMargins(k === 0 ? 0 : Ui.dp(this, 6), 0, 0, 0);
+      stats.addView(t, lp);
+    }
+    page.addView(stats);
+    if (anyMine) {
+      const allP = Ui.button(this, "✓ Mark everyone not marked as Present", StudentAttendance.COLORS[0], {
+        onClick: (v) => {
+          for (const s of list)
+            if (Ui.nz(st.get(s.get("id"))).isEmpty() && Posting.canMarkAttendance(this, s.get("post_unit")))
+              Posting.setAttendance(db, this, id, s.get("id"), iso, Posting.PRESENT);
+          this.render();
+        }
+      });
+      page.addView(allP);
+      Ui.margins(allP, 12, 8, 12, 0);
+    } else {
+      const m = Ui.muted(this, "The unit's faculty and PGs mark the attendance.");
+      m.setPadding(Ui.dp(this, 18), Ui.dp(this, 8), Ui.dp(this, 18), 0);
+      page.addView(m);
+    }
+    const card = Ui.card(this);
+    for (const s of list) {
+      const v = Ui.nz(st.get(s.get("id")));
+      const row = this.studentRow(s, Posting.percent(Posting.tally(db, p, s.get("id"))) + " so far");
+      if (Posting.canMarkAttendance(this, s.get("post_unit"))) {
+        for (let k = 0; k < 3; k++) {
+          const status = StudentAttendance.STATUSES[k];
+          const on = status.equals(v);
+          const c = StudentAttendance.COLORS[k];
+          const chip = Ui.tv(this, status.substring(0, 1), 13, on ? Color.WHITE : c, true);
+          chip.setGravity(Gravity.CENTER);
+          chip.setContentDescription(status);
+          chip.setBackground(on ? Ui.round(this, c, 16) : Ui.outline(this, Color.WHITE, Ui.mix(c, Color.WHITE, 0.5), 16));
+          chip.setOnClickListener({
+            onClick: (v2) => {
+              Posting.setAttendance(db, this, id, s.get("id"), iso, status);
+              this.render();
+            }
+          });
+          const lp = Ui.lp(Ui.dp(this, 34), Ui.dp(this, 32));
+          lp.setMargins(Ui.dp(this, 4), 0, 0, 0);
+          row.addView(chip, lp);
+        }
+      } else {
+        row.addView(v.isEmpty() ? Ui.muted(this, "–") : Ui.softPill(this, v, StudentAttendance.color(v)));
+      }
+      card.addView(row);
+    }
+    if (anyMine) card.addView(Ui.muted(this, "P = Present  ·  A = Absent  ·  L = Leave. Tap to change."));
+    page.addView(card);
+  }
+
+  /** Photo, name, serial number and unit, and a line underneath; the caller adds what goes on the right. */
+  studentRow(s, extra) {
+    const row = Ui.h(this);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+    row.addView(People.avatar(this, s, 34, Posting.COLOR));
+    const t = Ui.v(this);
+    t.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 6), 0);
+    t.addView(Ui.tv(this, s.get("name"), 14, Ui.TEXT, true));
+    const sl = Ui.nz(s.get("sl"));
+    t.addView(Ui.tv(this, (sl.isEmpty() ? "" : "No. " + sl + "  ·  ") + Db.shortName(s.get("post_unit")) + (extra.isEmpty() ? "" : "  ·  " + extra), 11, Ui.MUTED, false));
+    row.addView(t, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    return row;
+  }
+
+  marks(page, p, list) {
+    const db = this.db, id = this.id;
+    const parts = Posting.parts(p);
+    let sb = "";
+    for (const x of parts) sb += (sb.length === 0 ? "" : "  ·  ") + x[0] + " " + x[1];
+    const how = Ui.muted(this, sb + "  =  " + Posting.maxTotal(p) + ". The unit's faculty enter the marks; tap a student.");
+    how.setPadding(Ui.dp(this, 18), Ui.dp(this, 6), Ui.dp(this, 18), Ui.dp(this, 2));
+    page.addView(how);
+    const card = Ui.card(this);
+    for (const s of list) {
+      const m = Posting.marks(db, id, s.get("id"));
+      const t = Posting.tally(db, p, s.get("id"));
+      const row = this.studentRow(s, "attendance " + Posting.percent(t));
+      const total = m == null ? "" : Ui.nz(m.get("total"));
+      row.addView(total.isEmpty() ? Ui.muted(this, "–") : Ui.softPill(this, total + " / " + Posting.maxTotal(p), Posting.COLOR));
+      const may = Posting.canMark(this, s.get("post_unit"));
+      row.setOnClickListener({
+        onClick: (v) => {
+          if (may) this.marksDialog(p, s);
+          else Ui.toast(this, "The faculty of " + Db.unitName(s.get("post_unit")) + " enter these marks.");
+        }
+      });
+      card.addView(row);
+    }
+    page.addView(card);
+  }
+
+  marksDialog(p, s) {
+    const db = this.db, id = this.id;
+    const parts = Posting.parts(p);
+    const m = Posting.marks(db, id, s.get("id"));
+    const sc = Posting.scores(m, parts.size());
+    const f = new Form(this);
+    const t = Posting.tally(db, p, s.get("id"));
+    f.view.addView(Ui.muted(this, "Attendance " + Posting.percent(t) + "  ·  " + t[0] + " present, " + t[1] + " absent, " + t[2] + " leave"));
+    for (let i = 0; i < parts.size(); i++)
+      f.text("p" + i, parts.get(i)[0] + " (out of " + parts.get(i)[1] + ")", sc[i], InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+    f.multi("remarks", "Remarks (optional)", m == null ? "" : Ui.nz(m.get("remarks")));
+    Ui.formDialog(this, s.get("name"), f, "Save", {
+      run: () => {
+        const scores = [];
+        for (let i = 0; i < parts.size(); i++) {
+          const v = f.get("p" + i).trim();
+          if (!v.isEmpty() && (Posting.num(v) < 0 || Posting.num(v) > Posting.num(parts.get(i)[1]))) {
+            Ui.toast(this, parts.get(i)[0] + ": at most " + parts.get(i)[1]);
+            return false;
+          }
+          scores.add(v);
+        }
+        Posting.saveMarks(db, this, id, s.get("id"), scores, f.get("remarks"));
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  // ---------- students waiting to join ----------
+
+  joinRequests(page) {
+    if (!Cloud.active(this)) {
+      page.addView(this.emptyNote("Students join once the app is signed in to the department's shared database."));
+      return;
+    }
+    const how = Ui.muted(this, "Students install the app, tap Create an account, then “I am an MBBS student” and pick their own name from their unit's list. "
+      + "Any faculty member of that unit approves them here. They then see only their own attendance, marks and MBBS classes, never patients.");
+    how.setPadding(Ui.dp(this, 18), Ui.dp(this, 6), Ui.dp(this, 18), Ui.dp(this, 4));
+    page.addView(how);
+    if (this.members == null) {
+      if (this.membersError != null) {
+        page.addView(this.emptyNote("Could not load: " + this.membersError));
+        this.membersError = null;
+        return;
+      }
+      page.addView(this.emptyNote("Loading…"));
+      if (!this.loading) this.loadMembers();
+      return;
+    }
+    const mine = new HashMap();
+    for (const s of Posting.students(this.db, this.id, this.unit)) mine.put(s.get("id"), s);
+    const waiting = [], joined = [];
+    for (let i = 0; i < this.members.length(); i++) {
+      const m = this.members.optJSONObject(i);
+      const sid = Cloud.staffOf(m);
+      if (sid <= 0 || !mine.containsKey(String(sid))) continue;
+      if ("pending" === m.optString("role")) waiting.add(m);
+      else if ("student" === m.optString("role")) joined.add(m);
+    }
+    page.addView(Ui.section(this, "Waiting for approval  ·  " + waiting.size()));
+    const card = Ui.card(this);
+    if (waiting.isEmpty()) card.addView(Ui.muted(this, "No one is waiting."));
+    for (const m of waiting) {
+      const s = mine.get(String(Cloud.staffOf(m)));
+      const row = this.studentRow(s, m.optString("email"));
+      if (Posting.canMark(this, s.get("post_unit"))) {
+        const ok = Ui.button(this, "Approve", Ui.GREEN, { onClick: (v) => { this.decide(m, true); } });
+        const no = Ui.outlineButton(this, "✕", Ui.RED, { onClick: (v) => { this.decide(m, false); } });
+        row.addView(ok);
+        row.addView(no);
+        Ui.margins(no, 6, 0, 0, 0);
+      } else {
+        row.addView(Ui.softPill(this, "Waiting", Ui.AMBER));
+      }
+      card.addView(row);
+    }
+    page.addView(card);
+    page.addView(Ui.section(this, "Joined the app  ·  " + joined.size() + " of " + mine.size()));
+    const jc = Ui.card(this);
+    if (joined.isEmpty()) jc.addView(Ui.muted(this, "No student has joined yet."));
+    for (const m of joined) jc.addView(this.studentRow(mine.get(String(Cloud.staffOf(m))), "✓ joined"));
+    page.addView(jc);
+  }
+
+  loadMembers() {
+    this.loading = true;
+    new Thread({
+      run: () => {
+        let got = null;
+        let err = null;
+        try { got = Cloud.members(this); } catch (e) { err = e.getMessage == null || e.getMessage() == null ? String(e) : e.getMessage(); }
+        this.runOnUiThread({
+          run: () => {
+            this.loading = false;
+            this.members = got;
+            this.membersError = got == null ? (err == null ? "no answer" : err) : null;
+            if (!this.isFinishing()) this.render();
+          }
+        });
+      }
+    }).start();
+  }
+
+  decide(m, ok) {
+    new Thread({
+      run: () => {
+        let err = null;
+        try { StudentPortal.approve(this, m.optString("user_id"), ok); } catch (e) { err = e.getMessage == null ? String(e) : e.getMessage(); }
+        this.runOnUiThread({
+          run: () => {
+            Ui.toast(this, err != null ? "Failed: " + err : ok ? "Approved: " + m.optString("name") : "Not approved: " + m.optString("name"));
+            this.members = null;
+            if (!this.isFinishing()) this.render();
+          }
+        });
+      }
+    }).start();
+  }
+}
+;
 /* ---- app/Pptx.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -71351,6 +78658,8 @@ class ProtocolActivity extends Base {
 
   renderAll(page) {
     const act = Protocols.active(this.db);
+    // 10.17: the door-to-treatment times these timers record
+    page.addView(this.entryCard("⏱", GoldenHour.COLOR, "Golden-hour scores", GoldenHour.homeLine(this.db), "›", this.opener(GoldenHourActivity)));
     page.addView(Ui.heading(this, act.isEmpty() ? "No protocol running now" : "Running now (" + act.size() + ")", Protocols.COLOR));
     const now = Protocols.now();
     for (const r of act) {
@@ -75166,6 +82475,207 @@ QuizScan.Item = class {
   }
 };
 ;
+/* ---- app/RareCase.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Rare case alert (10.10, idea 148): when a rare diagnosis (pheochromocytoma, Wilson's, myasthenia...) is admitted
+ * anywhere, every PG and faculty member hears of it at once, with the ward and bed, so they can go and see it. Found from
+ * the diagnosis by a fixed word list (no AI); a doctor can also mark a case as rare, or say a match is not rare
+ * (patients.rare: '1' marked, '0' not rare, '' by the list).
+ */
+class RareCase {
+  static COLOR = 0xFF7C3AED;
+
+  /** {name shown, words that find it in a diagnosis (lower case)}. */
+  static LIST = [
+            ["Pheochromocytoma", "pheochromocytoma", "phaeochromocytoma", "paraganglioma"],
+            ["Wilson's disease", "wilson"],
+            ["Myasthenia gravis", "myasthenia"],
+            ["Addison's disease", "addison", "adrenal insufficiency", "adrenal crisis"],
+            ["Cushing's syndrome", "cushing"],
+            ["Acromegaly", "acromegaly"],
+            ["Conn's syndrome", "conn's", "conns syndrome", "hyperaldosteronism"],
+            ["Pituitary apoplexy", "pituitary apoplexy", "sheehan"],
+            ["Diabetes insipidus", "diabetes insipidus"],
+            ["Thyroid storm", "thyroid storm", "thyrotoxic crisis"],
+            ["Myxoedema coma", "myxedema coma", "myxoedema coma"],
+            ["Periodic paralysis", "periodic paralysis"],
+            ["Porphyria", "porphyria"],
+            ["Haemochromatosis", "hemochromatosis", "haemochromatosis"],
+            ["Amyloidosis", "amyloid"],
+            ["Sarcoidosis", "sarcoid"],
+            ["Systemic sclerosis", "systemic sclerosis", "scleroderma"],
+            ["Dermatomyositis / polymyositis", "dermatomyositis", "polymyositis"],
+            ["Takayasu arteritis", "takayasu"],
+            ["Vasculitis (GPA, PAN, EGPA)", "granulomatosis with polyangiitis", "wegener", "polyarteritis", "churg", "egpa", "microscopic polyangiitis"],
+            ["Behcet's disease", "behcet"],
+            ["Adult-onset Still's disease", "still's", "stills disease"],
+            ["TTP / HUS", "ttp", "thrombotic thrombocytopenic", "hemolytic uremic", "haemolytic uraemic"],
+            ["HLH", "hlh", "hemophagocytic", "haemophagocytic", "macrophage activation"],
+            ["PNH", "pnh", "paroxysmal nocturnal"],
+            ["Aplastic anaemia", "aplastic"],
+            ["Multiple myeloma", "myeloma"],
+            ["Motor neuron disease", "motor neuron disease", "motor neurone disease", "amyotrophic", " als "],
+            ["Neuromyelitis optica", "neuromyelitis", "nmosd", "devic"],
+            ["Multiple sclerosis", "multiple sclerosis"],
+            ["Autoimmune encephalitis", "autoimmune encephalitis", "anti-nmda", "anti nmda", "hashimoto encephalopathy"],
+            ["CJD", "creutzfeldt", "cjd"],
+            ["Wernicke's encephalopathy", "wernicke"],
+            ["Osmotic demyelination", "osmotic demyelination", "central pontine"],
+            ["Botulism", "botulism"],
+            ["Diphtheria", "diphtheria"],
+            ["Melioidosis", "melioidosis"],
+            ["Infective endocarditis", "infective endocarditis"],
+            ["Budd-Chiari syndrome", "budd chiari", "budd-chiari"],
+            ["Marfan syndrome", "marfan"],
+            ["Brugada syndrome", "brugada"],
+            ["WPW syndrome", "wpw", "wolff"],
+            ["Carcinoid", "carcinoid"],
+            ["Insulinoma", "insulinoma"],
+            ["MEN syndrome", "multiple endocrine neoplasia"],
+            ["Gaucher / Fabry / storage disease", "gaucher", "fabry", "storage disorder"],
+            ["Familial hypercholesterolaemia", "familial hypercholesterolemia", "familial hypercholesterolaemia"],
+            ["Leprosy reaction", "lepra reaction", "erythema nodosum leprosum"],
+            ["Hypertrophic cardiomyopathy", "hypertrophic cardiomyopathy", "hocm"]];
+
+  /** The rare diagnosis this text names, or null. Short words (TTP, HLH, PNH, CJD, ALS, WPW) must stand alone. */
+  static match(diagnosis) {
+    const d = " " + Ui.nz(diagnosis).toLowerCase().replace(/[^a-z0-9'\-]+/g, " ") + " ";
+    for (const r of RareCase.LIST) {
+      for (let i = 1; i < r.length; i++) {
+        const w = r[i];
+        const shortWord = w.trim().length <= 4 && !w.includes(" ");
+        if (shortWord ? d.includes(" " + w + " ") : d.includes(w)) return r[0];
+      }
+    }
+    return null;
+  }
+
+  /** The rare diagnosis of a patient (marked, or found by the list), or null. */
+  static of(p) {
+    const flag = Ui.nz(p.get("rare"));
+    if ("0" === flag) return null;
+    const m = RareCase.match(p.get("diagnosis"));
+    if (m != null) return m;
+    if ("1" === flag) return Ui.nz(p.get("diagnosis")).trim().isEmpty() ? "Rare case" : Ui.nz(p.get("diagnosis")).trim();
+    return null;
+  }
+
+  /** In-patients with a rare diagnosis now, newest admission first. */
+  static inWards(db) {
+    const out = [];
+    for (const p of db.rows("SELECT * FROM patients WHERE status=? ORDER BY admit_date DESC, id DESC", Db.IN)) {
+      const r = RareCase.of(p);
+      if (r != null) {
+        p.put("rare_name", r);
+        out.push(p);
+      }
+    }
+    return out;
+  }
+
+  /** Doctors (faculty, PGs and CRMIs) may mark a case as rare or not rare. */
+  static canMark(c) {
+    if (!Cloud.active(c)) return true;
+    const r = Cloud.role(c);
+    return SignOff.faculty(c) || Cloud.isAdmin(c) || "pg" === r || "crmi" === r;
+  }
+
+  static mark(a, db, pid, v) {
+    const cv = new ContentValues();
+    cv.put("rare", v);
+    db.update("patients", cv, pid);
+    Ui.toast(a, "1" === v ? "Marked as a rare case. Everyone will be told." : "Marked as not rare");
+    a.render();
+  }
+
+  /** Patient page: the purple rare-case banner, or the "Mark as a rare case" link. Null when neither fits. */
+  static patientCard(a, db, p) {
+    const pid = Ui.toLong(p.get("id"), 0);
+    const r = RareCase.of(p);
+    const can = RareCase.canMark(a) && Db.IN === p.get("status");
+    if (r == null) {
+      if (!can) return null;
+      const t = Ui.outlineButton(a, "🦓 Mark as a rare case (tell all PGs)", RareCase.COLOR, {
+        onClick: () => {
+          Ui.confirm(a, "Rare case", "Every PG and faculty member will be told: a rare case is in " + Protocols.where(p) + ".", "Tell everyone", {
+            run: () => { RareCase.mark(a, db, pid, "1"); }
+          });
+        }
+      });
+      const box = Ui.v(a);
+      box.setPadding(Ui.dp(a, 12), Ui.dp(a, 4), Ui.dp(a, 12), Ui.dp(a, 4));
+      box.addView(t);
+      return box;
+    }
+    const card = Ui.h(a);
+    card.setGravity(Gravity.CENTER_VERTICAL);
+    card.setBackground(Glass.hero(a, Ui.shades(RareCase.COLOR), 18));
+    card.setPadding(Ui.dp(a, 16), Ui.dp(a, 12), Ui.dp(a, 12), Ui.dp(a, 12));
+    const t = Ui.v(a);
+    t.addView(Ui.tv(a, "🦓 Rare case: " + r, 16, Color.WHITE, true));
+    t.addView(Ui.tv(a, "All PGs were told to come and see. Teach on it while the patient is here.", 12, 0xD9FFFFFF, false));
+    card.addView(t, Ui.weight(1));
+    if (can) {
+      const no = Ui.tv(a, "Not rare", 12, Color.WHITE, true);
+      no.setBackground(Ui.round(a, 0x33FFFFFF, 12));
+      no.setPadding(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 10), Ui.dp(a, 6));
+      no.setOnClickListener({ onClick: () => { RareCase.mark(a, db, pid, "0"); } });
+      card.addView(no);
+    }
+    const lp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), Ui.dp(a, 6));
+    card.setLayoutParams(lp);
+    return card;
+  }
+
+  /** Home (teaching column): the rare cases in the wards now; null when none. */
+  static homeCard(a, db) {
+    const l = RareCase.inWards(db);
+    if (l.length === 0) return null;
+    let s = "";
+    for (let i = 0; i < l.length && i < 3; i++) s += (i === 0 ? "" : "\n") + l[i].get("rare_name") + "  ·  " + Protocols.where(l[i]);
+    if (l.length > 3) s += "\n+" + (l.length - 3) + " more";
+    const card = a.entryCard("RARE CASE", RareCase.COLOR, "🦓 " + l.length + (l.length === 1 ? " rare case" : " rare cases") + " in the wards now",
+        s, null, a.opener(RareCaseActivity), 5);
+    const g = Ui.round(a, Ui.mix(RareCase.COLOR, Color.WHITE, 0.9), 18);
+    g.setStroke(Ui.dp(a, 2), RareCase.COLOR);
+    card.setBackground(g);
+    return card;
+  }
+}
+;
+/* ---- app/RareCaseActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Rare cases in the wards (10.10, idea 148): every in-patient with a rare diagnosis, to go and see before discharge. */
+class RareCaseActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Rare cases");
+    this.subtitle = "In the wards now";
+    this.headerColor(RareCase.COLOR);
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const l = RareCase.inWards(db);
+    const hero = Ui.card(this);
+    hero.addView(Ui.tv(this, "🦓 " + l.length + (l.length === 1 ? " rare case" : " rare cases") + " in the department", 18, RareCase.COLOR, true));
+    hero.addView(Ui.muted(this, "Found from the diagnosis (pheochromocytoma, Wilson's, myasthenia and " + (RareCase.LIST.length - 3)
+        + " more), or marked by a doctor. Every PG and faculty member is told when one is admitted."));
+    page.addView(hero);
+    for (const p of l) {
+      page.addView(Ui.heading(this, p.get("rare_name"), RareCase.COLOR));
+      page.addView(this.patientRow(p));
+    }
+    if (l.length === 0) page.addView(this.emptyNote("No rare case in the wards now. When one is admitted, everyone is told."));
+    this.setPage(page);
+  }
+}
+;
 /* ---- app/Readmit.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -78299,6 +85809,21 @@ class SettingsActivity extends Base {
           this.recreate();
         }
       }));
+    // 10.10: silent alarm patterns
+    const bOn = Buzz.on(this);
+    card.addView(this.switchRow("📳 Silent alarm patterns", bOn ? "On: code blue, critical lab, escalation and timers each vibrate in their own pattern"
+      : "Off: urgent alerts vibrate like any other", bOn, bOn ? Ui.GREEN : Ui.MUTED,
+      {
+        onCheckedChanged: (b, v) => {
+          Buzz.setOn(this, v);
+          this.recreate();
+        }
+      }));
+    if (bOn) {
+      const feel = Ui.outlineButton(this, "📳 Feel the patterns", Ui.PRIMARY, { onClick: () => { Buzz.feelDialog(this); } });
+      card.addView(feel);
+      Ui.margins(feel, 0, 6, 0, 0);
+    }
     return card;
   }
 
@@ -78928,6 +86453,150 @@ class ShiftCheckActivity extends Base {
       this.db.update("handovers", cv, Long.parseLong(i.key.substring(2)));
     }
     this.render();
+  }
+}
+;
+/* ---- app/SickReport.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Sick case report format (10.29): every unit PG reports each sick patient to the DAP in one fixed shape (patient, vitals,
+ * oxygen, problem, treatment given, what the DAP is asked to do). The rows are the call duty sick list (duty_sick); the DAP
+ * marks each one Seen. Shared as a WhatsApp message to the DAP's number, or as a PDF/Word report of the night.
+ */
+class SickReport {
+  constructor() {}
+
+  static COLOR = 0xFFB91C1C;
+  static OXYGEN = ["Room air", "Nasal prongs", "Face mask", "NRBM", "NIV / BiPAP", "Ventilator"];
+  static NEED = ["For information", "Review at bedside", "Advice on phone", "IMCU / CCB bed", "Other department opinion"];
+  /** The report's own fields, besides ward, patient, bed, ip_no, issue (problem), status and by_name. */
+  static FIELDS = ["age_sex", "diagnosis", "bp", "pr", "rr", "spo2", "o2", "temp", "grbs", "gcs", "urine", "treatment", "need", "plan", "vitals_time"];
+
+  /** "BP 90/60 · PR 120 · RR 28 · SpO₂ 88% on NRBM · Temp 101 · GRBS 320 · GCS 13", or "" when nothing was entered. */
+  static vitals(r) {
+    const s = new StringBuilder();
+    SickReport.add(s, "BP", r.get("bp"), "");
+    SickReport.add(s, "PR", r.get("pr"), "/min");
+    SickReport.add(s, "RR", r.get("rr"), "/min");
+    const spo2 = Ui.nz(r.get("spo2")).trim();
+    if (!spo2.isEmpty()) SickReport.add(s, "SpO₂", spo2 + (spo2.endsWith("%") ? "" : "%") + (Ui.nz(r.get("o2")).isEmpty() ? "" : " on " + r.get("o2")), "");
+    else if (!Ui.nz(r.get("o2")).isEmpty()) SickReport.add(s, "O₂", r.get("o2"), "");
+    SickReport.add(s, "Temp", r.get("temp"), "°F");
+    SickReport.add(s, "GRBS", r.get("grbs"), "");
+    SickReport.add(s, "GCS", r.get("gcs"), "/15");
+    SickReport.add(s, "Urine", r.get("urine"), "");
+    return s.toString();
+  }
+
+  static add(s, label, v, unit) {
+    v = Ui.nz(v).trim();
+    if (v.isEmpty()) return;
+    if (s.length() > 0) s.append("  ·  ");
+    s.append(label).append(' ').append(v);
+    if (!unit.isEmpty() && v.matches("[0-9.]+")) s.append(unit);
+  }
+
+  /** One patient in the fixed report shape, for WhatsApp. */
+  static text(r) {
+    const s = new StringBuilder();
+    s.append("*🚨 SICK CASE REPORT · ").append(Db.shortName(r.get("ward"))).append(" · ").append(Ui.nz(r.get("status")).toUpperCase()).append("*\n");
+    SickReport.line(s, "Patient", Ui.nz(r.get("patient")) + (Ui.nz(r.get("age_sex")).isEmpty() ? "" : ", " + r.get("age_sex")));
+    const where = (Ui.nz(r.get("ip_no")).isEmpty() ? "" : "IP " + r.get("ip_no") + "  ·  ") + Db.shortName(r.get("ward"))
+      + (Ui.nz(r.get("bed")).isEmpty() ? "" : " bed " + r.get("bed"));
+    SickReport.line(s, "Where", where);
+    SickReport.line(s, "Diagnosis", r.get("diagnosis"));
+    const v = SickReport.vitals(r);
+    SickReport.line(s, "Vitals" + (Ui.nz(r.get("vitals_time")).isEmpty() ? "" : " (" + r.get("vitals_time") + ")"), v);
+    SickReport.line(s, "Problem now", r.get("issue"));
+    SickReport.line(s, "Treatment given", r.get("treatment"));
+    SickReport.line(s, "Need from DAP", Ui.nz(r.get("need")) + (Ui.nz(r.get("plan")).isEmpty() ? "" : (Ui.nz(r.get("need")).isEmpty() ? "" : ": ") + r.get("plan")));
+    SickReport.line(s, "Reported by", Ui.nz(r.get("by_name")) + (Ui.nz(r.get("updated")).isEmpty() ? "" : ", " + Alerts.show(r.get("updated"))));
+    return s.toString().trim();
+  }
+
+  static line(s, label, v) {
+    if (Ui.nz(v).trim().isEmpty()) return;
+    s.append("*").append(label).append(":* ").append(v.trim()).append('\n');
+  }
+
+  static rows(db, iso, ward) {
+    const w = ward == null || ward.equals("ALL") ? "" : " AND ward='" + ward.split("'").join("") + "'";
+    return db.rows("SELECT * FROM duty_sick WHERE date=?" + w + " ORDER BY ward, CASE status WHEN 'Critical' THEN 0 WHEN 'Sick' THEN 1 ELSE 2 END, id", iso);
+  }
+
+  /** A unit's (or every ward's) sick cases for the night, one report under another. */
+  static all(db, iso, ward) {
+    const rows = SickReport.rows(db, iso, ward);
+    const s = new StringBuilder("*Sick cases to the DAP · " + (ward == null || ward.equals("ALL") ? "all wards" : Db.unitName(ward))
+      + " · call duty " + Dates.nice(iso) + "*\n" + rows.size() + (rows.size() === 1 ? " patient" : " patients") + "\n");
+    for (const r of rows) s.append("\n").append(SickReport.text(r)).append("\n");
+    return s.toString().trim();
+  }
+
+  /** The DAP's phone for the duty day, from the call duty group (roster or DAP register), or "". */
+  static dapPhone(db, iso) {
+    for (const e of CallDutyActivity.members(db, iso).entrySet())
+      if (e.getValue()[0].equals("DAP")) return Ui.nz(e.getValue()[1]);
+    return "";
+  }
+
+  static dapName(db, iso) {
+    for (const e of CallDutyActivity.members(db, iso).entrySet())
+      if (e.getValue()[0].equals("DAP")) return e.getKey();
+    return "";
+  }
+
+  static seen(r) {
+    return !Ui.nz(r.get("ack_by")).isEmpty();
+  }
+
+  /** The night's report as a table, with the DAP's signature box. */
+  static doc(db, iso, ward) {
+    const f = new FormDoc();
+    f.upper = "";
+    f.college = db.setting("college", "Tirunelveli Medical College & Hospital, Tirunelveli");
+    f.address = "";
+    f.dept = db.setting("dept", "Department of General Medicine");
+    f.title = "SICK CASE REPORT TO THE DAP";
+    const scope = ward == null || ward.equals("ALL") ? "All wards" : Db.unitName(ward);
+    f.footer = "Call duty " + Dates.nice(iso) + "  •  " + scope;
+    f.fileBase = "Sick_cases_" + iso + (ward == null || ward.equals("ALL") ? "" : "_" + ward);
+    const dap = SickReport.dapName(db, iso);
+    const top = f.plain(0.6, 0.4);
+    top.row(16, new FormDoc.Cell("Call duty 2 PM " + Dates.nice(iso) + " to 7:30 AM  ·  " + scope).b().size(9),
+      new FormDoc.Cell("DAP: " + (dap.isEmpty() ? "" : dap)).b().size(9));
+    const t = f.block(null, SickReport.COLOR, 0.04, 0.16, 0.13, 0.19, 0.20, 0.14, 0.14);
+    t.border = 0xFF334155;
+    t.row(28, SickReport.hd("No"), SickReport.hd("Patient · IP · ward/bed"), SickReport.hd("Diagnosis · status"), SickReport.hd("Vitals · O₂"),
+      SickReport.hd("Problem · treatment given"), SickReport.hd("Need from DAP"), SickReport.hd("Reported by · DAP seen"));
+    let n = 0;
+    for (const r of SickReport.rows(db, iso, ward)) {
+      n++;
+      const who = Ui.nz(r.get("patient")) + (Ui.nz(r.get("age_sex")).isEmpty() ? "" : ", " + r.get("age_sex"))
+        + (Ui.nz(r.get("ip_no")).isEmpty() ? "" : "\nIP " + r.get("ip_no")) + "\n" + Db.shortName(r.get("ward"))
+        + (Ui.nz(r.get("bed")).isEmpty() ? "" : " bed " + r.get("bed"));
+      const dx = Ui.nz(r.get("diagnosis")) + "\n" + Ui.nz(r.get("status"));
+      const vit = SickReport.vitals(r).split("  ·  ").join("\n") + (Ui.nz(r.get("vitals_time")).isEmpty() ? "" : "\nat " + r.get("vitals_time"));
+      const prob = Ui.nz(r.get("issue")) + (Ui.nz(r.get("treatment")).isEmpty() ? "" : "\nGiven: " + r.get("treatment"));
+      const need = Ui.nz(r.get("need")) + (Ui.nz(r.get("plan")).isEmpty() ? "" : "\n" + r.get("plan"));
+      const by = Ui.nz(r.get("by_name")) + "\n" + Alerts.show(r.get("updated"))
+        + (SickReport.seen(r) ? "\nSeen: " + r.get("ack_by") + ", " + Alerts.show(r.get("ack_time")) : "\nNot seen yet");
+      t.row(40, SickReport.cell(String(n)).center(), SickReport.cell(who), SickReport.cell(dx.trim()), SickReport.cell(vit.trim()),
+        SickReport.cell(prob.trim()), SickReport.cell(need.trim()), SickReport.cell(by));
+    }
+    if (n === 0) t.row(24, SickReport.cell(""), SickReport.cell("No sick cases reported."), SickReport.cell(""), SickReport.cell(""), SickReport.cell(""), SickReport.cell(""), SickReport.cell(""));
+    const sign = f.plain(0.5, 0.5);
+    sign.row(44, new FormDoc.Cell("Duty PG(s)").b().size(9).bottom(), new FormDoc.Cell("Duty Assistant Professor (DAP)").b().size(9).bottom());
+    return f;
+  }
+
+  static hd(s) {
+    return new FormDoc.Cell(s).b().size(8).center().color(0xFFFFFFFF).fill(SickReport.COLOR);
+  }
+
+  static cell(s) {
+    return new FormDoc.Cell(s).size(8);
   }
 }
 ;
@@ -81134,6 +88803,22 @@ class StudentAttendance {
     return i < 0 ? Ui.MUTED : StudentAttendance.COLORS[i];
   }
 
+  /**
+   * The students expected at one session. An MBBS class lists only its year's students (10.27, user asked) when the
+   * class's batch names the year ("Final year OP class", "Second year MBBS"); otherwise every MBBS student.
+   */
+  static studentsAt(db, key, sessionId) {
+    const year = "MBBS" === key ? StudentAttendance.mbbsYear(db, sessionId) : "";
+    if (year.isEmpty()) return StudentAttendance.students(db, key);
+    return db.rows("SELECT * FROM staff WHERE role=? AND " + Approvals.APPROVED_SQL + " ORDER BY unit, CAST(reg_no AS INTEGER), name", year);
+  }
+
+  /** The MBBS year ("MBBS Final year" …) an MBBS class is for, from its batch, or "" when it does not say. */
+  static mbbsYear(db, sessionId) {
+    const r = Ui.nz(sessionId).isEmpty() ? null : db.row("SELECT batch, topic FROM classes WHERE id=?", sessionId);
+    return r == null ? "" : Posting.yearOf(r.get("batch"));
+  }
+
   /** The student members expected at a session of this section. */
   static students(db, key) {
     const who = "MBBS" === key ? "role LIKE 'MBBS%'" : "role IN ('Postgraduate','CRMI')";
@@ -81167,7 +88852,7 @@ class StudentAttendance {
   static counts(db, key, sessionId) {
     const st = StudentAttendance.statuses(db, key, sessionId);
     const n = [0, 0, 0];
-    for (const p of StudentAttendance.students(db, key)) {
+    for (const p of StudentAttendance.studentsAt(db, key, sessionId)) {
       const i = StudentAttendance.STATUSES.indexOf(StudentAttendance.statusOf(st, p));
       if (i >= 0) n[i]++;
     }
@@ -81202,7 +88887,7 @@ class StudentAttendance {
   /** "12 present · 2 absent · 1 leave", or how many are still to mark. */
   static summary(db, key, sessionId) {
     const n = StudentAttendance.counts(db, key, sessionId);
-    const total = StudentAttendance.students(db, key).size();
+    const total = StudentAttendance.studentsAt(db, key, sessionId).size();
     if (n[0] + n[1] + n[2] === 0) return total === 0 ? "No students listed yet" : "Not marked · " + total + (total === 1 ? " student" : " students");
     return n[0] + " present · " + n[1] + " absent · " + n[2] + " leave";
   }
@@ -81229,14 +88914,16 @@ class StudentAttendanceActivity extends Base {
     const S = StudentAttendance, db = this.db, key = this.key, sessionId = this.sessionId, color = this.color;
     const page = Ui.v(this);
     const can = S.canMark(this);
-    const list = S.students(db, key);
+    const list = S.studentsAt(db, key, sessionId);
+    const year = "MBBS" === key ? S.mbbsYear(db, sessionId) : "";
     const st = S.statuses(db, key, sessionId);
     const n = S.counts(db, key, sessionId);
 
     const hero = Ui.card(this);
     hero.setBackground(Ui.gradient(this, [Ui.mix(this.color, Color.WHITE, 0.82), Ui.mix(this.color, Color.WHITE, 0.93)], 20));
     const date = Ui.nz(this.getIntent().getStringExtra("date"));
-    hero.addView(Ui.tv(this, (date.isEmpty() ? "" : Dates.nice(date) + "  ·  ") + list.size() + (list.size() === 1 ? " student" : " students"), 16, Ui.mix(this.color, Color.BLACK, 0.4), true));
+    hero.addView(Ui.tv(this, (date.isEmpty() ? "" : Dates.nice(date) + "  ·  ") + list.size() + (year.isEmpty() ? "" : " " + Posting.yearLabel(year).toLowerCase())
+      + (list.size() === 1 ? " student" : " students"), 16, Ui.mix(this.color, Color.BLACK, 0.4), true));
     const stats = Ui.h(this);
     for (let k = 0; k < 3; k++) {
       const t = Ui.tv(this, n[k] + "\n" + S.STATUSES[k], 13, S.COLORS[k], true);
@@ -81264,7 +88951,8 @@ class StudentAttendanceActivity extends Base {
     page.addView(hero);
 
     if (list.isEmpty()) {
-      page.addView(this.emptyNote("MBBS" === key ? "No MBBS students listed as members yet. Add them in Students." : "No PGs or CRMIs listed as members yet. Add them in Students."));
+      page.addView(this.emptyNote(!year.isEmpty() ? "No " + Posting.yearLabel(year).toLowerCase() + " MBBS students yet. Paste the posting order in MBBS clinical posting."
+        : "MBBS" === key ? "No MBBS students listed as members yet. Add them in Students." : "No PGs or CRMIs listed as members yet. Add them in Students."));
     }
     const card = Ui.card(this);
     for (const p of list) {
@@ -81308,6 +88996,319 @@ class StudentAttendanceActivity extends Base {
       page.addView(card);
     }
     this.setPage(page);
+  }
+}
+;
+/* ---- app/StudentPortal.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * MBBS students in the app (10.26, user asked). A student creates an account, taps "I am an MBBS student" and picks their
+ * own name from their unit's posting list (server: student_names, student_claim). Any faculty member of that unit
+ * approves them (student_approve), which gives the app role "student". A student's phone never receives the
+ * department's records: their page asks the server for their own posting, attendance, marks (once the faculty
+ * share them) and the coming MBBS classes (student_view) each time it opens.
+ */
+class StudentPortal {
+  static COLOR = Posting.COLOR;
+  static view = null;       // the last answer of student_view, while the app is open
+  static viewError = null;
+  static loading = false;
+
+  static isStudent(c) {
+    return "student" === Cloud.role(c);
+  }
+
+  // ---------- server calls ----------
+
+  static names(c, unit) {
+    return new JSONArray(Cloud.json(c, "POST", "/rest/v1/rpc/student_names", new JSONObject().put("p_unit", unit)).text());
+  }
+
+  static claim(c, staffId) {
+    Cloud.json(c, "POST", "/rest/v1/rpc/student_claim", new JSONObject().put("p_staff", staffId));
+    Cloud.join(c, Cloud.prefs(c).getString("name", ""));
+  }
+
+  /** A unit's faculty member (or the admin, HOD or Medical Registrar) lets a student in, or turns them away. */
+  static approve(c, userId, ok) {
+    Cloud.json(c, "POST", "/rest/v1/rpc/student_approve", new JSONObject().put("p_user", userId).put("p_ok", ok));
+  }
+
+  static load(c) {
+    return new JSONObject(Cloud.json(c, "POST", "/rest/v1/rpc/student_view", new JSONObject()).text());
+  }
+
+  static errText(e) {
+    return e.getMessage == null || e.getMessage() == null ? String(e) : e.getMessage();
+  }
+
+  // ---------- waiting for approval: find your name ----------
+
+  /** Under "Waiting for approval": the student's way in, or the name they already picked. */
+  static joinCard(a, done) {
+    const P = StudentPortal;
+    const c = Ui.card(a);
+    c.setBackground(Ui.gradient(a, [Ui.mix(P.COLOR, Color.WHITE, 0.82), Ui.mix(P.COLOR, Color.WHITE, 0.93)], 20));
+    c.addView(Ui.tv(a, "🎓  MBBS student?", 16, Ui.mix(P.COLOR, Color.BLACK, 0.4), true));
+    const sid = Cloud.myStaff(a);
+    const picked = Cloud.prefs(a).getString("student_pick", "");
+    if (sid > 0 && !picked.isEmpty()) {
+      c.addView(Ui.tv(a, "You picked: " + picked + ". Any faculty member of your unit approves you in the app; then tap Check again.", 13, Ui.TEXT, false));
+      const other = Ui.outlineButton(a, "Not me: pick again", P.COLOR, { onClick: (v) => { P.pickUnit(a, done); } });
+      c.addView(other);
+      Ui.margins(other, 0, 10, 0, 0);
+    } else {
+      c.addView(Ui.tv(a, "Find your name in your unit's clinical posting list. Your unit's faculty then approve you, and you will see your own attendance and end-posting marks.",
+        13, Ui.TEXT, false));
+      const go = Ui.button(a, "I am an MBBS student: find my name", P.COLOR, { onClick: (v) => { P.pickUnit(a, done); } });
+      c.addView(go);
+      Ui.margins(go, 0, 10, 0, 0);
+    }
+    return c;
+  }
+
+  static pickUnit(a, done) {
+    const labels = new Array(Db.WARD_UNITS.length);
+    for (let i = 0; i < labels.length; i++) labels[i] = Db.unitName(Db.WARD_UNITS[i]);
+    new AlertDialog.Builder(a).setTitle("Your posting unit").setItems(labels, {
+      onClick: (d, w) => { StudentPortal.pickName(a, Db.WARD_UNITS[w], done); }
+    }).setNegativeButton("Cancel", null).show();
+  }
+
+  static pickName(a, unit, done) {
+    const pd = new ProgressDialog(a);
+    pd.setMessage("Loading " + unit + " list…");
+    pd.setCancelable(false);
+    pd.show();
+    new Thread({
+      run: () => {
+        let got = null;
+        let err = null;
+        try { got = StudentPortal.names(a, unit); } catch (e) { err = StudentPortal.errText(e); }
+        a.runOnUiThread({
+          run: () => {
+            try { pd.dismiss(); } catch (ignored) {}
+            if (a.isFinishing()) return;
+            if (got == null) { Ui.toast(a, "Could not load the list: " + err); return; }
+            StudentPortal.showNames(a, unit, got, done);
+          }
+        });
+      }
+    }).start();
+  }
+
+  static showNames(a, unit, list, done) {
+    if (list.length() === 0) {
+      new AlertDialog.Builder(a).setTitle(Db.unitName(unit)).setMessage("No names are free in this unit's list. Check the unit, or ask your unit's "
+        + "Assistant Professor to add you to the posting list in the app.").setPositiveButton("OK", null).show();
+      return;
+    }
+    const rows = [];
+    const labels = new Array(list.length());
+    for (let i = 0; i < list.length(); i++) {
+      const o = list.optJSONObject(i);
+      rows.add(o);
+      const reg = o.optString("reg_no");
+      labels[i] = (reg.isEmpty() ? "" : reg + "  ") + o.optString("name");
+    }
+    new AlertDialog.Builder(a).setTitle("Tap your name  ·  " + unit).setItems(labels, {
+      onClick: (d, w) => {
+        const o = rows.get(w);
+        new AlertDialog.Builder(a).setTitle("Is this you?").setMessage(o.optString("name") + "\n" + Db.unitName(unit)
+          + "\n\nOnly pick your own name: your unit's faculty check it before approving you.")
+          .setPositiveButton("Yes, that's me", { onClick: (d2, x) => { StudentPortal.doClaim(a, o.optLong("id"), o.optString("name") + " (" + unit + ")", done); } })
+          .setNegativeButton("Back", null).show();
+      }
+    }).setNegativeButton("Cancel", null).show();
+  }
+
+  static doClaim(a, staffId, label, done) {
+    const pd = new ProgressDialog(a);
+    pd.setMessage("Sending…");
+    pd.setCancelable(false);
+    pd.show();
+    new Thread({
+      run: () => {
+        let err = null;
+        try { StudentPortal.claim(a, staffId); } catch (e) { err = StudentPortal.errText(e); }
+        a.runOnUiThread({
+          run: () => {
+            try { pd.dismiss(); } catch (ignored) {}
+            if (err != null) { Ui.toast(a, "Failed: " + err); return; }
+            Cloud.prefs(a).edit().putString("student_pick", label).apply();
+            Ui.toast(a, "Sent. Your unit's faculty will approve you.");
+            run(done);
+          }
+        });
+      }
+    }).start();
+  }
+
+  // ---------- the student's own page ----------
+
+  /** The approved student's page: their posting, attendance, marks once shared, and the coming MBBS classes. */
+  static page(a, signOut) {
+    const P = StudentPortal;
+    const page = Ui.v(a);
+    if (P.view == null) {
+      if (P.viewError != null) {
+        page.addView(P.errorCard(a, P.viewError));
+        P.viewError = null;
+      } else {
+        const w = Ui.card(a);
+        w.addView(Ui.muted(a, "Loading your posting…"));
+        page.addView(w);
+        if (!P.loading) P.refresh(a);
+      }
+      page.addView(P.footer(a, signOut));
+      return page;
+    }
+    const me = P.view;
+    const hero = Ui.card(a);
+    hero.setBackground(Glass.hero(a, Ui.shades(P.COLOR), 22));
+    hero.addView(Ui.tv(a, me.optString("name"), 20, Color.WHITE, true));
+    const reg = me.optString("reg_no");
+    hero.addView(Ui.tv(a, me.optString("role") + "  ·  " + Db.unitName(me.optString("unit")) + (reg.isEmpty() ? "" : "  ·  No. " + reg), 13, 0xE6FFFFFF, false));
+    page.addView(hero);
+
+    const posts = me.optJSONArray("postings");
+    if (posts == null || posts.length() === 0) page.addView(a.emptyNote("You are not on a posting list yet."));
+    for (let i = 0; posts != null && i < posts.length(); i++) page.addView(P.postingCard(a, me, posts.optJSONObject(i)));
+
+    const classes = me.optJSONArray("classes");
+    page.addView(Ui.section(a, "MBBS classes coming up"));
+    const cc = Ui.card(a);
+    if (classes == null || classes.length() === 0) cc.addView(Ui.muted(a, "No MBBS classes scheduled."));
+    for (let i = 0; classes != null && i < classes.length(); i++) {
+      const k = classes.optJSONObject(i);
+      const r = Ui.v(a);
+      r.setPadding(0, Ui.dp(a, 6), 0, Ui.dp(a, 6));
+      r.addView(Ui.tv(a, Dates.nice(k.optString("date")) + (k.optString("unit").isEmpty() ? "" : "  ·  " + k.optString("unit")), 12, P.COLOR, true));
+      r.addView(Ui.tv(a, k.optString("topic"), 14, Ui.TEXT, true));
+      const by = k.optString("taken_by"), venue = k.optString("venue"), note = k.optString("note");
+      const sub = (by.isEmpty() ? "" : "By " + by) + (venue.isEmpty() ? "" : (by.isEmpty() ? "" : "  ·  ") + venue) + (note.isEmpty() ? "" : "  ·  " + note);
+      if (!sub.isEmpty()) r.addView(Ui.tv(a, sub, 12, Ui.MUTED, false));
+      cc.addView(r);
+    }
+    page.addView(cc);
+    page.addView(P.footer(a, signOut));
+    return page;
+  }
+
+  static postingCard(a, me, p) {
+    const P = StudentPortal;
+    const c = Ui.card(a);
+    const title = p.optString("title"), batch = p.optString("batch");
+    c.addView(Ui.tv(a, title + (batch.isEmpty() ? "" : " – " + batch), 15, Ui.TEXT, true));
+    const sl = p.optString("sl");
+    c.addView(Ui.muted(a, MbbsMarks.dot(p.optString("from_date")) + " to " + MbbsMarks.dot(p.optString("to_date")) + "  ·  " + Db.unitName(p.optString("unit"))
+      + (sl.isEmpty() ? "" : "  ·  Sl. No. " + sl)));
+
+    // attendance
+    const n = [0, 0, 0];
+    const days = [];
+    const att = me.optJSONArray("attendance");
+    for (let i = 0; att != null && i < att.length(); i++) {
+      const r = att.optJSONObject(i);
+      if (!r.optString("posting_id").equals(p.optString("id"))) continue;
+      days.add(r);
+      for (let k = 0; k < 3; k++) if (StudentAttendance.STATUSES[k].equals(r.optString("status"))) n[k]++;
+    }
+    const marked = n[0] + n[1] + n[2];
+    const stats = Ui.h(a);
+    const pc = Ui.tv(a, (marked === 0 ? "–" : Math.round(n[0] * 100 / marked) + "%") + "\nAttendance", 13, P.COLOR, true);
+    pc.setGravity(Gravity.CENTER);
+    pc.setBackground(Ui.round(a, Ui.mix(P.COLOR, Color.WHITE, 0.88), 14));
+    pc.setPadding(0, Ui.dp(a, 8), 0, Ui.dp(a, 8));
+    stats.addView(pc, Ui.weight(1.3));
+    for (let k = 0; k < 3; k++) {
+      const t = Ui.tv(a, n[k] + "\n" + StudentAttendance.STATUSES[k], 13, StudentAttendance.COLORS[k], true);
+      t.setGravity(Gravity.CENTER);
+      t.setBackground(Ui.round(a, Ui.mix(StudentAttendance.COLORS[k], Color.WHITE, 0.9), 14));
+      t.setPadding(0, Ui.dp(a, 8), 0, Ui.dp(a, 8));
+      const lp = Ui.weight(1);
+      lp.setMargins(Ui.dp(a, 6), 0, 0, 0);
+      stats.addView(t, lp);
+    }
+    c.addView(stats);
+    Ui.margins(stats, 0, 10, 0, 0);
+    if (!days.isEmpty()) {
+      let sb = "";
+      for (let i = Math.max(0, days.size() - 10); i < days.size(); i++) {
+        const r = days.get(i);
+        const d = Dates.parse(r.optString("day"));
+        sb += (sb.length === 0 ? "" : "   ") + (d == null ? r.optString("day") : d.getDayOfMonth() + "/" + d.getMonthValue())
+          + " " + (r.optString("status").isEmpty() ? "–" : r.optString("status").substring(0, 1));
+      }
+      const recent = Ui.tv(a, "Last days: " + sb, 12, Ui.MUTED, false);
+      c.addView(recent);
+      Ui.margins(recent, 0, 8, 0, 0);
+    }
+
+    // marks
+    let mk = null;
+    const marks = me.optJSONArray("marks");
+    for (let i = 0; marks != null && i < marks.length(); i++)
+      if (marks.optJSONObject(i).optString("posting_id").equals(p.optString("id"))) mk = marks.optJSONObject(i);
+    const mh = Ui.tv(a, "End-posting evaluation", 14, Ui.TEXT, true);
+    c.addView(mh);
+    Ui.margins(mh, 0, 12, 0, 0);
+    if (mk == null) {
+      c.addView(Ui.muted(a, "Your marks appear here when your unit's faculty share them."));
+    } else {
+      const pm = new HashMap();
+      pm.put("parts", p.optString("parts"));
+      const parts = Posting.parts(pm);
+      const mm = new HashMap();
+      mm.put("scores", mk.optString("scores"));
+      const sc = Posting.scores(mm, parts.size());
+      for (let i = 0; i < parts.size(); i++)
+        c.addView(Ui.kv(a, parts.get(i)[0], (sc[i].isEmpty() ? "–" : sc[i]) + " / " + parts.get(i)[1]));
+      c.addView(Ui.kv(a, "Total", (mk.optString("total").isEmpty() ? "–" : mk.optString("total")) + " / " + Posting.maxTotal(pm)));
+      if (!mk.optString("remarks").isEmpty()) c.addView(Ui.tv(a, "Remarks: " + mk.optString("remarks"), 12, Ui.MUTED, false));
+    }
+    return c;
+  }
+
+  static errorCard(a, err) {
+    const c = Ui.card(a);
+    c.addView(Ui.title(a, "Could not load your page"));
+    c.addView(Ui.muted(a, err + "\n\nCheck the internet and tap Refresh."));
+    return c;
+  }
+
+  static footer(a, signOut) {
+    const P = StudentPortal;
+    const c = Ui.v(a);
+    c.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), Ui.dp(a, 8));
+    c.addView(Ui.buttonRow(a,
+      Ui.button(a, "Refresh", P.COLOR, { onClick: (v) => { P.view = null; P.refresh(a); a.render(); } }),
+      Ui.outlineButton(a, "Sign out", Ui.RED, { onClick: (v) => { P.view = null; run(signOut); } })));
+    const note = Ui.muted(a, "As an MBBS student you see only your own posting, attendance, marks and the MBBS classes. Patient records stay with the doctors.");
+    c.addView(note);
+    Ui.margins(note, 6, 10, 6, 0);
+    return c;
+  }
+
+  static refresh(a) {
+    const P = StudentPortal;
+    P.loading = true;
+    new Thread({
+      run: () => {
+        let got = null;
+        let err = null;
+        try { got = P.load(a); } catch (e) { err = P.errText(e); }
+        a.runOnUiThread({
+          run: () => {
+            P.loading = false;
+            P.view = got;
+            P.viewError = got == null ? err : null;
+            if (!a.isFinishing()) a.render();
+          }
+        });
+      }
+    }).start();
   }
 }
 ;
@@ -82543,6 +90544,71 @@ class SyncListActivity extends Base {
     });
   }
 
+  /** 10.10: no internet in the ward? Pass the entries and the census to the phone next to you by Bluetooth. */
+  offlineCard() {
+    const c = Ui.card(this);
+    c.addView(Ui.tv(this, "📶 No internet? Share by Bluetooth", 16, OfflineShare.COLOR, true));
+    c.addView(Ui.muted(this, "Send this phone's new entries and the census to a phone next to you (Bluetooth or Quick Share). "
+        + "That phone adds them and puts them online when it gets the internet first. Chats and photos are not included."));
+    const r = Ui.h(this);
+    const send = Ui.button(this, "Send", OfflineShare.COLOR, { onClick: () => { this.sendOffline(); } });
+    r.addView(send, Ui.weight(1));
+    const get = Ui.outlineButton(this, "Receive a file", OfflineShare.COLOR, {
+      onClick: () => {
+        Store.pick(this, ["application/zip", "application/x-zip-compressed", "application/octet-stream"], OfflineShare.REQ_IMPORT);
+      }
+    });
+    r.addView(get, Ui.weight(1));
+    Ui.margins(get, 8, 0, 0, 0);
+    c.addView(r);
+    Ui.margins(r, 0, 10, 0, 0);
+    return c;
+  }
+
+  sendOffline() {
+    let rel;
+    try {
+      rel = OfflineShare.write(this, this.db);
+    } catch (e) {
+      Ui.toast(this, "Could not make the file: " + e.getMessage());
+      return;
+    }
+    Ui.confirm(this, "Send by Bluetooth", "The file holds patient details. Choose Bluetooth (or Quick Share) and the phone next to you. "
+        + "On that phone: open TVMCHMED > Waiting to go up > Receive a file, then delete the file from its Downloads.", "Choose phone", {
+      run: () => { Store.share(this, rel, "TVMCHMED offline entries"); }
+    });
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req !== OfflineShare.REQ_IMPORT || res !== RESULT_OK || data == null || data.getData() == null) return;
+    let o;
+    try {
+      const inp = this.getContentResolver().openInputStream(data.getData());
+      try {
+        o = OfflineShare.read(this, inp);
+      } finally {
+        if (inp != null) inp.close();
+      }
+    } catch (e) {
+      Ui.toast(this, e.getMessage() == null ? "Could not read the file" : e.getMessage());
+      return;
+    }
+    const s = OfflineShare.peek(o);
+    Ui.confirm(this, "Add entries from " + (s.from.isEmpty() ? "another phone" : s.from) + "?", "Made at " + s.time + ": " + s.mine
+        + (s.mine === 1 ? " new entry" : " new entries") + " and the census. Your own entries not yet online are kept.", "Add", {
+      run: () => {
+        try {
+          const r = OfflineShare.apply(this, this.db, o);
+          Ui.toast(this, r.added === 0 ? "Nothing new: this phone already has them" : r.added + (r.added === 1 ? " record added" : " records added") + ". You can delete the file now.");
+        } catch (e) {
+          Ui.toast(this, "Could not add: " + e.getMessage());
+        }
+        this.render();
+      }
+    });
+  }
+
   render() {
     const db = this.db, C = SyncListActivity.COLOR;
     const page = Ui.v(this);
@@ -82564,6 +90630,7 @@ class SyncListActivity extends Base {
         + (err.isEmpty() ? "" : "\nLast problem: " + err)));
     if (total > 0) hero.addView(Ui.muted(this, "These are safe on this phone. They go up by themselves when the internet is back; do not clear the browser's data for this site until this list is empty."));
     page.addView(hero);
+    page.addView(this.offlineCard());
     for (const [tbl, pks] of by) {
       page.addView(Ui.heading(this, SyncListActivity.label(tbl) + "  ·  " + pks.length, C));
       const c = Ui.card(this);
@@ -82635,6 +90702,326 @@ class SyncStatus {
         .show();
   }
 }
+;
+/* ---- app/TamilCard.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Tamil discharge card (10.17, user's pick 177): one phone-sized picture for the family's WhatsApp, in simple Tamil: the illness, the
+ * medicines with morning / noon / night, what to do at home for that illness, the danger signs to come back for, and the review date.
+ * The illness advice comes from the final diagnosis by fixed rules (no AI). The full medicine chart stays in the Tamil pill card.
+ */
+class TamilCard {
+  static COLOR = 0xFF0F766E;
+  static W = 1080;
+
+  /** Illness: pattern (lower case), Tamil name, things to do at home, danger signs. */
+  static DISEASES = [
+            [["diabet|\\bdka\\b|t2dm|\\bdm\\b|hyperglyc|hypoglyc"], ["சர்க்கரை நோய்"],
+                    ["இனிப்பு, அரிசி அளவைக் குறைக்கவும்; காய்கறி அதிகம் சாப்பிடவும்", "தினமும் 30 நிமிடம் நடக்கவும்", "மாதம் ஒரு முறை சர்க்கரை பரிசோதனை செய்யவும்", "கால்களில் புண் இருக்கிறதா என்று தினமும் பார்க்கவும்"],
+                    ["மயக்கம், அதிக வியர்வை, நடுக்கம் (சர்க்கரை குறைவு)", "அதிக தாகம், வாந்தி, வேகமான மூச்சு"]],
+            [["hypertens|\\bhtn\\b|\\bshtn\\b"], ["ரத்த அழுத்தம் (BP)"],
+                    ["உப்பு குறைவாக; ஊறுகாய், அப்பளம், கருவாடு தவிர்க்கவும்", "BP மாத்திரையை தினமும் ஒரே நேரத்தில் சாப்பிடவும்", "புகை, மது வேண்டாம்"],
+                    ["கடும் தலைவலி, கண் மங்குதல்", "கை கால் பலவீனம், பேச்சு குழறல்"]],
+            [["heart failure|\\bccf\\b|\\blvf\\b|cardiomyopath|\\bdcm\\b|\\bchf\\b|\\bhfref\\b"], ["இதய பலவீனம்"],
+                    ["தண்ணீர், கஞ்சி எல்லாம் சேர்த்து ஒரு நாளைக்கு 1 முதல் 1.5 லிட்டர் மட்டும்", "உப்பு குறைவாக", "தினமும் எடை பார்க்கவும்; 2 கிலோ கூடினால் வரவும்", "தலையணையை உயர்த்தி வைத்துப் படுக்கவும்"],
+                    ["படுத்தால் மூச்சுத் திணறல்", "கால் வீக்கம் அதிகமாதல்"]],
+            [["\\bn?stemi\\b|\\bmi\\b|\\bacs\\b|coronary|\\bihd\\b|\\bcad\\b|angina|\\bawmi\\b|\\biwmi\\b|myocardial infarct"], ["மாரடைப்பு (இதய ரத்தக்குழாய் அடைப்பு)"],
+                    ["ஆஸ்பிரின், கொழுப்பு மாத்திரைகளை நிறுத்தவே கூடாது", "புகை பிடிக்கக் கூடாது", "எண்ணெய், வறுத்த உணவு குறைக்கவும்", "மெதுவாக நடப்பதில் தொடங்கி படிப்படியாக அதிகரிக்கவும்"],
+                    ["10 நிமிடத்துக்கு மேல் நெஞ்சு வலி", "வியர்வையுடன் மூச்சுத் திணறல்"]],
+            [["stroke|\\bcva\\b|infarct|hemipar|hemipleg|\\bich\\b|intracerebral"], ["பக்கவாதம் (ஸ்ட்ரோக்)"],
+                    ["தினமும் கை கால் பயிற்சி (பிசியோதெரபி)", "படுக்கையில் இருந்தால் 2 மணி நேரத்திற்கு ஒரு முறை பக்கம் திருப்பவும் (படுக்கைப் புண் வராமல்)", "விழுங்க சிரமம் இருந்தால் கூழ் உணவு, உட்கார வைத்து ஊட்டவும்", "BP, சர்க்கரையைக் கட்டுப்பாட்டில் வைக்கவும்"],
+                    ["புதிதாக கை கால் பலவீனம் அல்லது பேச்சு குழறல்", "அதிக தூக்கம், வலிப்பு"]],
+            [["\\bckd\\b|chronic kidney|renal failure|\\baki\\b|nephr|dialys|kidney"], ["சிறுநீரக நோய்"],
+                    ["உப்பு குறைவாக; வாழை, ஆரஞ்சு, இளநீர் போன்ற பொட்டாசியம் அதிகமானவை குறைக்கவும்", "வலி மாத்திரைகளை சொந்தமாக வாங்கிச் சாப்பிடக் கூடாது", "டாக்டர் சொன்ன அளவு மட்டும் தண்ணீர்"],
+                    ["சிறுநீர் குறைதல், உடல் வீக்கம்", "மூச்சுத் திணறல், அதிக சோர்வு"]],
+            [["cirrho|\\bcld\\b|chronic liver|portal hyp|ascites|hepatic|liver|hepatitis"], ["கல்லீரல் நோய்"],
+                    ["மது முழுவதும் நிறுத்த வேண்டும்", "உப்பு குறைவாக", "தினமும் 2 முறை மலம் போக வேண்டும்; மலச்சிக்கல் கூடாது", "நாட்டு மருந்து, பச்சிலை மருந்து வேண்டாம்"],
+                    ["ரத்த வாந்தி அல்லது கருப்பு மலம்", "குழப்பம், அதிக தூக்கம்"]],
+            [["copd|asthma|bronchi|emphysema"], ["மூச்சுக் குழாய் நோய் (ஆஸ்துமா / COPD)"],
+                    ["இன்ஹேலரை மூச்சுத் திணறல் இல்லாவிட்டாலும் தினமும் சொன்னபடி பயன்படுத்தவும்", "புகை, விறகு அடுப்புப் புகை தவிர்க்கவும்", "ஃப்ளூ தடுப்பூசி போட்டுக்கொள்ளவும்"],
+                    ["பேச முடியாத அளவு மூச்சுத் திணறல்", "உதடு நீலமாதல்"]],
+            [["pneumon|\\blrti\\b|\\bcap\\b"], ["நுரையீரல் தொற்று (நிமோனியா)"],
+                    ["ஆன்டிபயாடிக் மாத்திரையை முழு நாட்களும் சாப்பிடவும்", "நன்றாகத் தண்ணீர் குடிக்கவும், ஓய்வு எடுக்கவும்"],
+                    ["மூச்சுத் திணறல் அதிகமாதல்", "3 நாளுக்கு மேல் காய்ச்சல்"]],
+            [["tubercul|\\btb\\b|koch|\\bakt\\b|\\bptb\\b"], ["காசநோய் (TB)"],
+                    ["TB மாத்திரையை ஒரு நாளும் விடாமல் முழு 6 மாதமும் சாப்பிடவும்", "இருமும்போது வாயை மூடவும்; வீட்டில் காற்றோட்டம் வேண்டும்", "முட்டை, பருப்பு, பால் போன்ற சத்தான உணவு", "நிக்க்ஷய் உதவித்தொகைக்கு அருகிலுள்ள சுகாதார நிலையத்தில் பதிவு செய்யவும்"],
+                    ["கண் மஞ்சள், தொடர் வாந்தி (மாத்திரை ஒவ்வாமை)", "ரத்தத்துடன் இருமல்"]],
+            [["dengue"], ["டெங்கு காய்ச்சல்"],
+                    ["நிறைய தண்ணீர், கஞ்சி, இளநீர், ORS குடிக்கவும்", "வலிக்கு paracetamol மட்டும்; மற்ற வலி மாத்திரைகள் வேண்டாம்", "வீட்டைச் சுற்றி தண்ணீர் தேங்க விடாதீர்கள்"],
+                    ["வயிற்று வலி, தொடர் வாந்தி", "ஈறு, மூக்கில் ரத்தம் அல்லது கருப்பு மலம்"]],
+            [["lepto|scrub|typhus|enteric|typhoid|malaria|fever|pyrexia"], ["காய்ச்சல் தொற்று"],
+                    ["மாத்திரைகளை முழு நாட்களும் சாப்பிடவும்", "காய்ச்சிய தண்ணீர் குடிக்கவும்; ஓய்வு எடுக்கவும்"],
+                    ["மீண்டும் அதிக காய்ச்சல்", "மஞ்சள் காமாலை, சிறுநீர் குறைதல்"]],
+            [["snake|envenom|\\basv\\b|viper|krait|cobra"], ["பாம்புக் கடி"],
+                    ["கடித்த இடத்தைச் சுத்தமாக வைக்கவும்", "இரவில் டார்ச் லைட்டுடன் நடக்கவும்; தரையில் படுக்க வேண்டாம்"],
+                    ["ஈறு அல்லது சிறுநீரில் ரத்தம்", "கண் இமை தொங்குதல், மூச்சுத் திணறல்"]],
+            [["poison|\\bop\\b|organophos|suicid|overdose|ingestion|paraquat|rodenticide|phosph|consumption|\\bdsh\\b|self harm"], ["விஷம் அருந்தியது"],
+                    ["மனநல மருத்துவரைக் கட்டாயம் சந்திக்கவும் (மனநல OPD)", "வீட்டில் பூச்சிக்கொல்லி, மருந்துகளைப் பூட்டி வைக்கவும்", "மனம் சோர்வாக இருந்தால் 14416 (டெலி மானஸ்) அழைக்கவும்"],
+                    ["மூச்சுத் திணறல், கை கால் பலவீனம்", "கண் மஞ்சள், சிறுநீர் குறைதல்"]],
+            [["seizure|epilep|convuls|status epi"], ["வலிப்பு நோய்"],
+                    ["வலிப்பு மாத்திரையை ஒரு நாளும் விடக்கூடாது", "வாகனம் ஓட்டுதல், கிணறு, நீச்சல், உயரத்தில் வேலை தவிர்க்கவும்", "இரவில் போதுமான தூக்கம்"],
+                    ["5 நிமிடத்துக்கு மேல் வலிப்பு", "வலிப்புக்குப் பின் சுயநினைவு திரும்பாமல் இருத்தல்"]],
+            [["anaemi|anemi"], ["ரத்தசோகை"],
+                    ["இரும்புச்சத்து மாத்திரையை உணவுக்குப் பின் சாப்பிடவும் (மலம் கருப்பாகும், பயப்பட வேண்டாம்)", "கீரை, பேரீச்சை, முட்டை, இறைச்சி சாப்பிடவும்"],
+                    ["மூச்சுத் திணறல், நெஞ்சு படபடப்பு", "மயக்கம்"]],
+            [["thyro|hypothy|hyperthy"], ["தைராய்டு நோய்"],
+                    ["தைராய்டு மாத்திரையைக் காலையில் வெறும் வயிற்றில் சாப்பிடவும்", "6 வாரம் கழித்து TSH பரிசோதனை செய்யவும்"],
+                    ["அதிக படபடப்பு, காய்ச்சல்"]],
+            [["alcohol|withdrawal|\\bdts\\b|wernicke"], ["மது சார்ந்த பிரச்சனை"],
+                    ["மது முழுவதும் நிறுத்தவும்; மது மறுவாழ்வு மையத்தில் உதவி பெறலாம்", "சத்தான உணவு சாப்பிடவும்"],
+                    ["நடுக்கம், குழப்பம், வலிப்பு"]],
+            [["\\buti\\b|urinary tract|pyelo|urosepsis"], ["சிறுநீர்த் தொற்று"],
+                    ["நிறைய தண்ணீர் குடிக்கவும்", "ஆன்டிபயாடிக் மாத்திரையை முழு நாட்களும் சாப்பிடவும்"],
+                    ["குளிர் காய்ச்சல், முதுகு வலி"]],
+            [["gastroent|\\bage\\b|diarrh|dysent|cholera"], ["வயிற்றுப்போக்கு"],
+                    ["ORS கரைசல் அடிக்கடி குடிக்கவும்", "காய்ச்சிய தண்ணீர்; சாப்பிடும் முன் கை கழுவவும்"],
+                    ["சிறுநீர் குறைதல், மயக்கம்", "மலத்தில் ரத்தம்"]],
+            [["hemophil|haemophil"], ["ஹீமோஃபீலியா"],
+                    ["அடிபடாமல் பார்த்துக்கொள்ளவும்; ஊசி போடும் முன் சொல்லவும்", "Factor ஊசிக்கு ஹீமோஃபீலியா மையத்தைத் தொடர்பு கொள்ளவும்"],
+                    ["மூட்டு வீக்கம், வலி", "தலையில் அடி, வாந்தி"]],
+    ];
+
+  static DEFAULT_DO = ["மாத்திரைகளைத் தினமும் சொன்னபடி சாப்பிடவும்", "சத்தான உணவு, போதுமான ஓய்வு"];
+
+  static content(db, pid) {
+    const k = new TamilCard.Content();
+    const p = db.row("SELECT * FROM patients WHERE id=?", String(pid));
+    if (p == null) return k;
+    const cs = CaseSheet.load(db, pid);
+    k.name = Ui.nz(p.get("name"));
+    k.who = (Ui.nz(p.get("age")).isEmpty() ? "" : p.get("age") + " வயது  ·  ") + ("F" === p.get("sex") ? "பெண்" : "ஆண்");
+    const out = Ui.nz(p.get("outcome_date"));
+    k.dates = "சேர்க்கை " + Dates.nice(p.get("admit_date")) + (Db.IN === p.get("status") || out.length < 10 ? "" : "   ·   வீடு திரும்புதல் " + Dates.nice(out.substring(0, 10)));
+    let dx = CaseSheet.s(cs, "final_dx");
+    if (dx.isEmpty()) dx = Ui.nz(p.get("diagnosis"));
+    k.dxEn = dx;
+    const low = dx.toLowerCase();
+    const names = [];
+    for (const d of TamilCard.DISEASES) {
+      if (names.size() >= 3 || !new RegExp(d[0][0]).test(low)) continue;
+      names.add(d[1][0]);
+      for (const s of d[2]) if (k.todo.size() < 6 && !k.todo.contains(s)) k.todo.add(s);
+      for (const s of d[3]) if (k.danger.size() < 5 && !k.danger.contains(s)) k.danger.add(s);
+    }
+    k.dxTa = TextUtils.join("  ·  ", names);
+    if (!CaseSheet.s(cs, "diet_diabetic").isEmpty() && "0" !== CaseSheet.s(cs, "diet_diabetic")) k.todo.splice(0, 0, "சர்க்கரை நோய்க்கான உணவு");
+    if (!CaseSheet.s(cs, "diet_lowsalt").isEmpty() && "0" !== CaseSheet.s(cs, "diet_lowsalt")) k.todo.splice(0, 0, "உப்பு குறைவான உணவு");
+    if (!CaseSheet.s(cs, "diet_renal").isEmpty() && "0" !== CaseSheet.s(cs, "diet_renal")) k.todo.splice(0, 0, "சிறுநீரக உணவு (உப்பு, பொட்டாசியம் குறைவு)");
+    if (k.todo.isEmpty()) for (const s of TamilCard.DEFAULT_DO) k.todo.add(s);
+    // the doctor's own danger signs from the discharge (as on the pill card) come first
+    const mine = [];
+    for (const w of PillCard.WARN_TA) if (!CaseSheet.s(cs, w[0]).isEmpty() && "0" !== CaseSheet.s(cs, w[0])) mine.add(w[1]);
+    k.danger.splice(0, 0, ...mine);
+    if (k.danger.isEmpty()) for (let i = 0; i < 4; i++) k.danger.add(PillCard.WARN_TA[i][1]);
+    while (k.danger.size() > 6) k.danger.removeAt(k.danger.size() - 1);
+    const fu = CaseSheet.s(cs, "fu_date");
+    k.review = fu.isEmpty() ? "" : Dates.nice(fu);
+    k.place = CaseSheet.s(cs, "fu_place");
+    if (k.place.isEmpty()) k.place = "மருத்துவ OPD  ·  " + Db.shortName(Ui.nz(p.get("home_unit"))) + " பிரிவு";
+    k.meds = PillCard.meds(db, pid);
+    return k;
+  }
+
+  // ---------- drawing ----------
+
+  static paint(color, size, bold) {
+    const p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    p.setColor(color);
+    p.setTextSize(size);
+    p.setTypeface(Typeface.create(Typeface.SANS_SERIF, bold ? Typeface.BOLD : Typeface.NORMAL));
+    return p;
+  }
+
+  /** Words wrapped to fit a width. */
+  static wrap(s, p, w) {
+    const out = [];
+    let line = "";
+    for (const word of Ui.nz(s).split(" ")) {
+      const t = line.length === 0 ? word : line + " " + word;
+      if (p.measureText(t) <= w || line.length === 0) line = t;
+      else {
+        out.add(line);
+        line = word;
+      }
+    }
+    if (line.length > 0) out.add(line);
+    return out;
+  }
+
+  /** A section: a tinted rounded box with a coloured title and bullet lines. Returns the y below it. cv null only measures. */
+  static section(cv, y, title, color, tint, lines, bullets) {
+    const paint = TamilCard.paint, W = TamilCard.W;
+    const tp = paint(color, 38, true), lp = paint(0xFF1E293B, 32, false);
+    const x = 60, w = W - 120, lh = 46;
+    const rows = [], first = [];
+    for (const l of lines) {
+      const ws = TamilCard.wrap(l, lp, w - (bullets ? 90 : 60));
+      for (let i = 0; i < ws.size(); i++) { rows.add(ws.get(i)); first.add(i === 0); }
+    }
+    const h = 30 + 46 + 18 + rows.size() * lh + 24;
+    if (cv != null) {
+      cv.drawRoundRect(new RectF(x - 20, y, x + w + 20, y + h), 28, 28, paint(tint, 0, false));
+      cv.drawRoundRect(new RectF(x - 20, y, x - 8, y + h), 6, 6, paint(color, 0, false));
+      cv.drawText(title, x + 10, y + 30 + 36, tp);
+      let ly = y + 30 + 46 + 18 + 32;
+      for (let i = 0; i < rows.size(); i++) {
+        if (bullets && first.get(i)) cv.drawCircle(x + 26, ly - 11, 7, paint(color, 0, false));
+        cv.drawText(rows.get(i), x + (bullets ? 50 : 10), ly, lp);
+        ly += lh;
+      }
+    }
+    return y + h + 26;
+  }
+
+  static medicines(cv, y, meds) {
+    const paint = TamilCard.paint, W = TamilCard.W;
+    const show = Math.min(8, meds.size());
+    const rh = 104, h = 30 + 46 + 14 + show * rh + (meds.size() > show ? 50 : 0) + 18;
+    if (cv == null) return y + h + 26;
+    const x = 60, w = W - 120;
+    cv.drawRoundRect(new RectF(x - 20, y, x + w + 20, y + h), 28, 28, paint(0xFFF0FDFA, 0, false));
+    cv.drawRoundRect(new RectF(x - 20, y, x - 8, y + h), 6, 6, paint(TamilCard.COLOR, 0, false));
+    cv.drawText("💊  மருந்துகள்", x + 10, y + 66, paint(TamilCard.COLOR, 38, true));
+    const nm = paint(0xFF0F172A, 32, true), small = paint(0xFF0F766E, 24, true), amt = paint(0xFF0F172A, 30, true), none = paint(0xFFCBD5E1, 30, false);
+    let ry = y + 90;
+    for (let i = 0; i < show; i++) {
+      const m = meds.get(i);
+      cv.drawRoundRect(new RectF(x, ry + 6, x + w, ry + rh - 6), 18, 18, paint(0xFFFFFFFF, 0, false));
+      cv.save();
+      cv.scale(0.62, 0.62, x + 50, ry + rh / 2);
+      PillCard.drawPill(cv, x + 50, ry + rh / 2, m);
+      cv.restore();
+      const n = m.name.length > 20 ? m.name.substring(0, 20) + "…" : m.name;
+      cv.drawText(n, x + 100, ry + 46, nm);
+      let sub = m.purposeTa.isEmpty() ? PillCard.lookup(PillCard.FOOD_TA, m.food) : m.purposeTa;
+      if (sub.length > 26) sub = sub.substring(0, 26) + "…";
+      if (!sub.isEmpty()) cv.drawText(sub, x + 100, ry + 82, small);
+      if (m.whenNeeded) {
+        const wn = paint(0xFF9A3412, 26, true);
+        cv.drawText("தேவைப்படும் போது", x + w - 20 - wn.measureText("தேவைப்படும் போது"), ry + rh / 2 + 10, wn);
+      } else for (let k = 0; k < 3; k++) {
+        const cx = x + w - 300 + k * 100 + 30;
+        PillCard.drawTime(cv, k, cx - 20, ry + rh / 2, 17);
+        const v = m.at[k].isEmpty() ? "—" : m.at[k];
+        cv.drawText(v, cx + 4, ry + rh / 2 + 11, m.at[k].isEmpty() ? none : amt);
+      }
+      ry += rh;
+    }
+    if (meds.size() > show) cv.drawText("+ " + (meds.size() - show) + " மருந்துகள்: முழு மருந்து அட்டவணையைப் பார்க்கவும்", x + 10, ry + 36, paint(0xFF475569, 26, false));
+    return y + h + 26;
+  }
+
+  /** Draws the card from the top; with cv null it only works out the height. */
+  static draw(cv, k, hospital) {
+    const paint = TamilCard.paint, W = TamilCard.W;
+    let y = 0;
+    if (cv != null) {
+      cv.drawColor(0xFFFFFFFF);
+      const band = new Paint(Paint.ANTI_ALIAS_FLAG);
+      band.setShader(new LinearGradient(0, 0, W, 240, 0xFF0F766E, 0xFF14B8A6, Shader.TileMode.CLAMP));
+      cv.drawRect(0, 0, W, 240, band);
+      cv.drawText("வீட்டுக்குச் செல்லும் அட்டை", 60, 108, paint(0xFFFFFFFF, 58, true));
+      cv.drawText("Discharge card  ·  " + hospital, 62, 162, paint(0xE6FFFFFF, 28, false));
+      cv.drawText("மருத்துவத் துறை", 62, 208, paint(0xCCFFFFFF, 26, false));
+      cv.drawText(k.name, 60, 312, paint(0xFF0F172A, 48, true));
+      cv.drawText(k.who, 60, 360, paint(0xFF475569, 30, false));
+      cv.drawText(k.dates, 60, 402, paint(0xFF475569, 26, false));
+    }
+    y = 440;
+    const dx = [];
+    if (!k.dxTa.isEmpty()) dx.add(k.dxTa);
+    if (!k.dxEn.isEmpty()) dx.add("(" + k.dxEn + ")");
+    if (dx.isEmpty()) dx.add("—");
+    y = TamilCard.section(cv, y, "🩺  உங்களுக்கு இருந்த நோய்", 0xFF7C3AED, 0xFFF5F3FF, dx, false);
+    if (!k.meds.isEmpty()) y = TamilCard.medicines(cv, y, k.meds);
+    y = TamilCard.section(cv, y, "✅  வீட்டில் செய்ய வேண்டியவை", 0xFF15803D, 0xFFF0FDF4, k.todo, true);
+    y = TamilCard.section(cv, y, "🚨  இவை இருந்தால் உடனே வரவும்", 0xFFB91C1C, 0xFFFEF2F2, k.danger, true);
+    // the review date, large
+    const h = k.review.isEmpty() ? 150 : 190;
+    if (cv != null) {
+      cv.drawRoundRect(new RectF(40, y, W - 40, y + h), 28, 28, paint(0xFFEFF6FF, 0, false));
+      cv.drawRoundRect(new RectF(40, y, 52, y + h), 6, 6, paint(0xFF1D4ED8, 0, false));
+      cv.drawText("📅  மீண்டும் பார்க்க வர வேண்டிய நாள்", 70, y + 62, paint(0xFF1D4ED8, 36, true));
+      if (k.review.isEmpty()) cv.drawText("மருந்துகள் தீரும் முன் மருத்துவ OPD-க்கு வரவும்", 70, y + 116, paint(0xFF1E293B, 30, false));
+      else {
+        cv.drawText(k.review, 70, y + 128, paint(0xFF0F172A, 52, true));
+        cv.drawText(k.place, 70, y + 172, paint(0xFF475569, 28, false));
+      }
+    }
+    y += h + 30;
+    if (cv != null) {
+      cv.drawText("அவசரத்திற்கு 108 ஆம்புலன்ஸ்  ·  இந்த அட்டையை மருத்துவரிடம் காட்டவும்", 60, y + 20, paint(0xFF64748B, 24, false));
+      cv.drawText("Show this card at every visit.  ·  " + hospital, 60, y + 56, paint(0xFF94A3B8, 22, false));
+    }
+    return y + 90;
+  }
+
+  static bitmap(db, pid) {
+    const k = TamilCard.content(db, pid);
+    const hosp = PillCard.hospital(db);
+    const h = Math.max(1350, Math.trunc(TamilCard.draw(null, k, hosp)));
+    const b = Bitmap.createBitmap(TamilCard.W, h, Bitmap.Config.ARGB_8888);
+    TamilCard.draw(new Canvas(b), k, hosp);
+    return b;
+  }
+
+  /** The card as a JPEG for WhatsApp (relative path). */
+  static picture(db, pid) {
+    const b = TamilCard.bitmap(db, pid);
+    const rel = PillCard.DIR + "/discharge_card_" + pid + ".jpg";
+    const f = db.file(rel);
+    f.getParentFile().mkdirs();
+    const out = new FileOutputStream(f);
+    try {
+      b.compress(Bitmap.CompressFormat.JPEG, 90, out);
+    } finally {
+      out.close();
+    }
+    return rel;
+  }
+
+  /** The preview with a send button. */
+  static show(a, db, pid) {
+    const b = TamilCard.bitmap(db, pid);
+    const iv = new ImageView(a);
+    iv.setImageBitmap(b);
+    iv.setAdjustViewBounds(true);
+    const sv = new ScrollView(a);
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 10), 0);
+    box.addView(iv, Ui.lp(MATCH_PARENT, WRAP_CONTENT));
+    sv.addView(box);
+    new AlertDialog.Builder(a).setTitle("Tamil discharge card").setView(sv)
+      .setPositiveButton("Send (WhatsApp)", {
+        onClick: (d, w) => {
+          try {
+            Store.share(a, TamilCard.picture(db, pid), "வீட்டுக்குச் செல்லும் அட்டை - Discharge card");
+          } catch (e) {
+            Ui.toast(a, "Could not make the picture: " + e.getMessage());
+          }
+        }
+      }).setNegativeButton("Close", null).show();
+  }
+
+  /** The patient page button. */
+  static patientButton(a, db, pid) {
+    const box = Ui.v(a);
+    box.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), 0);
+    box.addView(Ui.outlineButton(a, "🏠  Tamil discharge card (picture for WhatsApp)", TamilCard.COLOR, {
+      onClick: (v) => { TamilCard.show(a, db, pid); }
+    }));
+    return box;
+  }
+}
+
+/** What the card says, worked out once from the patient and the case sheet. */
+TamilCard.Content = class {
+  constructor() {
+    this.name = ""; this.who = ""; this.dates = ""; this.dxTa = ""; this.dxEn = ""; this.review = ""; this.place = "";
+    this.todo = []; this.danger = []; this.meds = [];
+  }
+};
 ;
 /* ---- app/TamilNote.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -82780,7 +91167,7 @@ class Tasks {
     r.addView(cb);
     const due = Ui.nz(t.get("due"));
     const late = !done && !due.isEmpty() && due.compareTo(Dates.todayIso()) < 0;
-    const sub = Ui.nz(t.get("kind")) + (due.isEmpty() ? "" : "  ·  by " + Dates.nice(due) + (late ? " (overdue)" : ""))
+    const sub = Ui.nz(t.get("kind")) + (due.isEmpty() ? "" : "  ·  by " + (due.length === 16 ? Dates.nice(due.substring(0, 10)) + " " + due.substring(11) : Dates.nice(due)) + (late ? " (overdue)" : ""))
       + (done ? "  ·  done by " + Ui.nz(t.get("done_by")) + " " + Ui.nz(t.get("done_time")) : "  ·  added by " + Ui.nz(t.get("by_name")));
     const s = Ui.tv(a, sub, 12, late ? Ui.RED : Ui.MUTED, false);
     s.setPadding(Ui.dp(a, 32), 0, 0, 0);
@@ -82884,6 +91271,157 @@ class TasksActivity extends Base {
       card.addView(Tasks.row(this, db, t, null));
     }
     this.setPage(page);
+  }
+}
+;
+/* ---- app/TeachActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Teaching moments (10.10, idea 153): the faculty's bedside pearls of the last two weeks, each opening the patient. */
+class TeachActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Teaching moments");
+    this.subtitle = "Bedside pearls from the faculty";
+    this.headerColor(TeachPoints.COLOR);
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const l = TeachPoints.recent(db, 14);
+    const hero = Ui.card(this);
+    hero.addView(Ui.tv(this, "💡 " + l.length + (l.length === 1 ? " teaching point" : " teaching points") + " in two weeks", 18, TeachPoints.COLOR, true));
+    hero.addView(Ui.muted(this, "A faculty member taps \"Teaching point\" on a patient's page. Go and see the patient while they are still in the ward."));
+    page.addView(hero);
+    let day = "";
+    let card = null;
+    for (const t of l) {
+      const tm = Ui.nz(t.get("time"));
+      const d = tm.length >= 10 ? tm.substring(0, 10) : "";
+      if (d !== day || card == null) {
+        day = d;
+        page.addView(Ui.heading(this, d === Dates.todayIso() ? "Today" : Dates.nice(d), TeachPoints.COLOR));
+        card = Ui.card(this);
+        page.addView(card);
+      }
+      const n = TeachPoints.pearl(this, t, true);
+      n.setOnClickListener(this.opener(PatientActivity, "id", t.get("patient_id")));
+      card.addView(n);
+    }
+    if (l.length === 0) page.addView(this.emptyNote("No teaching points yet. Faculty: open a patient and tap \"Teaching point for the PGs\"."));
+    this.setPage(page);
+  }
+}
+;
+/* ---- app/TeachPoints.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Teaching moments (10.10, idea 153): a faculty member taps "Teaching point" on any patient and writes one line. Every PG
+ * gets it as a pearl with the ward and bed to go and see (never the patient's name on the lock screen).
+ */
+class TeachPoints {
+  static TABLE = "teach_points";
+  static COLOR = 0xFFCA8A04;
+
+  /** Faculty (and the HOD, registrar and admin) write teaching points. */
+  static canWrite(c) {
+    return SignOff.faculty(c) || Cloud.isAdmin(c);
+  }
+
+  static forPatient(db, pid) {
+    return db.rows("SELECT * FROM " + TeachPoints.TABLE + " WHERE patient_id=? ORDER BY time DESC", String(pid));
+  }
+
+  /** Points of the last so many days, newest first, with the patient's current ward and status. */
+  static recent(db, days) {
+    const from = Dates.today().minusDays(days).toString();
+    return db.rows("SELECT t.*, p.status, p.location AS now_loc, p.bed AS now_bed FROM " + TeachPoints.TABLE + " t LEFT JOIN patients p ON p.id=t.patient_id "
+        + "WHERE t.time>=? ORDER BY t.time DESC", from);
+  }
+
+  /** "M3 bed 12" where the patient was when the point was written. */
+  static where(t) {
+    const w = Db.shortName(Ui.nz(t.get("ward")));
+    return w + (Ui.nz(t.get("bed")).isEmpty() ? "" : " bed " + t.get("bed"));
+  }
+
+  static addDialog(a, db, p) {
+    const f = new Form(a);
+    f.multi("point", "The teaching point (one or two lines)", "");
+    f.heading("PGs get it at once with the ward and bed, never the name. Example: \"Look at the Kayser-Fleischer ring with a torch from the side.\"");
+    Ui.formDialog(a, "💡 Teaching point", f, "Send to PGs", {
+      run: () => {
+        if (!f.require("point", "Write the teaching point")) return false;
+        const cv = new ContentValues();
+        cv.put("patient_id", Ui.toLong(p.get("id"), 0));
+        cv.put("ward", Ui.nz(p.get("location")));
+        cv.put("bed", Ui.nz(p.get("bed")));
+        cv.put("unit", Ui.nz(p.get("home_unit")));
+        cv.put("point", f.get("point").trim());
+        cv.put("by_name", CallDutyActivity.myName(a));
+        cv.put("by_staff", String(Cloud.myStaff(a)));
+        cv.put("time", Dates.todayIso() + " " + Dates.now());
+        db.insert(TeachPoints.TABLE, cv);
+        Ui.toast(a, "Sent to the PGs");
+        a.render();
+        return true;
+      }
+    });
+  }
+
+  /** Patient page: the points written on this patient, and the button for faculty. Null when there is nothing to show. */
+  static section(a, db, p) {
+    const pid = Ui.toLong(p.get("id"), 0);
+    const l = TeachPoints.forPatient(db, pid);
+    const can = TeachPoints.canWrite(a) && Db.IN === p.get("status");
+    if (l.length === 0 && !can) return null;
+    const box = Ui.v(a);
+    box.addView(Ui.heading(a, "Teaching points" + (l.length === 0 ? "" : "  ·  " + l.length), TeachPoints.COLOR));
+    const card = Ui.card(a);
+    for (const t of l) card.addView(TeachPoints.pearl(a, t, false));
+    if (can) {
+      const b = Ui.outlineButton(a, "💡 Teaching point for the PGs", TeachPoints.COLOR, { onClick: () => { TeachPoints.addDialog(a, db, p); } });
+      card.addView(b);
+      if (l.length > 0) Ui.margins(b, 0, 8, 0, 0);
+    }
+    box.addView(card);
+    return box;
+  }
+
+  /** One pearl: the point on a soft gold note, who wrote it and when. */
+  static pearl(c, t, withWhere) {
+    const n = Ui.v(c);
+    n.setBackground(Ui.round(c, Ui.mix(TeachPoints.COLOR, Color.WHITE, 0.88), 12));
+    n.setPadding(Ui.dp(c, 12), Ui.dp(c, 8), Ui.dp(c, 12), Ui.dp(c, 8));
+    if (withWhere) n.addView(Ui.tv(c, "📍 " + TeachPoints.where(t) + (Db.IN === t.get("status") ? "" : "  ·  no longer in the ward"), 12, Ui.mix(TeachPoints.COLOR, Color.BLACK, 0.35), true));
+    n.addView(Ui.tv(c, "💡 " + Ui.nz(t.get("point")), 15, Ui.TEXT, false));
+    const tm = Ui.nz(t.get("time"));
+    n.addView(Ui.muted(c, Ui.nz(t.get("by_name")) + "  ·  " + Dates.nice(tm.length >= 10 ? tm.substring(0, 10) : "")
+        + (tm.length >= 16 ? " " + tm.substring(11, 16) : "")));
+    const lp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(0, Ui.dp(c, 3), 0, Ui.dp(c, 3));
+    n.setLayoutParams(lp);
+    return n;
+  }
+
+  /** Home (teaching column): today's teaching moments; null when none in the last day. */
+  static homeCard(a, db) {
+    const l = TeachPoints.recent(db, 1);
+    if (l.length === 0) return null;
+    const t = l[0];
+    const card = a.entryCard("TEACHING MOMENT", TeachPoints.COLOR, "💡 " + Ui.nz(t.get("point")),
+        TeachPoints.where(t) + "  ·  " + Ui.nz(t.get("by_name")) + (l.length > 1 ? "  ·  +" + (l.length - 1) + " more" : ""), null, a.opener(TeachActivity), 3);
+    const g = Ui.round(a, Ui.mix(TeachPoints.COLOR, Color.WHITE, 0.9), 18);
+    g.setStroke(Ui.dp(a, 2), TeachPoints.COLOR);
+    card.setBackground(g);
+    return card;
+  }
+
+  /** For the notification: new points by someone else since last time (ids). */
+  static since(db, time) {
+    return db.rows("SELECT * FROM " + TeachPoints.TABLE + " WHERE time>? ORDER BY time", time);
   }
 }
 ;
@@ -83122,6 +91660,52 @@ class Thesis {
       if (out.size() >= 40) break;
     }
     return out;
+  }
+
+  /**
+   * 10.17 (user's pick 201): the thesis fills itself. Facts that come from the ward (age, sex, outcome, stay, labs) are brought up to date in
+   * every case linked to a patient: empty ones are filled, and the outcome and stay follow the patient until discharge. Returns how many changed.
+   */
+  static refresh(db, diss) {
+    const fields = Thesis.fields(diss);
+    let changed = 0;
+    for (const c of Thesis.cases(db, Long.parseLong(diss.get("id")))) {
+      const pid = Ui.nz(c.get("patient_id"));
+      if (pid.isEmpty() || "0" === pid) continue;
+      const p = db.row("SELECT * FROM patients WHERE id=?", pid);
+      if (p == null) continue;
+      const o = Thesis.data(c);
+      let dirty = false;
+      for (let i = 0; i < fields.length(); i++) {
+        const f = fields.optJSONObject(i);
+        const src = f.optString("src"), k = f.optString("k");
+        if (src.isEmpty()) continue;
+        const follows = "outcome" === src || "stay" === src || src.startsWith("last:");
+        if (!o.optString(k).isEmpty() && !follows) continue;
+        const v = Thesis.fromPatient(db, p, src);
+        if (v.isEmpty() || v === o.optString(k)) continue;
+        try { o.put(k, v); } catch (ignored) { }
+        dirty = true;
+      }
+      if (dirty) {
+        const cv = new ContentValues();
+        cv.put("data", o.toString());
+        db.update("thesis_cases", cv, Long.parseLong(c.get("id")));
+        changed++;
+      }
+    }
+    return changed;
+  }
+
+  /** Adds every ward patient who fits the thesis (by the match words) as a new case, with the ward facts filled in. */
+  static addAll(db, diss, by) {
+    const fields = Thesis.fields(diss);
+    let n = 0;
+    for (const p of Thesis.suggestions(db, diss)) {
+      Thesis.saveCase(db, Long.parseLong(diss.get("id")), 0, Long.parseLong(p.get("id")), Thesis.prefill(db, fields, p), by);
+      n++;
+    }
+    return n;
   }
 
   // ---------------------------------------------------------------- AI field suggestions
@@ -83369,6 +91953,8 @@ class ThesisActivity extends Base {
       return;
     }
     const edit = ThesisActivity.canEdit(this, d);
+    // 10.17: ward facts in linked cases follow the patient (outcome, stay, latest labs)
+    if (edit && Thesis.refresh(this.db, d) > 0) Sync.kick(this);
     const fields = Thesis.fields(d);
     const cases = Thesis.cases(this.db, this.dissId);
     const page = Ui.v(this);
@@ -83397,6 +91983,28 @@ class ThesisActivity extends Base {
         onClick: (v) => { this.fromWards(); }
       })));
       page.addView(act);
+      // 10.17: patients in the wards who fit the thesis, added with one tap
+      const fit = fields.length() === 0 ? [] : Thesis.suggestions(this.db, d);
+      if (!fit.isEmpty()) {
+        const fc0 = Ui.card(this);
+        fc0.setBackground(Ui.outline(this, 0xFFF5F3FF, Thesis.COLOR, 14));
+        fc0.addView(Ui.tv(this, "✨ " + fit.size() + (fit.size() === 1 ? " patient fits" : " patients fit") + " your thesis", 15, Thesis.COLOR, true));
+        let who = "";
+        for (let i = 0; i < Math.min(3, fit.size()); i++)
+          who += (i === 0 ? "" : "  ·  ") + Ui.nz(fit.get(i).get("diagnosis")) + " (" + Dates.nice(fit.get(i).get("admit_date")) + ")";
+        fc0.addView(Ui.muted(this, who + (fit.size() > 3 ? "  …" : "") + "\nAge, sex, diagnosis, outcome, stay and labs are filled in for you."));
+        const all = Ui.button(this, "Add all " + fit.size(), Thesis.COLOR, {
+          onClick: (v) => {
+            const n = Thesis.addAll(this.db, this.diss(), ExamCases.myName(this, this.db));
+            Sync.kick(this);
+            Ui.toast(this, n + (n === 1 ? " case added" : " cases added"));
+            this.render();
+          }
+        });
+        fc0.addView(all);
+        Ui.margins(all, 0, 8, 0, 0);
+        page.addView(fc0);
+      }
     }
 
     // the form
@@ -83849,6 +92457,263 @@ class ThesisActivity extends Base {
         }
       }
     }).setNegativeButton("Cancel", null).show();
+  }
+}
+;
+/* ---- app/TimeMachine.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * Time machine (10.10, idea 132): the whole department as it was at any past date and hour. Each patient's admission,
+ * transfers, unit changes, discharge and death are replayed up to that moment, the same way the app works out where a
+ * patient is now (Db.recompute), so nothing new has to be recorded. An event without a time counts from midnight for an
+ * admission and from noon for anything else.
+ */
+class TimeMachine {
+  static COLOR = 0xFF4338CA;
+
+  static Snapshot = class {
+    constructor(at) {
+      this.at = at;
+      /** ward code -> patients there at that moment (each with "at_loc" and "at_home"). */
+      this.wards = new JMap();
+      this.total = 0; this.male = 0; this.female = 0; this.admitted = 0; this.left = 0;
+    }
+  };
+
+  static stamp(e) {
+    let t = Ui.nz(e.get("time")).trim();
+    if (t.length >= 5) t = t.substring(0, 5);
+    else t = Db.ADMIT === e.get("type") ? "00:00" : "12:00";
+    return Ui.nz(e.get("date")) + " " + t;
+  }
+
+  /** The department at "yyyy-MM-dd HH:mm". */
+  static at(db, at) {
+    const s = new TimeMachine.Snapshot(at);
+    const day = at.substring(0, 10), dayStart = day + " 00:00";
+    for (const w of Db.CENSUS_WARDS) s.wards.put(w, []);
+    const who = "SELECT id FROM patients WHERE admit_date<=? AND (status=? OR IFNULL(outcome_date,'')='' OR outcome_date>=?)";
+    const people = new JMap();
+    for (const p of db.rows("SELECT * FROM patients WHERE id IN (" + who + ")", day, Db.IN, day)) people.put(String(p.get("id")), p);
+    let pid = null, loc = null, home = null;
+    let inn = false;
+    const evs = db.rows("SELECT * FROM events WHERE date<=? AND patient_id IN (" + who + ") ORDER BY patient_id, "
+        + Db.EVENT_ORDER.substring(" ORDER BY ".length), day, day, Db.IN, day).slice();
+    evs.push(new Row());   // the end marker closes the last patient
+    for (const e of evs) {
+      const p = e.get("patient_id") == null ? null : String(e.get("patient_id"));
+      if (pid != null && pid !== p) {
+        TimeMachine.place(s, people.get(pid), inn, loc, home);
+        loc = null; home = null; inn = false;
+      }
+      pid = p;
+      if (p == null) break;
+      const st = TimeMachine.stamp(e);
+      if (st.compareTo(at) > 0) continue;
+      const t = e.get("type");
+      if (Db.ADMIT === t) {
+        loc = e.get("to_loc");
+        home = e.get("from_loc");
+        inn = true;
+        if (st.compareTo(dayStart) >= 0) s.admitted++;
+      } else if (Db.TRANSFER === t) {
+        loc = e.get("to_loc");
+        if (Db.isWardUnit(loc) || Db.KDP === loc) home = loc;
+      } else if (Db.UNIT_CHANGE === t) {
+        home = e.get("to_loc");
+      } else if (Db.DISCHARGE === t || Db.DEATH === t) {
+        if (inn && st.compareTo(dayStart) >= 0) s.left++;
+        inn = false;
+      }
+    }
+    return s;
+  }
+
+  static place(s, p, inn, loc, home) {
+    if (p == null || !inn || loc == null) return;
+    const q = new Row(p);
+    q.put("at_loc", loc);
+    q.put("at_home", home == null ? "" : home);
+    // the patient row shows where the patient was then, not where they are now
+    q.put("location", loc);
+    q.put("status", Db.IN);
+    if (!s.wards.containsKey(loc)) s.wards.put(loc, []);
+    s.wards.get(loc).push(q);
+    s.total++;
+    if (Ui.nz(p.get("sex")).toUpperCase().startsWith("F")) s.female++;
+    else s.male++;
+  }
+}
+;
+/* ---- app/TimeMachineActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** Time machine (10.10, idea 132): pick a day and drag the hour to see every ward and patient as it was then. */
+class TimeMachineActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("Time machine");
+    this.subtitle = "The department at any past hour";
+    this.headerColor(TimeMachine.COLOR);
+    this.day = Dates.today();
+    const t = Dates.time();
+    this.half = t.getHour() * 2 + (t.getMinute() >= 30 ? 1 : 0);   // half-hours from midnight, 0..47
+    this.ward = null;                                                // the ward opened below the grid
+  }
+
+  static hhmm(half) {
+    return jfmt("%02d:%02d", Math.trunc(half / 2), (half % 2) * 30);
+  }
+
+  static nice(half) {
+    const h = Math.trunc(half / 2), m = (half % 2) * 30;
+    if (h === 0 && m === 0) return "Midnight";
+    if (h === 12 && m === 0) return "Noon";
+    return (h % 12 === 0 ? 12 : h % 12) + ":" + jfmt("%02d", m) + (h < 12 ? " AM" : " PM");
+  }
+
+  future() {
+    const t = Dates.time();
+    const nowHalf = t.getHour() * 2 + (t.getMinute() >= 30 ? 1 : 0);
+    return this.day.isAfter(Dates.today()) || this.day.equals(Dates.today()) && this.half > nowHalf;
+  }
+
+  render() {
+    const db = this.db;
+    if (this.day.isAfter(Dates.today())) this.day = Dates.today();
+    const page = Ui.v(this);
+    const at = this.day + " " + TimeMachineActivity.hhmm(this.half);
+    const s = TimeMachine.at(db, at);
+    const now = db.totalInpatients();
+    const nice = TimeMachineActivity.nice;
+
+    // the moment and the numbers
+    const hero = Ui.v(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(TimeMachine.COLOR), 20));
+    hero.setPadding(Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 18), Ui.dp(this, 16));
+    hero.addView(Ui.tv(this, "🕰  " + Dates.longFmt(this.day) + "  ·  " + nice(this.half), 15, 0xE6FFFFFF, true));
+    hero.addView(Ui.tv(this, s.total + (s.total === 1 ? " patient" : " patients") + " in the department", 26, Color.WHITE, true));
+    hero.addView(Ui.tv(this, "Male " + s.male + "  ·  Female " + s.female + "  ·  since midnight: " + s.admitted + " admitted, " + s.left + " discharged or died", 13, 0xD9FFFFFF, false));
+    const diff = now - s.total;
+    hero.addView(Ui.tv(this, this.future() ? "That time has not come yet: showing the department now." : "Now: " + now + (diff === 0 ? " (the same)" : diff > 0 ? " (" + diff + " more now)" : " (" + (-diff) + " fewer now)"), 13, 0xD9FFFFFF, false));
+    const hp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    hp.setMargins(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
+    page.addView(hero, hp);
+
+    // the day and the hour
+    const ctl = Ui.card(this);
+    const r = Ui.h(this);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.addView(Ui.outlineButton(this, "◀", TimeMachine.COLOR, { onClick: () => { this.day = this.day.minusDays(1); this.render(); } }));
+    const d = Ui.button(this, "📅 " + Dates.nice(this.day), TimeMachine.COLOR, { onClick: () => { this.pickDay(); } });
+    r.addView(d, Ui.weight(1));
+    Ui.margins(d, 8, 0, 8, 0);
+    const nx = Ui.outlineButton(this, "▶", TimeMachine.COLOR, {
+      onClick: () => { if (this.day.isBefore(Dates.today())) { this.day = this.day.plusDays(1); this.render(); } }
+    });
+    r.addView(nx);
+    ctl.addView(r);
+    const hl = Ui.tv(this, "Hour: " + nice(this.half), 15, TimeMachine.COLOR, true);
+    hl.setPadding(0, Ui.dp(this, 10), 0, 0);
+    ctl.addView(hl);
+    const sb = new SeekBar(this);
+    sb.setMax(47);
+    sb.setProgress(this.half);
+    sb.setOnSeekBarChangeListener({
+      onProgressChanged: (b, p, user) => { hl.setText("Hour: " + nice(p)); },
+      onStartTrackingTouch: (b) => {},
+      onStopTrackingTouch: (b) => { this.half = b.getProgress(); this.render(); }
+    });
+    ctl.addView(sb, Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(this, 40)));
+    const q = Ui.h(this);
+    const labels = ["Midnight", "7:30 AM", "Noon", "7:30 PM", "Now"];
+    const halves = [0, 15, 24, 39, -1];
+    for (let i = 0; i < labels.length; i++) {
+      const k = i;
+      const c = Ui.chip(this, labels[i], halves[i] === this.half, TimeMachine.COLOR);
+      c.setOnClickListener({
+        onClick: () => {
+          if (halves[k] < 0) {
+            this.day = Dates.today();
+            const t = Dates.time();
+            this.half = t.getHour() * 2 + (t.getMinute() >= 30 ? 1 : 0);
+          } else this.half = halves[k];
+          this.render();
+        }
+      });
+      q.addView(c);
+      Ui.margins(c, 0, 6, 6, 0);
+    }
+    const qs = new HorizontalScrollView(this);
+    qs.setHorizontalScrollBarEnabled(false);
+    qs.addView(q);
+    ctl.addView(qs);
+    page.addView(ctl);
+
+    // every ward as a tile; tap one to see who was there
+    page.addView(Ui.heading(this, "Wards at " + nice(this.half), TimeMachine.COLOR));
+    const grid = Ui.v(this);
+    grid.setPadding(Ui.dp(this, 8), 0, Ui.dp(this, 8), 0);
+    let row = null;
+    let n = 0;
+    const cols = Base.wide(this) ? 5 : 3;
+    for (const e of s.wards.entrySet()) {
+      if (n % cols === 0) {
+        row = Ui.h(this);
+        grid.addView(row);
+      }
+      n++;
+      row.addView(this.tile(e.getKey(), e.getValue().length));
+    }
+    while (row != null && n % cols !== 0) {
+      row.addView(new View(this), Ui.weight(1));
+      n++;
+    }
+    page.addView(grid);
+    if (this.ward != null && s.wards.containsKey(this.ward)) {
+      const l = s.wards.get(this.ward);
+      page.addView(Ui.heading(this, Db.unitName(this.ward) + "  ·  " + l.length, Ui.unitColor(this.ward)));
+      for (const p of l) page.addView(this.patientRow(p));
+      if (l.length === 0) page.addView(this.emptyNote("Nobody was in this ward then."));
+    } else page.addView(this.emptyNote("Tap a ward to see who was there."));
+    this.setPage(page);
+  }
+
+  tile(code, count) {
+    const c = Ui.unitColor(code);
+    const on = code === this.ward;
+    const t = Ui.v(this);
+    t.setGravity(Gravity.CENTER);
+    t.setBackground(on ? Glass.hero(this, Ui.shades(c), 14) : Ui.round(this, Ui.mix(c, Color.WHITE, 0.88), 14));
+    t.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10));
+    const num = Ui.tv(this, String(count), 22, on ? Color.WHITE : c, true);
+    num.setGravity(Gravity.CENTER);
+    t.addView(num);
+    const name = Ui.tv(this, Db.shortName(code), 12, on ? Color.WHITE : Ui.TEXT, true);
+    name.setGravity(Gravity.CENTER);
+    t.addView(name);
+    t.setOnClickListener({
+      onClick: () => {
+        this.ward = code === this.ward ? null : code;
+        this.render();
+      }
+    });
+    const lp = Ui.weight(1);
+    lp.setMargins(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
+    t.setLayoutParams(lp);
+    return t;
+  }
+
+  pickDay() {
+    const dlg = new DatePickerDialog(this, {
+      onDateSet: (v, y, m, dd) => {
+        this.day = LocalDate.of(y, m + 1, dd);
+        this.render();
+      }
+    }, this.day.getYear(), this.day.getMonthValue() - 1, this.day.getDayOfMonth());
+    dlg.getDatePicker().setMaxDate(System.currentTimeMillis());
+    dlg.show();
   }
 }
 ;
@@ -84804,6 +93669,8 @@ class UnitActivity extends Base {
     const page = Ui.v(this);
     // the unit's or ward's team first, with their photos (9.00)
     page.addView(People.board(this, db, code));
+    const mbbs = Posting.unitCard(this, db, code);
+    if (mbbs != null) page.addView(mbbs);
 
     // Census
     const census = Ui.card(this);
@@ -87429,6 +96296,150 @@ WaAdmit.Result = class {
   }
 };
 ;
+/* ---- app/WaClass.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * A class announcement copied from WhatsApp, to the class form (10.22). The department's usual message:
+ * "Tomorrow- (29/10/26) / THURSDAY -M4 unit / Time : 7:30 AM to 10:00 AM / *Final year OP class* / CASE PRESENTATION- GIT - DCLD /
+ * By: Prof Dr RAJESH MD / Venue: Medicine Auditorium". Read by rules on the phone; greetings and thanks are skipped.
+ */
+class WaClass {
+  static WA_PREFIX = /^\s*(?:\[[^\]]{6,30}\]\s*[^:]{1,40}:\s*|\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4},?\s+\d{1,2}:\d{2}\s*(?:[ap]\.?m\.?)?\s+-\s+[^:]{1,40}:\s*)/i;
+  static DATE = /(?<!\d)(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})(?!\d)/;
+  static TIME = /(?<![\d/])(\d{1,2})(?:[:.](\d{2}))?\s*([ap])\.?\s*m\b\.?/gi;
+  static UNIT = /\bM\s*-?\s*([1-7])\b|\bunit\s*(?:no\.?\s*)?([1-7])\b/i;
+  static DAY = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i;
+  static LABEL = /^(taken by|presented by|handled by|faculty|teacher|speaker|by|venue|place|hall|topic|subject|title|time|timing|date|batch|class)\s*[:\-–=]\s*(.*)$/i;
+  static SKIP = /^(good\s+(morning|evening|afternoon|night|day)|dear\b|respected\b|hello\b|hi\b|greetings|thank|thanks|regards|with regards|sir\s*\/?\s*ma'?a?m\b)/i;
+  /** Words of an all-capitals line kept in capitals (short ones like GIT, DCLD, OP stay as they are). */
+  static CAPS = new Set(["STEMI", "NSTEMI", "NSAID", "NSAIDS", "HFREF", "HFPEF", "ACLS", "BCLS", "COVID", "MODS", "SIADH", "CKD-MBD", "HELLP"]);
+  static SMALL = new Set(["case", "ward", "with", "and", "the", "for", "from", "into", "type", "acute", "basic", "bed", "side", "unit", "year", "part", "room", "hall", "club", "talk", "exam", "test", "viva", "care", "drug", "dose", "time", "day", "new", "old", "main", "near", "left", "high", "low", "block", "floor", "of", "in", "on", "to", "an", "a", "or", "at", "by", "its", "how", "all"]);
+
+  static parse(text, today, teachers) {
+    const W = WaClass;
+    const r = { fields: new JMap(), unplaced: [] };
+    const topic = [];
+    let batch = "", end = "", tomorrow = false, todayWord = false;
+    const lower = Ui.nz(text).toLowerCase();
+    r.fields.put("kind", lower.includes("pg class") || lower.includes("postgraduate") || lower.includes("md class") ? "PG" : "MBBS");
+    for (const raw of Ui.nz(text).split(/\r?\n/)) {
+      const line = raw.replace(W.WA_PREFIX, "").replace(/[*_~]/g, "").replace(/[–—]/g, "-").trim();
+      if (line === "" || W.SKIP.test(line)) continue;
+      const low = line.toLowerCase();
+      let used = false;
+      const dm = W.DATE.exec(line);
+      if (dm && !r.fields.containsKey("date")) {
+        const d = W.date(dm);
+        if (d != null) { r.fields.put("date", d.toString()); used = true; }
+      }
+      if (/\btomorrow\b/.test(low)) { tomorrow = true; used = true; }
+      if (/\btoday\b/.test(low)) { todayWord = true; used = true; }
+      const um = W.UNIT.exec(line);
+      if (um && !r.fields.containsKey("unit")) { r.fields.put("unit", "M" + (um[1] != null ? um[1] : um[2])); used = true; }
+      if (W.DAY.test(line)) used = true;
+      const lm = W.LABEL.exec(line);
+      if (lm) {
+        const k = lm[1].toLowerCase(), v = lm[2].trim();
+        if (k.startsWith("time") || k === "date") {
+          if (k.startsWith("time")) end = W.times(v, r.fields);
+        } else if (k === "venue" || k === "place" || k === "hall") {
+          if (v !== "") r.fields.put("venue", W.tidy(v));
+        } else if (k === "topic" || k === "subject" || k === "title") {
+          if (v !== "") topic.push(W.tidy(v));
+        } else if (k === "batch" || k === "class") {
+          if (v !== "") batch = W.tidy(v);
+        } else if (v !== "") r.fields.put("taken_by", W.teacher(v, teachers));
+        continue;
+      }
+      const hasTime = new RegExp(W.TIME.source, "i").test(line);
+      if (used) {
+        if (!r.fields.containsKey("time") && hasTime) end = W.times(line, r.fields);
+        continue;
+      }
+      if (hasTime && !r.fields.containsKey("time")) {
+        end = W.times(line, r.fields);
+        continue;
+      }
+      if (batch === "" && /\b(class|mbbs|year|batch|students|crmi)\b/.test(low) && line.length < 60) {
+        batch = W.tidy(line);
+        continue;
+      }
+      if (/^(by|prof|dr)\b/.test(low) && !r.fields.containsKey("taken_by")) {
+        r.fields.put("taken_by", W.teacher(line.replace(/^by\s*/i, ""), teachers));
+        continue;
+      }
+      topic.push(W.tidy(line));
+    }
+    if (!r.fields.containsKey("date") && (tomorrow || todayWord)) r.fields.put("date", (tomorrow ? today.plusDays(1) : today).toString());
+    if (batch !== "") r.fields.put("batch", batch);
+    if (topic.length) r.fields.put("topic", topic.join(" - "));
+    if (end !== "") r.fields.put("note", "Till " + end);
+    return r;
+  }
+
+  /** "dd/mm/yy" or "dd/mm/yyyy". */
+  static date(m) {
+    try {
+      const y = parseInt(m[3], 10);
+      return LocalDate.of(y < 100 ? 2000 + y : y, parseInt(m[2], 10), parseInt(m[1], 10));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** The first time in the text goes to the form; the second ("to 10:00 AM") comes back as the end time. */
+  static times(s, f) {
+    const re = new RegExp(WaClass.TIME.source, "gi");
+    let end = "", n = 0, m;
+    const two = (x) => String(x).padStart(2, "0");
+    while ((m = re.exec(s)) != null && n < 2) {
+      const h = parseInt(m[1], 10) % 12 + (m[3].toLowerCase() === "p" ? 12 : 0);
+      const min = m[2] == null ? 0 : parseInt(m[2], 10);
+      if (h > 23 || min > 59) continue;
+      if (n === 0) f.put("time", two(h) + ":" + two(min));
+      else end = LeaveForm.clock(two(h) + ":" + two(min));
+      n++;
+    }
+    return end;
+  }
+
+  /** The faculty member on the staff list whose name has every word of the message's name, else the name as written. */
+  static teacher(v, teachers) {
+    const prof = /\bprof\b/i.test(v);
+    const core = v.replace(/\b(prof(essor)?|assoc(iate)?|asst|assistant|dr|md|dm|mrcp|frcp|dnb|mbbs|hod|sir|mam|madam)\b\.?/gi, " ")
+      .replace(/[.,()]/g, " ").replace(/\s+/g, " ").trim();
+    if (core === "") return WaClass.tidy(v);
+    const words = core.toLowerCase().split(" ");
+    let found = null, hits = 0;
+    for (const t of teachers) {
+      const tl = " " + t.toLowerCase().replace(/[.,]/g, " ") + " ";
+      if (words.every(w => tl.includes(" " + w + " "))) { found = t; hits++; }
+    }
+    if (hits === 1) return found;
+    return (prof ? "Prof. " : "") + "Dr. " + WaClass.tidy(core);
+  }
+
+  /** An all-capitals line in normal case, keeping short words (GIT, DCLD) and known abbreviations in capitals. */
+  static tidy(s) {
+    s = s.replace(/\s*-\s*/g, " - ").replace(/\s+/g, " ").trim();
+    let up = 0, letters = 0;
+    for (const c of s) if (/\p{L}/u.test(c)) { letters++; if (c !== c.toLowerCase()) up++; }
+    if (letters === 0 || up < letters * 0.8) return s;
+    return s.split(" ").map(w => {
+      const lw = w.toLowerCase();
+      const keep = WaClass.CAPS.has(w) || (w.length <= 4 && !WaClass.SMALL.has(lw)) || !/[aeiouy]/.test(lw);
+      return keep ? w : lw.charAt(0).toUpperCase() + lw.substring(1);
+    }).join(" ");
+  }
+
+  /** "date, time, unit…" for the message after filling. */
+  static summary(r) {
+    const names = [["date", "date"], ["time", "time"], ["unit", "unit"], ["batch", "class"], ["topic", "topic"], ["taken_by", "faculty"], ["venue", "venue"]];
+    return names.filter(n => r.fields.containsKey(n[0])).map(n => n[1]).join(", ");
+  }
+}
+;
 /* ---- app/Wall.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -89021,7 +98032,7 @@ class WeekAcademicsActivity extends Base {
   /** The sessions of one section from 'from' to 'to', oldest first. */
   static sessions(db, key, from, to) {
     return WeekAcademicsActivity.isClass(key)
-        ? db.rows("SELECT id, date, time, topic, taken_by AS who, unit FROM classes WHERE kind=? AND date BETWEEN ? AND ? ORDER BY date, time, id", key, from, to)
+        ? db.rows("SELECT id, date, time, topic, taken_by AS who, unit, venue FROM classes WHERE kind=? AND date BETWEEN ? AND ? ORDER BY date, time, id", key, from, to)
         : db.rows("SELECT id, date, time, topic, presenter AS who, unit FROM academics WHERE kind=? AND date BETWEEN ? AND ? ORDER BY date, time, id", key, from, to);
   }
 
@@ -89128,7 +98139,19 @@ class WeekAcademicsActivity extends Base {
     add.setBackground(Ui.round(this, Color.WHITE, 16));
     add.setPadding(Ui.dp(this, 12), Ui.dp(this, 7), Ui.dp(this, 12), Ui.dp(this, 7));
     add.setOnClickListener(this.opener(FormActivity, "kind", W.isClass(key) ? "class" : "academic", "sub", key));
-    band.addView(add);
+    if (W.isClass(key)) {
+      // 10.22: the class message from the WhatsApp group fills a new class
+      const acts = Ui.v(this);
+      acts.setGravity(Gravity.END);
+      acts.addView(add);
+      const paste = Ui.tv(this, "💬 Paste", 12, Chat.GREEN, true);
+      paste.setBackground(Ui.round(this, Color.WHITE, 16));
+      paste.setPadding(Ui.dp(this, 12), Ui.dp(this, 7), Ui.dp(this, 12), Ui.dp(this, 7));
+      paste.setOnClickListener(this.opener(FormActivity, "kind", "class", "sub", key, "paste", "1"));
+      acts.addView(paste);
+      Ui.margins(paste, 0, 6, 0, 0);
+      band.addView(acts);
+    } else band.addView(add);
     box.addView(band);
 
     const body = Ui.v(this);
@@ -89182,6 +98205,7 @@ class WeekAcademicsActivity extends Base {
     if (!Ui.nz(s.get("who")).isEmpty()) bits.add(s.get("who"));
     if (!Ui.nz(s.get("time")).isEmpty()) bits.add(s.get("time"));
     if (!Ui.nz(s.get("unit")).isEmpty()) bits.add(Db.unitName(s.get("unit")));
+    if (!Ui.nz(s.get("venue")).isEmpty()) bits.add(s.get("venue"));
     const past = s.get("date").compareTo(Dates.todayIso()) < 0;
     bits.add(s.get("date").equals(Dates.todayIso()) ? "Today" : past ? "Held" : "Upcoming");
     const who = Ui.tv(this, TextUtils.join("  ·  ", bits), 11, 0xFF64748B, false);
@@ -90136,7 +99160,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, Adpcm, Ai, AiReturn, AiRun, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Crashes, CrashesActivity, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, Mystery, MysteryActivity, Net, NightlyBackup, Notify, ObstetricActivity, Opinions, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientPick, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilNote, Tasks, TasksActivity, TeachingActivity, Thesis, ThesisActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, Wall, WallActivity, WardDuty, WardList, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, AdmitDesign, Adpcm, Ai, AiReturn, AiRun, Album, AlbumActivity, Alerts, Antibiogram, AntibiogramActivity, Applause, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, Buzz, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisClaims, CmchisPackages, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Countdown, CountdownActivity, Crashes, CrashesActivity, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, GoldenHour, GoldenHourActivity, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Honours, HonoursActivity, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, MyMonth, Mystery, MysteryActivity, Net, NightlyBackup, NmcAttendance, NmcAttendanceActivity, Notify, ObstetricActivity, OfflineShare, Opinions, OrderScan, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientDesign, PatientPick, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Posting, PostingActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, RareCase, RareCaseActivity, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SickReport, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, StudentPortal, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilCard, TamilNote, Tasks, TasksActivity, TeachActivity, TeachPoints, TeachingActivity, Thesis, ThesisActivity, TimeMachine, TimeMachineActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, WaClass, Wall, WallActivity, WardDuty, WardList, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
