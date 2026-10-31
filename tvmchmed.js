@@ -4690,6 +4690,10 @@ R.drawable.home_banner_wide = { name: "home_banner_wide", src: "home_banner_wide
 R.drawable.album_frame = { name: "album_frame", src: "album_frame.webp", w: 0, h: 0 };
 R.drawable.cert_template = { name: "cert_template", src: "cert_template.webp", w: 0, h: 0 };
 R.drawable.doubt_heart = { name: "doubt_heart", src: "doubt_heart.webp", w: 0, h: 0 };
+R.drawable.pg_leave_empty = { name: "pg_leave_empty", src: "pg_leave_empty.webp", w: 0, h: 0 };
+R.drawable.pg_leave_top = { name: "pg_leave_top", src: "pg_leave_top.webp", w: 0, h: 0 };
+R.drawable.pg_leave_foot = { name: "pg_leave_foot", src: "pg_leave_foot.webp", w: 0, h: 0 };
+R.drawable.medicine_emblem = { name: "medicine_emblem", src: "medicine_emblem.webp", w: 0, h: 0 };
 R.drawable.home_poster = { name: "home_poster", src: "home_poster.webp", w: 0, h: 0 };
 R.string = { app_name: 'TVMCHMED', cloud_url: 'https://dgxifayxugbprykzrnpj.supabase.co', cloud_key: 'sb_publishable_ibmSKedCcdJLB4505Tdyxg_25B3qViz' };
 R.layout = Object.assign(R.layout || {}, { simple_dropdown_item_1line: 'simple_dropdown_item_1line', simple_spinner_dropdown_item: 'simple_spinner_dropdown_item', simple_spinner_item: 'simple_spinner_item', simple_list_item_1: 'simple_list_item_1' });
@@ -5959,7 +5963,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 82);
+    super(c, "tvmchmed.db", null, 83);
     this.ctx = c;
   }
 
@@ -6463,6 +6467,10 @@ class Db extends SQLiteOpenHelper {
           + "details TEXT DEFAULT '', reported_by TEXT DEFAULT '', reported_on TEXT DEFAULT '', owner TEXT DEFAULT '', due TEXT DEFAULT '', "
           + "status TEXT DEFAULT 'Open', action TEXT DEFAULT '', closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '')");
       Db.addColumn(db, "alerts", "audio", "TEXT DEFAULT ''");
+    }
+    if (oldV < 83) {
+      // 10.48: the PG's last steps after approval: HOD signed, submitted in the office (the finalised copy is "letter")
+      for (const col of ["hod_signed", "hod_signed_date", "office_done", "office_date"]) Db.addColumn(db, "pg_leaves", col, "TEXT DEFAULT ''");
     }
     if (oldV < 82) {
       // 10.29: sick case report format from the unit PGs to the DAP (vitals, oxygen, treatment, need) + DAP seen
@@ -11787,6 +11795,11 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["10.40", "📞 Intercom has its own section on the home page, under the ward census, with a living icon (golden phone, turning rainbow halo, ripples and orbiting dots), who is online and Open intercom / Keypad buttons. Calls themselves work in the Android app."],
+    ["10.39", "🩺 New patient card look everywhere patients are listed: name and age in bold, an IP number chip (and bed), Adm date and diagnosis lines with icons, and on the right a big ward pill (Fever, IMCU, M3 ward…) with Parent : M5 under it. In the fever ward the red + Mark dengue button sits inside each card. 📞 Intercom: the Accept button on an incoming call now answers every time (the call screen was redrawing twice a second and swallowing the tap)."],
+    ["10.38", "📢 New Notice Board look: megaphone header, search box, coloured cards by type (duty roster blue, class roster purple, order red, meeting teal, general orange) with a coloured left edge, round icon, date and a View PDF button, filter chips with counts and a This week count. On a tablet or the website the filters and This week sit in a side panel and smaller notices go two to a row."],
+    ["10.37", "🏠 Home page in your order: NMC attendance, deterioration watch, missing notes, then the admission day, Admit a patient, DAP card and ward census; then Your sections, All sections, Latest on the board, the PG teaching cards (Golden Honours, PG Arena, Daily MCQ…), Academics and the album. On a tablet or the website the day's work sits beside the ward census, and PG teaching beside Academics."],
+    ["10.36", "🏠 Home page sections rearranged (from your picture), same colours: after the welcome card come Your sections and the section folders (Emergency first, then Teaching, PG corner, Wards, Duty & team, Paperwork, AI assistant, HOD & admin), then Teaching today, then On duty today with the admit button and DAP card, then the notices and ward census."],
     ["10.35", "🩺 New patient page design (from your picture): a dark top card with the patient's initials, \"Now in\" ward, day of stay, diagnosis, Admitted / Bed / CMCHIS tiles and big Case sheet, Timeline, Summary and Discharge buttons; small caps headings, white chart pills and flat white cards on a light page. The case sheet has the same look."],
     ["10.34", "📝 New admission form design (from your picture): a navy banner with \"Medicine Ward\" in gold, the fields in coloured section cards (Patient Details, More Details, Admission Group, daily census, Toxicology, Admission, Coverage & Insurance) with round icons, inputs with an icon at the left, pill buttons for WhatsApp paste and diet sheet scan, and a gold Save button."],
     ["10.33", "🌊 New unit team board design (from your picture), for every unit and special ward: a dark navy board with the unit's name in gold, its admission day, a wave band in the unit's own theme colours, gold group headings, each person in a glowing coloured ring, and a dark MBBS students card with the year and a numbered two-column list."],
@@ -12258,7 +12271,8 @@ class Base extends Activity {
     // 10.4: a shared-database phone without internet says so on every screen
     const off = this instanceof AccountActivity || this instanceof LockActivity ? null : Net.bar(this);
     if (off != null) top.addView(off, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-    this.setContentView(this.floatingBars(scroll, top, null));
+    // 10.42: bottomBar, a bar fixed at the bottom of the screen (the PG leave page's gold band)
+    this.setContentView(this.floatingBars(scroll, top, this.bottomBar || null));
     Undo.attach(this);
     scroll.post({ run: () => { scroll.scrollTo(0, y); } });
   }
@@ -12369,41 +12383,53 @@ class Base extends Activity {
     return Ui.softPill(c, "In ward", Ui.PRIMARY);
   }
 
-  patientRow(p) {
+  /** 10.39: the patient card in the user's "Female patients" picture; extra goes under the diagnosis, action at the bottom right. */
+  patientRow(p, extra = null, action = null) {
     const db = this.db;
     const card = Ui.card(this);
-    // 9.20: each patient on a soft tint of the ward's colour with a clear border
-    const pc = Ui.unitColor(p.get("location"));
-    const pbg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [Ui.mix(pc, Color.WHITE, 0.9), Ui.mix(pc, Color.WHITE, 0.96)]);
-    pbg.setCornerRadius(Ui.dp(this, 18));
-    pbg.setStroke(Ui.dp(this, 1.5), Ui.mix(pc, Color.WHITE, 0.45));
-    card.setBackground(pbg);
+    card.setBackground(Ui.outline(this, Color.WHITE, 0xFFE2E8F0, 18));
     card.setOrientation(LinearLayout.HORIZONTAL);
-    card.setPadding(0, 0, Ui.dp(this, 14), 0);
+    card.setBaselineAligned(false);
+    card.setPadding(0, 0, Ui.dp(this, 12), 0);
     const stripe = new View(this);
     stripe.setBackground(Ui.round(this, Ui.unitColor(p.get("location")), 3));
-    const sp = new LinearLayout.LayoutParams(Ui.dp(this, 5), ViewGroup.LayoutParams.MATCH_PARENT);
-    sp.setMargins(Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12));
+    const sp = new LinearLayout.LayoutParams(Ui.dp(this, 6), ViewGroup.LayoutParams.MATCH_PARENT);
+    sp.setMargins(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
     card.addView(stripe, sp);
 
     const body = Ui.v(this);
     body.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 12));
     const age = Ui.nz(p.get("age")).isEmpty() ? "" : p.get("age") + " y, ";
-    body.addView(Ui.tv(this, p.get("name") + "  ·  " + age + Base.sexLabel(p.get("sex")), 16, Ui.TEXT, true));
-    const ip = Ui.nz(p.get("ip_no")).isEmpty() ? "" : "IP " + p.get("ip_no") + "  ·  ";
-    const bed = Ui.nz(p.get("bed")).isEmpty() ? "" : "  ·  Bed " + p.get("bed");
-    body.addView(Ui.muted(this, ip + Base.where(p) + bed));
-    let line = "Adm " + Dates.nice(p.get("admit_date"));
-    if (!Ui.nz(p.get("outcome_date")).isEmpty()) line += "  →  " + Dates.nice(p.get("outcome_date"));
-    if (!Ui.nz(p.get("diagnosis")).isEmpty()) line += "  ·  " + p.get("diagnosis");
-    const d = Ui.muted(this, line);
-    d.setMaxLines(2);
-    body.addView(d);
-    card.addView(body, Ui.weight(1));
+    body.addView(Ui.tv(this, p.get("name") + "  ·  " + age + Base.sexLabel(p.get("sex")), 18, PatientRowDesign.NAVY, true));
+    const chips = Ui.h(this);
+    if (!Ui.nz(p.get("ip_no")).isEmpty()) chips.addView(PatientRowDesign.chip(this, R.drawable.ic_badge, "IP " + p.get("ip_no")));
+    if (chips.getChildCount() > 0) {
+      body.addView(chips);
+      Ui.margins(chips, 0, 6, 0, 0);
+    }
+    body.addView(PatientRowDesign.hLine(this));
+    let line = "Adm " + NoticeDesign.date(p.get("admit_date"));
+    if (!Ui.nz(p.get("outcome_date")).isEmpty()) line += "  →  " + NoticeDesign.date(p.get("outcome_date"));
+    body.addView(PatientRowDesign.line(this, R.drawable.ic_calendar, line, 1));
+    if (!Ui.nz(p.get("diagnosis")).isEmpty()) body.addView(PatientRowDesign.line(this, R.drawable.ic_heart, p.get("diagnosis"), 2));
+    if (extra != null) body.addView(extra);
+    card.addView(body, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+    card.addView(PatientRowDesign.vLine(this));
 
     const right = Ui.v(this);
-    right.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-    right.addView(Base.statusPill(this, p));
+    right.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
+    right.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 10));
+    right.addView(PatientRowDesign.placePill(this, p));
+    if (Db.isSpecial(p.get("location")) && !Ui.nz(p.get("home_unit")).isEmpty() && Db.IN === p.get("status")) {
+      const par = PatientRowDesign.soft(this, "Parent : " + p.get("home_unit"));
+      right.addView(par);
+      Ui.margins(par, 0, 6, 0, 0);
+    }
+    if (!Ui.nz(p.get("bed")).isEmpty() && Db.IN === p.get("status")) {
+      const bd = PatientRowDesign.soft(this, "Bed " + p.get("bed"));
+      right.addView(bd);
+      Ui.margins(bd, 0, 6, 0, 0);
+    }
     const tasks = p.get("id") == null ? 0 : Tasks.pending(db, Long.parseLong(p.get("id")));
     if (tasks > 0) {
       const tk = Ui.softPill(this, "⏳ " + tasks + (tasks === 1 ? " task" : " tasks"), Tasks.COLOR);
@@ -12461,6 +12487,10 @@ class Base extends Activity {
       const cm = Ui.softPill(this, "CMCHIS", Ui.TEAL);
       right.addView(cm);
       Ui.margins(cm, 0, 4, 0, 0);
+    }
+    if (action != null) {
+      right.addView(action);
+      Ui.margins(action, 0, 8, 0, 0);
     }
     card.addView(right, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
     Ui.ripple(card, Ui.alpha(Ui.PRIMARY, 0x22));
@@ -35556,6 +35586,84 @@ class CrashesActivity extends Base {
   }
 }
 ;
+/* ---- app/Crest.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.42: the medical crest of the user's pictures (PG leave page and the update pop-up): a caduceus (staff, wings and two
+ * serpents) in one colour, optionally with an ECG line running through it.
+ */
+class Crest extends Drawable {
+  constructor(color, ecg) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.color = color;
+    this.ecg = ecg;
+    /** How far the ECG line runs out either side, in crest widths. */
+    this.reach = 0.6;
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p;
+    const h = b.height(), s = Math.min(b.width(), h);
+    const cx = b.exactCenterX(), top = b.top + (h - s) / 2;
+    const w = s * 0.9;
+    p.setColor(this.color);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeCap(Paint.Cap.ROUND);
+    p.setStrokeJoin(Paint.Join.ROUND);
+    p.setStrokeWidth(s * 0.045);
+    cv.drawLine(cx, top + s * 0.12, cx, top + s * 0.98, p);
+    p.setStyle(Paint.Style.FILL);
+    cv.drawCircle(cx, top + s * 0.09, s * 0.045, p);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(s * 0.03);
+    for (let side = -1; side <= 1; side += 2) {
+      for (let k = 0; k < 3; k++) {
+        const f = new Path();
+        const y0 = top + s * (0.2 + 0.045 * k);
+        const reach = w * (0.5 - 0.1 * k);
+        f.moveTo(cx, y0);
+        f.cubicTo(cx + side * reach * 0.4, y0 - s * 0.1, cx + side * reach * 0.8, y0 - s * 0.12, cx + side * reach, y0 - s * (0.14 - 0.03 * k));
+        f.cubicTo(cx + side * reach * 0.75, y0 - s * 0.01, cx + side * reach * 0.4, y0 + s * 0.04, cx, y0 + s * 0.05);
+        cv.drawPath(f, p);
+      }
+    }
+    p.setStrokeWidth(s * 0.04);
+    const y1 = top + s * 0.34, y2 = top + s * 0.92, amp = w * 0.17;
+    for (let side = -1; side <= 1; side += 2) {
+      const sp = new Path();
+      const steps = 40;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const y = y1 + (y2 - y1) * t;
+        const x = cx + side * amp * Math.sin(t * Math.PI * 3.0) * (1 - 0.35 * t);
+        if (i === 0) sp.moveTo(x, y); else sp.lineTo(x, y);
+      }
+      cv.drawPath(sp, p);
+      p.setStyle(Paint.Style.FILL);
+      cv.drawCircle(cx + side * amp * 0.55, y1 - s * 0.025, s * 0.035, p);
+      p.setStyle(Paint.Style.STROKE);
+    }
+    if (this.ecg) {
+      p.setStrokeWidth(s * 0.025);
+      const y = top + s * 0.6, u = s * 0.07;
+      const e = new Path();
+      e.moveTo(b.left - s * this.reach, y);
+      e.lineTo(cx - 3 * u, y);
+      e.lineTo(cx - 2 * u, y - 2.5 * u);
+      e.lineTo(cx - u, y + 2.5 * u);
+      e.lineTo(cx, y - 1.2 * u);
+      e.lineTo(cx + 0.6 * u, y);
+      e.lineTo(b.right + s * this.reach, y);
+      cv.drawPath(e, p);
+    }
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+}
+;
 /* ---- app/CriticalLabs.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -56115,6 +56223,11 @@ class IntercomActivity extends Base {
   static LOG_FILTERS = ["All", "Missed", "Outgoing", "Incoming"];
   static TABS = ["Members", "Call log", "Keypad"];
   static tab = 0;
+
+  /** Opens on a given tab next time (0 members, 1 call log, 2 keypad); the home Intercom section's Keypad button. */
+  static showTab(t) {
+    IntercomActivity.tab = t;
+  }
   static filter = 0;
   static logFilter = 0;
   static query = "";
@@ -56618,6 +56731,166 @@ IntercomActivity.HexPhone = class extends Drawable {
   setAlpha(a) {}
   setColorFilter(f) {}
   getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+;
+/* ---- app/IntercomHome.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.40 (user: "Create separate section for intercom with mesmerising icon and design"): its own home section on a deep navy
+ * card, with a living orb (golden hexagon phone, a turning rainbow halo, ripples going out and dots in orbit), who is online
+ * and the buttons to open the intercom, the keypad or go back to a call.
+ */
+class IntercomHome {
+  static card(a) {
+    const ic = Intercom.current();
+    const card = Ui.v(a);
+    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFF0A2459, 0xFF061433, 0xFF140B3A]);
+    bg.setCornerRadius(Ui.dp(a, 24));
+    bg.setStroke(Ui.dp(a, 1), 0x55F5C451);
+    card.setBackground(bg);
+    card.setPadding(Ui.dp(a, 16), Ui.dp(a, 16), Ui.dp(a, 16), Ui.dp(a, 16));
+    const cp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    cp.setMargins(Ui.dp(a, 12), Ui.dp(a, 10), Ui.dp(a, 12), Ui.dp(a, 6));
+    card.setLayoutParams(cp);
+
+    const top = Ui.h(a);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.addView(new IntercomHome.Orb(a), Ui.lp(Ui.dp(a, 104), Ui.dp(a, 104)));
+    const t = Ui.v(a);
+    t.setPadding(Ui.dp(a, 14), 0, 0, 0);
+    const k = Ui.tv(a, "DEPARTMENT INTERCOM", 11, IntercomActivity.GOLD, true);
+    k.setLetterSpacing(0.18);
+    t.addView(k);
+    t.addView(Ui.tv(a, "Call any colleague, free", 20, Color.WHITE, true));
+    const onCall = ic != null && ic.state() !== Intercom.State.IDLE;
+    const peers = ic == null ? [] : ic.peers();
+    const status = onCall ? "On a call with " + ic.peerName()
+        : ic == null || !ic.isConnected() ? "Connecting…" : peers.length === 0 ? "Connected · no one else online" : "Connected · " + peers.length + " online";
+    const st = Ui.h(a);
+    st.setGravity(Gravity.CENTER_VERTICAL);
+    const dot = new View(a);
+    const d = Ui.round(a, ic != null && ic.isConnected() ? 0xFF22C55E : 0xFFF59E0B, 0);
+    d.setShape(GradientDrawable.OVAL);
+    dot.setBackground(d);
+    st.addView(dot, Ui.lp(Ui.dp(a, 9), Ui.dp(a, 9)));
+    const sv = Ui.tv(a, status, 13, 0xCCFFFFFF, false);
+    sv.setPadding(Ui.dp(a, 7), 0, 0, 0);
+    st.addView(sv);
+    t.addView(st);
+    Ui.margins(st, 0, 4, 0, 0);
+    // up to five of the people online, as initials
+    if (peers.length > 0) {
+      const faces = Ui.h(a);
+      let n = 0;
+      for (const p of peers) {
+        if (n === 5) break;
+        const f = Ui.tv(a, CallActivity.initials(Ui.nz(p.name)), 11, Color.WHITE, true);
+        f.setGravity(Gravity.CENTER);
+        const fg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFF2563EB, 0xFF7C3AED]);
+        fg.setShape(GradientDrawable.OVAL);
+        fg.setStroke(Ui.dp(a, 1.5), 0xFF061433);
+        f.setBackground(fg);
+        const fp = Ui.lp(Ui.dp(a, 28), Ui.dp(a, 28));
+        if (n > 0) fp.leftMargin = -Ui.dp(a, 7);
+        faces.addView(f, fp);
+        n++;
+      }
+      if (peers.length > 5) faces.addView(Ui.tv(a, "  +" + (peers.length - 5), 13, IntercomActivity.GOLD, true));
+      t.addView(faces);
+      Ui.margins(faces, 0, 8, 0, 0);
+    }
+    top.addView(t, Ui.weight(1));
+    card.addView(top);
+
+    const row = Ui.h(a);
+    row.setPadding(0, Ui.dp(a, 14), 0, 0);
+    if (onCall) {
+      row.addView(IntercomHome.pill(a, "📞  Back to the call", 0xFF22C55E, true, {
+        onClick: (v) => { a.startActivity(new Intent(a, CallActivity)); }
+      }), Ui.weight(1));
+    } else {
+      row.addView(IntercomHome.pill(a, "📞  Open intercom", IntercomActivity.GOLD, true, a.opener(IntercomActivity)), Ui.weight(1));
+      const gap = new View(a);
+      row.addView(gap, Ui.lp(Ui.dp(a, 10), 1));
+      row.addView(IntercomHome.pill(a, "⌨  Keypad", IntercomActivity.GOLD, false, {
+        onClick: (v) => {
+          IntercomActivity.showTab(2);
+          a.startActivity(new Intent(a, IntercomActivity));
+        }
+      }), Ui.weight(0.7));
+    }
+    card.addView(row);
+    Ui.ripple(card, 0x22F5C451);
+    card.setOnClickListener(a.opener(IntercomActivity));
+    return card;
+  }
+
+  static pill(c, s, color, filled, l) {
+    const t = Ui.tv(c, s, 14, filled ? 0xFF061433 : color, true);
+    t.setGravity(Gravity.CENTER);
+    t.setPadding(Ui.dp(c, 12), Ui.dp(c, 10), Ui.dp(c, 12), Ui.dp(c, 10));
+    t.setBackground(filled ? Ui.gradient(c, [Ui.mix(color, Color.WHITE, 0.2), color], 22) : Ui.outline(c, 0x14FFFFFF, Ui.alpha(color, 0x99), 22));
+    t.setOnClickListener(l);
+    return t;
+  }
+}
+
+/** The living intercom icon: a golden hexagon phone, a turning rainbow halo, ripples going out and three dots in orbit. */
+IntercomHome.Orb = class extends View {
+  constructor(c) {
+    super(c);
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.hex = new IntercomActivity.HexPhone(c);
+    this.born = System.currentTimeMillis();
+    this.m = new Matrix();
+    this.HALO = [0xFFF5C451, 0xFF22D3EE, 0xFFA78BFA, 0xFFF472B6, 0xFFF5C451];
+    this.frame = { run: () => { if (this.isAttachedToWindow()) this.invalidate(); } };
+  }
+
+  onDraw(cv) {
+    const w = this.getWidth(), h = this.getHeight();
+    if (w <= 0) return;
+    const p = this.p;
+    const cx = w / 2, cy = h / 2, r = Math.min(w, h) / 2;
+    const t = (System.currentTimeMillis() - this.born) / 1000;
+    // soft glow behind
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new RadialGradient(cx, cy, r, [0x553B82F6, 0x00061433], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r, p);
+    p.setShader(null);
+    // ripples going out
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(r * 0.035);
+    for (let k = 0; k < 3; k++) {
+      const ph = (t * 0.55 + k / 3) % 1;
+      p.setColor(Color.argb(Math.trunc(170 * (1 - ph)), 245, 196, 81));
+      cv.drawCircle(cx, cy, r * (0.42 + 0.5 * ph), p);
+    }
+    // the turning rainbow halo
+    const sg = new SweepGradient(cx, cy, this.HALO, null);
+    this.m.setRotate((t * 70) % 360, cx, cy);
+    sg.setLocalMatrix(this.m);
+    p.setShader(sg);
+    p.setStrokeWidth(r * 0.07);
+    cv.drawCircle(cx, cy, r * 0.84, p);
+    p.setShader(null);
+    // three dots in orbit
+    p.setStyle(Paint.Style.FILL);
+    for (let k = 0; k < 3; k++) {
+      const ang = (t * 90 + k * 120) * Math.PI / 180;
+      const x = cx + Math.cos(ang) * r * 0.84, y = cy + Math.sin(ang) * r * 0.84;
+      p.setColor(0x6622D3EE);
+      cv.drawCircle(x, y, r * 0.11, p);
+      p.setColor(Color.WHITE);
+      cv.drawCircle(x, y, r * 0.05, p);
+    }
+    // the golden hexagon phone, breathing
+    const s = r * (0.58 + 0.03 * Math.sin(t * 2.4));
+    this.hex.setBounds(Math.trunc(cx - s), Math.trunc(cy - s), Math.trunc(cx + s), Math.trunc(cy + s));
+    this.hex.draw(cv);
+    this.postDelayed(this.frame, 40);
+  }
 };
 ;
 /* ---- app/IntercomNotes.js ---- */
@@ -64514,6 +64787,7 @@ class MainActivity extends Base {
   static ISOLATION = 0xFFF59E0B;
   static ICU = 0xFF8B5CF6;
   static NAVY = 0xFF0E1A4F;
+  static CREAM_TEXT = 0xFFFFF4D6;
   static NAVY_DEEP = 0xFF081033;
   static REQ_BACKUP = 11;
   static REQ_RESTORE = 12;
@@ -64531,17 +64805,20 @@ class MainActivity extends Base {
     this.pStatus = "IN"; this.pUnit = "ALL"; this.pQuery = "";
     this.patientList = null;
     this.nCat = "ALL";
+    this.nQuery = ""; this.nList = null; this.nSearch = null;
     /** The home page is drawn in two goes (8.10): the top first, the census box, board and academics just after it shows. */
     this.later = new Handler(Looper.getMainLooper());
     this.renderGen = 0;
     this.homeLater = null; this.allGrid = null; this.allSearch = null;
+    /** 10.37: the slots homeRest fills once the page shows. */
+    this.censusSlot = null; this.boardSlot = null; this.acadSlot = null;
     this.allQuery = "";
     /** The folder opened in place on the home page (10.18), or null. */
     this.openFolder = null;
   }
 
   liveRefresh() {
-    return this.allSearch == null || !this.allSearch.hasFocus();
+    return (this.allSearch == null || !this.allSearch.hasFocus()) && (this.nSearch == null || !this.nSearch.hasFocus());
   }
 
   onCreate(b) {
@@ -64580,6 +64857,7 @@ class MainActivity extends Base {
   onPause() {
     super.onPause();
     if (this.current != null) this.scrollY[this.tab] = this.current.getScrollY();
+    UpdatePrompt.paused();
   }
 
   render() {
@@ -64587,10 +64865,12 @@ class MainActivity extends Base {
     if (tab === 0) {
       this.setTitle("TVMCHMED");
       this.subtitle = db.setting("dept", "") + " · TVMCH";
+      this.headerColors = [0xFF050A26, 0xFF0C1650, 0xFF141A52];
       this.headerAction("Share census", {
         onClick: (v) => { ReportActivity.shareText(this, ReportActivity.censusText(db)); }
       });
     } else {
+      this.headerColors = Ui.HERO;
       this.setTitle(tab === 1 ? "Patients" : tab === 2 ? "Wards & units" : tab === 3 ? "Information board" : "All sections");
       this.subtitle = tab === 1 ? db.totalInpatients() + " inpatients at TVMCH" : tab === 3 ? "Orders, duty rosters, class rosters" : null;
       this.headerAction(null, null);
@@ -64631,28 +64911,37 @@ class MainActivity extends Base {
     }
   }
 
+  /** 10.42 (user's picture): a bevelled gold bar with sapphires between the tabs; icons and names in deep brown. */
   tabBar() {
     const icons = [R.drawable.ic_home, R.drawable.ic_people, R.drawable.ic_hospital, R.drawable.ic_notice, R.drawable.ic_menu];
     const wrap = Ui.v(this);
     wrap.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 10));
     const bar = Ui.h(this);
-    bar.setBackground(new Glass.Wallpaper(this));
+    bar.setBackground(new RoyalHome.GoldBar(this, MainActivity.TAB_NAMES.length));
     bar.setElevation(Ui.dp(this, 8));
-    Glass.softShadow(bar, 0xFF2F80ED);
     bar.setPadding(Ui.dp(this, 6), Ui.dp(this, 4), Ui.dp(this, 6), Ui.dp(this, 4));
-    wrap.addView(bar, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 84)));
+    wrap.addView(bar, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 70)));
     for (let i = 0; i < MainActivity.TAB_NAMES.length; i++) {
       const idx = i;
       const on = i === this.tab;
-      // clear 3D glass icons, all the same size and still; the open tab sits in a glass capsule with a darker glyph and label
       const item = Ui.v(this);
       item.setGravity(Gravity.CENTER);
+      if (on) {
+        const sel = Ui.round(this, 0x33FFFFFF, 16);
+        sel.setStroke(Ui.dp(this, 1), 0x998A5E14);
+        item.setBackground(sel);
+      }
       const ic = new ImageView(this);
-      ic.setImageDrawable(new Glass.Bubble(this, icons[i], on));
-      item.addView(ic, Ui.lp(Ui.dp(this, 50), Ui.dp(this, 50)));
-      const t = Ui.tv(this, MainActivity.TAB_NAMES[i], 10.5, Color.WHITE, on);
-      t.setShadowLayer(Ui.dp(this, 3), 0, Ui.dp(this, 1), 0x660F172A);
-      if (!on) t.setAlpha(0.9);
+      ic.setImageResource(icons[i]);
+      ic.setColorFilter(on ? 0xFF0A1240 : 0xFF5A3E0C);
+      item.addView(ic, Ui.lp(Ui.dp(this, Base.wide(this) ? 28 : 24), Ui.dp(this, Base.wide(this) ? 28 : 24)));
+      const t = Ui.tv(this, MainActivity.TAB_NAMES[i], 14, on ? 0xFF0A1240 : 0xFF3A2A08, on);
+      // 10.43 (user): on a phone the names are smaller and fixed in size, so a large font setting cannot cut them
+      if (!Base.wide(this)) {
+        t.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
+        t.setSingleLine(true);
+      }
+      t.setShadowLayer(1.5, 0, 1, 0x80FFF6DA);
       t.setGravity(Gravity.CENTER);
       item.addView(t, Ui.lp(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
       Ui.ripple(item, 0x33FFFFFF);
@@ -64660,7 +64949,8 @@ class MainActivity extends Base {
         onClick: (v) => { if (idx !== this.tab) this.switchTab(idx); }
       });
       const lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
-      lp.setMargins(Ui.dp(this, 2), 0, Ui.dp(this, 2), 0);
+      const side = Base.wide(this) ? 10 : 7;
+      lp.setMargins(Ui.dp(this, side), Ui.dp(this, 2), Ui.dp(this, side), Ui.dp(this, 2));
       bar.addView(item, lp);
     }
     return wrap;
@@ -64877,57 +65167,42 @@ class MainActivity extends Base {
     for (const a of Alerts.active(db)) page.addView(Alerts.banner(this, a));
     Alerts.popupNew(this);
 
-    page.addView(this.banner());
-    const hero = Ui.card(this);
-    hero.setBackground(Glass.hero(this, Ui.HERO, 24));
-    hero.setPadding(Ui.dp(this, 20), Ui.dp(this, 18), Ui.dp(this, 20), Ui.dp(this, 18));
-    hero.addView(this.heroTop(today));
-    hero.addView(this.deptBlock());
-    const adm = Ui.h(this);
-    adm.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 4));
-    adm.addView(Ui.tv(this, "Admitting today  ", 13, 0xD9FFFFFF, false));
-    const au = db.admittingUnits(Dates.dow(Dates.admitDay()));
-    if (au.isEmpty()) adm.addView(Ui.tv(this, "No unit set", 14, Color.WHITE, true));
-    for (const u of au) {
-      const p = Ui.tv(this, u, 16, Ui.unitColor(u), true);
-      p.setBackground(Ui.round(this, Color.WHITE, 16));
-      p.setPadding(Ui.dp(this, 14), Ui.dp(this, 3), Ui.dp(this, 14), Ui.dp(this, 3));
-      adm.addView(p);
-      Ui.margins(p, 0, 0, 6, 0);
+    // 10.42 (user's picture): the royal top with the department, medallion, clock and the member's sections
+    const mods = this.modules();
+    const byLabel = new JMap();
+    for (const m of mods) byLabel.put(m.label, m);
+    const mine = [];
+    // ten gold tiles, two rows of five like the picture
+    for (const l of HomeLayout.picks(this, Cloud.role(this), byLabel.keySet(), 10)) mine.push(byLabel.get(l));
+    HomeLayout.shown.clear();
+    for (const m of mine) HomeLayout.shown.add(m.label);
+    page.addView(this.royalHero(today, mine));
+    const upd = Updates.available(this, db);
+    if (upd != null) {
+      page.addView(this.entryCard("Update", Ui.GREEN, "Version " + upd.optString("name") + " is available",
+        (upd.optString("notes").isEmpty() ? "" : upd.optString("notes") + "\n") + "Tap to install. Your records stay on the phone.", null, this.opener(SettingsActivity, Updates.INSTALL, "1")));
     }
-    const daily = Ui.tv(this, "New cases go to Triage · Fever · IMCU", 12, Color.WHITE, true);
-    daily.setBackground(Ui.round(this, 0x33FFFFFF, 16));
-    daily.setPadding(Ui.dp(this, 10), Ui.dp(this, 4), Ui.dp(this, 10), Ui.dp(this, 4));
-    adm.addView(daily);
-    hero.addView(Ui.hscroll(this, adm));
-    const stats = Ui.statRow(this,
-      this.heroStat(String(db.totalInpatients()), "Inpatients"),
-      this.heroStat(String(db.events(Db.ADMIT, iso, iso, null, null)), "Admitted"),
-      this.heroStat(String(db.events(Db.DISCHARGE, iso, iso, null, null)), "Discharged"),
-      this.heroStat(String(db.transfers(iso, iso, null, Db.IMCU)), "To IMCU"),
-      this.heroStat(String(db.events(Db.DEATH, iso, iso, null, null)), "Deaths"));
-    stats.setBackground(Glass.frost(this, 16));
-    stats.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 10));
-    hero.addView(stats);
-    Ui.margins(stats, 0, 12, 0, 0);
-    page.addView(hero);
-    page.addView(HomeLayout.myDay(this, db));
     if (Guide.showOnce(this)) this.open(GuideActivity);
-    // 9.90: on a tablet the day's work and the day's teaching sit side by side; on a phone they follow one another
-    let duty = page, teach = page;
-    if (Base.wide(this)) {
-      const cols = Ui.h(this);
-      cols.setGravity(Gravity.TOP);
-      duty = Ui.v(this);
-      teach = Ui.v(this);
-      cols.addView(duty, Ui.weight(1));
-      cols.addView(teach, Ui.weight(1));
-      page.addView(cols);
-    }
+    // 10.17: a golden pop-up with clapping for a faculty 👍 not seen yet (user's pick 214)
+    Applause.check(this, db);
+    // 10.41: a flashing "new version" pop-up whenever the app is opened while an update is published
+    UpdatePrompt.check(this, db);
+
+    // 10.37 (user's order): NMC, deterioration watch, missing notes, the admission day, admit, DAP, ward census,
+    // your sections, all sections, the board, the PG teaching cards, academics, album.
+    // On a tablet or the website the day's work sits beside the ward census, and the PG cards beside academics.
+    const wide = Base.wide(this);
+    const duty = Ui.v(this), census = Ui.v(this);
+    page.addView(wide ? this.twoCols(duty, census, 1, 1) : this.stack(duty, census));
+    // 10.40: the intercom in its own section, just under the day's work and the ward census (user asked)
+    if (Intercom.available(this) && !AdminControl.isHidden(db, "Intercom")) page.addView(IntercomHome.card(this));
     // 10.20: NMC biometric attendance for faculty: open the AEBAS app at check-in and check-out time
-    for (const card of [AiReturn.homeCard(this, db), NmcAttendance.homeCard(this, db), UnitMoves.homeCard(this, db), HandoverActivity.homeCard(this, db), MorningBrief.homeCard(this, db),
-      Ews.homeCard(this, db), ProtocolActivity.homeCard(this, db), Countdown.homeCard(this, db), Outbreak.homeCard(this, db), CriticalLabs.homeCard(this, db), Watch.homeCard(this, db),
-      ShiftCheck.homeCard(this, db), Results.homeCard(this, db), Docs.homeCard(this, db), Swaps.homeCard(this, db), Logbook.homeCard(this, db)]) if (card != null) duty.addView(card);
+    for (const card of [NmcAttendance.homeCard(this, db), Ews.homeCard(this, db), Docs.homeCard(this, db)]) if (card != null) duty.addView(card);
+    // the other things waiting today, after the three the user named
+    duty.addView(HomeLayout.myDay(this, db));
+    for (const card of [AiReturn.homeCard(this, db), UnitMoves.homeCard(this, db), HandoverActivity.homeCard(this, db), MorningBrief.homeCard(this, db),
+      ProtocolActivity.homeCard(this, db), Countdown.homeCard(this, db), Outbreak.homeCard(this, db), CriticalLabs.homeCard(this, db), Watch.homeCard(this, db),
+      ShiftCheck.homeCard(this, db), Results.homeCard(this, db), Swaps.homeCard(this, db), Logbook.homeCard(this, db)]) if (card != null) duty.addView(card);
     duty.addView(Ui.heading(this, "On duty today", Ui.unitColor(db.todaysUnit())));
     duty.addView(this.admissionDayCard(Dates.admitDay().toString()));
     // 9.70: the admit button sits right under the admission day (user asked)
@@ -64936,37 +65211,38 @@ class MainActivity extends Base {
     ab.addView(Ui.button(this, "+  Admit a patient", Ui.PRIMARY, this.opener(FormActivity, "kind", "patient", "unit", db.todaysUnit())));
     duty.addView(ab);
     duty.addView(this.dapCard(Dates.admitDay().toString()));
-    // 10.11: the department album fills the space under the DAP card (10.12: one big frame, on phones too; user asked)
-    if (!AdminControl.isHidden(db, "Album")) duty.addView(Album.homeSection(this, db));
+    // the ward census is drawn just after the page shows (homeRest)
+    this.censusSlot = census;
 
-    // 10.17: a golden pop-up with clapping for a faculty 👍 not seen yet (user's pick 214)
-    Applause.check(this, db);
-    // 10.14: Golden Honours, the PG ranking, heads the teaching column (user asked: the most special section)
+    // the sections this member uses most, then every section folded away with a search box
+    // 10.42: "Your sections" now sit in the royal top as gold tiles; every other section stays below
+    page.addView(this.allSections(mods));
+    this.boardSlot = Ui.v(this);
+    page.addView(this.boardSlot);
+
+    const pg = Ui.v(this), acad = Ui.v(this);
+    page.addView(wide ? this.twoCols(pg, acad, 1, 1) : this.stack(pg, acad));
+    // PG teaching: 10.14 Golden Honours first (user asked: the most special section), then the PG cards
     if (!AdminControl.isHidden(db, "Golden Honours")) {
       Honours.markActive(this, db);
-      teach.addView(Honours.homeSection(this, db));
+      pg.addView(Honours.homeSection(this, db));
     }
-    teach.addView(Ui.heading(this, "Teaching today", Ui.PURPLE));
-    for (const s of SessionAttendance.open(db)) teach.addView(AcademicActivity.attendanceBanner(this, db, s));
-    const tp = TeachPoints.homeCard(this, db);
-    if (tp != null) teach.addView(tp);
-    const rc = RareCase.homeCard(this, db);
-    if (rc != null) teach.addView(rc);
+    pg.addView(Ui.heading(this, "PG teaching", Ui.PURPLE));
     const bub = Doubts.homeBubble(this, db);
-    if (bub != null) teach.addView(bub);
-    if (!AdminControl.isHidden(db, "PG Arena")) teach.addView(Arena.homeCard(this, db));
+    if (bub != null) pg.addView(bub);
+    if (!AdminControl.isHidden(db, "PG Arena")) pg.addView(Arena.homeCard(this, db));
     const mcq = Mcq.homeCard(this, db);
-    if (mcq != null) teach.addView(mcq);
-    teach.addView(Spots.homeRow(this, db));
-    const ach = AchievementsActivity.homeCard(this, db);
-    if (ach != null) teach.addView(ach);
-    if (!AdminControl.isHidden(db, "Learning board")) teach.addView(TopicNotes.homeSection(this, db));
-
-    const upd = Updates.available(this, db);
-    if (upd != null) {
-      page.addView(this.entryCard("Update", Ui.GREEN, "Version " + upd.optString("name") + " is available",
-        (upd.optString("notes").isEmpty() ? "" : upd.optString("notes") + "\n") + "Tap to install. Your records stay on the phone.", null, this.opener(SettingsActivity, Updates.INSTALL, "1")));
-    }
+    if (mcq != null) pg.addView(mcq);
+    pg.addView(Spots.homeRow(this, db));
+    for (const card of [TeachPoints.homeCard(this, db), RareCase.homeCard(this, db), AchievementsActivity.homeCard(this, db)]) if (card != null) pg.addView(card);
+    // academics: today's classes with attendance, the learning board, then this week's academics (drawn in homeRest)
+    acad.addView(Ui.heading(this, "Academics", Ui.PURPLE));
+    for (const s of SessionAttendance.open(db)) acad.addView(AcademicActivity.attendanceBanner(this, db, s));
+    if (!AdminControl.isHidden(db, "Learning board")) acad.addView(TopicNotes.homeSection(this, db));
+    this.acadSlot = Ui.v(this);
+    acad.addView(this.acadSlot);
+    // 10.11: the department album, one big frame
+    if (!AdminControl.isHidden(db, "Album")) page.addView(Album.homeSection(this, db));
 
     if (!Cloud.active(this)) {
       const waiting = Cloud.signedIn(this);
@@ -64975,19 +65251,205 @@ class MainActivity extends Base {
         null, this.opener(AccountActivity)));
     }
 
-    // the sections this member uses most, then every section folded away with a search box
-    const mods = this.modules();
-    const byLabel = new JMap();
-    for (const m of mods) byLabel.put(m.label, m);
-    page.addView(Ui.heading(this, "Your sections", Ui.PRIMARY));
-    const mine = [];
-    for (const l of HomeLayout.picks(this, Cloud.role(this), byLabel.keySet(), HomeLayout.YOURS)) mine.push(byLabel.get(l));
-    HomeLayout.shown.clear();
-    for (const m of mine) HomeLayout.shown.add(m.label);
-    page.addView(this.tilePanel(mine));
-    page.addView(this.allSections(mods));
     this.homeLater = Ui.v(this);
     page.addView(this.homeLater);
+  }
+
+  /**
+   * 10.42 (user's picture): the royal home top. A tablet or the website shows the three parts side by side like the picture
+   * (department block, medallion, clock and section tiles); a phone stacks them.
+   */
+  royalHero(today, mine) {
+    const db = this.db;
+    const iso = today.toString();
+    const wide = Base.wide(this);
+    const hero = Ui.v(this);
+    hero.setBackground(new RoyalHome.Space(this, 26, true));
+    hero.setElevation(Ui.dp(this, 6));
+    const pad = Ui.dp(this, wide ? 16 : 12);
+    hero.setPadding(pad, pad, pad, pad);
+    const hp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    hp.setMargins(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 4));
+    hero.setLayoutParams(hp);
+
+    let college = db.setting("college", "Tirunelveli Medical College");
+    // the picture names the college without "Hospital"
+    if (college.endsWith(" Hospital")) college = college.substring(0, college.length - " Hospital".length);
+    const dept = db.setting("dept", "Department of General Medicine");
+    let main = dept.toLowerCase().startsWith("department of ") ? dept.substring("department of ".length) : dept;
+    if (main.toLowerCase().startsWith("general ")) main = main.substring("general ".length);
+    const hod = db.setting("hod", "");
+
+    const left = Ui.v(this);
+    left.setBackground(new RoyalHome.Panel(this, 20, [0xE6121C5E, 0xE60A1240]));
+    left.setPadding(Ui.dp(this, 16), Ui.dp(this, 16), Ui.dp(this, 16), Ui.dp(this, 16));
+    const top = Ui.h(this);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.addView(this.logoTile(wide ? 64 : 56));
+    const col = RoyalHome.goldTv(this, college, wide ? 21 : 17, true);
+    col.setPadding(Ui.dp(this, 14), 0, 0, 0);
+    col.setMaxLines(2);
+    top.addView(col, Ui.weight(1));
+    left.addView(top);
+    const who = Ui.h(this);
+    who.setGravity(Gravity.CENTER_VERTICAL);
+    const ring = new FrameLayout(this);
+    ring.setBackground(new RoyalHome.GemRing());
+    const rs = wide ? 112 : 96;
+    const ps = Math.round(rs * 0.76);
+    const photo = this.hodPhoto(ps);
+    ring.addView(photo, new FrameLayout.LayoutParams(Ui.dp(this, ps), Ui.dp(this, ps), Gravity.CENTER));
+    who.addView(ring, Ui.lp(Ui.dp(this, rs), Ui.dp(this, rs)));
+    const t = Ui.v(this);
+    t.setPadding(Ui.dp(this, 16), 0, 0, 0);
+    const lead = Ui.tv(this, "DEPARTMENT OF", 13, 0xFFE5E7EB, false);
+    lead.setLetterSpacing(0.14);
+    t.addView(lead);
+    const d = Ui.tv(this, main, wide ? 32 : 28, 0xFFFFFFFF, true);
+    d.setShadowLayer(6, 0, 2, 0x99000000);
+    d.setSingleLine(true);
+    t.addView(d);
+    const rule = new View(this);
+    rule.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [0xFFF6DD95, 0xFFC9962E]));
+    t.addView(rule, Ui.lp(Ui.dp(this, 70), Ui.dp(this, 3)));
+    Ui.margins(rule, 0, 6, 0, 8);
+    if (!hod.isEmpty()) {
+      const h = RoyalHome.goldTv(this, hod, wide ? 21 : 18, true);
+      h.setSingleLine(true);
+      t.addView(h);
+    }
+    const hl = Ui.tv(this, "HEAD OF THE DEPARTMENT", 12.5, 0xFFE5E7EB, false);
+    hl.setLetterSpacing(0.1);
+    t.addView(hl);
+    who.addView(t, Ui.weight(1));
+    left.addView(who);
+    Ui.margins(who, 0, 14, 0, 0);
+    const adm = Ui.h(this);
+    adm.setGravity(Gravity.CENTER_VERTICAL);
+    adm.addView(Ui.tv(this, "Admitting today  ", 15, 0xFFE5E7EB, false));
+    const pill = Ui.h(this);
+    pill.setGravity(Gravity.CENTER_VERTICAL);
+    const pb = Ui.round(this, 0xFF3A2E14, 20);
+    pb.setStroke(Ui.dp(this, 1), 0xFFC9962E);
+    pill.setBackground(pb);
+    pill.setPadding(0, 0, Ui.dp(this, 14), 0);
+    const au = [...db.admittingUnits(Dates.dow(Dates.admitDay()))];
+    if (au.length === 0) au.push("—");
+    for (const u of au) {
+      const p = Ui.tv(this, u, 17, 0xFF3A2A08, true);
+      p.setBackground(Ui.gradient(this, [0xFFF8E7AE, 0xFFC9962E], 20));
+      p.setPadding(Ui.dp(this, 14), Ui.dp(this, 4), Ui.dp(this, 14), Ui.dp(this, 4));
+      pill.addView(p);
+    }
+    const daily = Ui.tv(this, "New cases go to Triage · Fever · IMCU", 14, MainActivity.CREAM_TEXT, false);
+    daily.setPadding(Ui.dp(this, 12), 0, 0, 0);
+    pill.addView(daily);
+    adm.addView(pill);
+    const admScroll = Ui.hscroll(this, adm);
+    left.addView(admScroll);
+    Ui.margins(admScroll, 0, 14, 0, 0);
+    const nums = [
+      [String(db.totalInpatients()), "Inpatients"],
+      [String(db.events(Db.ADMIT, iso, iso, null, null)), "Admitted"],
+      [String(db.events(Db.DISCHARGE, iso, iso, null, null)), "Discharged"],
+      [String(db.transfers(iso, iso, null, Db.IMCU)), "To IMCU"],
+      [String(db.transfers(iso, iso, null, Db.CCB)), "To CCB"],
+      [String(db.events(Db.DEATH, iso, iso, null, null)), "Deaths"]];
+    const per = wide ? 6 : 3;
+    let row = null;
+    for (let i = 0; i < nums.length; i++) {
+      if (i % per === 0) {
+        row = Ui.h(this);
+        left.addView(row);
+        Ui.margins(row, 0, i === 0 ? 14 : 8, 0, 0);
+      }
+      const cr = RoyalHome.crystal(this, nums[i][0], nums[i][1]);
+      const lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+      lp.setMargins(Ui.dp(this, 3), 0, Ui.dp(this, 3), 0);
+      row.addView(cr, lp);
+    }
+    left.setOnClickListener(this.opener(LiveCensusActivity));
+
+    const mid = Ui.v(this);
+    mid.setGravity(Gravity.CENTER_HORIZONTAL);
+    mid.addView(RoyalHome.plaque(this, college, wide ? 15 : 17), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    // 10.44 (user): the golden emblem picture in place of the 3D gold circle; tap it to see it large
+    const med = RoyalHome.emblem(this, wide ? 240 : 250);
+    mid.addView(med);
+    Ui.margins(med, 0, 12, 0, 4);
+
+    const right = Ui.v(this);
+    const cd = Ui.h(this);
+    cd.setGravity(Gravity.CENTER);
+    cd.addView(new RoyalHome.Clock(this), Ui.lp(Ui.dp(this, wide ? 120 : 104), Ui.dp(this, wide ? 120 : 104)));
+    const dp = RoyalHome.datePlate(this, today);
+    cd.addView(dp);
+    Ui.margins(dp, 12, 0, 0, 0);
+    right.addView(cd);
+    const tiles = Ui.v(this);
+    tiles.setBackground(new RoyalHome.Panel(this, 20, [0xFF3E8A80, 0xFF2A6B63, 0xFF1F5550]));
+    tiles.setPadding(Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12));
+    const cols = wide ? 5 : 3;
+    // a phone shows three rows of three, so no tile is left alone on a row
+    if (!wide && mine.length > 9) mine = mine.slice(0, 9);
+    let tr = null;
+    for (let i = 0; i < mine.length; i++) {
+      if (i % cols === 0) {
+        tr = Ui.h(this);
+        tiles.addView(tr);
+        if (i > 0) Ui.margins(tr, 0, 8, 0, 0);
+      }
+      const m = mine[i];
+      const tl = RoyalHome.tile(this, m.icon, m.label, MainActivity.badgeOf(m.sub));
+      tl.setOnClickListener({ onClick: (v) => { HomeLayout.tapped(this, m.label); call(m.l, 'onClick', v); } });
+      const lp = new LinearLayout.LayoutParams(0, Ui.dp(this, 100), 1);
+      lp.setMargins(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
+      tr.addView(tl, lp);
+    }
+    if (tr != null) for (let k = mine.length % cols; k > 0 && k < cols; k++) {
+      const lp = new LinearLayout.LayoutParams(0, 1, 1);
+      lp.setMargins(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
+      tr.addView(new View(this), lp);
+    }
+    right.addView(tiles);
+    Ui.margins(tiles, 0, 12, 0, 0);
+
+    if (wide) {
+      const cols3 = Ui.h(this);
+      cols3.setBaselineAligned(false);
+      cols3.setGravity(Gravity.CENTER_VERTICAL);
+      cols3.addView(left, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.15));
+      const mp = new LinearLayout.LayoutParams(Ui.dp(this, 270), ViewGroup.LayoutParams.WRAP_CONTENT);
+      mp.setMargins(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+      cols3.addView(mid, mp);
+      cols3.addView(right, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.2));
+      hero.addView(cols3);
+    } else {
+      hero.addView(mid);
+      hero.addView(left);
+      Ui.margins(left, 0, 12, 0, 0);
+      hero.addView(right);
+      Ui.margins(right, 0, 14, 0, 0);
+    }
+    return hero;
+  }
+
+  /** Two columns side by side (tablet and website), tops aligned. */
+  twoCols(a, b, wa, wb) {
+    const cols = Ui.h(this);
+    cols.setGravity(Gravity.TOP);
+    cols.setBaselineAligned(false);
+    cols.addView(a, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, wa));
+    cols.addView(b, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, wb));
+    return cols;
+  }
+
+  /** One after the other (phone). */
+  stack(a, b) {
+    const s = Ui.v(this);
+    s.addView(a, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    s.addView(b, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    return s;
   }
 
   /** "All sections" (10.18): a search box on top, then eight folders that open in place; "List" shows every folder opened. */
@@ -65041,19 +65503,21 @@ class MainActivity extends Base {
   homeRest(page) {
     const db = this.db;
     const iso = Dates.todayIso();
-    const pinned = db.num("SELECT COUNT(*) FROM notices WHERE until='' OR until IS NULL OR until>=?", iso);
-    if (pinned > 0) {
-      page.addView(Ui.heading(this, "Latest on the board", Ui.AMBER));
-      for (const n of db.rows("SELECT * FROM notices WHERE until='' OR until IS NULL OR until>=? ORDER BY pinned DESC, date DESC, id DESC LIMIT 2", iso))
-        page.addView(this.noticeCard(n, true));
-    }
-
     // 10.30: ward census on a navy panel (user's design): hero with totals and beds, legend, white ward cards
     const bp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
     bp.setMargins(Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 6));
-    page.addView(this.censusPanel(), bp);
+    (this.censusSlot != null ? this.censusSlot : page).addView(this.censusPanel(), bp);
 
-    page.addView(this.scheduleCard()); page.addView(Copyright.footer(this, Ui.MUTED));
+    const board = this.boardSlot != null ? this.boardSlot : page;
+    const pinned = db.num("SELECT COUNT(*) FROM notices WHERE until='' OR until IS NULL OR until>=?", iso);
+    if (pinned > 0) {
+      board.addView(Ui.heading(this, "Latest on the board", Ui.AMBER));
+      for (const n of db.rows("SELECT * FROM notices WHERE until='' OR until IS NULL OR until>=? ORDER BY pinned DESC, date DESC, id DESC LIMIT 2", iso))
+        board.addView(this.noticeCard(n, true));
+    }
+
+    (this.acadSlot != null ? this.acadSlot : page).addView(this.scheduleCard());
+    page.addView(Copyright.footer(this, Ui.MUTED));
   }
 
   /** Today's admissions, with hemophilia and stroke counted separately; opens the admission day screen. */
@@ -65462,24 +65926,24 @@ class MainActivity extends Base {
    * in an emergency, on duty, for paperwork, for teaching, as a PG, with AI, and as HOD. Sections not listed go in the last one.
    */
   static FOLDERS = [
-    ["Wards", "Census", "Live census", "Bed board", "Ward round", "Charts", "Tasks", "Pending results", "Missing notes", "7:30 checklist", "Due soon", "Search",
-      "Triage ward", "Step-down", "TAEI ward", "Fever ward", "Critical care", "IMCU", "ID ward", "Geriatric", "Rheumatology", "Kandiyaperi",
-      "Convict cases", "Obstetric physician", "Rare cases", "Time machine", "Wall screen"],
     ["Emergency", "Code blue", "Protocol timers", "Golden-hour scores", "Critical labs", "Deterioration watch", "Clinical scores", "ABG interpreter",
       "Infusion calculator", "Kidney doses", "ECG reader", "Antibiogram", "Outbreak watch"],
-    ["Duty & team", "DAP register", "Call duty", "Call over", "Handover", "VIP cases", "Intercom", "PG Connect", "Faculty chat", "Notice board",
-      "Calendar", "Phone book", "Faculty", "Students", "Duty hours", "Duty swaps", "Incidents", "Shortages", "Album", "How to use"],
-    ["Paperwork", "Approvals", "Sign-off queue", "PG leave", "Leave register", "Leave calendar", "NMC attendance", "Attendance", "CMCHIS", "DAMA forms", "Consent forms",
-      "Death certificate", "Monthly report", "Reports", "Memo", "Verify a document", "Import file"],
     ["Teaching", "Academic", "Topic of the day", "Learning board", "Daily MCQ", "Live quiz", "Exam cases", "Presentations", "Teaching moments",
       "Virtual rounds", "MBBS theory papers", "MBBS clinical posting", "Latest journals", "Library", "Harrison's topic"],
     ["PG corner", "PG Arena", "Golden Honours", "PG questions", "Flashcards", "University questions", "MD exam planner", "Competency map",
       "Logbook", "Dissertation", "Achievements"],
+    ["Wards", "Census", "Live census", "Bed board", "Ward round", "Charts", "Tasks", "Pending results", "Missing notes", "7:30 checklist", "Due soon", "Search",
+      "Triage ward", "Step-down", "TAEI ward", "Fever ward", "Critical care", "IMCU", "ID ward", "Geriatric", "Rheumatology", "Kandiyaperi",
+      "Convict cases", "Obstetric physician", "Rare cases", "Time machine", "Wall screen"],
+    ["Duty & team", "DAP register", "Call duty", "Call over", "Handover", "VIP cases", "Intercom", "PG Connect", "Faculty chat", "Notice board",
+      "Calendar", "Phone book", "Faculty", "Students", "Duty hours", "Duty swaps", "Incidents", "Shortages", "Album", "How to use"],
+    ["Paperwork", "Approvals", "Sign-off queue", "PG leave", "Leave register", "Leave calendar", "NMC attendance", "Attendance", "CMCHIS", "DAMA forms", "Consent forms",
+      "Death certificate", "Monthly report", "Reports", "Memo", "Verify a document", "Import file"],
     ["AI assistant", "Ask TVMCHMED", "Morning brief", "Department memory", "Viva coach", "Virtual patient", "AI OSCE", "Debate partner", "Wrapped"],
     ["HOD & admin", "HOD desk", "Dashboard", "Clinical audit", "Unit scorecard", "Mortality review", "Conduct reports", "Crash reports"]];
 
   /** One colour per folder, in the order above. */
-  static FOLDER_COLORS = [0xFF0F766E, 0xFFDC2626, 0xFF4F46E5, 0xFFB45309, 0xFF7C3AED, 0xFFCA8A04, 0xFF0891B2, 0xFF334155];
+  static FOLDER_COLORS = [0xFFDC2626, 0xFF7C3AED, 0xFFCA8A04, 0xFF0F766E, 0xFF4F46E5, 0xFFB45309, 0xFF0891B2, 0xFF334155];
 
   /** Bright, distinct colours for the home icons, so neighbours in a row never share a colour. */
   static TILE_COLORS = (() => {
@@ -66170,101 +66634,194 @@ class MainActivity extends Base {
     return Ui.AMBER;
   }
 
+  /** 10.38: a notice card like the user's Notice Board picture (tinted by type, coloured left edge, round icon, date, View pill). */
   noticeCard(n, compact) {
     const db = this.db;
     const cat = Ui.nz(n.get("category")).isEmpty() ? "General" : n.get("category");
-    const color = MainActivity.catColor(cat);
-    const card = Ui.card(this);
+    const color = NoticeDesign.color(cat);
+    const fb = NoticeDesign.frame(this, color);
+    const card = fb[0], inner = fb[1];
+    card.setLayoutParams(NoticeDesign.margins(this, 12, 6, 12, 6));
+    const tap = {
+      onClick: (v) => {
+        if (this.tab === 3) this.open(FormActivity, "kind", "notice", "id", n.get("id"));
+        else this.switchTab(3);
+      }
+    };
     const top = Ui.h(this);
-    top.addView(Ui.softPill(this, cat, color));
+    top.setGravity(Gravity.TOP);
+    top.addView(NoticeDesign.badge(this, NoticeDesign.icon(cat), color, 44));
+    const t = Ui.v(this);
+    t.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 4), 0);
+    const pills = Ui.h(this);
+    pills.addView(Ui.softPill(this, cat, color));
     if ("1" === n.get("pinned")) {
       const pin = Ui.pill(this, "Pinned", Ui.AMBER);
-      top.addView(pin);
+      pills.addView(pin);
       Ui.margins(pin, 6, 0, 0, 0);
     }
-    const sp = new View(this);
-    top.addView(sp, new LinearLayoutParams(0, 1, 1));
-    top.addView(Ui.muted(this, Dates.nice(n.get("date"))));
-    card.addView(top);
-    const title = Ui.tv(this, n.get("title"), 17, Ui.TEXT, true);
-    card.addView(title);
-    Ui.margins(title, 0, 8, 0, 2);
+    t.addView(pills);
+    const title = Ui.tv(this, n.get("title"), 17, NoticeDesign.NAVY, true);
+    t.addView(title);
+    Ui.margins(title, 0, 6, 0, 2);
     if (!Ui.nz(n.get("body")).isEmpty()) {
-      const body = Ui.body(this, n.get("body"));
+      const body = Ui.tv(this, n.get("body"), 14, 0xFF475569, false);
       body.setLineSpacing(0, 1.15);
       if (compact) body.setMaxLines(3);
-      card.addView(body);
+      t.addView(body);
     }
-    if (!Ui.nz(n.get("until")).isEmpty()) card.addView(Ui.muted(this, "Valid till " + Dates.nice(n.get("until"))));
-    const image = Ui.nz(n.get("image"));
-    if (!image.isEmpty() && !compact && Store.isImage(image)) {
-      const f = new File(this.getFilesDir(), image);
+    if (!Ui.nz(n.get("until")).isEmpty()) t.addView(Ui.tv(this, "Valid till " + NoticeDesign.date(n.get("until")), 12, NoticeDesign.MUTED, false));
+    top.addView(t, Ui.weight(1));
+    const more = Ui.tv(this, "⋯", 22, NoticeDesign.MUTED, true);
+    more.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 2), Ui.dp(this, 4));
+    more.setOnClickListener(tap);
+    top.addView(more);
+    inner.addView(top);
+
+    const rel = Ui.nz(n.get("image"));
+    const isImage = !rel.isEmpty() && Store.isImage(rel);
+    if (isImage && !compact) {
+      const f = new File(this.getFilesDir(), rel);
       const bm = Ui.loadScaled(f, 900);
       if (bm != null) {
         const iv = new ImageView(this);
         iv.setImageBitmap(bm);
         iv.setAdjustViewBounds(true);
         iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        card.addView(iv, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        inner.addView(iv, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         Ui.margins(iv, 0, 10, 0, 0);
         iv.setOnClickListener({
           onClick: (v) => { Ui.showImage(this, f); }
         });
       }
-    } else if (!image.isEmpty() && Store.isImage(image)) {
-      card.addView(Ui.tv(this, "📎 Image attached", 12, color, true));
     }
-    if (!image.isEmpty() && !Store.isImage(image)) {
-      const att = Ui.tv(this, "📎 Open attached " + Store.kindLabel(image), 13, color, true);
-      att.setPadding(0, Ui.dp(this, 8), 0, 0);
-      const rel = image;
-      att.setOnClickListener({
+    // date, then the attachment line with its View pill
+    const foot = Ui.h(this);
+    foot.setGravity(Gravity.CENTER_VERTICAL);
+    foot.setPadding(Ui.dp(this, 56), Ui.dp(this, 10), 0, 0);
+    const cal = new ImageView(this);
+    cal.setImageResource(R.drawable.ic_calendar);
+    cal.setColorFilter(NoticeDesign.MUTED);
+    foot.addView(cal, Ui.lp(Ui.dp(this, 15), Ui.dp(this, 15)));
+    const d = Ui.tv(this, NoticeDesign.date(n.get("date")), 13, NoticeDesign.MUTED, false);
+    d.setPadding(Ui.dp(this, 6), 0, 0, 0);
+    d.setSingleLine(true);
+    foot.addView(d, Ui.weight(1));
+    if (!rel.isEmpty()) {
+      const view = {
         onClick: (v) => {
           if (!db.file(rel).exists()) { Ui.toast(this, "Still downloading. Try again in a moment."); return; }
-          this.open(ViewerActivity, "file", rel, "title", n.get("title"));
+          if (Store.isImage(rel)) Ui.showImage(this, db.file(rel));
+          else this.open(ViewerActivity, "file", rel, "title", n.get("title"));
         }
-      });
-      card.addView(att);
-    }
-    Ui.ripple(card, Ui.alpha(color, 0x1A));
-    card.setOnClickListener({
-      onClick: (v) => {
-        if (this.tab === 3) this.open(FormActivity, "kind", "notice", "id", n.get("id"));
-        else this.switchTab(3);
+      };
+      const kind = isImage ? "photo" : Store.kindLabel(rel);
+      if (!compact && Base.wide(this)) {
+        const att = Ui.tv(this, "📎 Open attached " + kind, 13, color, true);
+        att.setOnClickListener(view);
+        foot.addView(att);
+        Ui.margins(att, 0, 0, 10, 0);
       }
-    });
+      foot.addView(NoticeDesign.viewPill(this, "View " + kind, color, view));
+    }
+    inner.addView(foot);
+    Ui.ripple(card, Ui.alpha(color, 0x1A));
+    card.setOnClickListener(tap);
     return card;
   }
 
   board(page) {
     const db = this.db;
-    const cats = new Array(Db.NOTICE_CATS.length + 1).fill(null);
-    cats[0] = "ALL";
-    System.arraycopy(Db.NOTICE_CATS, 0, cats, 1, Db.NOTICE_CATS.length);
-    const chips = Ui.h(this);
-    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
-    for (const c of cats) {
-      const ch = Ui.chip(this, "ALL" === c ? "All" : c, c === this.nCat, "ALL" === c ? Ui.PRIMARY : MainActivity.catColor(c));
-      ch.setOnClickListener({
-        onClick: (v) => { this.nCat = c; this.render(); }
-      });
-      chips.addView(ch);
-    }
-    page.addView(Ui.hscroll(this, chips));
+    const wide = Base.wide(this);
     const iso = Dates.todayIso();
-    const filter = "ALL" === this.nCat ? "" : " AND category=?";
-    const a1 = "ALL" === this.nCat ? [iso] : [iso, this.nCat];
+    page.addView(NoticeDesign.header(this));
+    const search = this.nSearch = NoticeDesign.search(this, this.nQuery);
+    page.addView(search, NoticeDesign.margins(this, 14, 8, 14, 6));
+    const live = "(until='' OR until IS NULL OR until>=?)";
+    const all = db.num("SELECT COUNT(*) FROM notices WHERE " + live, iso);
+    const week = LocalDate.now().minusDays(6).toString();
+    this.nList = Ui.v(this);
+    if (wide) {
+      const side = Ui.v(this);
+      side.setPadding(0, Ui.dp(this, 6), Ui.dp(this, 14), 0);
+      const quick = NoticeDesign.panel(this, "Quick filters");
+      quick.addView(NoticeDesign.filterRow(this, "All", all, NoticeDesign.NAVY, "ALL" === this.nCat, this.boardFilter("ALL")));
+      for (const c of Db.NOTICE_CATS)
+        quick.addView(NoticeDesign.filterRow(this, c, db.num("SELECT COUNT(*) FROM notices WHERE " + live + " AND category=?", iso, c), NoticeDesign.color(c), c === this.nCat, this.boardFilter(c)));
+      side.addView(quick);
+      const wk = this.weekPanel(week);
+      side.addView(wk);
+      Ui.margins(wk, 0, 12, 0, 0);
+      page.addView(this.twoCols(this.nList, side, 2.3, 1));
+    } else {
+      const chips = Ui.h(this);
+      chips.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 4));
+      chips.addView(NoticeDesign.chip(this, "All", all, NoticeDesign.NAVY, "ALL" === this.nCat, this.boardFilter("ALL")));
+      for (const c of Db.NOTICE_CATS)
+        chips.addView(NoticeDesign.chip(this, c, db.num("SELECT COUNT(*) FROM notices WHERE " + live + " AND category=?", iso, c), NoticeDesign.color(c), c === this.nCat, this.boardFilter(c)));
+      page.addView(Ui.hscroll(this, chips));
+      page.addView(this.nList);
+      page.addView(this.weekPanel(week), NoticeDesign.margins(this, 12, 14, 12, 0));
+    }
+    this.fillBoard();
+    search.addTextChangedListener({
+      beforeTextChanged: () => {},
+      onTextChanged: () => {},
+      afterTextChanged: (e) => {
+        this.nQuery = e.toString().trim();
+        this.fillBoard();
+      }
+    });
+    page.addView(NoticeDesign.footer(this));
+  }
+
+  boardFilter(c) {
+    return {
+      onClick: (v) => { this.nCat = c; this.render(); }
+    };
+  }
+
+  /** "This week": notices dated in the last 7 days, by type. */
+  weekPanel(since) {
+    const p = NoticeDesign.panel(this, "This week");
+    for (const c of Db.NOTICE_CATS)
+      p.addView(NoticeDesign.weekRow(this, c, this.db.num("SELECT COUNT(*) FROM notices WHERE date>=? AND category=?", since, c), NoticeDesign.color(c)));
+    return p;
+  }
+
+  fillBoard() {
+    if (this.nList == null) return;
+    const db = this.db;
+    this.nList.removeAllViews();
+    const iso = Dates.todayIso();
+    let filter = "ALL" === this.nCat ? "" : " AND category=?";
+    const a1 = [iso];
+    if ("ALL" !== this.nCat) a1.push(this.nCat);
+    if (!this.nQuery.isEmpty()) {
+      filter += " AND (title LIKE ? OR body LIKE ?)";
+      a1.push("%" + this.nQuery + "%");
+      a1.push("%" + this.nQuery + "%");
+    }
     const current = db.rows("SELECT * FROM notices WHERE (until='' OR until IS NULL OR until>=?)" + filter + " ORDER BY pinned DESC, date DESC, id DESC", a1);
     const old = db.rows("SELECT * FROM notices WHERE until<>'' AND until<?" + filter + " ORDER BY date DESC, id DESC LIMIT 50", a1);
-    page.addView(Ui.heading(this, "Current", Ui.AMBER));
-    if (current.isEmpty()) page.addView(this.emptyNote("No notices yet. Tap “+ Post” to put up a duty roster, class roster or order."));
-    for (const n of current) page.addView(this.noticeCard(n, false));
+    this.nList.addView(PatientDesign.heading(this, "Current notices", String(current.size())));
+    if (current.isEmpty()) this.nList.addView(this.emptyNote(this.nQuery.isEmpty() ? "No notices yet. Tap “+ Post” to put up a duty roster, class roster or order." : "No notice matches “" + this.nQuery + "”."));
+    // tablet and website: the first two full width, the rest two to a row (like the picture)
+    const wide = Base.wide(this);
+    for (let i = 0; i < current.size(); i++) {
+      if (!wide || i < 2 || i + 1 >= current.size()) { this.nList.addView(this.noticeCard(current.get(i), false)); continue; }
+      const a = this.noticeCard(current.get(i), true), b = this.noticeCard(current.get(i + 1), true);
+      this.nList.addView(this.twoCols(a, b, 1, 1));
+      Ui.margins(a, 12, 6, 6, 6);
+      Ui.margins(b, 6, 6, 12, 6);
+      i++;
+    }
     if (!old.isEmpty()) {
-      page.addView(Ui.heading(this, "Expired", Ui.MUTED));
+      this.nList.addView(PatientDesign.heading(this, "Expired", String(old.size())));
       for (const n of old) {
         const v = this.noticeCard(n, true);
         v.setAlpha(0.6);
-        page.addView(v);
+        this.nList.addView(v);
       }
     }
   }
@@ -71061,6 +71618,185 @@ class NmcAttendanceActivity extends Base {
   }
 }
 ;
+/* ---- app/NoticeDesign.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.38 (user sent a "Notice Board" picture): megaphone header with a search box, notice cards tinted by type with a coloured
+ * left edge, a round icon, the type pill, date and a "View PDF" pill, Quick filters with counts and a This week panel.
+ */
+class NoticeDesign {
+  static NAVY = 0xFF0B1F4D; static MUTED = 0xFF64748B;
+
+  static color(cat) {
+    if (cat.startsWith("Duty")) return 0xFF2563EB;
+    if (cat.startsWith("Class")) return 0xFF7C3AED;
+    if (cat.startsWith("Order")) return 0xFFDC2626;
+    if (cat.startsWith("Meeting")) return 0xFF0D9488;
+    return 0xFFEA580C;
+  }
+
+  static icon(cat) {
+    if (cat.startsWith("Duty")) return R.drawable.ic_calendar;
+    if (cat.startsWith("Class")) return R.drawable.ic_school;
+    if (cat.startsWith("Order")) return R.drawable.ic_doc;
+    if (cat.startsWith("Meeting")) return R.drawable.ic_group;
+    return R.drawable.ic_notice;
+  }
+
+  /** yyyy-MM-dd as dd-MM-yyyy. */
+  static date(iso) {
+    const s = Ui.nz(iso);
+    if (s.length < 10) return s;
+    return s.substring(8, 10) + "-" + s.substring(5, 7) + "-" + s.substring(0, 4);
+  }
+
+  /** A white glyph on a round gradient of the colour. */
+  static badge(c, icon, color, sizeDp) {
+    const iv = new ImageView(c);
+    iv.setImageResource(icon);
+    iv.setColorFilter(Color.WHITE);
+    const g = Ui.gradient(c, [Ui.mix(color, Color.WHITE, 0.25), Ui.mix(color, 0xFF000000, 0.15)], 0);
+    g.setShape(GradientDrawable.OVAL);
+    iv.setBackground(g);
+    const p = Ui.dp(c, sizeDp / 4);
+    iv.setPadding(p, p, p, p);
+    iv.setLayoutParams(Ui.lp(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
+    return iv;
+  }
+
+  static margins(c, l, t, r, b) {
+    const p = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    p.setMargins(Ui.dp(c, l), Ui.dp(c, t), Ui.dp(c, r), Ui.dp(c, b));
+    return p;
+  }
+
+  /** Megaphone badge, "Notice Board" and the motto. */
+  static header(c) {
+    const row = Ui.h(c);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(Ui.dp(c, 18), Ui.dp(c, 14), Ui.dp(c, 18), Ui.dp(c, 6));
+    row.addView(NoticeDesign.badge(c, R.drawable.ic_notice, 0xFF1E40AF, 54));
+    const t = Ui.v(c);
+    t.setPadding(Ui.dp(c, 14), 0, 0, 0);
+    t.addView(Ui.tv(c, "Notice Board", 26, NoticeDesign.NAVY, true));
+    t.addView(Ui.tv(c, "Stay informed • Stay connected • Stay ahead", 13, NoticeDesign.MUTED, false));
+    row.addView(t, Ui.weight(1));
+    return row;
+  }
+
+  /** A white rounded search field. */
+  static search(c, text) {
+    const e = new EditText(c);
+    e.setHint("🔍  Search notices...");
+    e.setSingleLine(true);
+    e.setText(text);
+    e.setTextSize(15);
+    e.setBackground(Ui.outline(c, Color.WHITE, 0xFFE2E8F0, 14));
+    e.setPadding(Ui.dp(c, 16), Ui.dp(c, 11), Ui.dp(c, 16), Ui.dp(c, 11));
+    return e;
+  }
+
+  /** A filter row for the Quick filters panel: dot, name, count; filled when chosen. */
+  static filterRow(c, label, count, color, on, l) {
+    const r = Ui.h(c);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(c, 12), Ui.dp(c, 9), Ui.dp(c, 10), Ui.dp(c, 9));
+    r.setBackground(Ui.round(c, on ? Ui.alpha(color, 0x1F) : 0x00FFFFFF, 12));
+    const dot = new View(c);
+    const d = Ui.round(c, color, 0);
+    d.setShape(GradientDrawable.OVAL);
+    dot.setBackground(d);
+    r.addView(dot, Ui.lp(Ui.dp(c, 10), Ui.dp(c, 10)));
+    const t = Ui.tv(c, label, 14, on ? color : 0xFF1F2937, on);
+    t.setPadding(Ui.dp(c, 10), 0, 0, 0);
+    r.addView(t, Ui.weight(1));
+    r.addView(NoticeDesign.countPill(c, count, color));
+    r.setOnClickListener(l);
+    r.setClickable(true);
+    return r;
+  }
+
+  /** A chip for the phone's filter strip: name and count. */
+  static chip(c, label, count, color, on, l) {
+    const t = Ui.tv(c, label + "  " + count, 13, on ? Color.WHITE : color, true);
+    t.setPadding(Ui.dp(c, 14), Ui.dp(c, 7), Ui.dp(c, 14), Ui.dp(c, 7));
+    t.setBackground(on ? Ui.round(c, color, 18) : Ui.outline(c, Ui.alpha(color, 0x12), Ui.alpha(color, 0x55), 18));
+    const p = Ui.lp(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    p.setMargins(0, 0, Ui.dp(c, 8), 0);
+    t.setLayoutParams(p);
+    t.setOnClickListener(l);
+    return t;
+  }
+
+  static countPill(c, n, color) {
+    const t = Ui.tv(c, String(n), 12, color, true);
+    t.setGravity(Gravity.CENTER);
+    t.setMinWidth(Ui.dp(c, 28));
+    t.setPadding(Ui.dp(c, 8), Ui.dp(c, 2), Ui.dp(c, 8), Ui.dp(c, 2));
+    t.setBackground(Ui.round(c, Ui.alpha(color, 0x22), 10));
+    return t;
+  }
+
+  /** A white side panel with a title (Quick filters, This week). */
+  static panel(c, title) {
+    const p = Ui.v(c);
+    p.setBackground(Ui.outline(c, Color.WHITE, 0xFFE2E8F0, 18));
+    p.setPadding(Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 10));
+    const t = Ui.tv(c, title, 16, NoticeDesign.NAVY, true);
+    t.setPadding(Ui.dp(c, 8), 0, 0, Ui.dp(c, 6));
+    p.addView(t);
+    return p;
+  }
+
+  /** This week: one line per type with its count. */
+  static weekRow(c, label, count, color) {
+    const r = Ui.h(c);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(c, 8), Ui.dp(c, 7), Ui.dp(c, 8), Ui.dp(c, 7));
+    r.addView(NoticeDesign.badge(c, NoticeDesign.icon(label), color, 30));
+    const t = Ui.tv(c, label, 14, 0xFF1F2937, false);
+    t.setPadding(Ui.dp(c, 10), 0, 0, 0);
+    r.addView(t, Ui.weight(1));
+    r.addView(Ui.tv(c, String(count), 18, color, true));
+    return r;
+  }
+
+  /** The card frame: tinted, rounded, with the coloured left edge; returns [frame, body]. */
+  static frame(c, color) {
+    const f = Ui.h(c);
+    f.setBaselineAligned(false);
+    const bg = Ui.outline(c, Ui.mix(color, Color.WHITE, 0.94), Ui.alpha(color, 0x40), 16);
+    f.setBackground(bg);
+    const edge = new View(c);
+    edge.setBackground(Ui.round(c, color, 3));
+    const ep = new LinearLayout.LayoutParams(Ui.dp(c, 5), ViewGroup.LayoutParams.MATCH_PARENT);
+    ep.setMargins(0, Ui.dp(c, 10), 0, Ui.dp(c, 10));
+    f.addView(edge, ep);
+    const body = Ui.v(c);
+    body.setPadding(Ui.dp(c, 12), Ui.dp(c, 14), Ui.dp(c, 14), Ui.dp(c, 12));
+    f.addView(body, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+    return [f, body];
+  }
+
+  /** The coloured "View PDF ›" pill. */
+  static viewPill(c, label, color, l) {
+    const t = Ui.tv(c, label + "  ›", 13, Color.WHITE, true);
+    t.setPadding(Ui.dp(c, 14), Ui.dp(c, 6), Ui.dp(c, 12), Ui.dp(c, 6));
+    t.setBackground(Ui.round(c, color, 16));
+    t.setOnClickListener(l);
+    return t;
+  }
+
+  static footer(c) {
+    const t = Ui.tv(c, "SCIENCE • SERVICE • HUMANITY", 12, 0xFF94A3B8, true);
+    t.setLetterSpacing(0.18);
+    t.setGravity(Gravity.CENTER);
+    t.setPadding(0, Ui.dp(c, 18), 0, Ui.dp(c, 6));
+    return t;
+  }
+}
+;
 /* ---- app/Notify.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -73235,6 +73971,120 @@ class PatientPick {
   }
 }
 ;
+/* ---- app/PatientRowDesign.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.39 (user sent a "Female patients" list picture): white patient cards with a coloured left edge, the name and age in bold,
+ * an IP chip, Adm date and diagnosis lines with icons, and on the right a big ward pill, "Parent : M5" and the action button.
+ */
+class PatientRowDesign {
+  static NAVY = 0xFF0B1F4D; static TEXT = 0xFF334155; static LINE = 0xFFE5E7EB;
+
+  static placeIcon(loc) {
+    if (Db.FEVER === loc) return R.drawable.ic_fever;
+    if (Db.IMCU === loc || Db.CCB === loc) return R.drawable.ic_heart;
+    if (Db.TRIAGE === loc) return R.drawable.ic_warn;
+    if (Db.STEPDOWN === loc) return R.drawable.ic_trend;
+    if (Db.IDW === loc) return R.drawable.ic_shield;
+    return R.drawable.ic_bed;
+  }
+
+  /** The big ward pill: "Fever", "IMCU", "M3 ward", "Kandiyaperi"; Died / Discharged keep their old pills. */
+  static placePill(c, p) {
+    const st = p.get("status");
+    if (Db.DIED === st || Db.DISCHARGED === st) return Base.statusPill(c, p);
+    const loc = Ui.nz(p.get("location"));
+    const color = Ui.unitColor(loc);
+    const label = Db.isSpecial(loc) ? Db.shortName(loc) : Db.KDP === loc ? "Kandiyaperi" : loc + " ward";
+    const pill = Ui.h(c);
+    pill.setGravity(Gravity.CENTER);
+    pill.setPadding(Ui.dp(c, 12), Ui.dp(c, 6), Ui.dp(c, 14), Ui.dp(c, 6));
+    pill.setBackground(Ui.gradient(c, [Ui.mix(color, Color.WHITE, 0.45), Ui.mix(color, Color.WHITE, 0.25)], 18));
+    const ink = Ui.mix(color, 0xFF000000, 0.55);
+    const iv = new ImageView(c);
+    iv.setImageResource(PatientRowDesign.placeIcon(loc));
+    iv.setColorFilter(ink);
+    pill.addView(iv, Ui.lp(Ui.dp(c, 18), Ui.dp(c, 18)));
+    const t = Ui.tv(c, label, 15, ink, true);
+    t.setPadding(Ui.dp(c, 6), 0, 0, 0);
+    t.setMaxLines(1);
+    pill.addView(t);
+    return pill;
+  }
+
+  /** "Parent : M5" under the ward pill of a special ward. */
+  static soft(c, s) {
+    const t = Ui.tv(c, s, 12, PatientRowDesign.NAVY, false);
+    t.setGravity(Gravity.CENTER);
+    t.setPadding(Ui.dp(c, 12), Ui.dp(c, 3), Ui.dp(c, 12), Ui.dp(c, 3));
+    t.setBackground(Ui.round(c, 0xFFE3ECFA, 12));
+    return t;
+  }
+
+  /** The IP number (and bed) chip with the id-card icon. */
+  static chip(c, icon, s) {
+    const r = Ui.h(c);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(c, 10), Ui.dp(c, 4), Ui.dp(c, 12), Ui.dp(c, 4));
+    r.setBackground(Ui.round(c, 0xFFE3ECFA, 14));
+    const iv = new ImageView(c);
+    iv.setImageResource(icon);
+    iv.setColorFilter(PatientRowDesign.NAVY);
+    r.addView(iv, Ui.lp(Ui.dp(c, 16), Ui.dp(c, 16)));
+    const t = Ui.tv(c, s, 14, PatientRowDesign.NAVY, false);
+    t.setPadding(Ui.dp(c, 8), 0, 0, 0);
+    t.setSingleLine(true);
+    r.addView(t);
+    return r;
+  }
+
+  /** An icon and a line of text (Adm date, diagnosis). */
+  static line(c, icon, s, maxLines) {
+    const r = Ui.h(c);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(0, Ui.dp(c, 4), 0, 0);
+    const iv = new ImageView(c);
+    iv.setImageResource(icon);
+    iv.setColorFilter(0xFF475569);
+    r.addView(iv, Ui.lp(Ui.dp(c, 16), Ui.dp(c, 16)));
+    const t = Ui.tv(c, s, 14, PatientRowDesign.TEXT, false);
+    t.setPadding(Ui.dp(c, 8), 0, 0, 0);
+    t.setMaxLines(maxLines);
+    t.setEllipsize(TextUtils.TruncateAt.END);
+    r.addView(t, Ui.weight(1));
+    return r;
+  }
+
+  static hLine(c) {
+    const v = new View(c);
+    v.setBackgroundColor(PatientRowDesign.LINE);
+    const p = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 1);
+    p.setMargins(0, Ui.dp(c, 8), 0, Ui.dp(c, 4));
+    v.setLayoutParams(p);
+    return v;
+  }
+
+  static vLine(c) {
+    const v = new View(c);
+    v.setBackgroundColor(PatientRowDesign.LINE);
+    const p = new LinearLayout.LayoutParams(1, ViewGroup.LayoutParams.MATCH_PARENT);
+    p.setMargins(Ui.dp(c, 10), Ui.dp(c, 14), Ui.dp(c, 10), Ui.dp(c, 14));
+    v.setLayoutParams(p);
+    return v;
+  }
+
+  /** The red "+ Mark dengue" style button at the bottom of the right column. */
+  static action(c, label, color, l) {
+    const t = Ui.tv(c, label, 13, Color.WHITE, true);
+    t.setGravity(Gravity.CENTER);
+    t.setPadding(Ui.dp(c, 12), Ui.dp(c, 7), Ui.dp(c, 12), Ui.dp(c, 7));
+    t.setBackground(Ui.gradient(c, [Ui.mix(color, Color.WHITE, 0.12), Ui.mix(color, 0xFF000000, 0.12)], 16));
+    t.setOnClickListener(l);
+    return t;
+  }
+}
+;
 /* ---- app/PatientTimeline.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -74726,7 +75576,7 @@ class PgConnectActivity extends Base {
  * person, submits it in the medicine office and uploads the signed letter here. The HOD step of 9.00 is no longer in the app.
  */
 class PgLeaveActivity extends Base {
-  constructor() { super(); this.filter = 0; }
+  constructor() { super(); this.filter = 1; this.mine = false; this.apType = ""; this.apFrom = ""; this.apTo = ""; this.apReason = ""; this.apDoc = ""; this.apDocName = ""; this.apDuty = ""; this.finalFor = ""; this.opened = false; this.attach = null; this.listAnchor = null; this.jump = false; }
 
   static LEVELS = ["ap", "prof", "nodal", "hod"];
   static LEVEL_NAMES = ["Assistant Professor (any one)", "Unit Chief", "Leave nodal officer (Dr. S. Rajkumar)", "HOD"];
@@ -74735,7 +75585,7 @@ class PgLeaveActivity extends Base {
   /** The steps approved in the app: the Assistant Professor, the unit chief and the leave nodal officer. */
   static APP_STEPS = 3;
   static NEXT = "Approved in the app. Next: download the form, sign it with the doing-duty PG, get the HOD's signature in person, submit it in the medicine office and upload the signed letter here.";
-  static FILTERS = ["Awaiting approval", "Approved", "Not approved", "All"];
+  static FILTERS = ["All", "Awaiting Approval", "Approved", "History"];
 
   onCreate(b) {
     super.onCreate(b);
@@ -74743,6 +75593,21 @@ class PgLeaveActivity extends Base {
     this.subtitle = "Leave letters and approvals";
     this.headerColor(Ui.PURPLE);
     this.headerAction("+ Apply", this.opener(PgLeaveFormActivity));
+    this.attach = new Attach(this, PgLeaveActivity.REQ_DOC);
+    if (b != null) {
+      this.apType = Ui.nz(b.getString("ap_type"));
+      this.apFrom = Ui.nz(b.getString("ap_from"));
+      this.apTo = Ui.nz(b.getString("ap_to"));
+      this.apReason = Ui.nz(b.getString("ap_reason"));
+      this.apDoc = Ui.nz(b.getString("ap_doc"));
+      this.apDocName = Ui.nz(b.getString("ap_doc_name"));
+      this.apDuty = Ui.nz(b.getString("ap_duty"));
+      this.finalFor = Ui.nz(b.getString("final_for"));
+      this.filter = b.getInt("filter", this.filter);
+      this.mine = b.getBoolean("mine", this.mine);
+      this.attach.restore(b);
+    }
+    this.attach.onAdded(this.docAdded());
   }
 
   /**
@@ -74778,174 +75643,957 @@ class PgLeaveActivity extends Base {
     return false;
   }
 
-  // 10.32: the look of the user's PG Leave picture: navy banner with a gold title, a blue-violet stats panel,
-  // a gradient apply button, counted filter chips, and leave cards with the approval steps side by side.
-
+  // 10.42: the look of the user's second PG leave picture: a navy header with "Postgraduate Leave" in gold and a faint
+  // caduceus, Applied / Create New Request buttons, gold-framed numbers, the Leave Journey with glowing steps, a navy
+  // START NEW APPLICATION button, counted chips (All, Awaiting Approval, Approved, History), "All caught up!" when nothing
+  // waits, and a gold "Together We Serve" band fixed at the bottom.
   static NAVY = 0xFF0A1A4A;
   static GOLD = 0xFFF5C451;
   static INDIGO = 0xFF4F46E5;
   static VIOLET = 0xFF7C3AED;
   static LAVENDER = 0xFFF1EEFF;
-  static FILTER_ICONS = ["⏱", "✓", "✕", "☰"];
+  static INK = 0xFF1B2160;
+  static SHEET = 0xFF2B3486;
+  static GOLD_DEEP = 0xFFB07D1E;
+  static GOLD_SOFT = 0xFFE9C46A;
+  static NODE_NAMES = ["Asst. Prof", "Unit Chief", "Nodal Officer", "HOD"];
+  static NODE_ICONS = null;
+
+  static $clinit() {
+    PgLeaveActivity.NODE_ICONS = [R.drawable.ic_people, R.drawable.ic_clipboard, R.drawable.ic_verified, R.drawable.ic_shield];
+  }
+
+  /** Which chip a leave falls under: 0 All, 1 Awaiting approval, 2 Approved (not yet over), 3 History (over, or not approved). */
+  static inFilter(r, f, iso) {
+    if (f === 0) return true;
+    const o = PgLeaveActivity.overall(r);
+    const over = iso.compareTo(Ui.nz(r.get("to_date"))) > 0;
+    if (f === 1) return o.equals("Awaiting approval");
+    if (f === 2) return o.equals("Approved") && !over;
+    return o.equals("Not approved") || (o.equals("Approved") && over);
+  }
+
+  // 10.45: the user's third PG leave picture. The top (TVMCHMED header, the bell, the profile ring and the "PG Leave · Apply ·
+  // Track · Manage" banner) and the bottom band ("Work Smart... Take Care... Serve Better...") are the picture itself; on them sit
+  // a back arrow, the bell (tap: what waits for me, red count) and the profile ring (tap: only my leave). Between them: the
+  // "Apply for Leave" card, "My Leave Dashboard" and the leave list with its chips.
+  static REQ_DOC = 9450;
+  static REQ_FINAL_FILE = 9460;
+  static REQ_FINAL_PIC = 9461;
+  static MAX_DOC = 5 * 1024 * 1024;
+  static FIELD_TEXT = 0xFF1B2348;
+  static HINT = 0xFF6B7393;
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    out.putString("ap_type", this.apType);
+    out.putString("ap_from", this.apFrom);
+    out.putString("ap_to", this.apTo);
+    out.putString("ap_reason", this.apReason);
+    out.putString("ap_doc", this.apDoc);
+    out.putString("ap_doc_name", this.apDocName);
+    out.putString("ap_duty", this.apDuty);
+    out.putString("final_for", this.finalFor);
+    out.putInt("filter", this.filter);
+    out.putBoolean("mine", this.mine);
+    if (this.attach != null) this.attach.save(out);
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    const P = PgLeaveActivity;
+    if (req === P.REQ_FINAL_FILE || req === P.REQ_FINAL_PIC) {
+      if (res !== RESULT_OK || data == null || data.getData() == null || this.finalFor.isEmpty()) return;
+      try {
+        const rel = Store.importUri(this, data.getData(), "leaves", "letter");
+        const r = this.db.row("SELECT letter FROM pg_leaves WHERE id=?", this.finalFor);
+        if (r == null) return;
+        const old = Ui.nz(r.get("letter"));
+        if (!old.isEmpty() && !old.equals(rel)) this.db.forgetFile(old);
+        const cv = new ContentValues();
+        cv.put("letter", rel);
+        this.db.update("pg_leaves", cv, Long.parseLong(this.finalFor));
+        Ui.toast(this, "Finalised leave application uploaded");
+      } catch (e) {
+        Ui.toast(this, "Could not upload: " + (e.getMessage ? e.getMessage() : e));
+      }
+      this.finalFor = "";
+      this.render();
+      return;
+    }
+    if (this.attach != null) this.attach.result(req, res, data);
+  }
+
+  /** The supporting document is kept until the leave is sent; over 5 MB it is refused, as the card says. */
+  docAdded() {
+    return {
+      added: (rel, name, pdf) => {
+        const f = this.db.file(rel);
+        if (f.length() > PgLeaveActivity.MAX_DOC) {
+          f.delete();
+          Ui.toast(this, "That file is over 5 MB. Choose a smaller one, or snap a photo.");
+          return;
+        }
+        if (!this.apDoc.isEmpty()) this.db.forgetFile(this.apDoc);
+        this.apDoc = rel;
+        this.apDocName = name;
+        this.render();
+      }
+    };
+  }
+
+  /** The width the page is drawn at: the screen's width, or a centred 720 dp column on a tablet or computer. */
+  pageWidth() {
+    // 10.47 (user asked): the page fills the whole width on tablets as well as phones
+    return this.getResources().getDisplayMetrics().widthPixels;
+  }
 
   render() {
-    this.pageBg = 0xFFF4F5FB;
-    let page = Ui.v(this);
-    let iso = Dates.todayIso();
-    let all = this.db.rows("SELECT l.*, s.name, s.unit FROM pg_leaves l LEFT JOIN staff s ON s.id=l.staff_id ORDER BY l.from_date DESC, l.id DESC");
-    let waiting = 0, today = 0;
-    let atLevel = new Array(PgLeaveActivity.LEVELS.length).fill(0);
-    let counts = new Array(PgLeaveActivity.FILTERS.length).fill(0);
+    const P = PgLeaveActivity;
+    this.pageBg = 0xFFDCE6F7;
+    const me = Cloud.myStaff(this);
+    const outer = Ui.v(this);
+    outer.setGravity(Gravity.CENTER_HORIZONTAL);
+    outer.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFEAF1FC, 0xFFD3E1F6, 0xFF8FAEE0]));
+    const w = this.pageWidth();
+    const page = Ui.v(this);
+    outer.addView(page, Ui.lp(w, ViewGroup.LayoutParams.WRAP_CONTENT));
+    Ui.margins(page, 0, -8, 0, 0);
+    page.getLayoutParams().width = w;
+    const iso = Dates.todayIso();
+    const all = this.db.rows("SELECT l.*, s.name, s.unit FROM pg_leaves l LEFT JOIN staff s ON s.id=l.staff_id ORDER BY l.from_date DESC, l.id DESC");
+    let forMe = 0;
     for (const r of all) {
-      let o = PgLeaveActivity.overall(r);
-      for (let i = 0; i < 3; i++) if (o.equals(PgLeaveActivity.FILTERS[i])) counts[i]++;
-      if (o.equals("Awaiting approval")) {
-        waiting++;
-        for (let i = 0; i < PgLeaveActivity.APP_STEPS; i++) if ("Approved" !== PgLeaveActivity.status(r, i)) { atLevel[i]++; break; }
-      }
-      if (o.equals("Approved") && iso.compareTo(r.get("from_date")) >= 0 && iso.compareTo(r.get("to_date")) <= 0) today++;
+      const c = P.current(r);
+      if (c >= 0 && Cloud.active(this) && P.canApprove(this, c)) forMe++;
     }
-    counts[3] = all.size();
-    page.addView(this.banner());
+    const everyone = all.slice();
+    if (this.mine) {
+      for (let i = all.length - 1; i >= 0; i--) if (String(me) !== Ui.nz(all[i].get("staff_id"))) all.splice(i, 1);
+    }
+    const counts = new Array(P.FILTERS.length).fill(0);
+    for (const r of all) for (let i = 0; i < P.FILTERS.length; i++) if (P.inFilter(r, i, iso)) counts[i]++;
 
-    let stats = Ui.v(this);
-    stats.setBackground(Ui.gradient(this, [0xFF2563EB, PgLeaveActivity.INDIGO, PgLeaveActivity.VIOLET], 20));
-    stats.setElevation(Ui.dp(this, 4));
-    stats.setPadding(Ui.dp(this, 10), Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 14));
-    let row = Ui.h(this);
-    row.addView(this.stat(R.drawable.ic_doc, String(today), "PGs on leave today"), Ui.weight(1));
-    row.addView(this.vline(0x4DFFFFFF), Ui.lp(Ui.dp(this, 1), Ui.dp(this, 70)));
-    row.addView(this.stat(R.drawable.ic_calendar, String(waiting), "Awaiting approval"), Ui.weight(1));
-    row.addView(this.vline(0x4DFFFFFF), Ui.lp(Ui.dp(this, 1), Ui.dp(this, 70)));
-    row.addView(this.stat(R.drawable.ic_clipboard, String(all.size()), "Applications"), Ui.weight(1));
-    stats.addView(row);
-    let rule = this.vline(0x40FFFFFF);
-    stats.addView(rule, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 1)));
-    Ui.margins(rule, 8, 14, 8, 10);
-    let wl = Ui.h(this);
-    wl.setGravity(Gravity.CENTER);
-    wl.addView(this.icon(R.drawable.ic_people, 0xFFFFFFFF, 16));
-    let w = Ui.tv(this, "Waiting with: Asst.\u00A0Professor\u00A0" + atLevel[0] + "  •  Unit\u00A0chief\u00A0" + atLevel[1] + "  •  Nodal\u00A0officer\u00A0" + atLevel[2], 12, 0xF2FFFFFF, true);
-    w.setGravity(Gravity.CENTER);
-    wl.addView(w);
-    Ui.margins(w, 6, 0, 0, 0);
-    stats.addView(wl);
-    let hl = Ui.h(this);
-    hl.setGravity(Gravity.CENTER_VERTICAL);
-    hl.addView(this.vline(0x59FFFFFF), new LinearLayoutParams(0, Ui.dp(this, 1), 1));
-    let hod = Ui.tv(this, "Then the HOD signs the letter in person", 12, 0xD9FFFFFF, false);
-    hod.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
-    hl.addView(hod);
-    hl.addView(this.vline(0x59FFFFFF), new LinearLayoutParams(0, Ui.dp(this, 1), 1));
-    stats.addView(hl);
-    Ui.margins(hl, 0, 6, 0, 0);
-    page.addView(stats);
-    Ui.margins(stats, 12, 10, 12, 0);
+    page.addView(this.top(w, forMe));
+    page.addView(this.applyCard());
+    page.addView(this.dashboard(everyone, me));
 
-    let apply = Ui.h(this);
-    apply.setGravity(Gravity.CENTER_VERTICAL);
-    apply.setBackground(Ui.gradient(this, [0xFF6D28D9, 0xFF9333EA], 28));
-    apply.setElevation(Ui.dp(this, 3));
-    apply.setPadding(Ui.dp(this, 16), Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10));
-    apply.addView(new View(this), Ui.lp(Ui.dp(this, 30), 1));
-    let at = Ui.tv(this, "✎  + Apply for leave", 16, 0xFFFFFFFF, true);
-    at.setGravity(Gravity.CENTER);
-    apply.addView(at, Ui.weight(1));
-    apply.addView(this.chevron(0x33FFFFFF, 0xFFFFFFFF));
-    apply.setOnClickListener(this.opener(PgLeaveFormActivity));
-    page.addView(apply);
-    Ui.margins(apply, 12, 12, 12, 0);
-
-    let chips = Ui.h(this);
-    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 12), Ui.dp(this, 4));
-    for (let i = 0; i < PgLeaveActivity.FILTERS.length; i++) {
-      let idx = i;
-      let c = this.filterChip(PgLeaveActivity.FILTER_ICONS[i] + "  " + PgLeaveActivity.FILTERS[i], counts[i], i === this.filter);
+    const lt = this.sectionTitle(R.drawable.ic_clipboard, this.mine ? "My Leave Applications" : "Leave Applications");
+    page.addView(lt);
+    Ui.margins(lt, 40, 22, 40, 0);
+    this.listAnchor = lt;
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 6));
+    for (let i = 0; i < P.FILTERS.length; i++) {
+      const idx = i;
+      const c = this.filterChip(i, counts[i], i === this.filter);
       c.setOnClickListener({ onClick: (v) => { this.filter = idx; this.render(); } });
       chips.addView(c);
       Ui.margins(c, 0, 0, 8, 0);
     }
     page.addView(Ui.hscroll(this, chips));
-
     let shown = 0;
     for (const r of all) {
-      if (this.filter < 3 && !PgLeaveActivity.overall(r).equals(PgLeaveActivity.FILTERS[this.filter])) continue;
+      if (!P.inFilter(r, this.filter, iso)) continue;
       page.addView(this.leaveCard(r));
       shown++;
     }
-    if (shown === 0) page.addView(this.emptyNote(this.filter === 0 ? "No leave waiting for approval." : "Nothing here yet."));
-    page.addView(this.footer());
-    this.setPage(page);
+    if (shown === 0) page.addView(this.caughtUp());
+    page.addView(this.afterApproval(everyone, me));
+    // 10.47 (user asked): no bottom band with the quote
+    this.bottomBar = null;
+    this.setPage(outer);
+    if (this.jump) {
+      this.jump = false;
+      this.toList();
+    } else if (!this.opened) {
+      // 10.46: the first time the page opens it starts at the very top: the banner, then the Apply for Leave card
+      this.opened = true;
+      setTimeout(() => { try { let e = outer.el; while (e && e.scrollHeight <= e.clientHeight) e = e.parentElement; if (e) e.scrollTop = 0; } catch (x) {} }, 50);
+    }
   }
 
-  /** Navy banner: "PG Leave" in gold script, the subtitle with a gold bar, a gold document badge and the motto over an ECG line. */
-  banner() {
-    let b = Ui.v(this);
-    b.setBackground(new PgLeaveActivity.Banner(this));
-    b.setPadding(Ui.dp(this, 20), Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 14));
-    let top = Ui.h(this);
-    top.setGravity(Gravity.CENTER_VERTICAL);
-    let t = Ui.v(this);
-    let title = Honours.goldText(this, "PG Leave", 34, true);
-    title.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
-    t.addView(title);
-    let sub = Ui.tv(this, "Leave letters and approvals", 14, 0xFFFFFFFF, false);
-    t.addView(sub);
-    let bar = new View(this);
-    bar.setBackground(Ui.round(this, PgLeaveActivity.GOLD, 2));
-    t.addView(bar, Ui.lp(Ui.dp(this, 44), Ui.dp(this, 3)));
-    Ui.margins(bar, 0, 8, 0, 0);
-    top.addView(t, Ui.weight(1));
-    let badge = new FrameLayout(this);
-    badge.setBackground(Ui.outline(this, 0x26F5C451, PgLeaveActivity.GOLD, 30));
-    let doc = this.icon(R.drawable.ic_doc, PgLeaveActivity.GOLD, 30);
-    badge.addView(doc, new FrameLayout.LayoutParams(Ui.dp(this, 30), Ui.dp(this, 30), Gravity.CENTER));
-    top.addView(badge, Ui.lp(Ui.dp(this, 60), Ui.dp(this, 60)));
-    b.addView(top);
-    let motto = Ui.tv(this, "For a Better Tomorrow", 13, 0xFFE9C46A, false);
-    motto.setTypeface(Typeface.create(Typeface.SERIF, Typeface.ITALIC));
-    b.addView(motto);
-    Ui.margins(motto, 0, 14, 0, 0);
-    let m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-    m.setMargins(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), 0);
-    b.setLayoutParams(m);
-    return b;
+  canFinish(r, me) {
+    if (!Cloud.active(this)) return true;
+    if (me > 0 && String(me) === Ui.nz(r.get("staff_id"))) return true;
+    return Cloud.isOwner(this) || Cloud.isManager(Cloud.role(this));
   }
 
-  /** One number of the stats panel under a white ring icon. */
-  stat(ic, v, label) {
-    let l = Ui.v(this);
-    l.setGravity(Gravity.CENTER_HORIZONTAL);
-    let ring = new FrameLayout(this);
-    ring.setBackground(Ui.outline(this, 0x1FFFFFFF, 0xE6FFFFFF, 22));
-    ring.addView(this.icon(ic, 0xFFFFFFFF, 20), new FrameLayout.LayoutParams(Ui.dp(this, 20), Ui.dp(this, 20), Gravity.CENTER));
-    l.addView(ring, Ui.lp(Ui.dp(this, 42), Ui.dp(this, 42)));
-    let n = Ui.tv(this, v, 24, 0xFFFFFFFF, true);
-    n.setGravity(Gravity.CENTER);
-    l.addView(n);
-    Ui.margins(n, 0, 4, 0, 0);
-    let t = Ui.tv(this, label, 11, 0xE6FFFFFF, false);
-    t.setGravity(Gravity.CENTER);
-    l.addView(t);
-    return l;
+  /**
+   * 10.48 (user's sequence): after the leave nodal officer approves, the PG downloads the filled one day / multiple days form,
+   * gets the HOD's signature, submits it in the office and uploads the finalised copy.
+   */
+  afterApproval(all, me) {
+    const P = PgLeaveActivity;
+    const sec = Ui.v(this);
+    const t = this.sectionTitle(R.drawable.ic_verified, "After Approval");
+    sec.addView(t);
+    Ui.margins(t, 40, 26, 40, 0);
+    const seq = Ui.tv(this, "After the leave nodal officer approves:\n1. Download the filled leave form (one day or multiple days)\n"
+      + "2. Get the HOD's signature\n3. Submit it in the medicine office\n4. Upload the finalised copy here", 14, P.FIELD_TEXT, false);
+    seq.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+    seq.setLineSpacing(Ui.dp(this, 3), 1);
+    seq.setBackground(Ui.outline(this, 0xFFFFF8E1, 0xFFE9C46A, 14));
+    seq.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
+    sec.addView(seq);
+    Ui.margins(seq, 14, 12, 14, 0);
+    const pgOnly = me > 0 && Cloud.active(this) && !Cloud.isOwner(this) && !Cloud.isManager(Cloud.role(this));
+    const old = Dates.today().minusDays(60).toString();
+    let n = 0;
+    for (const r of all) {
+      if (!P.overall(r).equals("Approved")) continue;
+      if (pgOnly && String(me) !== Ui.nz(r.get("staff_id"))) continue;
+      const done = "Yes" === r.get("hod_signed") && "Yes" === r.get("office_done") && !Ui.nz(r.get("letter")).isEmpty();
+      if (done && Ui.nz(r.get("to_date")).compareTo(old) < 0) continue;
+      sec.addView(this.finishCard(r, this.canFinish(r, me)));
+      n++;
+    }
+    if (n === 0) {
+      const e = Ui.tv(this, "No approved leave yet. Once the leave nodal officer approves, the leave shows here with its form.", 14, P.HINT, false);
+      e.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+      e.setGravity(Gravity.CENTER);
+      e.setBackground(Ui.round(this, 0xFFFFFFFF, 16));
+      e.setPadding(Ui.dp(this, 14), Ui.dp(this, 14), Ui.dp(this, 14), Ui.dp(this, 14));
+      sec.addView(e);
+      Ui.margins(e, 14, 10, 14, 0);
+    }
+    return sec;
   }
 
-  vline(color) {
-    let v = new View(this);
-    v.setBackgroundColor(color);
+  finishCard(r, can) {
+    const P = PgLeaveActivity;
+    const c = Ui.v(this);
+    const g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFFFFFFF, 0xFFF3F6FD]);
+    g.setCornerRadius(Ui.dp(this, 18));
+    g.setStroke(Ui.dp(this, 1), 0xFFE2B455);
+    c.setBackground(g);
+    c.setElevation(Ui.dp(this, 4));
+    c.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 14));
+    const name = Ui.nz(r.get("name")).isEmpty() ? "(PG removed)" : r.get("name");
+    const range = Dates.nice(r.get("from_date")) + (r.get("to_date").equals(r.get("from_date")) ? "" : " to " + Dates.nice(r.get("to_date")));
+    const h = Ui.tv(this, name, 17, P.FIELD_TEXT, true);
+    h.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 17);
+    c.addView(h);
+    const d = Ui.tv(this, range + "  ·  " + Ui.nz(r.get("days")).replace(/\.0$/, "") + " day(s)  ·  Resuming " + Dates.nice(LeaveForm.resume(r)), 13, P.HINT, false);
+    d.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+    c.addView(d);
+    const form = this.linkBox(R.drawable.ic_doc, "Download the filled " + (LeaveForm.oneDay(r) ? "one day" : "multiple days") + " leave form (PDF / Word)", { onClick: (v) => { LeaveForm.choose(this, r); } });
+    c.addView(form);
+    Ui.margins(form, 0, 10, 0, 0);
+    c.addView(this.yesNo("1) HOD approval", "hod_signed", "Done", r, can));
+    c.addView(this.yesNo("2) Submitted in office", "office_done", "Submitted", r, can));
+    const l3 = Ui.tv(this, "3) Finalised leave application copy", 15, P.FIELD_TEXT, true);
+    l3.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+    c.addView(l3);
+    Ui.margins(l3, 0, 12, 0, 0);
+    const has = !Ui.nz(r.get("letter")).isEmpty();
+    if (has) {
+      const v = this.linkBox(R.drawable.ic_verified, "View the uploaded copy (" + Store.kindLabel(r.get("letter")) + ")", { onClick: (x) => { this.viewLetter(r); } });
+      c.addView(v);
+      Ui.margins(v, 0, 6, 0, 0);
+    } else {
+      const no = Ui.tv(this, "Not uploaded yet", 13, 0xFFB45309, false);
+      no.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+      c.addView(no);
+    }
+    if (can) {
+      const b = Ui.h(this);
+      b.addView(this.uploadPill(R.drawable.ic_doc, "PDF / Word", r.get("id"), P.REQ_FINAL_FILE), Ui.weight(1));
+      b.addView(new View(this), Ui.lp(Ui.dp(this, 8), 1));
+      b.addView(this.uploadPill(R.drawable.ic_camera, "Gallery (JPEG)", r.get("id"), P.REQ_FINAL_PIC), Ui.weight(1));
+      c.addView(b);
+      Ui.margins(b, 0, 8, 0, 0);
+    }
+    const lp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), 0);
+    c.setLayoutParams(lp);
+    return c;
+  }
+
+  yesNo(label, col, yesWord, r, can) {
+    const P = PgLeaveActivity;
+    const row = Ui.h(this);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    const l = Ui.tv(this, label, 15, P.FIELD_TEXT, true);
+    l.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+    row.addView(l, Ui.weight(1));
+    const yes = "Yes" === r.get(col);
+    for (let i = 0; i < 2; i++) {
+      const pickYes = i === 0;
+      const on = pickYes === yes;
+      const color = pickYes ? Ui.GREEN : 0xFF6B7280;
+      const p = Ui.tv(this, pickYes ? "✓ " + yesWord : "Not yet", 13, on ? 0xFFFFFFFF : color, true);
+      p.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+      p.setBackground(on ? Ui.round(this, color, 16) : Ui.outline(this, 0xFFFFFFFF, color, 16));
+      p.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+      if (can) {
+        Ui.ripple(p, 0x22000000);
+        p.setOnClickListener({
+          onClick: (v) => {
+            if (pickYes === yes) return;
+            const cv = new ContentValues();
+            cv.put(col, pickYes ? "Yes" : "");
+            cv.put(col.equals("hod_signed") ? "hod_signed_date" : "office_date", pickYes ? Dates.todayIso() : "");
+            this.db.update("pg_leaves", cv, Long.parseLong(r.get("id")));
+            this.render();
+          }
+        });
+      }
+      row.addView(p);
+      Ui.margins(p, 6, 0, 0, 0);
+    }
+    Ui.margins(row, 0, 12, 0, 0);
+    return row;
+  }
+
+  uploadPill(ic, text, id, req) {
+    const p = Ui.h(this);
+    p.setGravity(Gravity.CENTER);
+    const g = Ui.outline(this, 0xFFF7F9FF, 0xFF2747B8, 20);
+    g.setStroke(Ui.dp(this, 2), 0xFF2747B8);
+    p.setBackground(g);
+    p.setPadding(Ui.dp(this, 8), Ui.dp(this, 9), Ui.dp(this, 8), Ui.dp(this, 9));
+    p.addView(this.icon(ic, 0xFF2747B8, 18));
+    const t = Ui.tv(this, text, 14, 0xFF2747B8, true);
+    t.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+    t.setSingleLine(true);
+    p.addView(t);
+    Ui.margins(t, 6, 0, 0, 0);
+    Ui.ripple(p, 0x222747B8);
+    p.setOnClickListener({
+      onClick: (v) => {
+        this.finalFor = id;
+        if (req === PgLeaveActivity.REQ_FINAL_PIC) Store.pick(this, ["image/*"], PgLeaveActivity.REQ_FINAL_PIC);
+        else Store.pick(this, ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"], PgLeaveActivity.REQ_FINAL_FILE);
+      }
+    });
+    return p;
+  }
+
+  /** Scrolls the page so the leave list's title is at the top. */
+  toList() {
+    const a = this.listAnchor;
+    if (a == null) return;
+    setTimeout(() => { try { a.el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, 150);
+  }
+
+  header() {
+    this.getWindow().setStatusBarColor(0xFF06123F);
+    // 10.47: an empty LinearLayout, not a plain View (a plain View in a WRAP_CONTENT slot takes the whole height on Android)
+    const v = Ui.v(this);
+    v.setLayoutParams(Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
     return v;
   }
 
+  /** The picture's top, with the back arrow, the bell's count and the two tap areas laid on it (picture: 1024 × 500). */
+  top(w, forMe) {
+    const f = new FrameLayout(this);
+    const h = Math.round(w * 500 / 1024);
+    f.setLayoutParams(Ui.lp(w, h));
+    const pic = new ImageView(this);
+    pic.setImageResource(R.drawable.pg_leave_top);
+    pic.setScaleType(ImageView.ScaleType.FIT_XY);
+    pic.setContentDescription("TVMCHMED, Department of Medicine, Tirunelveli Medical College Hospital. PG Leave: Apply, Track, Manage");
+    f.addView(pic, new FrameLayout.LayoutParams(w, h));
+    const k = w / 1024;
+    const back = new ImageView(this);
+    back.setImageResource(R.drawable.ic_back);
+    back.setColorFilter(0xFFFFFFFF);
+    const bp = Ui.dp(this, 6);
+    back.setPadding(bp, bp, bp, bp);
+    back.setBackground(Ui.round(this, 0x4D06123F, 16));
+    back.setContentDescription("Back");
+    Ui.ripple(back, 0x44FFFFFF);
+    back.setOnClickListener({ onClick: (v) => { this.finish(); } });
+    f.addView(back, PgLeaveActivity.place(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 32), Ui.dp(this, 32)));
+    const bell = new View(this);
+    bell.setContentDescription(forMe + " leave waiting for your approval");
+    Ui.ripple(bell, 0x33F5C451);
+    bell.setOnClickListener({ onClick: (v) => { this.mine = false; this.filter = 1; this.jump = true; this.render(); } });
+    f.addView(bell, PgLeaveActivity.place(Math.round(805 * k), Math.round(12 * k), Math.round(95 * k), Math.round(95 * k)));
+    if (forMe > 0) {
+      const bs = Math.max(Ui.dp(this, 18), Math.round(36 * k));
+      const badge = Ui.tv(this, forMe > 99 ? "99+" : String(forMe), 11, 0xFFFFFFFF, true);
+      badge.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 11);
+      badge.setGravity(Gravity.CENTER);
+      const red = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFF0453A, 0xFFC4161C]);
+      red.setCornerRadius(bs / 2);
+      red.setStroke(Ui.dp(this, 1), 0x66FFFFFF);
+      badge.setBackground(red);
+      badge.setElevation(Ui.dp(this, 3));
+      f.addView(badge, PgLeaveActivity.place(Math.round(873 * k) - Math.floor(bs / 2), Math.round(37 * k) - Math.floor(bs / 2), bs, bs));
+    }
+    const meV = new View(this);
+    meV.setContentDescription(this.mine ? "Showing only your leave. Tap to show all" : "Show only your leave");
+    if (this.mine) {
+      const ring = new GradientDrawable();
+      ring.setShape(GradientDrawable.OVAL);
+      ring.setColor(0x33F5C451);
+      ring.setStroke(Ui.dp(this, 2), 0xFFFFE9A8);
+      meV.setBackground(ring);
+    }
+    Ui.ripple(meV, 0x33F5C451);
+    meV.setOnClickListener({
+      onClick: (v) => {
+        if (!this.mine && Cloud.active(this) && Cloud.myStaff(this) <= 0) {
+          Ui.toast(this, "Your account is not linked to your Students entry yet, so your own applications cannot be picked out.");
+          return;
+        }
+        this.mine = !this.mine;
+        Ui.toast(this, this.mine ? "Showing only the leave you applied for" : "Showing all leave");
+        this.render();
+      }
+    });
+    f.addView(meV, PgLeaveActivity.place(Math.round(920 * k), Math.round(22 * k), Math.round(84 * k), Math.round(84 * k)));
+    return f;
+  }
+
+  static place(x, y, w, h) {
+    const p = new FrameLayout.LayoutParams(w, h, Gravity.TOP | Gravity.START);
+    p.setMargins(x, y, 0, 0);
+    return p;
+  }
+
+  /** A navy pill title with a gold icon, like "Apply for Leave" and "My Leave Dashboard" in the picture. */
+  sectionTitle(ic, text) {
+    const t = Ui.h(this);
+    t.setGravity(Gravity.CENTER);
+    const g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFF2B4590, 0xFF0F2363, 0xFF0A1A4A]);
+    g.setCornerRadius(Ui.dp(this, 26));
+    g.setStroke(Ui.dp(this, 2), 0xFFE2B455);
+    t.setBackground(g);
+    t.setElevation(Ui.dp(this, 6));
+    t.setPadding(Ui.dp(this, 18), Ui.dp(this, 9), Ui.dp(this, 22), Ui.dp(this, 10));
+    t.addView(this.icon(ic, 0xFFF3C75A, 26));
+    const l = Ui.tv(this, text, 21, 0xFFFFFFFF, true);
+    l.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 21);
+    l.setSingleLine(true);
+    l.setEllipsize(TextUtils.TruncateAt.END);
+    t.addView(l);
+    Ui.margins(l, 12, 0, 0, 0);
+    return t;
+  }
+
+  /** One field box of the apply card: an icon, the bold label and a white rounded input under it. */
+  fieldBox(ic, label, input) {
+    const b = Ui.h(this);
+    b.setGravity(Gravity.TOP);
+    b.setBackground(Ui.outline(this, 0xFFF4F6FC, 0xFFFFFFFF, 16));
+    b.setPadding(Ui.dp(this, 8), Ui.dp(this, 10), Ui.dp(this, 8), Ui.dp(this, 10));
+    const i = this.icon(ic, 0xFF1E2F7A, 26);
+    b.addView(i);
+    Ui.margins(i, 0, 2, 8, 0);
+    const col = Ui.v(this);
+    const l = Ui.tv(this, label, 15, PgLeaveActivity.FIELD_TEXT, true);
+    l.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+    l.setSingleLine(true);
+    l.setEllipsize(TextUtils.TruncateAt.END);
+    col.addView(l);
+    col.addView(input, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 42)));
+    Ui.margins(input, 0, 6, 0, 0);
+    b.addView(col, Ui.weight(1));
+    return b;
+  }
+
+  pill() {
+    const g = Ui.outline(this, 0xFFFFFFFF, 0xFFDCE1F0, 21);
+    g.setStroke(Ui.dp(this, 1), 0xFFDCE1F0);
+    return g;
+  }
+
+  /** A tap-to-choose input: the value (or the grey hint) and an icon at the right. */
+  chooser(value, hint, ic, glyph, l) {
+    const P = PgLeaveActivity;
+    const p = Ui.h(this);
+    p.setGravity(Gravity.CENTER_VERTICAL);
+    p.setBackground(this.pill());
+    p.setElevation(Ui.dp(this, 1));
+    p.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 10), 0);
+    const empty = value.isEmpty();
+    const t = Ui.tv(this, empty ? hint : value, 15, empty ? P.HINT : P.FIELD_TEXT, !empty);
+    t.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+    t.setSingleLine(true);
+    t.setEllipsize(TextUtils.TruncateAt.END);
+    p.addView(t, Ui.weight(1));
+    if (ic !== 0) p.addView(this.icon(ic, 0xFF1E2F7A, 20));
+    else {
+      const g = Ui.tv(this, glyph, 18, 0xFF1E2F7A, true);
+      g.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
+      p.addView(g);
+    }
+    Ui.ripple(p, 0x221E2F7A);
+    p.setOnClickListener(l);
+    return p;
+  }
+
+  pickDate(from) {
+    let d = Dates.parse(from ? this.apFrom : (this.apTo.isEmpty() ? this.apFrom : this.apTo));
+    if (d == null) d = Dates.today();
+    new DatePickerDialog(this, {
+      onDateSet: (p, y, m, day) => {
+        const v = LocalDate.of(y, m + 1, day).toString();
+        if (from) {
+          this.apFrom = v;
+          if (this.apTo.isEmpty() || this.apTo.compareTo(v) < 0) this.apTo = v;
+        } else this.apTo = v;
+        this.render();
+      }
+    }, d.getYear(), d.getMonthValue() - 1, d.getDayOfMonth()).show();
+  }
+
+  /** The "Apply for Leave" card: the navy title riding on the top edge of a white card. */
+  applyCard() {
+    const P = PgLeaveActivity;
+    const f = new FrameLayout(this);
+    const card = Ui.v(this);
+    const cb = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFFFFFFF, 0xFFF3F6FD]);
+    cb.setCornerRadius(Ui.dp(this, 22));
+    cb.setStroke(Ui.dp(this, 2), 0xFFFFFFFF);
+    card.setBackground(cb);
+    card.setElevation(Ui.dp(this, 8));
+    card.setPadding(Ui.dp(this, 12), Ui.dp(this, 36), Ui.dp(this, 12), Ui.dp(this, 14));
+    const cp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    cp.setMargins(0, Ui.dp(this, 24), 0, 0);
+    f.addView(card, cp);
+    const title = this.sectionTitle(R.drawable.ic_badge, "Apply for Leave");
+    title.setElevation(Ui.dp(this, 10));
+    f.addView(title, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL));
+    const more = Ui.tv(this, "›", 30, 0xFF0F1B4D, true);
+    more.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 30);
+    more.setGravity(Gravity.CENTER);
+    more.setContentDescription("Open the full leave form");
+    Ui.ripple(more, 0x221E2F7A);
+    more.setOnClickListener(this.opener(PgLeaveFormActivity));
+    const mp = new FrameLayout.LayoutParams(Ui.dp(this, 40), Ui.dp(this, 40), Gravity.TOP | Gravity.END);
+    mp.setMargins(0, Ui.dp(this, 26), Ui.dp(this, 8), 0);
+    f.addView(more, mp);
+
+    const type = this.chooser(this.apType, "Select Leave Type", 0, "⌄", {
+      onClick: (v) => {
+        new AlertDialog.Builder(this).setTitle("Leave type")
+          .setItems(LeaveForm.TYPES, { onClick: (d, which) => { this.apType = LeaveForm.TYPES[which]; this.render(); } })
+          .setNegativeButton("Cancel", null).show();
+      }
+    });
+    const from = this.chooser(this.apFrom.isEmpty() ? "" : Dates.nice(this.apFrom), "Select Date", R.drawable.ic_calendar, null, { onClick: (v) => { this.pickDate(true); } });
+    const to = this.chooser(this.apTo.isEmpty() ? "" : Dates.nice(this.apTo), "Select Date", R.drawable.ic_calendar, null, { onClick: (v) => { this.pickDate(false); } });
+    const reason = new EditText(this);
+    reason.setText(this.apReason);
+    reason.setHint("Enter Reason Here...");
+    reason.setHintTextColor(P.HINT);
+    reason.setTextColor(P.FIELD_TEXT);
+    reason.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+    reason.setTypeface(Typeface.create(Typeface.DEFAULT, this.apReason.isEmpty() ? Typeface.ITALIC : Typeface.NORMAL));
+    reason.setSingleLine(true);
+    reason.setBackground(this.pill());
+    reason.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 10), 0);
+    reason.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+    reason.addTextChangedListener({
+      beforeTextChanged: (s, a, b, c) => {},
+      onTextChanged: (s, a, b, c) => {},
+      afterTextChanged: (s) => { this.apReason = s.toString(); }
+    });
+
+    const r1 = Ui.h(this);
+    r1.addView(this.fieldBox(R.drawable.ic_calendar, "Leave Type *", type), Ui.weight(1));
+    r1.addView(new View(this), Ui.lp(Ui.dp(this, 10), 1));
+    r1.addView(this.fieldBox(R.drawable.ic_calendar, "From Date *", from), Ui.weight(1));
+    card.addView(r1);
+    const r2 = Ui.h(this);
+    r2.addView(this.fieldBox(R.drawable.ic_calendar, "To Date *", to), Ui.weight(1));
+    r2.addView(new View(this), Ui.lp(Ui.dp(this, 10), 1));
+    r2.addView(this.fieldBox(R.drawable.ic_doc, "Reason *", reason), Ui.weight(1));
+    card.addView(r2);
+    Ui.margins(r2, 0, 10, 0, 0);
+
+    // 10.48 (user asked): the doing-duty PG, and the resuming date filled in by itself (the day after the last day of leave)
+    const duty = this.chooser(this.apDuty, "Select PG", 0, "⌄", { onClick: (v) => { this.pickDuty(); } });
+    const back = this.apTo.isEmpty() ? "" : Dates.nice(Dates.parse(this.apTo).plusDays(1).toString());
+    const resume = this.chooser(back, "Day after To Date", R.drawable.ic_calendar, null, { onClick: (v) => { Ui.toast(this, "Resuming duty is filled in by itself: the day after the last day of leave"); } });
+    const r3 = Ui.h(this);
+    r3.addView(this.fieldBox(R.drawable.ic_people, "Doing-duty PG *", duty), Ui.weight(1));
+    r3.addView(new View(this), Ui.lp(Ui.dp(this, 10), 1));
+    r3.addView(this.fieldBox(R.drawable.ic_calendar, "Resuming Duty", resume), Ui.weight(1));
+    card.addView(r3);
+    Ui.margins(r3, 0, 10, 0, 0);
+
+    const at = Ui.h(this);
+    at.setGravity(Gravity.CENTER_VERTICAL);
+    at.setBackground(Ui.outline(this, 0xFFF4F6FC, 0xFFFFFFFF, 16));
+    at.setPadding(Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10), Ui.dp(this, 10));
+    at.addView(this.icon(R.drawable.ic_attach, 0xFF1E2F7A, 28));
+    const atc = Ui.v(this);
+    const atl = Ui.tv(this, "Attachment (Optional)", 15, P.FIELD_TEXT, true);
+    atl.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+    atc.addView(atl);
+    const has = !this.apDoc.isEmpty();
+    const ats = Ui.tv(this, has ? "📎 " + this.apDocName : "Upload supporting document (Max 5MB)", 13, has ? 0xFF15803D : P.HINT, false);
+    ats.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13);
+    ats.setTypeface(Typeface.create(Typeface.DEFAULT, has ? Typeface.BOLD : Typeface.ITALIC));
+    ats.setMaxLines(2);
+    ats.setEllipsize(TextUtils.TruncateAt.END);
+    atc.addView(ats);
+    at.addView(atc, Ui.weight(1));
+    Ui.margins(atc, 10, 0, 8, 0);
+    const choose = Ui.h(this);
+    choose.setGravity(Gravity.CENTER_VERTICAL);
+    const chb = Ui.outline(this, 0xFFF7F9FF, 0xFF2747B8, 22);
+    chb.setStroke(Ui.dp(this, 2), 0xFF2747B8);
+    choose.setBackground(chb);
+    choose.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 8));
+    choose.addView(this.icon(R.drawable.ic_upload, 0xFF2747B8, 20));
+    const cht = Ui.tv(this, has ? "Change" : "Choose File", 15, 0xFF2747B8, true);
+    cht.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 15);
+    choose.addView(cht);
+    Ui.margins(cht, 6, 0, 0, 0);
+    Ui.ripple(choose, 0x222747B8);
+    choose.setOnClickListener({ onClick: (v) => { if (this.attach != null) this.attach.choose("pg_leaves", null, this.docAdded()); } });
+    at.addView(choose);
+    if (has) {
+      ats.setOnClickListener({
+        onClick: (v) => {
+          new AlertDialog.Builder(this).setMessage("Remove " + this.apDocName + "?")
+            .setPositiveButton("Remove", { onClick: (d, which) => { this.db.forgetFile(this.apDoc); this.apDoc = ""; this.apDocName = ""; this.render(); } })
+            .setNegativeButton("Keep", null).show();
+        }
+      });
+    }
+    card.addView(at);
+    Ui.margins(at, 0, 10, 0, 0);
+
+    const sub = Ui.h(this);
+    sub.setGravity(Gravity.CENTER);
+    const sg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFFCE7A2, 0xFFF2C94C, 0xFFE0A82A, 0xFFF0C552]);
+    sg.setCornerRadius(Ui.dp(this, 30));
+    sg.setStroke(Ui.dp(this, 2), 0xFFFFF1C4);
+    sub.setBackground(sg);
+    sub.setElevation(Ui.dp(this, 6));
+    sub.setPadding(Ui.dp(this, 14), Ui.dp(this, 14), Ui.dp(this, 14), Ui.dp(this, 14));
+    sub.addView(this.icon(R.drawable.ic_send, 0xFF101A3F, 26));
+    const st = Ui.tv(this, "Submit Leave Application", 19, 0xFF101A3F, true);
+    st.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 19);
+    st.setSingleLine(true);
+    st.setEllipsize(TextUtils.TruncateAt.END);
+    sub.addView(st);
+    Ui.margins(st, 10, 0, 0, 0);
+    Ui.ripple(sub, 0x33FFFFFF);
+    sub.setOnClickListener({ onClick: (v) => { this.submit(); } });
+    card.addView(sub);
+    Ui.margins(sub, 0, 14, 0, 0);
+
+    const fp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    fp.setMargins(Ui.dp(this, 14), Ui.dp(this, 2), Ui.dp(this, 14), 0);
+    f.setLayoutParams(fp);
+    return f;
+  }
+
+  /**
+   * Sends the card: a PG whose account is linked to the Students entry picks the doing-duty PG and the leave goes for approval
+   * at once; anyone else finishes it on the full form, filled in from the card.
+   */
+  submit() {
+    if (this.apType.isEmpty()) { Ui.toast(this, "Choose the leave type"); return; }
+    if (this.apFrom.isEmpty() || this.apTo.isEmpty()) { Ui.toast(this, "Choose the from and to dates"); return; }
+    if (this.apTo.compareTo(this.apFrom) < 0) { Ui.toast(this, "“To Date” must be on or after “From Date”"); return; }
+    if (this.apReason.trim().isEmpty()) { Ui.toast(this, "Enter the reason"); return; }
+    if (this.apDuty.isEmpty()) { Ui.toast(this, "Choose the doing-duty PG"); return; }
+    const me = Cloud.myStaff(this);
+    const self = me > 0 ? this.db.row("SELECT id, role FROM staff WHERE id=?", String(me)) : null;
+    if (self == null || !"Postgraduate".equals(self.get("role"))) {
+      Ui.toast(this, "Choose the PG and the doing-duty PG to finish");
+      this.open(PgLeaveFormActivity, "pre_type", this.apType, "pre_from", this.apFrom, "pre_to", this.apTo, "pre_reason", this.apReason.trim(),
+        "pre_doc", this.apDoc, "pre_doc_name", this.apDocName, "pre_duty", this.apDuty);
+      this.apType = ""; this.apFrom = ""; this.apTo = ""; this.apReason = ""; this.apDoc = ""; this.apDocName = ""; this.apDuty = "";
+      return;
+    }
+    this.send(String(me), this.apDuty);
+  }
+
+  /** The doing-duty PG: any other PG in the Students list. */
+  pickDuty() {
+    const me = Cloud.myStaff(this);
+    const pgs = this.db.rows("SELECT name FROM staff WHERE role='Postgraduate' AND id<>? AND " + Approvals.APPROVED_SQL + " ORDER BY name", String(me));
+    if (pgs.length === 0) { Ui.toast(this, "Add the PGs to the Students list first"); return; }
+    const names = pgs.map((p) => p.get("name"));
+    new AlertDialog.Builder(this).setTitle("Doing-duty PG (attends the duties)")
+      .setItems(names, { onClick: (d, which) => { this.apDuty = names[which]; this.render(); } })
+      .setNegativeButton("Cancel", null).show();
+  }
+
+  send(staffId, dutyPg) {
+    const P = PgLeaveActivity;
+    const a = Dates.parse(this.apFrom), b = Dates.parse(this.apTo);
+    const days = ChronoUnit.DAYS.between(a, b) + 1;
+    const limit = LeaveRules.pgCheck(this.db, -1, staffId, this.apType, a, days);
+    if (limit != null) { Ui.toast(this, limit); return; }
+    const cv = new ContentValues();
+    cv.put("staff_id", staffId);
+    cv.put("from_date", a.toString());
+    cv.put("to_date", b.toString());
+    cv.put("days", days);
+    cv.put("reason", this.apReason.trim());
+    cv.put("leave_type", this.apType);
+    cv.put("duty_pg", dutyPg);
+    cv.put("resume_date", b.plusDays(1).toString());
+    cv.put("letter", "");
+    for (let i = 0; i < P.LEVELS.length; i++) {
+      cv.put(P.LEVELS[i] + "_status", i < P.APP_STEPS ? "Pending" : "");
+      cv.put(P.LEVELS[i] + "_by", "");
+      cv.put(P.LEVELS[i] + "_date", "");
+      if (i < P.APP_STEPS) cv.put(P.LEVELS[i] + "_time", "");
+    }
+    cv.put("applied", Dates.todayIso());
+    const id = this.db.insert("pg_leaves", cv);
+    if (!this.apDoc.isEmpty() && id > 0) Attach.add(this, this.db, "pg_leaves", String(id), this.apDoc, this.apDocName);
+    this.apType = ""; this.apFrom = ""; this.apTo = ""; this.apReason = ""; this.apDoc = ""; this.apDocName = ""; this.apDuty = "";
+    Ui.toast(this, "Sent for approval");
+    this.mine = true;
+    this.filter = 1;
+    this.jump = true;
+    this.render();
+  }
+
+  /** "My Leave Dashboard": four coloured glass tiles in a frosted panel. */
+  dashboard(all, me) {
+    const f = new FrameLayout(this);
+    const panel = Ui.h(this);
+    const pb = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xF2FFFFFF, 0xE6EEF3FC]);
+    pb.setCornerRadius(Ui.dp(this, 22));
+    pb.setStroke(Ui.dp(this, 2), 0xFFFFFFFF);
+    panel.setBackground(pb);
+    panel.setElevation(Ui.dp(this, 6));
+    panel.setPadding(Ui.dp(this, 8), Ui.dp(this, 38), Ui.dp(this, 8), Ui.dp(this, 14));
+    const pp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    pp.setMargins(0, Ui.dp(this, 24), 0, 0);
+    f.addView(panel, pp);
+    const title = this.sectionTitle(R.drawable.ic_chart, "My Leave Dashboard");
+    title.setElevation(Ui.dp(this, 10));
+    f.addView(title, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.CENTER_HORIZONTAL));
+    panel.addView(this.dashTile(R.drawable.ic_calendar, "My Leave History", [0xFF3C9BFF, 0xFF1B5FE0, 0xFF0F3FB0], {
+      onClick: (v) => {
+        if (Cloud.active(this) && me <= 0) {
+          Ui.toast(this, "Your account is not linked to your Students entry yet, so all leave is shown.");
+          this.mine = false;
+        } else this.mine = true;
+        this.filter = 0;
+        this.jump = true;
+        this.render();
+      }
+    }), Ui.weight(1));
+    panel.addView(this.dashTile(R.drawable.ic_search, "Track Status", [0xFF34C79A, 0xFF13976E, 0xFF0A6E51], { onClick: (v) => { this.track(all, me); } }), Ui.weight(1));
+    panel.addView(this.dashTile(R.drawable.ic_doc, "Leave Policy", [0xFFA56BF5, 0xFF7C3AED, 0xFF5B21B6], { onClick: (v) => { this.policy(); } }), Ui.weight(1));
+    panel.addView(this.dashTile(R.drawable.ic_phone, "Contact Admin", [0xFFFBC04A, 0xFFF29A1A, 0xFFDB750B], { onClick: (v) => { this.contactAdmin(); } }), Ui.weight(1));
+    const fp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    fp.setMargins(Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 14), 0);
+    f.setLayoutParams(fp);
+    return f;
+  }
+
+  dashTile(ic, label, colors, l) {
+    const t = Ui.v(this);
+    t.setGravity(Gravity.CENTER);
+    const g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
+    g.setCornerRadius(Ui.dp(this, 16));
+    g.setStroke(Ui.dp(this, 2), 0x8CFFFFFF);
+    t.setBackground(g);
+    t.setElevation(Ui.dp(this, 4));
+    t.setPadding(Ui.dp(this, 4), Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12));
+    t.setMinimumHeight(Ui.dp(this, 112));
+    t.addView(this.icon(ic, 0xFFFFFFFF, 34));
+    const n = Ui.tv(this, label, 14, 0xFFFFFFFF, true);
+    n.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 14);
+    n.setGravity(Gravity.CENTER);
+    n.setMaxLines(2);
+    n.setShadowLayer(2, 0, 1, 0x55000000);
+    t.addView(n);
+    Ui.margins(n, 0, 6, 0, 0);
+    Ui.ripple(t, 0x33FFFFFF);
+    t.setOnClickListener(l);
+    t.setContentDescription(label);
+    const p = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
+    p.setMargins(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
+    t.setLayoutParams(p);
+    return t;
+  }
+
+  /** Track Status: the Leave Journey of my own leave (else the one waiting for me), in a pop-up. */
+  track(all, me) {
+    const r = this.focus(all, me);
+    const box = Ui.v(this);
+    box.setPadding(Ui.dp(this, 14), Ui.dp(this, 4), Ui.dp(this, 14), Ui.dp(this, 12));
+    box.addView(this.journey(r));
+    const b = new AlertDialog.Builder(this).setTitle("Track Status").setView(box).setNegativeButton("Close", null);
+    if (r != null) b.setPositiveButton("Open the leave", { onClick: (d, which) => { this.open(PgLeaveFormActivity, "id", r.get("id")); } });
+    b.show();
+  }
+
+  policy() {
+    const s = "Who approves, in turn:\n1. Any one Assistant Professor\n2. The unit chief\n3. The leave nodal officer (Dr. S. Rajkumar)\n\n"
+      + "Then: download the form, sign it with the doing-duty PG, get the HOD's signature in person, submit it in the medicine office and upload the signed letter in the leave entry.\n\n"
+      + "Leave limits: " + LeaveRules.pgRule() + "\n\nChanging the dates resets the approvals.";
+    new AlertDialog.Builder(this).setTitle("PG Leave Policy").setMessage(s).setPositiveButton("OK", null).show();
+  }
+
+  /** Contact Admin: the leave nodal officer (the admin), by phone or WhatsApp, from the staff list. */
+  contactAdmin() {
+    const a = this.db.row("SELECT name, phone FROM staff WHERE name LIKE '%Rajkumar%' AND role<>'Postgraduate' AND IFNULL(phone,'')<>'' ORDER BY id LIMIT 1");
+    if (a == null) {
+      new AlertDialog.Builder(this).setTitle("Contact Admin")
+        .setMessage("The leave nodal officer is Dr. S. Rajkumar (admin). His phone number is not in the staff list yet.")
+        .setPositiveButton("OK", null).show();
+      return;
+    }
+    const ph = a.get("phone");
+    new AlertDialog.Builder(this).setTitle("Contact Admin")
+      .setMessage(a.get("name") + "\nLeave nodal officer (admin)\n" + ph)
+      .setPositiveButton("Call", { onClick: (d, which) => { try { this.startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + ph))); } catch (ignored) {} } })
+      .setNeutralButton("WhatsApp", { onClick: (d, which) => { try { this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/" + PhoneDirectoryActivity.whatsapp(ph)))); } catch (ignored) {} } })
+      .setNegativeButton("Close", null).show();
+  }
+
+  /** One number in a gold frame: the label on top and the number in deep gold. */
+  stat(label, v) {
+    const f = new FrameLayout(this);
+    const frame = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFFF8E7AE, 0xFFD2A445, 0xFFF3D27A, 0xFFB8862B]);
+    frame.setCornerRadius(Ui.dp(this, 18));
+    f.setBackground(frame);
+    f.setElevation(Ui.dp(this, 3));
+    const inn = Ui.v(this);
+    inn.setGravity(Gravity.CENTER_HORIZONTAL);
+    const fill = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFFFFFFF, 0xFFFFFDF6]);
+    fill.setCornerRadius(Ui.dp(this, 14));
+    fill.setStroke(Ui.dp(this, 1), 0x80FFF6DA);
+    inn.setBackground(fill);
+    inn.setPadding(Ui.dp(this, 4), Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 10));
+    const l = Ui.tv(this, label, 14, 0xFF26305F, false);
+    l.setGravity(Gravity.CENTER);
+    l.setMaxLines(1);
+    l.setEllipsize(TextUtils.TruncateAt.END);
+    inn.addView(l);
+    const n = Ui.tv(this, String(v), 36, PgLeaveActivity.GOLD_DEEP, true);
+    n.setGravity(Gravity.CENTER);
+    n.setShadowLayer(2, 0, 1, 0x33B07D1E);
+    inn.addView(n);
+    Ui.margins(n, 0, 2, 0, 0);
+    const ip = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    const m = Ui.dp(this, 5);
+    ip.setMargins(m, m, m, m);
+    f.addView(inn, ip);
+    const lp = new LinearLayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1);
+    lp.setMargins(Ui.dp(this, 3), 0, Ui.dp(this, 3), 0);
+    f.setLayoutParams(lp);
+    return f;
+  }
+
+  /**
+   * The leave whose journey the card shows: this person's own leave still in progress, else the first one waiting for this
+   * person's approval, else the first one waiting at all, else none.
+   */
+  focus(all, me) {
+    const P = PgLeaveActivity;
+    for (const r of all) {
+      if (me > 0 && String(me) === Ui.nz(r.get("staff_id")) && (P.overall(r).equals("Awaiting approval")
+        || (P.overall(r).equals("Approved") && Ui.nz(r.get("letter")).isEmpty()))) return r;
+    }
+    for (const r of all) {
+      const c = P.current(r);
+      if (c >= 0 && P.canApprove(this, c)) return r;
+    }
+    for (const r of all) if (P.overall(r).equals("Awaiting approval")) return r;
+    return null;
+  }
+
+  /** How far a leave has gone: the index of the step it waits at (4 when finished), and that step's words. */
+  static stage(r) {
+    const P = PgLeaveActivity;
+    if (r == null) return -1;
+    const o = P.overall(r);
+    if (o.equals("Approved")) return Ui.nz(r.get("letter")).isEmpty() ? P.HOD : P.HOD + 1;
+    for (let i = 0; i < P.APP_STEPS; i++) if ("Approved" !== P.status(r, i)) return i;
+    return P.HOD;
+  }
+
+  static stageText(r) {
+    const P = PgLeaveActivity;
+    if (r == null) return "No leave waiting right now";
+    const s = P.stage(r);
+    if (P.overall(r).equals("Not approved")) return "Not approved by the " + P.NODE_NAMES[s];
+    if (s > P.HOD) return "Completed: signed letter submitted";
+    if (s === P.HOD) return "Awaiting HOD Sign-off";
+    return "Awaiting " + P.NODE_NAMES[s] + " approval";
+  }
+
+  /** The Leave Journey: a label box over four glowing steps joined by a gold line (dashed where still to come). */
+  journey(r) {
+    const P = PgLeaveActivity;
+    const j = Ui.v(this);
+    j.setGravity(Gravity.CENTER_HORIZONTAL);
+    const tag = Ui.v(this);
+    tag.setGravity(Gravity.CENTER_HORIZONTAL);
+    const tb = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFF7F7FB, 0xFFE9EAF2]);
+    tb.setCornerRadius(Ui.dp(this, 12));
+    tb.setStroke(Ui.dp(this, 1), 0xFFD9C27A);
+    tag.setBackground(tb);
+    tag.setPadding(Ui.dp(this, 16), Ui.dp(this, 6), Ui.dp(this, 16), Ui.dp(this, 8));
+    tag.addView(this.center(Ui.tv(this, "Leave Journey", 18, 0xFF111827, true)));
+    tag.addView(this.center(Ui.tv(this, "Current Stage: " + P.stageText(r), 15, 0xFF1F2937, false)));
+    if (r != null) {
+      const who = Ui.nz(r.get("name")).isEmpty() ? "(PG removed)" : r.get("name");
+      tag.addView(this.center(Ui.tv(this, who + "  ·  " + Dates.nice(r.get("from_date")), 12, 0xFF6B7280, false)));
+    }
+    j.addView(tag);
+    Ui.margins(tag, 0, 16, 0, 0);
+    const st = P.stage(r);
+    const refused = r != null && P.overall(r).equals("Not approved");
+    const line = new FrameLayout(this);
+    line.setBackground(new P.JourneyLine(this, P.NODE_NAMES.length, st, refused));
+    const nodes = Ui.h(this);
+    for (let i = 0; i < P.NODE_NAMES.length; i++) {
+      const c = Ui.v(this);
+      c.setGravity(Gravity.CENTER_HORIZONTAL);
+      const state = r == null ? 0 : i < st ? 1 : i === st ? (refused ? 3 : 2) : 0;
+      const n = new FrameLayout(this);
+      n.setBackground(new P.Node(this, state));
+      const ic = this.icon(P.NODE_ICONS[i], state === 0 ? 0xFF8A93BE : state === 3 ? 0xFFDC2626 : 0xFF1E2A78, 26);
+      n.addView(ic, new FrameLayout.LayoutParams(Ui.dp(this, 26), Ui.dp(this, 26), Gravity.CENTER));
+      c.addView(n, Ui.lp(Ui.dp(this, 64), Ui.dp(this, 64)));
+      const l = Ui.tv(this, P.NODE_NAMES[i], 14, 0xFF111827, state === 2);
+      l.setGravity(Gravity.CENTER);
+      l.setMaxLines(1);
+      c.addView(l);
+      nodes.addView(c, Ui.weight(1));
+    }
+    line.addView(nodes);
+    j.addView(line, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    Ui.margins(line, 0, 4, 0, 0);
+    if (r != null) {
+      Ui.ripple(j, 0x14B07D1E);
+      j.setOnClickListener(this.opener(PgLeaveFormActivity, "id", r.get("id")));
+    }
+    return j;
+  }
+
+  center(t) {
+    t.setGravity(Gravity.CENTER);
+    return t;
+  }
+
   icon(ic, color, sizeDp) {
-    let iv = new ImageView(this);
+    const iv = new ImageView(this);
     iv.setImageResource(ic);
     iv.setColorFilter(color);
     iv.setLayoutParams(Ui.lp(Ui.dp(this, sizeDp), Ui.dp(this, sizeDp)));
     return iv;
   }
 
+  vline(color) {
+    const v = new View(this);
+    v.setBackgroundColor(color);
+    return v;
+  }
+
   chevron(bg, fg) {
-    let c = Ui.tv(this, "›", 20, fg, true);
+    const c = Ui.tv(this, "›", 20, fg, true);
     c.setGravity(Gravity.CENTER);
     c.setPadding(0, 0, 0, Ui.dp(this, 3));
     c.setBackground(Ui.round(this, bg, 15));
@@ -74953,20 +76601,60 @@ class PgLeaveActivity extends Base {
     return c;
   }
 
-  /** A rounded filter chip with its count in a small badge; the chosen one is filled indigo. */
-  filterChip(s, count, on) {
-    let c = Ui.h(this);
+  /** A chip like the picture's: the chosen one white with a gold edge, Approved in mint, the others soft grey; gold count badge. */
+  filterChip(i, count, on) {
+    const c = Ui.h(this);
     c.setGravity(Gravity.CENTER_VERTICAL);
-    c.setBackground(on ? Ui.gradient(this, [PgLeaveActivity.INDIGO, PgLeaveActivity.VIOLET], 20) : Ui.outline(this, 0xFFFFFFFF, 0xFFE2E8F0, 20));
-    c.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
-    let t = Ui.tv(this, s, 13, on ? 0xFFFFFFFF : Ui.TEXT, true);
-    c.addView(t);
-    let n = Ui.tv(this, String(count), 11, on ? PgLeaveActivity.INDIGO : PgLeaveActivity.INDIGO, true);
-    n.setGravity(Gravity.CENTER);
-    n.setBackground(Ui.round(this, on ? 0xFFFFFFFF : 0xFFEEF2FF, 10));
-    n.setPadding(Ui.dp(this, 7), Ui.dp(this, 1), Ui.dp(this, 7), Ui.dp(this, 1));
-    c.addView(n);
-    Ui.margins(n, 8, 0, 0, 0);
+    const fill = on ? 0xFFFFFFFF : i === 2 ? 0xFFE3F6EA : 0xFFDDE0EC;
+    const edge = on ? 0xFFD9AE4F : i === 2 ? 0xFF86D3A2 : 0xFFC7CCE0;
+    const g = Ui.outline(this, fill, edge, 24);
+    g.setStroke(Ui.dp(this, on ? 2 : 1), edge);
+    c.setBackground(g);
+    c.setPadding(Ui.dp(this, 16), Ui.dp(this, 9), Ui.dp(this, i > 0 ? 8 : 16), Ui.dp(this, 9));
+    if (i === 1) {
+      const dot = new View(this);
+      dot.setBackground(Ui.round(this, 0xFFC9962E, 5));
+      c.addView(dot, Ui.lp(Ui.dp(this, 10), Ui.dp(this, 10)));
+      Ui.margins(dot, 0, 0, 8, 0);
+    }
+    c.addView(Ui.tv(this, PgLeaveActivity.FILTERS[i], 16, 0xFF111827, false));
+    if (i > 0) {
+      const n = Ui.tv(this, String(count), 13, 0xFF3B2A06, true);
+      n.setGravity(Gravity.CENTER);
+      n.setBackground(Ui.gradient(this, [0xFFE9C46A, 0xFFC9962E], 11));
+      n.setPadding(Ui.dp(this, 7), Ui.dp(this, 2), Ui.dp(this, 7), Ui.dp(this, 2));
+      c.addView(n);
+      Ui.margins(n, 8, 0, 0, 0);
+    }
+    return c;
+  }
+
+  /** The empty list: the doctors-with-a-tablet picture, "All caught up!" and what is (not) waiting. */
+  caughtUp() {
+    const c = Ui.v(this);
+    c.setGravity(Gravity.CENTER_HORIZONTAL);
+    c.setBackground(Ui.round(this, 0xFFFFFFFF, 18));
+    c.setPadding(Ui.dp(this, 16), Ui.dp(this, 18), Ui.dp(this, 16), Ui.dp(this, 22));
+    const pic = new ImageView(this);
+    pic.setImageResource(R.drawable.pg_leave_empty);
+    pic.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    pic.setAdjustViewBounds(true);
+    c.addView(pic, Ui.lp(Ui.dp(this, 280), Ui.dp(this, 145)));
+    const f = this.filter, mine = this.mine;
+    const head = f === 1 ? "All caught up!" : f === 3 ? "No history yet" : f === 2 ? "No approved leave now" : "No leave yet";
+    const sub = f === 1 ? (mine ? "None of your requests is waiting" : "No requests are waiting for your approval")
+      : f === 3 ? "Finished and not-approved leave will show here" : f === 2 ? "Approved leave that is still to come shows here"
+        : mine ? "You have not applied for leave yet" : "Leave applications will show here";
+    const h = Ui.tv(this, head, 20, 0xFF111827, true);
+    h.setGravity(Gravity.CENTER);
+    c.addView(h);
+    Ui.margins(h, 0, 10, 0, 0);
+    const s = Ui.tv(this, sub, 16, 0xFF1F2937, false);
+    s.setGravity(Gravity.CENTER);
+    c.addView(s);
+    const m = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    m.setMargins(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), 0);
+    c.setLayoutParams(m);
     return c;
   }
 
@@ -75085,6 +76773,12 @@ class PgLeaveActivity extends Base {
       inner.addView(letter);
       Ui.margins(letter, 0, 8, 0, 0);
     }
+    // 10.45: the supporting document sent with the Apply card
+    for (const d of Attach.of(this.db, "pg_leaves", r.get("id"))) {
+      const doc = this.linkBox(R.drawable.ic_attach, "Supporting document: " + Ui.nz(d.get("name")), { onClick: (v) => { Attach.open(this, this.db, d); } });
+      inner.addView(doc);
+      Ui.margins(doc, 0, 8, 0, 0);
+    }
     Ui.ripple(card, Ui.alpha(col, 0x1A));
     card.setOnClickListener(this.opener(PgLeaveFormActivity, "id", r.get("id")));
     return card;
@@ -75141,34 +76835,29 @@ class PgLeaveActivity extends Base {
     return b;
   }
 
-  /** Gold heart-ECG, "Together We Serve" between gold lines and the college name. */
+  /** The gold band fixed at the bottom: a caduceus on an ECG line, "Together We Serve" and the college name. */
+  /** 10.45: the picture's bottom band ("Work Smart... Take Care... Serve Better..."), fixed at the bottom; navy at the sides on a wide screen. */
   footer() {
-    let f = Ui.v(this);
-    f.setGravity(Gravity.CENTER_HORIZONTAL);
-    f.setPadding(0, Ui.dp(this, 18), 0, Ui.dp(this, 24));
-    let ecg = new View(this);
-    ecg.setBackground(new PgLeaveActivity.HeartEcg());
-    f.addView(ecg, Ui.lp(Ui.dp(this, 150), Ui.dp(this, 30)));
-    let l = Ui.h(this);
-    l.setGravity(Gravity.CENTER);
-    l.addView(this.vline(0x99C9A13B), Ui.lp(Ui.dp(this, 40), Ui.dp(this, 1)));
-    let t = Ui.tv(this, "Together We Serve", 17, 0xFFB8860B, false);
-    t.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD_ITALIC));
-    t.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
-    l.addView(t);
-    l.addView(this.vline(0x99C9A13B), Ui.lp(Ui.dp(this, 40), Ui.dp(this, 1)));
-    f.addView(l);
-    Ui.margins(l, 0, 4, 0, 0);
-    let col = Ui.tv(this, "TIRUNELVELI MEDICAL COLLEGE", 10, 0xFF64748B, true);
-    col.setLetterSpacing(0.18);
-    col.setGravity(Gravity.CENTER);
-    f.addView(col);
-    Ui.margins(col, 0, 4, 0, 0);
+    const f = new FrameLayout(this);
+    f.setBackgroundColor(0xFF071A55);
+    f.setElevation(Ui.dp(this, 8));
+    const sw = this.getResources().getDisplayMetrics().widthPixels;
+    const h = Math.min(Math.round(sw * 156 / 1024), Ui.dp(this, 74));
+    const pic = new ImageView(this);
+    pic.setImageResource(R.drawable.pg_leave_foot);
+    pic.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    pic.setContentDescription("Work Smart. Take Care. Serve Better.");
+    f.addView(pic, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, h));
+    f.setLayoutParams(Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, h));
     return f;
   }
 
-
   viewLetter(r) {
+    const lr = Ui.nz(r.get("letter")).toLowerCase();
+    if (lr.endsWith(".doc") || lr.endsWith(".docx")) {
+      PresentationsActivity.openFileIn(this, this.db, r.get("letter"), false, null);
+      return;
+    }
     if (!this.db.file(r.get("letter")).exists()) {
       Ui.toast(this, "The letter is still downloading. Try again in a moment.");
       Sync.kick(this);
@@ -75356,6 +77045,154 @@ PgLeaveActivity.HeartEcg = class extends Drawable {
   setAlpha(a) {}
   getOpacity() { return PixelFormat.TRANSLUCENT; }
 };
+
+/** 10.42 header: deep navy to indigo, a soft light at the top right and a faint gold caduceus on an ECG line there. */
+PgLeaveActivity.Header = class extends Drawable {
+  constructor(c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.crest = new Crest(0x59D9B45A, true);
+    this.crest.reach = 0.15;
+    this.dp = Ui.dp(c, 1);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp;
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, [0xFF141A52, 0xFF1F2668, 0xFF2A3380], null, Shader.TileMode.CLAMP));
+    cv.drawRect(b, p);
+    p.setShader(new RadialGradient(b.right - 60 * dp, b.top + 40 * dp, 160 * dp, [0x406D7BE0, 0x006D7BE0], null, Shader.TileMode.CLAMP));
+    cv.drawRect(b, p);
+    p.setShader(null);
+    const s = Math.trunc(96 * dp);
+    const cx = Math.trunc(b.right - 58 * dp), top = Math.trunc(b.top + 4 * dp);
+    this.crest.setBounds(cx - Math.trunc(s / 2), top, cx + Math.trunc(s / 2), top + s);
+    cv.save();
+    cv.clipRect(b);
+    this.crest.draw(cv);
+    cv.restore();
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.OPAQUE; }
+};
+
+/** The page sheet under the header: indigo with rounded top corners, so the navy shows at the corners. */
+PgLeaveActivity.Sheet = class extends Drawable {
+  constructor(c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.rad = Ui.dp(c, 30);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, rad = this.rad;
+    p.setShader(new LinearGradient(0, b.top, 0, b.top + Math.max(1, Math.min(b.height(), 900 * rad / 30)), [0xFF323D96, PgLeaveActivity.SHEET], null, Shader.TileMode.CLAMP));
+    const path = new Path();
+    path.addRoundRect(new RectF(b.left, b.top, b.right, b.bottom), [rad, rad, rad, rad, 0, 0, 0, 0], Path.Direction.CW);
+    cv.drawPath(path, p);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** A small seeded random, so the sparkles stay in place from one drawing to the next (java.util.Random(seed) on the phone). */
+PgLeaveActivity.seeded = function (seed) {
+  let s = seed >>> 0 || 1;
+  const next = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  return { nextFloat: next, nextInt: (n) => Math.floor(next() * n), nextBoolean: () => next() < 0.5 };
+};
+
+/**
+ * The line joining the journey's steps: gold (with sparkles) up to the step the leave waits at, dashed navy after it.
+ * The steps sit in equal columns, so step i's centre is at (i + 0.5) / n of the width.
+ */
+PgLeaveActivity.JourneyLine = class extends Drawable {
+  constructor(c, n, stage, refused) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.n = n; this.stage = stage; this.refused = refused;
+    this.dp = Ui.dp(c, 1);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp, n = this.n, stage = this.stage;
+    const w = b.width(), y = b.top + 32 * dp;
+    const x0 = b.left + w * 0.5 / n, x1 = b.left + w * (n - 0.5) / n;
+    const xs = stage < 0 ? x0 : b.left + w * (Math.min(stage, n - 1) + 0.5) / n;
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeCap(Paint.Cap.ROUND);
+    p.setStrokeWidth(3 * dp);
+    p.setColor(0xFF3B4170);
+    p.setPathEffect(new DashPathEffect([9 * dp, 7 * dp], 0));
+    const d = new Path();
+    d.moveTo(xs, y);
+    d.lineTo(x1, y);
+    cv.drawPath(d, p);
+    p.setPathEffect(null);
+    if (xs > x0) {
+      p.setStrokeWidth(9 * dp);
+      p.setShader(null);
+      p.setColor(0x40F5C451);
+      cv.drawLine(x0, y, xs, y, p);
+      p.setStrokeWidth(5 * dp);
+      p.setColor(0xFFFFFFFF);
+      p.setShader(new LinearGradient(x0, 0, xs, 0, [0xFFC9962E, 0xFFF8E08E, this.refused ? 0xFFE38B8B : 0xFFE2B455], null, Shader.TileMode.CLAMP));
+      cv.drawLine(x0, y, xs, y, p);
+      p.setShader(null);
+    }
+    p.setStyle(Paint.Style.FILL);
+    const rnd = PgLeaveActivity.seeded(42);
+    const lit = Math.max(xs, x0 + w * 0.08);
+    for (let i = 0; i < 46; i++) {
+      const x = b.left + w * 0.04 + rnd.nextFloat() * (lit - b.left - w * 0.02);
+      const yy = y + (rnd.nextFloat() - 0.5) * 30 * dp;
+      const r = (0.8 + rnd.nextFloat() * 1.8) * dp;
+      p.setColor(Ui.alpha(0xFFE2B455, 0x50 + rnd.nextInt(0xA0)));
+      if (stage >= 0) cv.drawCircle(x, yy, r, p);
+    }
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** One journey step: a white disc in a gold ring; done steps glow softly, the current step glows bright, a refusal is red. */
+PgLeaveActivity.Node = class extends Drawable {
+  constructor(c, state) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.state = state;
+    this.dp = Ui.dp(c, 1);
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp, state = this.state;
+    const cx = b.exactCenterX(), cy = b.exactCenterY(), r = Math.min(b.width(), b.height()) / 2;
+    const ring = state === 3 ? 0xFFDC2626 : 0xFFD9AE4F;
+    p.setColor(0xFFFFFFFF);
+    if (state > 0) {
+      p.setStyle(Paint.Style.FILL);
+      p.setShader(new RadialGradient(cx, cy, r, [Ui.alpha(ring, state === 1 ? 0x55 : 0xAA), Ui.alpha(ring, 0)], [0.62, 1], Shader.TileMode.CLAMP));
+      cv.drawCircle(cx, cy, r, p);
+      p.setShader(null);
+    }
+    const rr = r * 0.74;
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFFFFFFFF);
+    cv.drawCircle(cx, cy, rr, p);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(4 * dp);
+    if (state === 0) p.setColor(0xFFE3D3A0);
+    else p.setShader(new LinearGradient(cx - rr, cy - rr, cx + rr, cy + rr,
+      state === 3 ? [0xFFF87171, 0xFFB91C1C] : [0xFFF8E08E, 0xFFC9962E, 0xFFF3D27A], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, rr, p);
+    p.setShader(null);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
 ;
 /* ---- app/PgLeaveFormActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -75385,6 +77222,10 @@ class PgLeaveFormActivity extends Base {
       this.r = this.db.row("SELECT * FROM pg_leaves WHERE id=?", s);
       if (this.r != null) this.letter = Ui.nz(this.r.get("letter"));
     }
+    // 10.45: what the PG leave page's Apply card already filled in (a new application only)
+    const gx = (k) => Ui.nz(this.getIntent().getStringExtra(k));
+    this.preType = this.r == null ? gx("pre_type") : ""; this.preFrom = this.r == null ? gx("pre_from") : ""; this.preTo = this.r == null ? gx("pre_to") : "";
+    this.preReason = this.r == null ? gx("pre_reason") : ""; this.preDoc = this.r == null ? gx("pre_doc") : ""; this.preDocName = this.r == null ? gx("pre_doc_name") : ""; this.preDuty = this.r == null ? gx("pre_duty") : "";
     if (b != null) {
       this.letter = Ui.nz(b.getString("letter", this.letter));
       this.pendingScan = b.getString("pendingScan");
@@ -75442,7 +77283,7 @@ class PgLeaveFormActivity extends Base {
     const form = this.form;
     form.choice("staff_id", "PG", names, ids, r == null ? mine : r.get("staff_id"), null);
     const SPANS = PgLeaveFormActivity.SPANS;
-    form.segment("span", "Leave for", SPANS, r == null || LeaveForm.oneDay(r) ? SPANS[0] : SPANS[1], null, {
+    form.segment("span", "Leave for", SPANS, r == null ? (this.preTo.isEmpty() || this.preTo.equals(this.preFrom) ? SPANS[0] : SPANS[1]) : LeaveForm.oneDay(r) ? SPANS[0] : SPANS[1], null, {
       changed: (v) => {
         const one = SPANS[0].equals(v);
         form.show("on_date", one);
@@ -75450,19 +77291,19 @@ class PgLeaveFormActivity extends Base {
         form.show("to_date", !one);
       }
     });
-    form.date("on_date", "Date of leave", r == null ? Dates.todayIso() : r.get("from_date"));
-    form.date("from_date", "Leave from", r == null ? Dates.todayIso() : r.get("from_date"));
-    form.date("to_date", "Leave to", r == null ? Dates.today().plusDays(1).toString() : r.get("to_date"));
-    form.choice("leave_type", "Type of leave", LeaveForm.TYPES, LeaveForm.TYPES, r == null || Ui.nz(r.get("leave_type")).isEmpty() ? LeaveForm.TYPES[0]
+    form.date("on_date", "Date of leave", r == null ? (this.preFrom.isEmpty() ? Dates.todayIso() : this.preFrom) : r.get("from_date"));
+    form.date("from_date", "Leave from", r == null ? (this.preFrom.isEmpty() ? Dates.todayIso() : this.preFrom) : r.get("from_date"));
+    form.date("to_date", "Leave to", r == null ? (this.preTo.isEmpty() || this.preTo.equals(this.preFrom) ? Dates.today().plusDays(1).toString() : this.preTo) : r.get("to_date"));
+    form.choice("leave_type", "Type of leave", LeaveForm.TYPES, LeaveForm.TYPES, r == null && !this.preType.isEmpty() ? this.preType : r == null || Ui.nz(r.get("leave_type")).isEmpty() ? LeaveForm.TYPES[0]
       : LeaveRules.pgKind(r.get("leave_type")) === LeaveRules.ACADEMIC ? LeaveRules.ACADEMIC : r.get("leave_type"), null);
-    form.multi("reason", "Reason for leave (on account of) *", r == null ? "" : r.get("reason"));
-    form.date("resume_date", "Resuming duty on", r == null ? Dates.today().plusDays(1).toString() : LeaveForm.resume(r));
+    form.multi("reason", "Reason for leave (on account of) *", r == null ? this.preReason : r.get("reason"));
+    form.date("resume_date", "Resuming duty on", r == null ? (this.preTo.isEmpty() ? Dates.today().plusDays(1) : Dates.parse(this.preTo).plusDays(1)).toString() : LeaveForm.resume(r));
     const others = [];
     others.add("");
     for (const p of pgs) others.add(p.get("name"));
     const on = others.slice(), ol = others.slice();
     ol[0] = "Not decided";
-    form.choice("duty_pg", "Doing-duty PG (attends my duties)", ol, on, r == null ? "" : Ui.nz(r.get("duty_pg")), null);
+    form.choice("duty_pg", "Doing-duty PG (attends my duties)", ol, on, r == null ? this.preDuty : Ui.nz(r.get("duty_pg")), null);
     card.addView(form.view);
     const rule = Ui.muted(this, "📋  " + LeaveRules.pgRule());
     card.addView(rule);
@@ -75614,7 +77455,8 @@ class PgLeaveFormActivity extends Base {
     }
     if (r == null) {
       cv.put("applied", Dates.todayIso());
-      this.db.insert("pg_leaves", cv);
+      const nid = this.db.insert("pg_leaves", cv);
+      if (!this.preDoc.isEmpty() && nid > 0) Attach.add(this, this.db, "pg_leaves", String(nid), this.preDoc, this.preDocName);
       Ui.toast(this, "Sent for approval");
     } else {
       if (!this.letter.equals(Ui.nz(r.get("letter")))) this.db.forgetFile(r.get("letter"));
@@ -84003,6 +85845,549 @@ class RosterFormActivity extends Base {
     this.finish();
   }
 }
+;
+/* ---- app/RoyalHome.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.42 (user's picture, "make the homepage design exactly like this"): the royal home top. Navy starry space in a gold
+ * frame; on the left the logo, college, HOD photo in a jewelled gold ring, the department and HOD, who admits today and six
+ * crystal numbers; in the middle a gold "Tirunelveli Medical college" plaque over a gold medallion "Dept. of Medicine";
+ * on the right a gold clock, the day and date, and the member's sections as gold-framed tiles on teal. The pieces are
+ * drawn here; MainActivity.royalHero puts them together (side by side on a tablet or the website, stacked on a phone).
+ */
+class RoyalHome {
+  static GOLD = 0xFFE9C46A; static GOLD_LIGHT = 0xFFF8E7AE; static GOLD_DEEP = 0xFFA8771F; static CREAM = 0xFFFFF4D6; static NAVY = 0xFF0A1240;
+  static GOLD_BAR = [0xFFF8E7AE, 0xFFE2B455, 0xFFB8862B, 0xFFE9C46A, 0xFFF6DD95];
+
+  /** The bevelled gold edge: a dark line, a wide gold band and a light inner line. */
+  static goldEdge(cv, p, r, rad, dp) {
+    p.setStyle(Paint.Style.STROKE);
+    const w = 4 * dp;
+    const e = new RectF(r.left + w / 2, r.top + w / 2, r.right - w / 2, r.bottom - w / 2);
+    p.setColor(0xFFFFFFFF);
+    p.setStrokeWidth(w);
+    p.setShader(new LinearGradient(r.left, r.top, r.right, r.bottom, RoyalHome.GOLD_BAR, null, Shader.TileMode.MIRROR));
+    cv.drawRoundRect(e, rad, rad, p);
+    p.setShader(null);
+    p.setStrokeWidth(dp);
+    p.setColor(0x99FFF4D6);
+    const inn = new RectF(e.left + w / 2 + dp, e.top + w / 2 + dp, e.right - w / 2 - dp, e.bottom - w / 2 - dp);
+    cv.drawRoundRect(inn, Math.max(0, rad - w), Math.max(0, rad - w), p);
+  }
+
+  /** A sapphire: deep blue with a white glint, in a thin gold setting. */
+  static gem(cv, p, x, y, r) {
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFFFFFFFF);
+    p.setShader(new LinearGradient(x - r, y - r, x + r, y + r, [0xFFF8E7AE, 0xFFB8862B], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(x, y, r * 1.25, p);
+    p.setShader(new RadialGradient(x - r * 0.3, y - r * 0.3, r * 1.2, [0xFF93C5FD, 0xFF1D4ED8, 0xFF0B1A5C], [0, 0.45, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(x, y, r, p);
+    p.setShader(null);
+    p.setColor(0xCCFFFFFF);
+    cv.drawCircle(x - r * 0.35, y - r * 0.35, r * 0.22, p);
+  }
+
+  /** Text with a gold look on dark backgrounds (light gold, soft dark shadow). */
+  static goldTv(c, s, sp, bold) {
+    const t = Ui.tv(c, s, sp, 0xFFF3D88A, bold);
+    t.setShadowLayer(4, 0, 2, 0xCC000000);
+    return t;
+  }
+
+  /** The college plaque: embossed dark text on gold. */
+  static plaque(c, college, sp) {
+    const t = Ui.tv(c, college, sp, 0xFF4A3510, true);
+    t.setShadowLayer(1.5, 0, 1.5, 0x99FFF6DA);
+    t.setGravity(Gravity.CENTER);
+    t.setSingleLine(true);
+    t.setBackground(new RoyalHome.Plaque(c));
+    t.setPadding(Ui.dp(c, 30), Ui.dp(c, 12), Ui.dp(c, 30), Ui.dp(c, 16));
+    return t;
+  }
+
+  /**
+   * The medallion with "Dept. of" and the department name centred in the glass (10.43: the HOD's name taken out, user
+   * asked). Sizes are in dp, so a phone's large font setting cannot push the words out of the circle.
+   */
+  static medallion(c, main, sizeDp) {
+    const f = new FrameLayout(c);
+    f.setBackground(new RoyalHome.Medallion());
+    const t = Ui.v(c);
+    t.setGravity(Gravity.CENTER);
+    const a = Ui.tv(c, "Dept. of", 14, 0xFFFFFFFF, true);
+    a.setTextSize(TypedValue.COMPLEX_UNIT_DIP, sizeDp * 0.09);
+    a.setShadowLayer(4, 0, 1, 0xCC0B1A5C);
+    a.setGravity(Gravity.CENTER);
+    t.addView(a);
+    const big = Math.min(sizeDp * 0.15, sizeDp * 0.95 / Math.max(5, main.length));
+    const m = Ui.tv(c, main, 14, 0xFFFFFFFF, true);
+    m.setTextSize(TypedValue.COMPLEX_UNIT_DIP, big);
+    m.setShadowLayer(6, 0, 2, 0xE60B1A5C);
+    m.setGravity(Gravity.CENTER);
+    m.setSingleLine(true);
+    t.addView(m);
+    f.addView(t, new FrameLayout.LayoutParams(Ui.dp(c, sizeDp * 0.6), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
+    f.setLayoutParams(Ui.lp(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
+    return f;
+  }
+
+  /** 10.44 (user's picture "Science · Service · Humanity"): the golden crowned caduceus emblem in a gold ring, in place of the circle. */
+  static emblem(c, sizeDp) {
+    const f = new FrameLayout(c);
+    // 10.44: the user's round emblem, shown as a circle in a thin gold ring
+    f.setBackground(Ui.gradient(c, [0xFFFBEFC4, 0xFFC9962E, 0xFFF6DD95, 0xFF8A5E14], sizeDp / 2));
+    f.setElevation(Ui.dp(c, 10));
+    const pad = Ui.dp(c, 3);
+    f.setPadding(pad, pad, pad, pad);
+    const iv = new ImageView(c);
+    iv.setImageResource(R.drawable.medicine_emblem);
+    iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    iv.setBackground(Ui.round(c, 0xFF000000, sizeDp / 2 - 3));
+    iv.setClipToOutline(true);
+    iv.setContentDescription("Medicine emblem: Science, Service, Humanity");
+    f.addView(iv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    f.setLayoutParams(Ui.lp(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
+    f.setOnClickListener({ onClick: (v) => {
+      const big = new ImageView(c);
+      big.setImageResource(R.drawable.medicine_emblem);
+      big.setAdjustViewBounds(true);
+      new AlertDialog.Builder(c).setView(big).setPositiveButton("Close", null).show();
+    } });
+    return f;
+  }
+
+  /** The day and date on a dark teal glass plate with a gold edge. */
+  static datePlate(c, today) {
+    const d = Ui.v(c);
+    d.setGravity(Gravity.CENTER);
+    d.setBackground(new RoyalHome.Panel(c, 12, [0xFF2E6E68, 0xFF1C4E49]));
+    d.setPadding(Ui.dp(c, 18), Ui.dp(c, 12), Ui.dp(c, 18), Ui.dp(c, 12));
+    const dw = Ui.tv(c, today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH).toUpperCase(), 15, 0xFFF3D88A, false);
+    dw.setLetterSpacing(0.12);
+    dw.setGravity(Gravity.CENTER);
+    d.addView(dw);
+    const dd = Ui.tv(c, Dates.nice(today), 22, RoyalHome.CREAM, true);
+    dd.setShadowLayer(4, 0, 2, 0x99000000);
+    dd.setGravity(Gravity.CENTER);
+    d.addView(dd);
+    return d;
+  }
+
+  /** One crystal number with its label under it. */
+  static crystal(c, value, label) {
+    const l = Ui.v(c);
+    l.setGravity(Gravity.CENTER);
+    l.setBackground(new RoyalHome.Crystal(c));
+    l.setPadding(Ui.dp(c, 2), Ui.dp(c, 8), Ui.dp(c, 2), Ui.dp(c, 10));
+    const v = Ui.tv(c, value, 28, 0xFFFFFFFF, true);
+    v.setShadowLayer(6, 0, 2, 0xCC000000);
+    v.setGravity(Gravity.CENTER);
+    l.addView(v);
+    const t = Ui.tv(c, label, 11.5, RoyalHome.CREAM, false);
+    t.setGravity(Gravity.CENTER);
+    t.setSingleLine(true);
+    t.setShadowLayer(3, 0, 1, 0xCC000000);
+    l.addView(t);
+    return l;
+  }
+
+  /** A gold-framed tile: the section's icon in gold, its name in cream, a red count when something waits. */
+  static tile(c, icon, label, badge) {
+    const f = new FrameLayout(c);
+    const t = Ui.v(c);
+    t.setGravity(Gravity.CENTER);
+    t.setBackground(new RoyalHome.GoldTile(c));
+    t.setPadding(Ui.dp(c, 6), Ui.dp(c, 12), Ui.dp(c, 6), Ui.dp(c, 10));
+    const ic = new ImageView(c);
+    ic.setImageResource(icon);
+    ic.setColorFilter(0xFFF3D27A);
+    t.addView(ic, Ui.lp(Ui.dp(c, 34), Ui.dp(c, 34)));
+    const l = Ui.tv(c, label, 12.5, RoyalHome.CREAM, false);
+    l.setGravity(Gravity.CENTER);
+    l.setSingleLine(true);
+    l.setEllipsize(TextUtils.TruncateAt.END);
+    l.setShadowLayer(3, 0, 1, 0xCC000000);
+    t.addView(l, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    Ui.margins(l, 0, 6, 0, 0);
+    f.addView(t, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    if (badge > 0) {
+      const b = Ui.tv(c, badge > 99 ? "99+" : String(badge), 11, 0xFFFFFFFF, true);
+      b.setGravity(Gravity.CENTER);
+      const bd = Ui.round(c, 0xFFEF4444, 11);
+      bd.setStroke(Ui.dp(c, 2), 0xFFF8E7AE);
+      b.setBackground(bd);
+      b.setMinWidth(Ui.dp(c, 22));
+      b.setPadding(Ui.dp(c, 5), 0, Ui.dp(c, 5), 0);
+      f.addView(b, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(c, 22), Gravity.TOP | Gravity.END));
+    }
+    Ui.ripple(f, 0x33F5C451);
+    return f;
+  }
+}
+
+/** A small seeded random: the stars stay put from one drawing to the next. */
+RoyalHome.Seed = class {
+  constructor(seed) { this.s = seed >>> 0; }
+  next() { this.s = (Math.imul(this.s, 1664525) + 1013904223) >>> 0; return this.s / 4294967296; }
+};
+
+/** Navy space with stars and gold mist, in a bevelled gold frame. */
+RoyalHome.Space = class extends Drawable {
+  constructor(c, radDp, frame) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.dp = Ui.dp(c, 1); this.rad = radDp * this.dp; this.frame = frame;
+  }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp, rad = this.rad;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new RadialGradient(b.left + b.width() * 0.3, b.top + b.height() * 0.35, Math.max(b.width(), b.height()) * 0.8,
+      [0xFF1A2A7A, 0xFF0C1650, 0xFF050A26], [0, 0.5, 1], Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(new RadialGradient(b.right - b.width() * 0.15, b.top + b.height() * 0.2, b.width() * 0.35, [0x2EF5C451, 0x00F5C451], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(null);
+    const s = new RoyalHome.Seed(11);
+    const n = Math.trunc(Math.min(420, b.width() * b.height() / (dp * dp * 260)));
+    for (let i = 0; i < n; i++) {
+      const x = b.left + s.next() * b.width(), y = b.top + s.next() * b.height();
+      const big = s.next();
+      p.setColor(Ui.alpha(big > 0.85 ? 0xFFFFF1C2 : 0xFFDDE6FF, Math.trunc(0x30 + s.next() * 0xB0)));
+      cv.drawCircle(x, y, (0.4 + big * (big > 0.93 ? 1.8 : 0.9)) * dp, p);
+    }
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(1.1 * dp);
+    p.setColor(0x33E9C46A);
+    for (let k = 0; k < 5; k++) {
+      const cx = b.left + b.width() * (0.12 + 0.2 * k), cy = b.top + b.height() * (0.25 + 0.12 * (k % 3));
+      const rr = (40 + 14 * k) * dp;
+      const w = new Path();
+      w.moveTo(cx - rr, cy);
+      w.cubicTo(cx - rr * 0.5, cy - rr, cx + rr * 0.5, cy - rr * 0.2, cx, cy + rr * 0.3);
+      w.cubicTo(cx - rr * 0.3, cy + rr * 0.5, cx - rr * 0.6, cy + rr * 0.1, cx - rr * 0.35, cy - rr * 0.1);
+      cv.drawPath(w, p);
+    }
+    if (this.frame) RoyalHome.goldEdge(cv, p, r, rad, dp);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** A rounded panel: translucent navy (the left block) or teal (the tiles), inside a gold edge. */
+RoyalHome.Panel = class extends Drawable {
+  constructor(c, radDp, fill) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.dp = Ui.dp(c, 1); this.rad = radDp * this.dp; this.fill = fill;
+  }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp, rad = this.rad;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, this.fill, null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(null);
+    p.setStrokeWidth(dp);
+    const s = new RoyalHome.Seed(5);
+    p.setStyle(Paint.Style.STROKE);
+    for (let i = 0; i < 40; i++) {
+      const y = b.top + s.next() * b.height();
+      p.setColor(Ui.alpha(0xFFFFFFFF, Math.trunc(6 + s.next() * 14)));
+      cv.drawLine(b.left + 8 * dp, y, b.right - 8 * dp, y + 2 * dp, p);
+    }
+    RoyalHome.goldEdge(cv, p, r, rad, dp);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** The gold plaque with bevelled sides that carries the college's name. */
+RoyalHome.Plaque = class extends Drawable {
+  constructor(c) { super(); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); this.dp = Ui.dp(c, 1); }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp;
+    const cut = Math.min(b.height() * 0.6, 28 * dp);
+    const o = new Path();
+    o.moveTo(b.left, b.top);
+    o.lineTo(b.right, b.top);
+    o.lineTo(b.right - cut, b.bottom);
+    o.lineTo(b.left + cut, b.bottom);
+    o.close();
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(0, b.top, 0, b.bottom, [0xFFFBEFC4, 0xFFE2B455, 0xFFB8862B, 0xFFE9C46A], null, Shader.TileMode.CLAMP));
+    cv.drawPath(o, p);
+    const inn = 6 * dp;
+    const i = new Path();
+    i.moveTo(b.left + inn * 1.6, b.top + inn);
+    i.lineTo(b.right - inn * 1.6, b.top + inn);
+    i.lineTo(b.right - cut - inn * 0.4, b.bottom - inn);
+    i.lineTo(b.left + cut + inn * 0.4, b.bottom - inn);
+    i.close();
+    p.setShader(new LinearGradient(0, b.top, 0, b.bottom, [0xFFE8C46E, 0xFFF6DD95, 0xFFC9962E], null, Shader.TileMode.CLAMP));
+    cv.drawPath(i, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(1.2 * dp);
+    p.setColor(0x99714A0E);
+    cv.drawPath(i, p);
+    p.setColor(0xCCFFF6DA);
+    cv.drawPath(o, p);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/**
+ * The gold medallion (10.43, user: "make the golden circle real 3D", symmetrical): a soft shadow under it, a polished
+ * gold rim lit from the top left, a raised bevel, a beaded band with a glint on every bead, a recessed inner bevel, a blue
+ * glass face with a light reflection, and four sapphires at the quarters. Everything is mirror-symmetric.
+ */
+RoyalHome.Medallion = class extends Drawable {
+  constructor() { super(); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); this.crest = new Crest(0x2EFFF4D6, false); }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p;
+    const cx = b.exactCenterX(), cy = b.exactCenterY(), R = Math.min(b.width(), b.height()) / 2;
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFFFFFFFF);
+    p.setShader(new RadialGradient(cx, cy + R * 0.06, R, [0xAA000000, 0x00000000], [0.82, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy + R * 0.06, R, p);
+    p.setShader(new RadialGradient(cx, cy, R, [0x44F5C451, 0x00F5C451], [0.86, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, R, p);
+    const r1 = R * 0.9;
+    p.setShader(new LinearGradient(cx, cy - r1, cx, cy + r1, [0xFFFFF4CF, 0xFFE9C46A, 0xFFB8862B, 0xFF7A520F], [0, 0.35, 0.7, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r1, p);
+    p.setShader(new SweepGradient(cx, cy, [0x00FFFFFF, 0x55FFFFFF, 0x00FFFFFF, 0x33000000, 0x00FFFFFF, 0x55FFFFFF, 0x00FFFFFF, 0x33000000, 0x00FFFFFF], null));
+    cv.drawCircle(cx, cy, r1, p);
+    const rb1 = R * 0.84;
+    p.setShader(new LinearGradient(cx, cy - rb1, cx, cy + rb1, [0xFF8A5E14, 0xFFFFF1C2], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, rb1, p);
+    const rb2 = R * 0.82;
+    p.setShader(new LinearGradient(cx, cy - rb2, cx, cy + rb2, [0xFFF6DD95, 0xFFC9962E, 0xFF9A6B12], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, rb2, p);
+    p.setShader(null);
+    const rb = R * 0.76, br = R * 0.026;
+    for (let i = 0; i < 40; i++) {
+      const a = Math.PI * 2 * i / 40;
+      const x = cx + rb * Math.cos(a), y = cy + rb * Math.sin(a);
+      p.setColor(0xFF5A3E0C);
+      cv.drawCircle(x, y + br * 0.3, br * 1.1, p);
+      p.setColor(0xFFFFFFFF);
+      p.setShader(new RadialGradient(x - br * 0.35, y - br * 0.35, br * 1.3, [0xFFFFF4CF, 0xFFE2B455, 0xFF8A5E14], [0, 0.5, 1], Shader.TileMode.CLAMP));
+      cv.drawCircle(x, y, br, p);
+      p.setShader(null);
+    }
+    const r2 = R * 0.7;
+    p.setColor(0xFFFFFFFF);
+    p.setShader(new LinearGradient(cx, cy - r2, cx, cy + r2, [0xFF6B4A0E, 0xFFC9962E, 0xFFFFF1C2], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r2, p);
+    const r3 = R * 0.64;
+    p.setShader(new RadialGradient(cx, cy - r3 * 0.25, r3 * 1.15, [0xFFDCE8FF, 0xFF8FA9DD, 0xFF34539A, 0xFF101E55], [0, 0.35, 0.75, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r3, p);
+    p.setShader(new RadialGradient(cx, cy, r3, [0x00000000, 0x00000000, 0x66000000], [0, 0.8, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r3, p);
+    p.setShader(null);
+    const cs = Math.trunc(r3 * 1.3);
+    this.crest.setBounds(Math.trunc(cx - cs / 2), Math.trunc(cy - cs / 2), Math.trunc(cx + cs / 2), Math.trunc(cy + cs / 2));
+    this.crest.draw(cv);
+    p.setShader(new LinearGradient(cx, cy - r3, cx, cy - r3 * 0.15, [0x66FFFFFF, 0x00FFFFFF], null, Shader.TileMode.CLAMP));
+    cv.drawOval(new RectF(cx - r3 * 0.72, cy - r3 * 0.94, cx + r3 * 0.72, cy - r3 * 0.1), p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(R * 0.012);
+    p.setColor(0xCCFFFFFF);
+    cv.drawArc(new RectF(cx - r1 + R * 0.01, cy - r1 + R * 0.01, cx + r1 - R * 0.01, cy + r1 - R * 0.01), 200, 140, false, p);
+    p.setStyle(Paint.Style.FILL);
+    RoyalHome.gem(cv, p, cx, cy - r1 * 0.97, R * 0.06);
+    RoyalHome.gem(cv, p, cx, cy + r1 * 0.97, R * 0.06);
+    RoyalHome.gem(cv, p, cx - r1 * 0.97, cy, R * 0.06);
+    RoyalHome.gem(cv, p, cx + r1 * 0.97, cy, R * 0.06);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** A gold ring set with sapphires, round the HOD's photo. */
+RoyalHome.GemRing = class extends Drawable {
+  constructor() { super(); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p;
+    const cx = b.exactCenterX(), cy = b.exactCenterY(), R = Math.min(b.width(), b.height()) / 2;
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(cx - R, cy - R, cx + R, cy + R, [0xFFFBEFC4, 0xFFC9962E, 0xFFF6DD95, 0xFF8A5E14], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, R * 0.98, p);
+    p.setShader(null);
+    for (let i = 0; i < 8; i++) {
+      const a = Math.PI * 2 * i / 8 + Math.PI / 8;
+      RoyalHome.gem(cv, p, cx + R * 0.88 * Math.cos(a), cy + R * 0.88 * Math.sin(a), R * 0.085);
+    }
+    p.setColor(0xFF0B1A5C);
+    cv.drawCircle(cx, cy, R * 0.8, p);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** One crystal number: a silver-gold frame round navy glass with a sheen. */
+RoyalHome.Crystal = class extends Drawable {
+  constructor(c) { super(); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); this.dp = Ui.dp(c, 1); }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    const rad = 12 * dp;
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, [0xFFF3F4F6, 0xFFC9962E, 0xFFE5E7EB, 0xFF8A5E14, 0xFFF8E7AE], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    const inn = 4 * dp;
+    const g = new RectF(b.left + inn, b.top + inn, b.right - inn, b.bottom - inn);
+    p.setShader(new LinearGradient(g.left, g.top, g.right, g.bottom, [0xFF5B6BB0, 0xFF2A3780, 0xFF141E5A], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(g, rad - inn, rad - inn, p);
+    const sh = new Path();
+    sh.moveTo(g.left, g.top);
+    sh.lineTo(g.right, g.top);
+    sh.lineTo(g.right, g.top + g.height() * 0.25);
+    sh.lineTo(g.left, g.top + g.height() * 0.55);
+    sh.close();
+    p.setShader(null);
+    p.setColor(0x24FFFFFF);
+    cv.save();
+    cv.clipRect(g.left, g.top, g.right, g.bottom);
+    cv.drawPath(sh, p);
+    cv.restore();
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(dp);
+    p.setColor(0x66FFFFFF);
+    cv.drawRoundRect(g, rad - inn, rad - inn, p);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** A gold-framed tile on teal for one section. */
+RoyalHome.GoldTile = class extends Drawable {
+  constructor(c) { super(); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); this.dp = Ui.dp(c, 1); }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    const rad = 14 * dp;
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, [0xFFFBEFC4, 0xFFC9962E, 0xFFF6DD95, 0xFF8A5E14, 0xFFE9C46A], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    const inn = 4 * dp;
+    const g = new RectF(b.left + inn, b.top + inn, b.right - inn, b.bottom - inn);
+    p.setShader(new LinearGradient(g.left, g.top, g.right, g.bottom, [0xFF3E8A80, 0xFF2A6B63, 0xFF1C4E49], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(g, rad - inn, rad - inn, p);
+    p.setShader(new RadialGradient(g.centerX(), g.top + g.height() * 0.38, g.width() * 0.45, [0x40F5C451, 0x00F5C451], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(g, rad - inn, rad - inn, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(dp);
+    p.setColor(0x80FFF4D6);
+    cv.drawRoundRect(g, rad - inn, rad - inn, p);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** The gold bottom bar: a bevelled gold band with sapphires between the tabs. */
+RoyalHome.GoldBar = class extends Drawable {
+  constructor(c, tabs) { super(); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); this.dp = Ui.dp(c, 1); this.tabs = tabs; }
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    const rad = 18 * dp;
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(0, b.top, 0, b.bottom, [0xFFFBEFC4, 0xFFE2B455, 0xFFC9962E, 0xFFE9C46A], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(1.5 * dp);
+    p.setColor(0xFF8A5E14);
+    cv.drawRoundRect(new RectF(b.left + dp, b.top + dp, b.right - dp, b.bottom - dp), rad, rad, p);
+    p.setColor(0xB3FFF6DA);
+    p.setStrokeWidth(dp);
+    cv.drawRoundRect(new RectF(b.left + 4 * dp, b.top + 4 * dp, b.right - 4 * dp, b.bottom - 4 * dp), rad - 3 * dp, rad - 3 * dp, p);
+    for (let i = 1; i < this.tabs; i++) RoyalHome.gem(cv, p, b.left + b.width() * i / this.tabs, b.exactCenterY(), 4.5 * dp);
+  }
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** The gold clock with Roman numerals and a faint gear train behind the hands; it ticks every second. */
+RoyalHome.Clock = class extends View {
+  constructor(c) { super(c); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); }
+  onDraw(cv) {
+    const p = this.p;
+    const w = this.getWidth(), h = this.getHeight(), cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2;
+    if (R <= 0) return;
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(cx - R, cy - R, cx + R, cy + R, [0xFFF3F4F6, 0xFF9CA3AF, 0xFFE5E7EB, 0xFF6B7280], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, R * 0.98, p);
+    p.setShader(new LinearGradient(cx - R, cy - R, cx + R, cy + R, [0xFFFBEFC4, 0xFFC9962E, 0xFFF6DD95, 0xFF8A5E14], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, R * 0.88, p);
+    p.setShader(new RadialGradient(cx, cy, R * 0.8, [0xFFFFFBF0, 0xFFF1E6CC, 0xFFD9C8A0], [0, 0.75, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, R * 0.8, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(Math.max(1, R * 0.02));
+    p.setColor(0x40A8771F);
+    for (const g of [[-0.18, 0.12, 0.2], [0.2, -0.1, 0.16], [0.05, 0.3, 0.12]]) {
+      const gx = cx + R * g[0], gy = cy + R * g[1], gr = R * g[2];
+      cv.drawCircle(gx, gy, gr, p);
+      for (let i = 0; i < 12; i++) {
+        const a = Math.PI * 2 * i / 12;
+        cv.drawLine(gx + gr * Math.cos(a), gy + gr * Math.sin(a), gx + gr * 1.18 * Math.cos(a), gy + gr * 1.18 * Math.sin(a), p);
+      }
+    }
+    p.setColor(0xFF2A2410);
+    for (let i = 0; i < 60; i++) {
+      const a = Math.PI * 2 * i / 60 - Math.PI / 2;
+      const r1 = R * 0.78, r2 = R * (i % 5 === 0 ? 0.71 : 0.75);
+      p.setStrokeWidth(Math.max(1, R * (i % 5 === 0 ? 0.025 : 0.012)));
+      cv.drawLine(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a), cx + r2 * Math.cos(a), cy + r2 * Math.sin(a), p);
+    }
+    p.setStyle(Paint.Style.FILL);
+    p.setTextAlign(Paint.Align.CENTER);
+    p.setTextSize(R * 0.15);
+    p.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+    for (let i = 0; i < 12; i++) {
+      const a = Math.PI * 2 * i / 12 - Math.PI / 2;
+      const rr = R * 0.58;
+      cv.drawText(RoyalHome.Clock.ROMAN[i], cx + rr * Math.cos(a), cy + rr * Math.sin(a) + R * 0.05, p);
+    }
+    const now = new Date();
+    const sec = now.getSeconds(), min = now.getMinutes() + sec / 60, hr = (now.getHours() % 12) + min / 60;
+    this.hand(cv, cx, cy, hr / 12, R * 0.4, R * 0.06, 0xFF3A2A08);
+    this.hand(cv, cx, cy, min / 60, R * 0.6, R * 0.04, 0xFF3A2A08);
+    this.hand(cv, cx, cy, sec / 60, R * 0.66, R * 0.015, 0xFFB91C1C);
+    p.setColor(0xFFFFFFFF);
+    p.setShader(new LinearGradient(cx - R * 0.06, cy - R * 0.06, cx + R * 0.06, cy + R * 0.06, [0xFFFBEFC4, 0xFF8A5E14], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, R * 0.06, p);
+    p.setShader(null);
+    if (this.isAttachedToWindow()) this.postDelayed({ run: () => { if (this.isAttachedToWindow()) this.invalidate(); } }, 1000);
+  }
+  hand(cv, cx, cy, turn, len, wid, color) {
+    const p = this.p;
+    const a = Math.PI * 2 * turn - Math.PI / 2;
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeCap(Paint.Cap.ROUND);
+    p.setStrokeWidth(wid);
+    p.setColor(color);
+    cv.drawLine(cx - len * 0.15 * Math.cos(a), cy - len * 0.15 * Math.sin(a), cx + len * Math.cos(a), cy + len * Math.sin(a), p);
+    p.setStyle(Paint.Style.FILL);
+  }
+};
+RoyalHome.Clock.ROMAN = ["XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI"];
 ;
 /* ---- app/ScorecardActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -94425,8 +96810,7 @@ class UnitActivity extends Base {
     let shown = 0;
     for (const p of dengue) {
       if (!UnitActivity.dengueMatches(p, filters[this.dengueFilter])) continue;
-      page.addView(this.patientRow(p));
-      page.addView(this.dengueTags(p));
+      page.addView(this.patientRow(p, this.dengueTags(p), this.dengueButton(p)));
       shown++;
     }
     if (shown === 0) page.addView(this.emptyNote(dengue.isEmpty() ? "No dengue positive cases. Mark a patient from the All fever cases tab." : "No patients here."));
@@ -94439,8 +96823,7 @@ class UnitActivity extends Base {
     if (n === 0) page.addView(this.emptyNote("None"));
     for (const p of all) {
       if (!sex.equals(p.get("sex"))) continue;
-      page.addView(this.patientRow(p));
-      page.addView(this.dengueTags(p));
+      page.addView(this.patientRow(p, this.dengueTags(p), this.dengueButton(p)));
     }
   }
 
@@ -94477,26 +96860,26 @@ class UnitActivity extends Base {
   }
 
   /** Dengue status under each fever ward patient, with a button to mark or update it. */
+  /** Dengue status inside each fever ward patient's card (10.39), or null when not marked. */
   dengueTags(p) {
+    if (!Db.isDengue(p)) return null;
     const row = Ui.h(this);
     row.setGravity(Gravity.CENTER_VERTICAL);
-    row.setPadding(Ui.dp(this, 26), 0, Ui.dp(this, 14), Ui.dp(this, 6));
+    row.setPadding(0, Ui.dp(this, 6), 0, 0);
+    const test = Ui.nz(p.get("dengue_test"));
+    row.addView(Ui.softPill(this, "Dengue +" + (test.isEmpty() ? "" : " · " + test), Ui.RED));
+    const g = Ui.nz(p.get("dengue_grade"));
+    if (!g.isEmpty()) UnitActivity.addTag(row, Ui.softPill(this, g.equals(Db.DENGUE_GRADES[0]) ? "No warning signs" : g.equals(Db.DENGUE_GRADES[1]) ? "Warning signs" : "Severe", g.equals(Db.DENGUE_GRADES[0]) ? Ui.GREEN : g.equals(Db.DENGUE_GRADES[1]) ? Ui.ORANGE : Ui.RED));
+    if (!Ui.nz(p.get("platelet")).isEmpty()) UnitActivity.addTag(row, Ui.softPill(this, "Plt " + UnitActivity.plateletShort(p.get("platelet")), UnitActivity.plateletLow(p.get("platelet")) ? Ui.RED : Ui.SLATE));
+    return Ui.hscroll(this, row);
+  }
+
+  /** "+ Mark dengue" (or "Edit dengue") at the bottom right of each fever ward card. */
+  dengueButton(p) {
     const pos = Db.isDengue(p);
-    if (pos) {
-      const test = Ui.nz(p.get("dengue_test"));
-      row.addView(Ui.softPill(this, "Dengue +" + (test.isEmpty() ? "" : " · " + test), Ui.RED));
-      const g = Ui.nz(p.get("dengue_grade"));
-      if (!g.isEmpty()) UnitActivity.addTag(row, Ui.softPill(this, g.equals(Db.DENGUE_GRADES[0]) ? "No warning signs" : g.equals(Db.DENGUE_GRADES[1]) ? "Warning signs" : "Severe", g.equals(Db.DENGUE_GRADES[0]) ? Ui.GREEN : g.equals(Db.DENGUE_GRADES[1]) ? Ui.ORANGE : Ui.RED));
-      if (!Ui.nz(p.get("platelet")).isEmpty()) UnitActivity.addTag(row, Ui.softPill(this, "Plt " + UnitActivity.plateletShort(p.get("platelet")), UnitActivity.plateletLow(p.get("platelet")) ? Ui.RED : Ui.SLATE));
-    }
-    const gap = new View(this);
-    row.addView(gap, new LinearLayoutParams(0, 1, 1));
-    const set = Ui.pill(this, pos ? "Edit" : "Mark dengue +", pos ? Ui.unitColor(Db.FEVER) : Ui.RED);
-    set.setOnClickListener({
+    return PatientRowDesign.action(this, pos ? "✎ Edit dengue" : "+  Mark dengue", pos ? Ui.unitColor(Db.FEVER) : 0xFFDC2626, {
       onClick: (v) => { UnitActivity.dengueDialog(this, p, { run: () => { this.render(); } }); }
     });
-    row.addView(set);
-    return row;
   }
 
   /** Marks a fever ward patient dengue positive (or not), with test, severity and latest platelet count. */
@@ -94699,6 +97082,336 @@ class UnitMoves {
     return card;
   }
 }
+;
+/* ---- app/UpdatePrompt.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.41 (user: when I publish a new version, members opening the app should update or be shown "update to the latest version"):
+ * a flashing pop-up on the home page each time the app is opened while a newer published version exists, with Update now
+ * (downloads and opens Android's installer) and Later. Web: the website is always current (Updates.available is null).
+ */
+class UpdatePrompt {
+  static GREEN = 0xFF16A34A; static DEEP = 0xFF064E3B;
+  static showing = false;
+  /** The version already offered since the app was opened; Later keeps quiet until the app is opened again. */
+  static offered = 0;
+  static away = 0;
+
+  /** Shows the pop-up when a newer version is published and not yet offered since the app was opened. */
+  static check(a, db) {
+    if (UpdatePrompt.showing) return;
+    // back after more than 5 minutes away counts as opening the app again
+    if (UpdatePrompt.away > 0 && System.currentTimeMillis() - UpdatePrompt.away > 5 * 60 * 1000) UpdatePrompt.offered = 0;
+    UpdatePrompt.away = 0;
+    const o = Updates.available(a, db);
+    if (o == null || o.optInt("code") === UpdatePrompt.offered) return;
+    UpdatePrompt.offered = o.optInt("code");
+    UpdatePrompt.show(a, o);
+  }
+
+  /** The home page went to the background (MainActivity.onPause). */
+  static paused() {
+    UpdatePrompt.away = System.currentTimeMillis();
+  }
+
+  // 10.42: the look of the user's picture: a navy-to-teal glass card with gold sparkles, a glowing green orb with a gold
+  // arrow and gold arrows turning round it, the version in gold, the notes in a frosted box with a faint caduceus, LATER and a
+  // green UPDATE NOW with a running shine, and "Together We Serve · TIRUNELVELI MEDICAL COLLEGE" under the card.
+  static CREAM = 0xFFF3DFA2;
+  static GOLD = 0xFFE2B455;
+
+  static show(a, o) {
+    const U = UpdatePrompt;
+    U.showing = true;
+    const d = new Dialog(a);
+    const root = Ui.v(a);
+    root.setGravity(Gravity.CENTER_HORIZONTAL);
+    const card = Ui.v(a);
+    card.setGravity(Gravity.CENTER_HORIZONTAL);
+    const bg = new U.Card(a);
+    card.setBackground(bg);
+    card.setElevation(Ui.dp(a, 12));
+    card.setPadding(Ui.dp(a, 20), Ui.dp(a, 14), Ui.dp(a, 20), Ui.dp(a, 14));
+    const orb = new U.Orb(a);
+    card.addView(orb, Ui.lp(Ui.dp(a, 150), Ui.dp(a, 150)));
+    const title = Ui.tv(a, "New version available", 26, Color.WHITE, true);
+    title.setGravity(Gravity.CENTER);
+    title.setShadowLayer(6, 0, 2, 0x66000000);
+    card.addView(title);
+    const ver = Ui.h(a);
+    ver.setGravity(Gravity.CENTER);
+    ver.addView(Ui.tv(a, "TVMCHMED " + o.optString("name") + "  •  ", 16, U.GOLD, true));
+    const you = Ui.tv(a, "you have", 16, U.GOLD, true);
+    you.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC));
+    ver.addView(you);
+    ver.addView(Ui.tv(a, " " + Updates.myName(a), 16, U.GOLD, true));
+    card.addView(ver);
+    Ui.margins(ver, 0, 6, 0, 0);
+    const notes = o.optString("notes");
+    if (!notes.isEmpty()) {
+      const box = new FrameLayout(a);
+      const gb = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0x40FFFFFF, 0x1AFFFFFF]);
+      gb.setCornerRadius(Ui.dp(a, 16));
+      gb.setStroke(Ui.dp(a, 1), 0x59FFFFFF);
+      box.setBackground(gb);
+      const crest = new View(a);
+      crest.setBackground(new Crest(0x40F3DFA2, false));
+      box.addView(crest, new FrameLayout.LayoutParams(Ui.dp(a, 56), Ui.dp(a, 56), Gravity.END | Gravity.CENTER_VERTICAL));
+      const n = Ui.tv(a, notes, 16, U.CREAM, false);
+      n.setMaxLines(6);
+      n.setEllipsize(TextUtils.TruncateAt.END);
+      n.setPadding(Ui.dp(a, 14), Ui.dp(a, 12), Ui.dp(a, 40), Ui.dp(a, 12));
+      box.addView(n, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+      card.addView(box, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+      Ui.margins(box, 0, 16, 0, 0);
+    }
+    const keep = Ui.tv(a, "Your records stay on the phone. Android asks you to tap Install once.", 13, 0xD9FFFFFF, false);
+    keep.setGravity(Gravity.CENTER);
+    card.addView(keep);
+    Ui.margins(keep, 0, 12, 0, 0);
+    const btns = Ui.h(a);
+    btns.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+    const later = Ui.tv(a, "LATER", 16, 0xFFB9A77A, false);
+    later.setLetterSpacing(0.04);
+    later.setPadding(Ui.dp(a, 14), Ui.dp(a, 10), Ui.dp(a, 14), Ui.dp(a, 10));
+    Ui.ripple(later, 0x22FFFFFF);
+    later.setOnClickListener({ onClick: (v) => { d.dismiss(); } });
+    btns.addView(later);
+    const now = Ui.tv(a, "UPDATE NOW", 17, 0xFFFBE7B0, true);
+    now.setLetterSpacing(0.02);
+    now.setGravity(Gravity.CENTER);
+    const shine = new U.Shine(a);
+    now.setBackground(shine);
+    now.setElevation(Ui.dp(a, 4));
+    now.setPadding(Ui.dp(a, 18), Ui.dp(a, 11), Ui.dp(a, 18), Ui.dp(a, 11));
+    now.setOnClickListener({ onClick: (v) => { d.dismiss(); a.open(SettingsActivity, Updates.INSTALL, "1"); } });
+    btns.addView(now);
+    Ui.margins(now, 10, 0, 0, 0);
+    card.addView(btns, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    Ui.margins(btns, 0, 16, 0, 0);
+    root.addView(card, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    const tws = Ui.tv(a, "Together We Serve", 17, U.CREAM, false);
+    tws.setGravity(Gravity.CENTER);
+    tws.setShadowLayer(4, 0, 1, 0x99000000);
+    root.addView(tws);
+    Ui.margins(tws, 0, 18, 0, 0);
+    const col = Ui.h(a);
+    col.setGravity(Gravity.CENTER);
+    const crest = new View(a);
+    crest.setBackground(new Crest(U.GOLD, false));
+    col.addView(crest, Ui.lp(Ui.dp(a, 26), Ui.dp(a, 26)));
+    const cn = Ui.tv(a, "TIRUNELVELI MEDICAL COLLEGE", 15, U.GOLD, false);
+    cn.setLetterSpacing(0.06);
+    cn.setShadowLayer(4, 0, 1, 0x99000000);
+    col.addView(cn);
+    Ui.margins(cn, 6, 0, 0, 0);
+    root.addView(col);
+    Ui.margins(col, 0, 2, 0, 0);
+    root.setPadding(Ui.dp(a, 18), Ui.dp(a, 12), Ui.dp(a, 18), Ui.dp(a, 12));
+    d.setContentView(root);
+    const flash = ValueAnimator.ofFloat(0, 1);
+    flash.setDuration(2400);
+    flash.setRepeatCount(ValueAnimator.INFINITE);
+    flash.setInterpolator(new LinearInterpolator());
+    flash.addUpdateListener({
+      onAnimationUpdate: (v) => {
+        const f = v.getAnimatedValue();
+        orb.set(f);
+        bg.pulse = 0.5 + 0.5 * Math.sin(f * Math.PI * 4);
+        bg.invalidateSelf();
+        shine.at = f;
+        shine.invalidateSelf();
+      }
+    });
+    d.setOnDismissListener({ onDismiss: (dd) => { U.showing = false; flash.cancel(); } });
+    d.show();
+    // the web dialog box is a white card by default: this pop-up draws its own card, with the page blurred behind
+    if (d.box) { d.box.style.background = 'transparent'; d.box.style.boxShadow = 'none'; d.box.style.width = 'min(440px, 94vw)'; d.box.style.maxWidth = '94vw'; }
+    if (d.scrim) { d.scrim.style.backdropFilter = 'blur(10px)'; d.scrim.style.webkitBackdropFilter = 'blur(10px)'; d.scrim.style.background = 'rgba(8,12,40,0.62)'; }
+    flash.start();
+  }
+}
+
+/** A small seeded random, so the sparkles stay in place from one drawing to the next (java.util.Random(seed) on the phone). */
+UpdatePrompt.seeded = function (seed) {
+  let s = seed >>> 0 || 1;
+  const next = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  return { nextFloat: next, nextInt: (n) => Math.floor(next() * n), nextBoolean: () => next() < 0.5 };
+};
+
+/** The card: navy at the top left to deep teal at the bottom right, gold sparkles near the top and a pulsing gold edge. */
+UpdatePrompt.Card = class extends Drawable {
+  constructor(c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.dp = Ui.dp(c, 1);
+    this.pulse = 0;
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp, pulse = this.pulse;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    const rad = 24 * dp;
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(b.left, b.top, b.right, b.bottom, [0xFF1C2163, 0xFF18305E, 0xFF0F5450, 0xFF0E5F57], [0, 0.35, 0.75, 1], Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(new RadialGradient(b.exactCenterX(), b.top + 80 * dp, 170 * dp, [0x3349D6A3, 0x0049D6A3], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(null);
+    const rnd = UpdatePrompt.seeded(7);
+    for (let i = 0; i < 70; i++) {
+      const side = rnd.nextBoolean() ? -1 : 1;
+      const dx = (60 + rnd.nextFloat() * 120) * dp * side;
+      const y = b.top + (30 + rnd.nextFloat() * 110) * dp;
+      const rr = (0.6 + rnd.nextFloat() * 1.6) * dp;
+      p.setColor(Ui.alpha(0xFFF3D27A, 0x40 + rnd.nextInt(0xB0)));
+      cv.drawCircle(b.exactCenterX() + dx, y, rr, p);
+    }
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth((1 + pulse * 1.5) * dp);
+    p.setColor(Ui.mix(0x55E2B455, 0xFFE2B455, pulse));
+    const h = p.getStrokeWidth() / 2;
+    cv.drawRoundRect(new RectF(b.left + h, b.top + h, b.right - h, b.bottom - h), rad, rad, p);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** UPDATE NOW: a green pill with a thin gold edge and a band of light running across it. */
+UpdatePrompt.Shine = class extends Drawable {
+  constructor(c) {
+    super();
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.dp = Ui.dp(c, 1);
+    this.at = 0;
+  }
+
+  draw(cv) {
+    const b = this.getBounds(), p = this.p, dp = this.dp;
+    const r = new RectF(b.left, b.top, b.right, b.bottom);
+    const rad = 12 * dp;
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new LinearGradient(0, b.top, 0, b.bottom, [0xFF2FAF7A, 0xFF17855A, 0xFF0F6B49], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    const x = b.left - b.width() * 0.4 + this.at * b.width() * 1.8;
+    p.setShader(new LinearGradient(x - 30 * dp, 0, x + 30 * dp, 0, [0x00FFF4CC, 0x66FFF4CC, 0x00FFF4CC], null, Shader.TileMode.CLAMP));
+    cv.drawRoundRect(r, rad, rad, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(1.2 * dp);
+    p.setColor(0x99F3D27A);
+    cv.drawRoundRect(new RectF(b.left + dp, b.top + dp, b.right - dp, b.bottom - dp), rad, rad, p);
+    p.setStrokeWidth(2 * dp);
+    p.setStrokeCap(Paint.Cap.ROUND);
+    p.setColor(0xCCF8E08E);
+    const s = new Path();
+    s.moveTo(b.right - b.width() * 0.45, b.bottom - 3 * dp);
+    s.quadTo(b.right - 6 * dp, b.bottom - 4 * dp, b.right + 2 * dp, b.top + 4 * dp);
+    cv.drawPath(s, p);
+  }
+
+  setAlpha(a) {}
+  getOpacity() { return PixelFormat.TRANSLUCENT; }
+};
+
+/** The orb: gold halo rings, a green glass sphere with a gold rim and a gold arrow, two gold arrows turning round it. */
+UpdatePrompt.Orb = class extends View {
+  constructor(c) {
+    super(c);
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG);
+    this.t = 0;
+  }
+
+  set(t) {
+    this.t = t;
+    this.invalidate();
+  }
+
+  onDraw(cv) {
+    const p = this.p, t = this.t;
+    const w = this.getWidth(), h = this.getHeight();
+    if (w <= 0) return;
+    const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2;
+    const breathe = 0.5 + 0.5 * Math.sin(t * Math.PI * 4);
+    // a shader is drawn at the paint's alpha: keep the paint opaque for the gradients
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new RadialGradient(cx, cy, R, [0x66F5C451, 0x26F5C451, 0x00F5C451], [0.35, 0.7, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, R, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    for (let i = 0; i < 3; i++) {
+      p.setStrokeWidth(R * 0.012);
+      p.setColor(Ui.alpha(0xFFF5C451, Math.trunc((0x50 - i * 0x14) * (0.6 + 0.4 * breathe))));
+      cv.drawCircle(cx, cy, R * (0.66 + 0.1 * i), p);
+    }
+    const r = R * 0.48 * (1 + 0.03 * breathe);
+    p.setColor(0xFFFFFFFF);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(new RadialGradient(cx - r * 0.35, cy - r * 0.4, r * 1.5, [0xFF6EE7B7, 0xFF1F9D6E, 0xFF0B5B44], [0, 0.55, 1], Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeWidth(r * 0.08);
+    p.setShader(new LinearGradient(cx - r, cy - r, cx + r, cy + r, [0xFFFBE7A6, 0xFFC9962E, 0xFFF3D27A], null, Shader.TileMode.CLAMP));
+    cv.drawCircle(cx, cy, r, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0x40FFFFFF);
+    cv.drawOval(new RectF(cx - r * 0.6, cy - r * 0.82, cx + r * 0.3, cy - r * 0.35), p);
+    const a = new Path();
+    const s = r * 0.62;
+    a.moveTo(cx, cy - s);
+    a.lineTo(cx + s * 0.78, cy - s * 0.05);
+    a.lineTo(cx + s * 0.3, cy - s * 0.05);
+    a.lineTo(cx + s * 0.3, cy + s * 0.78);
+    a.lineTo(cx - s * 0.3, cy + s * 0.78);
+    a.lineTo(cx - s * 0.3, cy - s * 0.05);
+    a.lineTo(cx - s * 0.78, cy - s * 0.05);
+    a.close();
+    p.setColor(0xFFFFFFFF);
+    p.setShader(new LinearGradient(cx, cy - s, cx, cy + s, [0xFFFFF1C2, 0xFFF0C75E, 0xFFB8862B], null, Shader.TileMode.CLAMP));
+    p.setShadowLayer(r * 0.08, 0, r * 0.04, 0x66000000);
+    cv.drawPath(a, p);
+    p.clearShadowLayer();
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeCap(Paint.Cap.ROUND);
+    const ar = r * 1.22;
+    const ring = new RectF(cx - ar, cy - ar, cx + ar, cy + ar);
+    const rot = t * 360;
+    for (let k = 0; k < 2; k++) {
+      const start = rot + k * 180 + 20;
+      const sweep = 110;
+      p.setStrokeWidth(r * 0.09);
+      p.setColor(0xFFF0C75E);
+      cv.drawArc(ring, start, sweep, false, p);
+      const e = (start + sweep) * Math.PI / 180;
+      const ex = cx + ar * Math.cos(e), ey = cy + ar * Math.sin(e);
+      const tan = e + Math.PI / 2;
+      const hl = r * 0.24;
+      const head = new Path();
+      head.moveTo(ex + hl * Math.cos(tan), ey + hl * Math.sin(tan));
+      head.lineTo(ex + hl * 0.6 * Math.cos(e), ey + hl * 0.6 * Math.sin(e));
+      head.lineTo(ex - hl * 0.6 * Math.cos(e), ey - hl * 0.6 * Math.sin(e));
+      head.close();
+      p.setStyle(Paint.Style.FILL);
+      cv.drawPath(head, p);
+      p.setStyle(Paint.Style.STROKE);
+    }
+    p.setStyle(Paint.Style.FILL);
+    for (let i = 0; i < 8; i++) {
+      const ang = (i * 45 + 22 - rot * 0.3) * Math.PI / 180;
+      const rr = R * (0.72 + 0.12 * (i % 3));
+      const tw = 0.5 + 0.5 * Math.sin(t * Math.PI * 6 + i);
+      p.setColor(Ui.alpha(0xFFFFF1C2, Math.trunc(0x40 + 0xBF * tw)));
+      cv.drawCircle(cx + rr * Math.cos(ang), cy + rr * Math.sin(ang), R * (0.012 + 0.014 * tw), p);
+    }
+  }
+};
 ;
 /* ---- app/VerifyActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -99160,7 +101873,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, AdmitDesign, Adpcm, Ai, AiReturn, AiRun, Album, AlbumActivity, Alerts, Antibiogram, AntibiogramActivity, Applause, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, Buzz, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisClaims, CmchisPackages, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Countdown, CountdownActivity, Crashes, CrashesActivity, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, GoldenHour, GoldenHourActivity, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Honours, HonoursActivity, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, MyMonth, Mystery, MysteryActivity, Net, NightlyBackup, NmcAttendance, NmcAttendanceActivity, Notify, ObstetricActivity, OfflineShare, Opinions, OrderScan, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientDesign, PatientPick, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Posting, PostingActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, RareCase, RareCaseActivity, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SickReport, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, StudentPortal, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilCard, TamilNote, Tasks, TasksActivity, TeachActivity, TeachPoints, TeachingActivity, Thesis, ThesisActivity, TimeMachine, TimeMachineActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, WaClass, Wall, WallActivity, WardDuty, WardList, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, AdmitDesign, Adpcm, Ai, AiReturn, AiRun, Album, AlbumActivity, Alerts, Antibiogram, AntibiogramActivity, Applause, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, Buzz, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisClaims, CmchisPackages, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Countdown, CountdownActivity, Crashes, CrashesActivity, Crest, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, GoldenHour, GoldenHourActivity, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Honours, HonoursActivity, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomHome, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, MyMonth, Mystery, MysteryActivity, Net, NightlyBackup, NmcAttendance, NmcAttendanceActivity, NoticeDesign, Notify, ObstetricActivity, OfflineShare, Opinions, OrderScan, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientDesign, PatientPick, PatientRowDesign, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Posting, PostingActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, RareCase, RareCaseActivity, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, RoyalHome, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SickReport, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, StudentPortal, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilCard, TamilNote, Tasks, TasksActivity, TeachActivity, TeachPoints, TeachingActivity, Thesis, ThesisActivity, TimeMachine, TimeMachineActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, UpdatePrompt, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, WaClass, Wall, WallActivity, WardDuty, WardList, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
