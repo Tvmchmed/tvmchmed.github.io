@@ -5963,7 +5963,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 83);
+    super(c, "tvmchmed.db", null, 84);
     this.ctx = c;
   }
 
@@ -6467,6 +6467,10 @@ class Db extends SQLiteOpenHelper {
           + "details TEXT DEFAULT '', reported_by TEXT DEFAULT '', reported_on TEXT DEFAULT '', owner TEXT DEFAULT '', due TEXT DEFAULT '', "
           + "status TEXT DEFAULT 'Open', action TEXT DEFAULT '', closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '')");
       Db.addColumn(db, "alerts", "audio", "TEXT DEFAULT ''");
+    }
+    if (oldV < 84) {
+      // 10.49: the last day of a CRMI's or MBBS student's posting; 7 days later they leave the lists and the server ends their login
+      Db.addColumn(db, "staff", "till", "TEXT DEFAULT ''");
     }
     if (oldV < 83) {
       // 10.48: the PG's last steps after approval: HOD signed, submitted in the office (the finalised copy is "letter")
@@ -9411,6 +9415,13 @@ class Cloud {
         if (!m.optString("name").isEmpty() && !m.isNull("name")) e.putString("name", m.optString("name"));
       }
     } catch (ignored) {}
+    // 10.49: the last day of a finished CRMI / MBBS posting, when that is why the login ended (separate call: older servers have no column)
+    let ended = "";
+    if (role.equals("blocked")) try {
+      const me = new JSONArray(Cloud.json(c, "GET", "/rest/v1/members?select=ended&user_id=eq." + Cloud.prefs(c).getString("user_id", ""), null).text());
+      if (me.length() > 0 && !me.getJSONObject(0).isNull("ended")) ended = me.getJSONObject(0).optString("ended");
+    } catch (ignored) {}
+    e.putString("ended", ended);
     e.apply();
     return role;
   }
@@ -9430,6 +9441,13 @@ class Cloud {
         if (!m.optString("name").isEmpty() && !m.isNull("name")) e.putString("name", m.optString("name"));
       }
     } catch (ignored) {}
+    // 10.49: the last day of a finished CRMI / MBBS posting, when that is why the login ended (separate call: older servers have no column)
+    let ended = "";
+    if (role.equals("blocked")) try {
+      const me = new JSONArray((await Cloud.jsonA(c, "GET", "/rest/v1/members?select=ended&user_id=eq." + Cloud.prefs(c).getString("user_id", ""), null)).text());
+      if (me.length() > 0 && !me.getJSONObject(0).isNull("ended")) ended = me.getJSONObject(0).optString("ended");
+    } catch (ignored) {}
+    e.putString("ended", ended);
     e.apply();
     return role;
   }
@@ -10386,7 +10404,30 @@ class Approvals {
   static PENDING = "pending"; static REJECTED = "rejected";
 
   /** SQL: entries that count (approved). Older rows have an empty status and count as approved. */
-  static APPROVED_SQL = "COALESCE(approval,'')=''";
+  /**
+   * 10.49 (user's rule): a CRMI or MBBS student whose posting in Medicine ended more than 7 days ago ("till", the posting's last
+   * day) is off every list; the server ends their login on the same day (expire_postings). Empty till = no end.
+   */
+  static GRACE_DAYS = 7;
+  static CURRENT_SQL = "(COALESCE(till,'')='' OR till>=date('now','localtime','-7 days'))";
+  static APPROVED_SQL = "COALESCE(approval,'')='' AND " + Approvals.CURRENT_SQL;
+
+  /** Whether this entry's posting is over (its till is more than 7 days ago). */
+  static postingOver(s) {
+    const t = s == null ? "" : Ui.nz(s.get("till"));
+    return !t.isEmpty() && t.compareTo(Dates.today().minusDays(Approvals.GRACE_DAYS).toString()) < 0;
+  }
+
+  /** The day the login ends for this till date ("" when none). */
+  static accessEnds(till) {
+    const d = Dates.parse(Ui.nz(till));
+    return d == null ? "" : d.plusDays(Approvals.GRACE_DAYS).toString();
+  }
+
+  /** CRMIs and MBBS students have a posting end; PGs and faculty do not. */
+  static hasPosting(role) {
+    return Approvals.facultyOnly(role);
+  }
 
   static isStudent(role) {
     const r = Ui.nz(role);
@@ -13756,8 +13797,13 @@ class AccountActivity extends Base {
     const c = Ui.card(this);
     c.addView(Ui.iconBadge(this, R.drawable.ic_lock, Ui.AMBER, 48));
     const blocked = "blocked".equals(Cloud.role(this));
-    c.addView(Ui.title(this, blocked ? "Removed from the app" : "Waiting for approval"));
-    c.addView(Ui.muted(this, blocked && Conduct.removedForConduct(this) ? "This account was removed for breaking the department rule: " + Conduct.RULE
+    const ended = blocked ? Cloud.prefs(this).getString("ended", "") : "";   // 10.49: login ended because the posting is over
+    c.addView(Ui.title(this, !ended.isEmpty() ? "Your posting in Medicine is over" : blocked ? "Removed from the app" : "Waiting for approval"));
+    c.addView(Ui.muted(this, !ended.isEmpty()
+      ? "Your posting ended on " + Dates.nice(ended) + ", and the app login ends " + Approvals.GRACE_DAYS + " days after the posting. "
+        + "Thank you for your work in the Department of Medicine.\n\nThe department's records have been deleted from this phone. "
+        + "If you are posted to Medicine again, the faculty will move your posting date forward and you can tap Check again."
+      : blocked && Conduct.removedForConduct(this) ? "This account was removed for breaking the department rule: " + Conduct.RULE
         + "\n\nThe department's records have been deleted from this phone. Contact the admin if this is a mistake."
       : blocked ? "The admin, the HOD or a faculty member of your unit has removed this account, so the department's records, case sheets and files have been deleted from this phone. Contact the HOD if this is a mistake."
       : "You're signed in as " + Cloud.prefs(this).getString("email", "") + ". Ask the admin, the HOD or the Medical Registrar to approve you in the app, then tap Check again."));
@@ -78615,6 +78661,24 @@ class Posting {
   }
 
   /** Lower-case letters only, so "DEVA NANDHA  S A" and "Deva Nandha S.A." match. */
+  /**
+   * 10.49: moves each student's "Posting till" up to the end of their latest posting (never back), so the Students list and
+   * the server's expire_postings know when the posting is over. Only on phones that may change MBBS entries (faculty).
+   */
+  static stretchTill(db, c) {
+    if (!Approvals.mayChange(c, Db.MBBS_ROLES[0])) return 0;
+    let n = 0;
+    for (const r of db.rows("SELECT s.id AS id, MAX(p.to_date) AS end_date FROM posting_members m "
+        + "JOIN postings p ON p.id = CAST(m.posting_id AS INTEGER) JOIN staff s ON s.id = CAST(m.staff_id AS INTEGER) "
+        + "WHERE s.role LIKE 'MBBS%' AND COALESCE(p.to_date,'')<>'' GROUP BY s.id HAVING COALESCE(MAX(s.till),'') < MAX(p.to_date)")) {
+      const cv = new ContentValues();
+      cv.put("till", r.get("end_date"));
+      db.update("staff", cv, Long.parseLong(r.get("id")));
+      n++;
+    }
+    return n;
+  }
+
   static norm(name) {
     return Ui.nz(name).toLowerCase().replaceAllRx("[^a-z]", "");
   }
@@ -78641,6 +78705,8 @@ class Posting {
       cv.put("role", year);
       cv.put("unit", unit);
       if (!Ui.nz(p.get("batch")).isEmpty()) cv.put("batch", p.get("batch"));
+      const to = Ui.nz(p.get("to_date"));   // 10.49: the posting's last day; the login ends 7 days later
+      if (!to.isEmpty() && (s == null || Ui.nz(s.get("till")).compareTo(to) < 0)) cv.put("till", to);
       if (s == null) {
         cv.put("name", l[1]);
         cv.put("reg_no", l[0]);
@@ -79085,6 +79151,7 @@ class PostingActivity extends Base {
   }
 
   render() {
+    Posting.stretchTill(this.db, this);
     if (this.id <= 0) this.renderList();
     else this.renderPosting();
   }
@@ -90570,8 +90637,9 @@ class StaffActivity extends Base {
     this.list.removeAllViews();
     const q = "%" + this.query + "%";
     let shown = 0;
+    const cur = " AND " + Approvals.CURRENT_SQL;
     for (const code of S.UNIT_VALUES) {
-      const rows = this.db.rows("SELECT * FROM staff WHERE role=? AND unit=? AND (name LIKE ? OR reg_no LIKE ? OR phone LIKE ?) ORDER BY reg_no, name",
+      const rows = this.db.rows("SELECT * FROM staff WHERE role=? AND unit=? AND (name LIKE ? OR reg_no LIKE ? OR phone LIKE ?)" + cur + " ORDER BY reg_no, name",
         S.CAT_ROLES[this.cat], code, q, q, q);
       if (rows.isEmpty()) continue;
       this.list.addView(Ui.section(this, (Db.DEPT.equals(code) ? (this.cat >= 2 ? "Not posted yet" : "Department") : Db.unitName(code)) + "  ·  " + rows.size()));
@@ -90581,7 +90649,7 @@ class StaffActivity extends Base {
       shown += rows.size();
     }
     // anyone saved under a unit this screen does not list
-    const other = this.db.rows("SELECT * FROM staff WHERE role=? AND unit NOT IN ('M1','M2','M3','M4','M5','M6','M7','IMCU','FEVER','CCB','GERI','RHEUM','KDP','DEPT') AND (name LIKE ? OR reg_no LIKE ? OR phone LIKE ?) ORDER BY name",
+    const other = this.db.rows("SELECT * FROM staff WHERE role=? AND unit NOT IN ('M1','M2','M3','M4','M5','M6','M7','IMCU','FEVER','CCB','GERI','RHEUM','KDP','DEPT') AND (name LIKE ? OR reg_no LIKE ? OR phone LIKE ?)" + cur + " ORDER BY name",
       S.CAT_ROLES[this.cat], q, q, q);
     if (!other.isEmpty()) {
       this.list.addView(Ui.section(this, "Other  ·  " + other.size()));
@@ -90590,7 +90658,18 @@ class StaffActivity extends Base {
       this.list.addView(card);
       shown += other.size();
     }
-    if (shown === 0) this.list.addView(this.emptyNote(this.query.isEmpty() ? "No " + S.CATS[this.cat] + " students added yet. Use + Add, or Paste a list." : "No match."));
+    // 10.49: posting over: kept for their records, off every list; the server has ended their login
+    const past = this.db.rows("SELECT * FROM staff WHERE role=? AND NOT " + Approvals.CURRENT_SQL + " AND (name LIKE ? OR reg_no LIKE ? OR phone LIKE ?) ORDER BY till DESC, name",
+      S.CAT_ROLES[this.cat], q, q, q);
+    if (!past.isEmpty()) {
+      this.list.addView(Ui.section(this, "Posting over  ·  " + past.size()));
+      const card = Ui.card(this);
+      card.addView(Ui.muted(this, "Their posting in Medicine ended more than " + Approvals.GRACE_DAYS + " days ago, so they are off the lists and their app login has ended. "
+        + "Attendance, marks and logbook stay. To bring someone back, open them and move the Posting till date forward."));
+      for (const s of past) card.addView(this.row(s));
+      this.list.addView(card);
+    }
+    if (shown === 0 && past.isEmpty()) this.list.addView(this.emptyNote(this.query.isEmpty() ? "No " + S.CATS[this.cat] + " students added yet. Use + Add, or Paste a list." : "No match."));
   }
 
   row(s) {
@@ -90608,6 +90687,13 @@ class StaffActivity extends Base {
     else if (!Ui.nz(s.get("batch")).isEmpty()) bits.add(s.get("batch"));
     if (!Ui.nz(s.get("phone")).isEmpty()) bits.add(s.get("phone"));
     if (!bits.isEmpty()) t.addView(Ui.muted(this, TextUtils.join("  ·  ", bits)));
+    if (Approvals.hasPosting(s.get("role")) && !Ui.nz(s.get("till")).isEmpty()) {
+      const over = Approvals.postingOver(s);
+      const ending = !over && s.get("till").compareTo(Dates.today().toString()) < 0;
+      t.addView(Ui.tv(this, over ? "Posting over " + Dates.nice(s.get("till")) + " · login ended " + Dates.nice(Approvals.accessEnds(s.get("till")))
+        : ending ? "Posting ended " + Dates.nice(s.get("till")) + " · login ends " + Dates.nice(Approvals.accessEnds(s.get("till")))
+        : "Posting till " + Dates.nice(s.get("till")), 12, over ? Ui.RED : ending ? Ui.AMBER : Ui.MUTED, false));
+    }
     row.addView(t, Ui.weight(1));
     const ap = Approvals.pill(this, s);
     if (ap != null) {
@@ -90654,6 +90740,7 @@ class StaffActivity extends Base {
       changed: (r) => {
         f.show("pg_year", r.equals("Postgraduate"));
         f.show("batch", !r.equals("Postgraduate"));
+        f.show("till", Approvals.hasPosting(r));
       }
     });
     f.choice("unit", pg ? "Unit" : "Clinical posting", S.UNIT_LABELS, S.UNIT_VALUES, s == null ? unit : s.get("unit"), null);
@@ -90664,6 +90751,8 @@ class StaffActivity extends Base {
     f.text("batch", "Batch / academic year (e.g. 2023 batch)", batch0, Form.TEXT);
     f.show("pg_year", role.equals("Postgraduate"));
     f.show("batch", !role.equals("Postgraduate"));
+    f.optionalDate("till", "Posting till (last day in Medicine; the app login ends " + Approvals.GRACE_DAYS + " days later)", s == null ? "" : Ui.nz(s.get("till")));
+    f.show("till", Approvals.hasPosting(role));
     f.text("phone", "Phone", s == null ? "" : Ui.nz(s.get("phone")), Form.PHONE);
     const waiting = s != null && !Ui.nz(s.get("approval")).isEmpty();
     if (waiting) S.approvalBlock(a, f, s);
@@ -90702,6 +90791,7 @@ class StaffActivity extends Base {
         cv.put("reg_no", f.get("reg_no"));
         cv.put("batch", f.get("role").equals("Postgraduate") ? S.pgBatch(f.get("pg_year"), batch0) : f.get("batch"));
         cv.put("phone", f.get("phone"));
+        cv.put("till", Approvals.hasPosting(f.get("role")) ? f.get("till") : "");
         if (s == null) {
           db.insert("staff", cv);
           if (Approvals.PENDING.equals(cv.getAsString("approval")))
@@ -90747,6 +90837,8 @@ class StaffActivity extends Base {
     f.multi("lines", "One student per line (roll no first is optional)", "");
     f.choice("unit", this.cat >= 2 ? "Clinical posting for all of them" : "Unit for all of them", S.UNIT_LABELS, S.UNIT_VALUES, this.cat >= 2 ? Db.DEPT : "M1", null);
     f.text("batch", "Batch / academic year (optional)", "", Form.TEXT);
+    if (Approvals.hasPosting(S.CAT_ROLES[this.cat]))
+      f.optionalDate("till", "Posting till (last day in Medicine; the app login ends " + Approvals.GRACE_DAYS + " days later)", "");
     Ui.formDialog(this, "Paste " + S.CATS[this.cat] + " list", f, "Add", {
       run: () => {
         let added = 0, skipped = 0;
@@ -90761,6 +90853,7 @@ class StaffActivity extends Base {
           cv.put("role", S.CAT_ROLES[this.cat]);
           cv.put("unit", f.get("unit"));
           cv.put("batch", f.get("batch"));
+          if (Approvals.hasPosting(S.CAT_ROLES[this.cat])) cv.put("till", f.get("till"));
           cv.put("phone", "");
           this.db.insert("staff", cv);
           added++;
