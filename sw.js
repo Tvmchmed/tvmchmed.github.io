@@ -1,9 +1,9 @@
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Keeps the website's own files on the device so it opens without internet. Records live in IndexedDB, never here.
-const CACHE = 'tvmchmed-web-10.19';
-const FILES = ["./", "index.html", "style.css", "manifest.webmanifest", "quiz.html", "sql-wasm.wasm", "dept_logo.png", "icd11.txt", "uq_seed.txt", "dama_form.pdf", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.png", "home_banner.webp", "home_banner_wide.webp", "album_frame.webp", "cert_template.webp", "home_poster.webp", "doubt_heart.webp", "pg_leave_empty.webp", "pg_leave_top.webp", "pg_leave_foot.webp", "medicine_emblem.webp", "sql-wasm.js", "fflate.js", "config.js", "tvmchmed.js"];
+const CACHE = 'tvmchmed-web-10.38';
+const FILES = ["./", "index.html", "style.css", "manifest.webmanifest", "quiz.html", "sql-wasm.wasm", "dept_logo.png", "icd11.txt", "uq_seed.txt", "dama_form.pdf", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.png", "home_banner.webp", "home_banner_wide.webp", "album_frame.webp", "cert_template.webp", "home_poster.webp", "doubt_heart.webp", "pg_leave_empty.webp", "pg_leave_top.webp", "pg_leave_foot.webp", "medicine_emblem.webp", "bb_top.webp", "bb_ward.webp", "pd_top.webp", "wl_hosp.webp", "wl_care.webp", "wl_wave.webp", "medsphere-icon.png", "ms_hero.webp", "ms_hall.webp", "ms_group.webp", "ms_bed.webp", "royal_clock.webp", "royal_clock_hub.webp", "tvmchmed_logo.webp", "palace_home.webp", "palace_hub.webp", "palace_left.webp", "palace_right.webp", "grand_home.webp", "grand_head.webp", "grand_tabbar.webp", "grand_tab_on.webp", "grand_icons.webp", "grand_hub.webp", "sql-wasm.js", "fflate.js", "config.js", "tvmchmed.js"];
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => c.add(f.indexOf('.js') > 0 && f.indexOf('?') < 0 ? f + '?v=10.19' : f).catch(() => {})))).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(FILES.map(f => c.add(f.indexOf('.js') > 0 && f.indexOf('?') < 0 ? f + '?v=10.38' : f).catch(() => {})))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== SHARE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

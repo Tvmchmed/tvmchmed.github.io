@@ -3904,7 +3904,7 @@ const NotificationManager = {
     if (n === undefined) { n = id; id = tag; }
     if (!NotificationManager.areNotificationsEnabled() || !document.hidden) return;
     try {
-      const w = new NativeNotification(n.title || 'TVMCHMED', { body: n.text || '', icon: 'icon-192.png', tag: String(id) });
+      const w = new NativeNotification(n.title || 'TVMCHMED', { body: n.text || '', icon: 'icon-192.png', tag: String(id), silent: true });
       w.onclick = () => { window.focus(); if (n.pi && n.pi.intent && n.pi.intent.cls) App.top() && App.top().startActivity(n.pi.intent); w.close(); };
       NotificationManager.shown.set(String(id), w);
     } catch (e) { /* some phones only allow notifications from an installed web app */ }
@@ -4682,7 +4682,7 @@ Object.assign(window, {
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary. See LICENSE.txt. */
 // Generated from app/src/main/res: the vector icons and other resources, as R.drawable / R.raw.
 var R = { drawable: {}, raw: { icd11: "icd11.txt", uq_seed: "uq_seed.txt" }, id: { tag_state: "tag_state" }, layout: {} };
-R.VECTORS = {"ic_search":{"vw":24.0,"vh":24.0,"p":[{"d":"M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z","fill":"#FF000000"}]},"ic_doubt":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2C6.5,2 2,6 2,11c0,2.5 1.1,4.7 2.9,6.3L4,22l4.6,-2.4C9.6,19.8 10.8,20 12,20c5.5,0 10,-4 10,-9S17.5,2 12,2zM11,14h2v2h-2zM12,5.8c-1.8,0 -3.1,1.1 -3.1,2.9h1.9c0,-0.6 0.5,-1 1.2,-1s1.2,0.4 1.2,0.9c0,1.3 -2.2,1.2 -2.2,3.5h1.9c0,-1.5 2.3,-1.6 2.3,-3.6c0,-1.7 -1.3,-2.7 -3.2,-2.7z","fill":"#FF000000","rule":"evenOdd"}]},"ic_approve":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM9,14c-2.67,0 -8,1.34 -8,4v2h11.5c-0.32,-0.62 -0.5,-1.29 -0.5,-2 0,-1.5 0.66,-2.84 1.7,-3.76C12.15,14.08 10.4,14 9,14zM17.5,13.5l-1.06,1.06 -0,0 1.06,-1.06zM21.59,13.59L17,18.17l-2.09,-2.08L13.5,17.5 17,21l6,-6z","fill":"#FF000000"}]},"ic_attach":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_back":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z","fill":"#FF000000"}]},"ic_badge":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.11,0 -2,0.9 -2,2v14c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,6c1.93,0 3.5,1.57 3.5,3.5S13.93,13 12,13s-3.5,-1.57 -3.5,-3.5S10.07,6 12,6zM19,19H5v-0.23c0,-0.62 0.28,-1.2 0.76,-1.58C7.47,15.82 9.64,15 12,15s4.53,0.82 6.24,2.19c0.48,0.38 0.76,0.97 0.76,1.58V19z","fill":"#FF000000"}]},"ic_bed":{"vw":24.0,"vh":24.0,"p":[{"d":"M7,13c1.66,0 3,-1.34 3,-3S8.66,7 7,7s-3,1.34 -3,3 1.34,3 3,3zM19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0,-2.21 -1.79,-4 -4,-4z","fill":"#FF000000"}]},"ic_bone":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.2,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M2.2,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M4.8,9.8h14.4v4.4h-14.4z","fill":"#FF000000"}]},"ic_book":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_building":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,7V3H2v18h20V7H12zM6,19H4v-2h2v2zM6,15H4v-2h2v2zM6,11H4V9h2v2zM6,7H4V5h2v2zM10,19H8v-2h2v2zM10,15H8v-2h2v2zM10,11H8V9h2v2zM10,7H8V5h2v2zM20,19h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zM18,11h-2v2h2v-2zM18,15h-2v2h2v-2z","fill":"#FF000000"}]},"ic_bulb":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1H9v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74V17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_calendar":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,4h-1V2h-2v2H8V2H6v2H5C3.89,4 3.01,4.9 3.01,6L3,20c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM19,20H5V10h14v10zM19,8H5V6h14v2zM7,12h5v5H7z","fill":"#FF000000"}]},"ic_camera":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,2L7.17,4H4c-1.1,0 -2,0.9 -2,2v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2h-3.17L15,2H9zM12,17c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5 5,2.24 5,5 -2.24,5 -5,5zM12,8.8c-1.77,0 -3.2,1.43 -3.2,3.2s1.43,3.2 3.2,3.2 3.2,-1.43 3.2,-3.2 -1.43,-3.2 -3.2,-3.2z","fill":"#FF000000"}]},"ic_cane":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,4a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z","fill":"#FF000000"},{"d":"M9.6,7.2h4.2c0.9,0 1.6,0.6 1.7,1.5l0.6,4.8h-2l-0.3,-2.4l-0.4,10.9h-2.2l-0.3,-6h-0.6l-0.4,6h-2.1l0.2,-8.6l-1.6,1.9l-1.5,-1.2l2.9,-5.2c0.3,-1 0.9,-1.7 1.8,-1.7z","fill":"#FF000000"},{"d":"M17,12.5h1.3v9.5h-1.3z M16.6,12.5c0,-1.6 2.9,-1.6 2.9,0h-1.2c0,-0.5 -0.5,-0.5 -0.5,0z","fill":"#FF000000"}]},"ic_census":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1S9.6,1.84 9.18,3H5C3.9,3 3,3.9 3,5v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5C21,3.9 20.1,3 19,3zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1S11.45,3 12,3zM9,17H7v-5h2V17zM13,17h-2V9h2V17zM17,17h-2v-3h2V17z","fill":"#FF000000"}]},"ic_chart":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM9,17H7v-7h2v7zM13,17h-2V7h2v10zM17,17h-2v-4h2v4z","fill":"#FF000000"}]},"ic_chat":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1.5C6.2,1.5 1.5,5.9 1.5,11.3c0,1.9 0.6,3.7 1.6,5.2L1.8,22.2l5.9,-1.6c1.3,0.6 2.8,0.9 4.3,0.9c5.8,0 10.5,-4.4 10.5,-9.8S17.8,1.5 12,1.5zM10.6,6.4h2.8v3.5h3.5v2.8h-3.5v3.5h-2.8v-3.5H7.1v-2.8h3.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_clipboard":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1c-1.3,0 -2.4,0.84 -2.82,2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1 0.45,-1 1,-1zM14,17H7v-2h7v2zM17,13H7v-2h10v2zM17,9H7V7h10v2z","fill":"#FF000000"}]},"ic_cloud":{"vw":24.0,"vh":24.0,"p":[{"d":"M19.35,10.04C18.67,6.59 15.64,4 12,4 9.11,4 6.6,5.64 5.35,8.04 2.34,8.36 0,10.91 0,14c0,3.31 2.69,6 6,6h13c2.76,0 5,-2.24 5,-5 0,-2.64 -2.05,-4.78 -4.65,-4.96zM14,13v4h-4v-4H7l5,-5 5,5h-3z","fill":"#FF000000"}]},"ic_contacts":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,0H4v2h16V0zM4,24h16v-2H4v2zM20,4H4C2.9,4 2,4.9 2,6v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM12,6.75c1.24,0 2.25,1.01 2.25,2.25s-1.01,2.25 -2.25,2.25S9.75,10.24 9.75,9 10.76,6.75 12,6.75zM17,17H7v-1.5c0,-1.67 3.33,-2.5 5,-2.5s5,0.83 5,2.5V17z","fill":"#FF000000"}]},"ic_doc":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,2H6c-1.1,0 -1.99,0.9 -1.99,2L4,20c0,1.1 0.89,2 1.99,2H18c1.1,0 2,-0.9 2,-2V8l-6,-6zM16,18H8v-2h8v2zM16,14H8v-2h8v2zM13,9V3.5L18.5,9H13z","fill":"#FF000000"}]},"ic_drop":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2c-5.33,4.55 -8,8.48 -8,11.8c0,4.98 3.8,8.2 8,8.2s8,-3.22 8,-8.2c0,-3.32 -2.67,-7.25 -8,-11.8zM10.8,11.5h2.4v2.3h2.3v2.4h-2.3v2.3h-2.4v-2.3H8.5v-2.4h2.3z","fill":"#FF000000","rule":"evenOdd"}]},"ic_event":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.53,11.06L15.47,10l-4.88,4.88 -2.12,-2.12 -1.06,1.06L10.59,17l5.94,-5.94zM19,3h-1V1h-2v2H8V1H6v2H5c-1.11,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM19,19H5V8h14v11z","fill":"#FF000000"}]},"ic_fever":{"vw":24.0,"vh":24.0,"p":[{"d":"M15,13V5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v8c-1.21,0.91 -2,2.37 -2,4 0,2.76 2.24,5 5,5s5,-2.24 5,-5c0,-1.63 -0.79,-3.09 -2,-4zM11,5c0,-0.55 0.45,-1 1,-1s1,0.45 1,1h-1v1h1v2h-1v1h1v2h-2V5z","fill":"#FF000000"}]},"ic_flight":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,16v-2l-8,-5V3.5c0,-0.83 -0.67,-1.5 -1.5,-1.5S10,2.67 10,3.5V9l-8,5v2l8,-2.5V19l-2,1.5V22l3.5,-1 3.5,1v-1.5L13,19v-5.5l8,2.5z","fill":"#FF000000"}]},"ic_group":{"vw":24.0,"vh":24.0,"p":[{"d":"M16,11c1.66,0 2.99,-1.34 2.99,-3S17.66,5 16,5c-1.66,0 -3,1.34 -3,3s1.34,3 3,3zM8,11c1.66,0 2.99,-1.34 2.99,-3S9.66,5 8,5C6.34,5 5,6.34 5,8s1.34,3 3,3zM8,13c-2.33,0 -7,1.17 -7,3.5V19h14v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5zM16,13c-0.29,0 -0.62,0.02 -0.97,0.05 1.16,0.84 1.97,1.97 1.97,3.45V19h6v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5z","fill":"#FF000000"}]},"ic_heart":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z","fill":"#FF000000"}]},"ic_home":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z","fill":"#FF000000"}]},"ic_hospital":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM18,14h-4v4h-4v-4H6v-4h4V6h4v4h4v4z","fill":"#FF000000"}]},"ic_lock":{"vw":24.0,"vh":24.0,"p":[{"d":"M18,8h-1V6c0,-2.76 -2.24,-5 -5,-5S7,3.24 7,6v2H6c-1.1,0 -2,0.9 -2,2v10c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2V10c0,-1.1 -0.9,-2 -2,-2zM12,17c-1.1,0 -2,-0.9 -2,-2s0.9,-2 2,-2 2,0.9 2,2 -0.9,2 -2,2zM15.1,8H8.9V6c0,-1.71 1.39,-3.1 3.1,-3.1 1.71,0 3.1,1.39 3.1,3.1v2z","fill":"#FF000000"}]},"ic_mail":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,4H4c-1.1,0 -1.99,0.9 -1.99,2L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z","fill":"#FF000000"}]},"ic_menu":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,18h18v-2H3v2zM3,13h18v-2H3v2zM3,6v2h18V6H3z","fill":"#FF000000"}]},"ic_mic":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11H5c0,3.41 2.72,6.23 6,6.72V21h2v-3.28c3.28,-0.48 6,-3.3 6,-6.72h-1.7z","fill":"#FF000000"}]},"ic_moon":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,3c-4.97,0 -9,4.03 -9,9s4.03,9 9,9 9,-4.03 9,-9c0,-0.46 -0.04,-0.92 -0.1,-1.36 -0.98,1.37 -2.58,2.26 -4.4,2.26 -2.98,0 -5.4,-2.42 -5.4,-5.4 0,-1.81 0.89,-3.42 2.26,-4.4C12.92,3.04 12.46,3 12,3z","fill":"#FF000000"}]},"ic_notice":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,2H4c-1.1,0 -1.99,0.9 -1.99,2L2,22l4,-4h14c1.1,0 2,-0.9 2,-2V4c0,-1.1 -0.9,-2 -2,-2zM13,11h-2V5h2v6zM13,15h-2v-2h2v2z","fill":"#FF000000"}]},"ic_people":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM12,14c-2.67,0 -8,1.34 -8,4v2h16v-2c0,-2.66 -5.33,-4 -8,-4z","fill":"#FF000000"}]},"ic_phone":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z","fill":"#FF000000"}]},"ic_plus":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z","fill":"#FF000000"}]},"ic_quiz":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1L9,20v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74L8,17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_school":{"vw":24.0,"vh":24.0,"p":[{"d":"M5,13.18v4L12,21l7,-3.82v-4L12,17l-7,-3.82zM12,3L1,9l11,6 9,-4.91V17h2V9L12,3z","fill":"#FF000000"}]},"ic_send":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.01,21L23,12 2.01,3 2,10l15,2 -15,2z","fill":"#FF000000","rule":"evenOdd"}]},"ic_shield":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2L4,5v6.09c0,5.05 3.41,9.76 8,10.91c4.59,-1.15 8,-5.86 8,-10.91V5L12,2zM10.5,13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13z","fill":"#FF000000","rule":"evenOdd"}]},"ic_snake":{"vw":24.0,"vh":24.0,"p":[{"d":"M4.5,20.5c3,0 5.5,-0.8 8.5,-0.8c2.8,0 4.6,-1.6 4.6,-3.6c0,-2.2 -2,-3.2 -4.6,-3.6c-2.5,-0.4 -4.5,-1.4 -4.5,-3.6c0,-2 1.8,-3.6 4.3,-3.6","fill":"#00000000","stroke":"#FF000000","sw":"2.6","cap":"round"},{"d":"M12.6,3.1h3.6c1.6,0 2.6,0.9 2.6,2.2s-1,2.2 -2.6,2.2h-3.6z","fill":"#FF000000"},{"d":"M18.8,5.3h2.2l0.9,-0.9M21,5.3l0.9,0.9","fill":"#00000000","stroke":"#FF000000","sw":"0.9","cap":"round"}]},"ic_star":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z","fill":"#FF000000"}]},"ic_swap":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.99,11L3,15l3.99,4v-3H14v-2H6.99v-3zM21,9l-3.99,-4v3H10v2h7.01v3L21,9z","fill":"#FF000000"}]},"ic_task":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,10H2v2h12v-2zM14,6H2v2h12V6zM2,16h8v-2H2v2zM21.5,11.5L23,13l-6.99,7 -4.51,-4.5L13,14l3.01,3 5.49,-5.5z","fill":"#FF000000"}]},"ic_thesis":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_trend":{"vw":24.0,"vh":24.0,"p":[{"d":"M3.5,18.49l6,-6.01 4,4L22,6.92l-1.41,-1.41 -7.09,7.97 -4,-4L2,16.99z","fill":"#FF000000"}]},"ic_trophy":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,5h-2V3H7v2H5C3.9,5 3,5.9 3,7v1c0,2.55 1.92,4.63 4.39,4.94c0.63,1.5 1.98,2.63 3.61,2.96V19H7v2h10v-2h-4v-3.1c1.63,-0.33 2.98,-1.46 3.61,-2.96C19.08,12.63 21,10.55 21,8V7C21,5.9 20.1,5 19,5zM5,8V7h2v3.82C5.84,10.4 5,9.3 5,8zM19,8c0,1.3 -0.84,2.4 -2,2.82V7h2V8z","fill":"#FF000000"}]},"ic_tune":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,17v2h6v-2H3zM3,5v2h10V5H3zM13,21v-2h8v-2h-8v-2h-2v6h2zM7,9v2H3v2h4v2h2V9H7zM21,13v-2H11v2h10zM15,9h2V7h4V5h-4V3h-2v6z","fill":"#FF000000"}]},"ic_upload":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,16h6v-6h4l-7,-7 -7,7h4zM5,18h14v2H5z","fill":"#FF000000"}]},"ic_verified":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM10,17l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z","fill":"#FF000000"}]},"ic_warn":{"vw":24.0,"vh":24.0,"p":[{"d":"M1,21h22L12,2 1,21zM13,18h-2v-2h2v2zM13,14h-2v-4h2v4z","fill":"#FF000000","rule":"evenOdd"}]}};
+R.VECTORS = {"ic_video":{"vw":24.0,"vh":24.0,"p":[{"d":"M17,10.5V7c0,-0.55 -0.45,-1 -1,-1H4c-0.55,0 -1,0.45 -1,1v10c0,0.55 0.45,1 1,1h12c0.55,0 1,-0.45 1,-1v-3.5l4,4v-11l-4,4z","fill":"#FF000000"}]},"ic_search":{"vw":24.0,"vh":24.0,"p":[{"d":"M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z","fill":"#FF000000"}]},"ic_doubt":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2C6.5,2 2,6 2,11c0,2.5 1.1,4.7 2.9,6.3L4,22l4.6,-2.4C9.6,19.8 10.8,20 12,20c5.5,0 10,-4 10,-9S17.5,2 12,2zM11,14h2v2h-2zM12,5.8c-1.8,0 -3.1,1.1 -3.1,2.9h1.9c0,-0.6 0.5,-1 1.2,-1s1.2,0.4 1.2,0.9c0,1.3 -2.2,1.2 -2.2,3.5h1.9c0,-1.5 2.3,-1.6 2.3,-3.6c0,-1.7 -1.3,-2.7 -3.2,-2.7z","fill":"#FF000000","rule":"evenOdd"}]},"ic_approve":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM9,14c-2.67,0 -8,1.34 -8,4v2h11.5c-0.32,-0.62 -0.5,-1.29 -0.5,-2 0,-1.5 0.66,-2.84 1.7,-3.76C12.15,14.08 10.4,14 9,14zM17.5,13.5l-1.06,1.06 -0,0 1.06,-1.06zM21.59,13.59L17,18.17l-2.09,-2.08L13.5,17.5 17,21l6,-6z","fill":"#FF000000"}]},"ic_attach":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.5,6v11.5c0,2.21 -1.79,4 -4,4s-4,-1.79 -4,-4V5c0,-1.38 1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5v10.5c0,0.55 -0.45,1 -1,1s-1,-0.45 -1,-1V6H10v9.5c0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5V5c0,-2.21 -1.79,-4 -4,-4S7,2.79 7,5v12.5c0,3.04 2.46,5.5 5.5,5.5s5.5,-2.46 5.5,-5.5V6h-1.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_back":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,11H7.83l5.59,-5.59L12,4l-8,8 8,8 1.41,-1.41L7.83,13H20v-2z","fill":"#FF000000"}]},"ic_badge":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.11,0 -2,0.9 -2,2v14c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,6c1.93,0 3.5,1.57 3.5,3.5S13.93,13 12,13s-3.5,-1.57 -3.5,-3.5S10.07,6 12,6zM19,19H5v-0.23c0,-0.62 0.28,-1.2 0.76,-1.58C7.47,15.82 9.64,15 12,15s4.53,0.82 6.24,2.19c0.48,0.38 0.76,0.97 0.76,1.58V19z","fill":"#FF000000"}]},"ic_bed":{"vw":24.0,"vh":24.0,"p":[{"d":"M7,13c1.66,0 3,-1.34 3,-3S8.66,7 7,7s-3,1.34 -3,3 1.34,3 3,3zM19,7h-8v7H3V5H1v15h2v-3h18v3h2v-9c0,-2.21 -1.79,-4 -4,-4z","fill":"#FF000000"}]},"ic_bone":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.2,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M2.2,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,9.6a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M16.6,14.4a2.6,2.6 0,1 0,5.2 0a2.6,2.6 0,1 0,-5.2 0z M4.8,9.8h14.4v4.4h-14.4z","fill":"#FF000000"}]},"ic_book":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_building":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,7V3H2v18h20V7H12zM6,19H4v-2h2v2zM6,15H4v-2h2v2zM6,11H4V9h2v2zM6,7H4V5h2v2zM10,19H8v-2h2v2zM10,15H8v-2h2v2zM10,11H8V9h2v2zM10,7H8V5h2v2zM20,19h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zM18,11h-2v2h2v-2zM18,15h-2v2h2v-2z","fill":"#FF000000"}]},"ic_bulb":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1H9v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74V17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_calendar":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,4h-1V2h-2v2H8V2H6v2H5C3.89,4 3.01,4.9 3.01,6L3,20c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM19,20H5V10h14v10zM19,8H5V6h14v2zM7,12h5v5H7z","fill":"#FF000000"}]},"ic_camera":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,2L7.17,4H4c-1.1,0 -2,0.9 -2,2v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2h-3.17L15,2H9zM12,17c-2.76,0 -5,-2.24 -5,-5s2.24,-5 5,-5 5,2.24 5,5 -2.24,5 -5,5zM12,8.8c-1.77,0 -3.2,1.43 -3.2,3.2s1.43,3.2 3.2,3.2 3.2,-1.43 3.2,-3.2 -1.43,-3.2 -3.2,-3.2z","fill":"#FF000000"}]},"ic_cane":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,4a2.2,2.2 0,1 0,4.4 0a2.2,2.2 0,1 0,-4.4 0z","fill":"#FF000000"},{"d":"M9.6,7.2h4.2c0.9,0 1.6,0.6 1.7,1.5l0.6,4.8h-2l-0.3,-2.4l-0.4,10.9h-2.2l-0.3,-6h-0.6l-0.4,6h-2.1l0.2,-8.6l-1.6,1.9l-1.5,-1.2l2.9,-5.2c0.3,-1 0.9,-1.7 1.8,-1.7z","fill":"#FF000000"},{"d":"M17,12.5h1.3v9.5h-1.3z M16.6,12.5c0,-1.6 2.9,-1.6 2.9,0h-1.2c0,-0.5 -0.5,-0.5 -0.5,0z","fill":"#FF000000"}]},"ic_census":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1S9.6,1.84 9.18,3H5C3.9,3 3,3.9 3,5v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5C21,3.9 20.1,3 19,3zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1S11.45,3 12,3zM9,17H7v-5h2V17zM13,17h-2V9h2V17zM17,17h-2v-3h2V17z","fill":"#FF000000"}]},"ic_chart":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM9,17H7v-7h2v7zM13,17h-2V7h2v10zM17,17h-2v-4h2v4z","fill":"#FF000000"}]},"ic_chat":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1.5C6.2,1.5 1.5,5.9 1.5,11.3c0,1.9 0.6,3.7 1.6,5.2L1.8,22.2l5.9,-1.6c1.3,0.6 2.8,0.9 4.3,0.9c5.8,0 10.5,-4.4 10.5,-9.8S17.8,1.5 12,1.5zM10.6,6.4h2.8v3.5h3.5v2.8h-3.5v3.5h-2.8v-3.5H7.1v-2.8h3.5z","fill":"#FF000000","rule":"evenOdd"}]},"ic_clipboard":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3h-4.18C14.4,1.84 13.3,1 12,1c-1.3,0 -2.4,0.84 -2.82,2H5c-1.1,0 -2,0.9 -2,2v14c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM12,3c0.55,0 1,0.45 1,1s-0.45,1 -1,1 -1,-0.45 -1,-1 0.45,-1 1,-1zM14,17H7v-2h7v2zM17,13H7v-2h10v2zM17,9H7V7h10v2z","fill":"#FF000000"}]},"ic_cloud":{"vw":24.0,"vh":24.0,"p":[{"d":"M19.35,10.04C18.67,6.59 15.64,4 12,4 9.11,4 6.6,5.64 5.35,8.04 2.34,8.36 0,10.91 0,14c0,3.31 2.69,6 6,6h13c2.76,0 5,-2.24 5,-5 0,-2.64 -2.05,-4.78 -4.65,-4.96zM14,13v4h-4v-4H7l5,-5 5,5h-3z","fill":"#FF000000"}]},"ic_contacts":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,0H4v2h16V0zM4,24h16v-2H4v2zM20,4H4C2.9,4 2,4.9 2,6v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM12,6.75c1.24,0 2.25,1.01 2.25,2.25s-1.01,2.25 -2.25,2.25S9.75,10.24 9.75,9 10.76,6.75 12,6.75zM17,17H7v-1.5c0,-1.67 3.33,-2.5 5,-2.5s5,0.83 5,2.5V17z","fill":"#FF000000"}]},"ic_doc":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,2H6c-1.1,0 -1.99,0.9 -1.99,2L4,20c0,1.1 0.89,2 1.99,2H18c1.1,0 2,-0.9 2,-2V8l-6,-6zM16,18H8v-2h8v2zM16,14H8v-2h8v2zM13,9V3.5L18.5,9H13z","fill":"#FF000000"}]},"ic_drop":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2c-5.33,4.55 -8,8.48 -8,11.8c0,4.98 3.8,8.2 8,8.2s8,-3.22 8,-8.2c0,-3.32 -2.67,-7.25 -8,-11.8zM10.8,11.5h2.4v2.3h2.3v2.4h-2.3v2.3h-2.4v-2.3H8.5v-2.4h2.3z","fill":"#FF000000","rule":"evenOdd"}]},"ic_event":{"vw":24.0,"vh":24.0,"p":[{"d":"M16.53,11.06L15.47,10l-4.88,4.88 -2.12,-2.12 -1.06,1.06L10.59,17l5.94,-5.94zM19,3h-1V1h-2v2H8V1H6v2H5c-1.11,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.89,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM19,19H5V8h14v11z","fill":"#FF000000"}]},"ic_fever":{"vw":24.0,"vh":24.0,"p":[{"d":"M15,13V5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v8c-1.21,0.91 -2,2.37 -2,4 0,2.76 2.24,5 5,5s5,-2.24 5,-5c0,-1.63 -0.79,-3.09 -2,-4zM11,5c0,-0.55 0.45,-1 1,-1s1,0.45 1,1h-1v1h1v2h-1v1h1v2h-2V5z","fill":"#FF000000"}]},"ic_flight":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,16v-2l-8,-5V3.5c0,-0.83 -0.67,-1.5 -1.5,-1.5S10,2.67 10,3.5V9l-8,5v2l8,-2.5V19l-2,1.5V22l3.5,-1 3.5,1v-1.5L13,19v-5.5l8,2.5z","fill":"#FF000000"}]},"ic_group":{"vw":24.0,"vh":24.0,"p":[{"d":"M16,11c1.66,0 2.99,-1.34 2.99,-3S17.66,5 16,5c-1.66,0 -3,1.34 -3,3s1.34,3 3,3zM8,11c1.66,0 2.99,-1.34 2.99,-3S9.66,5 8,5C6.34,5 5,6.34 5,8s1.34,3 3,3zM8,13c-2.33,0 -7,1.17 -7,3.5V19h14v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5zM16,13c-0.29,0 -0.62,0.02 -0.97,0.05 1.16,0.84 1.97,1.97 1.97,3.45V19h6v-2.5c0,-2.33 -4.67,-3.5 -7,-3.5z","fill":"#FF000000"}]},"ic_heart":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,21.35l-1.45,-1.32C5.4,15.36 2,12.28 2,8.5 2,5.42 4.42,3 7.5,3c1.74,0 3.41,0.81 4.5,2.09C13.09,3.81 14.76,3 16.5,3 19.58,3 22,5.42 22,8.5c0,3.78 -3.4,6.86 -8.55,11.54L12,21.35z","fill":"#FF000000"}]},"ic_home":{"vw":24.0,"vh":24.0,"p":[{"d":"M10,20v-6h4v6h5v-8h3L12,3 2,12h3v8z","fill":"#FF000000"}]},"ic_hospital":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,3H5c-1.1,0 -1.99,0.9 -1.99,2L3,19c0,1.1 0.9,2 2,2h14c1.1,0 2,-0.9 2,-2V5c0,-1.1 -0.9,-2 -2,-2zM18,14h-4v4h-4v-4H6v-4h4V6h4v4h4v4z","fill":"#FF000000"}]},"ic_lock":{"vw":24.0,"vh":24.0,"p":[{"d":"M18,8h-1V6c0,-2.76 -2.24,-5 -5,-5S7,3.24 7,6v2H6c-1.1,0 -2,0.9 -2,2v10c0,1.1 0.9,2 2,2h12c1.1,0 2,-0.9 2,-2V10c0,-1.1 -0.9,-2 -2,-2zM12,17c-1.1,0 -2,-0.9 -2,-2s0.9,-2 2,-2 2,0.9 2,2 -0.9,2 -2,2zM15.1,8H8.9V6c0,-1.71 1.39,-3.1 3.1,-3.1 1.71,0 3.1,1.39 3.1,3.1v2z","fill":"#FF000000"}]},"ic_mail":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,4H4c-1.1,0 -1.99,0.9 -1.99,2L2,18c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6c0,-1.1 -0.9,-2 -2,-2zM20,8l-8,5 -8,-5V6l8,5 8,-5v2z","fill":"#FF000000"}]},"ic_menu":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,18h18v-2H3v2zM3,13h18v-2H3v2zM3,6v2h18V6H3z","fill":"#FF000000"}]},"ic_mic":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,14c1.66,0 2.99,-1.34 2.99,-3L15,5c0,-1.66 -1.34,-3 -3,-3S9,3.34 9,5v6c0,1.66 1.34,3 3,3zM17.3,11c0,3 -2.54,5.1 -5.3,5.1S6.7,14 6.7,11H5c0,3.41 2.72,6.23 6,6.72V21h2v-3.28c3.28,-0.48 6,-3.3 6,-6.72h-1.7z","fill":"#FF000000"}]},"ic_moon":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,3c-4.97,0 -9,4.03 -9,9s4.03,9 9,9 9,-4.03 9,-9c0,-0.46 -0.04,-0.92 -0.1,-1.36 -0.98,1.37 -2.58,2.26 -4.4,2.26 -2.98,0 -5.4,-2.42 -5.4,-5.4 0,-1.81 0.89,-3.42 2.26,-4.4C12.92,3.04 12.46,3 12,3z","fill":"#FF000000"}]},"ic_notice":{"vw":24.0,"vh":24.0,"p":[{"d":"M20,2H4c-1.1,0 -1.99,0.9 -1.99,2L2,22l4,-4h14c1.1,0 2,-0.9 2,-2V4c0,-1.1 -0.9,-2 -2,-2zM13,11h-2V5h2v6zM13,15h-2v-2h2v2z","fill":"#FF000000"}]},"ic_people":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,12c2.21,0 4,-1.79 4,-4s-1.79,-4 -4,-4 -4,1.79 -4,4 1.79,4 4,4zM12,14c-2.67,0 -8,1.34 -8,4v2h16v-2c0,-2.66 -5.33,-4 -8,-4z","fill":"#FF000000"}]},"ic_phone":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z","fill":"#FF000000"}]},"ic_plus":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z","fill":"#FF000000"}]},"ic_quiz":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,21c0,0.55 0.45,1 1,1h4c0.55,0 1,-0.45 1,-1v-1L9,20v1zM12,2C8.14,2 5,5.14 5,9c0,2.38 1.19,4.47 3,5.74L8,17c0,0.55 0.45,1 1,1h6c0.55,0 1,-0.45 1,-1v-2.26c1.81,-1.27 3,-3.36 3,-5.74 0,-3.86 -3.14,-7 -7,-7z","fill":"#FF000000"}]},"ic_school":{"vw":24.0,"vh":24.0,"p":[{"d":"M5,13.18v4L12,21l7,-3.82v-4L12,17l-7,-3.82zM12,3L1,9l11,6 9,-4.91V17h2V9L12,3z","fill":"#FF000000"}]},"ic_send":{"vw":24.0,"vh":24.0,"p":[{"d":"M2.01,21L23,12 2.01,3 2,10l15,2 -15,2z","fill":"#FF000000","rule":"evenOdd"}]},"ic_shield":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,2L4,5v6.09c0,5.05 3.41,9.76 8,10.91c4.59,-1.15 8,-5.86 8,-10.91V5L12,2zM10.5,13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13z","fill":"#FF000000","rule":"evenOdd"}]},"ic_snake":{"vw":24.0,"vh":24.0,"p":[{"d":"M4.5,20.5c3,0 5.5,-0.8 8.5,-0.8c2.8,0 4.6,-1.6 4.6,-3.6c0,-2.2 -2,-3.2 -4.6,-3.6c-2.5,-0.4 -4.5,-1.4 -4.5,-3.6c0,-2 1.8,-3.6 4.3,-3.6","fill":"#00000000","stroke":"#FF000000","sw":"2.6","cap":"round"},{"d":"M12.6,3.1h3.6c1.6,0 2.6,0.9 2.6,2.2s-1,2.2 -2.6,2.2h-3.6z","fill":"#FF000000"},{"d":"M18.8,5.3h2.2l0.9,-0.9M21,5.3l0.9,0.9","fill":"#00000000","stroke":"#FF000000","sw":"0.9","cap":"round"}]},"ic_star":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z","fill":"#FF000000"}]},"ic_swap":{"vw":24.0,"vh":24.0,"p":[{"d":"M6.99,11L3,15l3.99,4v-3H14v-2H6.99v-3zM21,9l-3.99,-4v3H10v2h7.01v3L21,9z","fill":"#FF000000"}]},"ic_task":{"vw":24.0,"vh":24.0,"p":[{"d":"M14,10H2v2h12v-2zM14,6H2v2h12V6zM2,16h8v-2H2v2zM21.5,11.5L23,13l-6.99,7 -4.51,-4.5L13,14l3.01,3 5.49,-5.5z","fill":"#FF000000"}]},"ic_thesis":{"vw":24.0,"vh":24.0,"p":[{"d":"M21,5c-1.11,-0.35 -2.33,-0.5 -3.5,-0.5c-1.95,0 -4.05,0.4 -5.5,1.5c-1.45,-1.1 -3.55,-1.5 -5.5,-1.5S2.45,4.9 1,6v14.65c0,0.25 0.25,0.5 0.5,0.5c0.1,0 0.15,-0.05 0.25,-0.05C3.1,20.45 5.05,20 6.5,20c1.95,0 4.05,0.4 5.5,1.5c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.65,0 3.35,0.3 4.75,1.05c0.1,0.05 0.15,0.05 0.25,0.05c0.25,0 0.5,-0.25 0.5,-0.5V6C22.4,5.55 21.75,5.25 21,5zM21,18.5c-1.1,-0.35 -2.3,-0.5 -3.5,-0.5c-1.7,0 -4.15,0.65 -5.5,1.5V8c1.35,-0.85 3.8,-1.5 5.5,-1.5c1.2,0 2.4,0.15 3.5,0.5V18.5z","fill":"#FF000000"}]},"ic_trend":{"vw":24.0,"vh":24.0,"p":[{"d":"M3.5,18.49l6,-6.01 4,4L22,6.92l-1.41,-1.41 -7.09,7.97 -4,-4L2,16.99z","fill":"#FF000000"}]},"ic_trophy":{"vw":24.0,"vh":24.0,"p":[{"d":"M19,5h-2V3H7v2H5C3.9,5 3,5.9 3,7v1c0,2.55 1.92,4.63 4.39,4.94c0.63,1.5 1.98,2.63 3.61,2.96V19H7v2h10v-2h-4v-3.1c1.63,-0.33 2.98,-1.46 3.61,-2.96C19.08,12.63 21,10.55 21,8V7C21,5.9 20.1,5 19,5zM5,8V7h2v3.82C5.84,10.4 5,9.3 5,8zM19,8c0,1.3 -0.84,2.4 -2,2.82V7h2V8z","fill":"#FF000000"}]},"ic_tune":{"vw":24.0,"vh":24.0,"p":[{"d":"M3,17v2h6v-2H3zM3,5v2h10V5H3zM13,21v-2h8v-2h-8v-2h-2v6h2zM7,9v2H3v2h4v2h2V9H7zM21,13v-2H11v2h10zM15,9h2V7h4V5h-4V3h-2v6z","fill":"#FF000000"}]},"ic_upload":{"vw":24.0,"vh":24.0,"p":[{"d":"M9,16h6v-6h4l-7,-7 -7,7h4zM5,18h14v2H5z","fill":"#FF000000"}]},"ic_verified":{"vw":24.0,"vh":24.0,"p":[{"d":"M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5l-9,-4zM10,17l-4,-4 1.41,-1.41L10,14.17l6.59,-6.59L18,9l-8,8z","fill":"#FF000000"}]},"ic_warn":{"vw":24.0,"vh":24.0,"p":[{"d":"M1,21h22L12,2 1,21zM13,18h-2v-2h2v2zM13,14h-2v-4h2v4z","fill":"#FF000000","rule":"evenOdd"}]}};
 Object.keys(R.VECTORS).forEach(function (k) { R.drawable[k] = { name: k, vector: R.VECTORS[k] }; });
 R.drawable.dept_logo = { name: "dept_logo", src: "dept_logo.png", w: 0, h: 0 };
 R.drawable.home_banner = { name: "home_banner", src: "home_banner.webp", w: 0, h: 0 };
@@ -4694,6 +4694,30 @@ R.drawable.pg_leave_empty = { name: "pg_leave_empty", src: "pg_leave_empty.webp"
 R.drawable.pg_leave_top = { name: "pg_leave_top", src: "pg_leave_top.webp", w: 0, h: 0 };
 R.drawable.pg_leave_foot = { name: "pg_leave_foot", src: "pg_leave_foot.webp", w: 0, h: 0 };
 R.drawable.medicine_emblem = { name: "medicine_emblem", src: "medicine_emblem.webp", w: 0, h: 0 };
+R.drawable.bb_top = { name: "bb_top", src: "bb_top.webp", w: 0, h: 0 };
+R.drawable.bb_ward = { name: "bb_ward", src: "bb_ward.webp", w: 0, h: 0 };
+R.drawable.pd_top = { name: "pd_top", src: "pd_top.webp", w: 0, h: 0 };
+R.drawable.wl_hosp = { name: "wl_hosp", src: "wl_hosp.webp", w: 0, h: 0 };
+R.drawable.wl_care = { name: "wl_care", src: "wl_care.webp", w: 0, h: 0 };
+R.drawable.wl_wave = { name: "wl_wave", src: "wl_wave.webp", w: 0, h: 0 };
+R.drawable.ms_hero = { name: "ms_hero", src: "ms_hero.webp", w: 0, h: 0 };
+R.drawable.ms_hall = { name: "ms_hall", src: "ms_hall.webp", w: 0, h: 0 };
+R.drawable.ms_group = { name: "ms_group", src: "ms_group.webp", w: 0, h: 0 };
+R.drawable.ms_bed = { name: "ms_bed", src: "ms_bed.webp", w: 0, h: 0 };
+R.drawable.royal_clock = { name: "royal_clock", src: "royal_clock.webp", w: 0, h: 0 };
+R.drawable.royal_clock_hub = { name: "royal_clock_hub", src: "royal_clock_hub.webp", w: 0, h: 0 };
+R.drawable.tvmchmed_logo = { name: "tvmchmed_logo", src: "tvmchmed_logo.webp", w: 0, h: 0 };
+R.drawable.palace_home = { name: "palace_home", src: "palace_home.webp", w: 0, h: 0 };
+R.drawable.palace_hub = { name: "palace_hub", src: "palace_hub.webp", w: 0, h: 0 };
+R.drawable.palace_left = { name: "palace_left", src: "palace_left.webp", w: 0, h: 0 };
+R.drawable.palace_right = { name: "palace_right", src: "palace_right.webp", w: 0, h: 0 };
+R.drawable.grand_home = { name: "grand_home", src: "grand_home.webp", w: 0, h: 0 };
+R.drawable.grand_head = { name: "grand_head", src: "grand_head.webp", w: 0, h: 0 };
+R.drawable.grand_tabbar = { name: "grand_tabbar", src: "grand_tabbar.webp", w: 0, h: 0 };
+R.drawable.grand_tab_on = { name: "grand_tab_on", src: "grand_tab_on.webp", w: 0, h: 0 };
+R.drawable.grand_icons = { name: "grand_icons", src: "grand_icons.webp", w: 0, h: 0 };
+R.drawable.grand_hub = { name: "grand_hub", src: "grand_hub.webp", w: 0, h: 0 };
+R.drawable.medsphere_icon = { name: "medsphere_icon", src: "medsphere-icon.png", w: 0, h: 0 };
 R.drawable.home_poster = { name: "home_poster", src: "home_poster.webp", w: 0, h: 0 };
 R.string = { app_name: 'TVMCHMED', cloud_url: 'https://dgxifayxugbprykzrnpj.supabase.co', cloud_key: 'sb_publishable_ibmSKedCcdJLB4505Tdyxg_25B3qViz' };
 R.layout = Object.assign(R.layout || {}, { simple_dropdown_item_1line: 'simple_dropdown_item_1line', simple_spinner_dropdown_item: 'simple_spinner_dropdown_item', simple_spinner_item: 'simple_spinner_item', simple_list_item_1: 'simple_list_item_1' });
@@ -5951,7 +5975,7 @@ class Db extends SQLiteOpenHelper {
     "ENT", "Ophthalmology", "Neurosurgery", "Urology", "Cardiothoracic", "Emergency / casualty", "Dermatology", "Other"];
 
   static TABLES = ["units", "staff", "patients", "events", "classes", "academics", "cmchis", "settings",
-    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison", "death_reviews", "issues", "duel_scores", "mysteries", "mystery_guesses", "kudos", "fame", "code_blues", "counsel_logs", "shift_checks", "teach_points", "album_photos", "app_days", "nmc_marks", "postings", "posting_members", "posting_att", "posting_marks"];
+    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison", "death_reviews", "issues", "duel_scores", "mysteries", "mystery_guesses", "kudos", "fame", "code_blues", "counsel_logs", "shift_checks", "teach_points", "album_photos", "app_days", "nmc_marks", "postings", "posting_members", "posting_att", "posting_marks", "rosters", "meetings", "meeting_att"];
   /** Tables kept on this phone only (in the backup file, never synced online). Case sheets are shared since 7.62. */
   static LOCAL_TABLES = [];
 
@@ -5963,7 +5987,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 84);
+    super(c, "tvmchmed.db", null, 87);
     this.ctx = c;
   }
 
@@ -6467,6 +6491,24 @@ class Db extends SQLiteOpenHelper {
           + "details TEXT DEFAULT '', reported_by TEXT DEFAULT '', reported_on TEXT DEFAULT '', owner TEXT DEFAULT '', due TEXT DEFAULT '', "
           + "status TEXT DEFAULT 'Open', action TEXT DEFAULT '', closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '')");
       Db.addColumn(db, "alerts", "audio", "TEXT DEFAULT ''");
+    }
+    if (oldV < 87) {
+      // 10.61: MedSphere waiting room ("1": the host lets people in). These blocks run newest first, so make the table here too.
+      db.execSQL("CREATE TABLE IF NOT EXISTS meetings(id INTEGER PRIMARY KEY, title TEXT DEFAULT '', kind TEXT DEFAULT '', audience TEXT DEFAULT 'ALL', "
+        + "date TEXT DEFAULT '', time TEXT DEFAULT '', by_name TEXT DEFAULT '', by_staff TEXT DEFAULT '', created TEXT DEFAULT '')");
+      Db.addColumn(db, "meetings", "lobby", "TEXT DEFAULT ''");
+    }
+    if (oldV < 86) {
+      // 10.60: MedSphere: scheduled meetings and who joined (minutes in the meeting)
+      db.execSQL("CREATE TABLE IF NOT EXISTS meetings(id INTEGER PRIMARY KEY, title TEXT DEFAULT '', kind TEXT DEFAULT '', audience TEXT DEFAULT 'ALL', "
+        + "date TEXT DEFAULT '', time TEXT DEFAULT '', by_name TEXT DEFAULT '', by_staff TEXT DEFAULT '', created TEXT DEFAULT '')");
+      db.execSQL("CREATE TABLE IF NOT EXISTS meeting_att(id INTEGER PRIMARY KEY, room TEXT DEFAULT '', meeting_id TEXT DEFAULT '', day TEXT DEFAULT '', "
+        + "staff_id TEXT DEFAULT '', name TEXT DEFAULT '', joined TEXT DEFAULT '', minutes TEXT DEFAULT '0')");
+    }
+    if (oldV < 85) {
+      // 10.50: PG and CRMI notice boards: duty rosters for chosen wards, shown on those wards till the posting's last day
+      db.execSQL("CREATE TABLE IF NOT EXISTS rosters(id INTEGER PRIMARY KEY, board TEXT DEFAULT '', title TEXT DEFAULT '', body TEXT DEFAULT '', "
+        + "wards TEXT DEFAULT '', from_date TEXT DEFAULT '', till TEXT DEFAULT '', by_name TEXT DEFAULT '', created TEXT DEFAULT '')");
     }
     if (oldV < 84) {
       // 10.49: the last day of a CRMI's or MBBS student's posting; 7 days later they leave the lists and the server ends their login
@@ -9456,6 +9498,20 @@ class Cloud {
     return new JSONArray(Cloud.json(c, "GET", "/rest/v1/members?select=*&order=created_at", null).text());
   }
 
+  /** 10.58: how many new sign-ups wait for approval, for the admin, HOD and Registrar (home banner and notification). */
+  static membersWaiting(c) {
+    return Cloud.isAdmin(c) ? Cloud.prefs(c).getInt("members_waiting", 0) : 0;
+  }
+
+  static pollWaiting(c) {
+    if (!Cloud.isAdmin(c)) return;
+    try {
+      const a = new JSONArray(Cloud.json(c, "GET", "/rest/v1/members?select=user_id&role=eq.pending", null).text());
+      Cloud.prefs(c).edit().putInt("members_waiting", a.length()).apply();
+    } catch (ignored) {
+    }
+  }
+
   static setMember(c, userId, role, staffId) {
     const b = new JSONObject().put("p_user", userId).put("p_role", role).put("p_staff", staffId > 0 ? staffId : JSONObject.NULL);
     Cloud.json(c, "POST", "/rest/v1/rpc/set_member", b);
@@ -10640,6 +10696,7 @@ class Sync {
     if (E2e.reseal(c, db) | keyed) await Sync.push(c, db);
     await E2e.purgeServer(c);
     changed = (await Sync.fetchFiles(c, db)) || changed;
+    try { await Cloud.pollWaiting(c); } catch (ignored) { }   // 10.58: new sign-ups waiting, for the approvers' banner
     Cloud.prefs(c).edit().putLong("last_sync", System.currentTimeMillis()).apply();
     return changed;
   }
@@ -11378,7 +11435,7 @@ class Background extends JobService {
   static JOB = 7300;
   static CHANNEL = "alerts";
   static PERIOD_MS = 15 * 60 * 1000;
-  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215; static N_ESCALATE = 7216; static N_BEDS = 7217; static N_DAPREPORT = 7218; static N_ISSUE = 7219; static N_KUDOS = 7220; static N_MONTH = 7221; static N_DUEL = 7222; static N_CODE = 7224; static N_TEACH = 7225; static N_RARE = 7226; static N_NMC = 7227;
+  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215; static N_ESCALATE = 7216; static N_BEDS = 7217; static N_DAPREPORT = 7218; static N_ISSUE = 7219; static N_KUDOS = 7220; static N_MONTH = 7221; static N_DUEL = 7222; static N_CODE = 7224; static N_TEACH = 7225; static N_RARE = 7226; static N_NMC = 7227; static N_MEET = 7228; static N_JOURNAL = 7229;
   /** Web: the repeating timer, started once. */
   static timer = null;
 
@@ -11409,6 +11466,7 @@ class Background extends JobService {
         if (changed) Countdown.schedule(c);
         Chat.notifyNew(c);
         Background.check(c);
+        JournalFeed.daily(c);   // 10.62: new journal articles from PubMed, once a day
         try {
           Updates.autoFetch(c, Db.get(c));
         } catch (ignored) {
@@ -11591,7 +11649,7 @@ class Background extends JobService {
       e.putString("arena_mine", mine.join(","));
       if (p.contains("arena_mine")) {
         if (fame > 0) Background.show(c, Background.N_KUDOS, "🏅 You are on the Wall of Fame", "Faculty named you. Tap to see.", Fame.COLOR, FameActivity);
-        else if (likes > 0) Background.show(c, Background.N_KUDOS, "👏 Applause! A faculty member liked your work", likes === 1 ? "Tap to see what they liked" : likes + " new likes. Tap to see.", Kudos.COLOR, ArenaActivity);
+        else if (likes > 0) Background.show(c, Background.N_KUDOS, "👍 A faculty member liked your work", likes === 1 ? "Tap to see what they liked" : likes + " new likes. Tap to see.", Kudos.COLOR, ArenaActivity);
       }
       const role = Cloud.role(c);
       const pg = "pg" === role || "crmi" === role;
@@ -11757,6 +11815,9 @@ class Background extends JobService {
     const ex = ExamCases.waitingForMe(c, db).size();
     if (ex > 0) lines.add(ex + " exam " + (ex == 1 ? "case" : "cases") + " for another unit's students to allow");
     total += ex;
+    const nm = Cloud.membersWaiting(c);   // 10.58: new sign-ups to approve
+    if (nm > 0) lines.add(nm + (nm == 1 ? " new member" : " new members") + " waiting to join");
+    total += nm;
     if (Cloud.isAdmin(c)) {
       const fl = db.num("SELECT COUNT(*) FROM faculty_leaves WHERE status='Applied'");
       if (fl > 0) lines.add(fl + " faculty leave " + (fl == 1 ? "request" : "requests"));
@@ -12155,6 +12216,7 @@ class Base extends Activity {
     Look.apply(this);
     Crashes.install(this);
     Crashes.screen = this.constructor.name;
+    HomeLayout.opened(this, this.constructor.name);   // 10.59: most used sections for the home icons
     this.db = Db.get(this);
     if (!(this instanceof AccountActivity) && Cloud.loginRequired(this)) { Cloud.openLogin(this); this.finish(); }
     else if (AdminControl.screenOff(this, this.db, this.constructor.name)) {
@@ -12213,7 +12275,9 @@ class Base extends Activity {
     const pending = this.db.pending();
     const err = Cloud.prefs(this).getString("last_error", "");
     cloudBadge.setText(SyncStatus.chip(pending, err));
-    cloudBadge.setBackground(Ui.round(this, !err.isEmpty() ? 0x66F59E0B : pending > 0 ? 0x40FFFFFF : 0x26FFFFFF, 14));
+    const g = Ui.round(this, !err.isEmpty() ? 0x66F59E0B : pending > 0 ? 0x40FFFFFF : 0x26FFFFFF, this.grandHeaderOn ? 18 : 14);
+    if (this.grandHeaderOn) g.setStroke(Ui.dp(this, 1), 0x99C8D2F0);
+    cloudBadge.setBackground(g);
   }
 
   /** abstract void render(); */
@@ -12252,7 +12316,40 @@ class Base extends Activity {
     this._actionListener = l;
   }
 
+  /** 10.68 (user's picture): the picture's emblem, TVMCH and the college at night, with the live "Saved" and action pills. */
+  grandHeader() {
+    this.getWindow().setStatusBarColor(GrandHome.STATUS);
+    const w = this.getResources().getDisplayMetrics().widthPixels;
+    const k = w / GrandHome.W;
+    const h = Math.round(GrandHome.HEAD_H * k);
+    const f = new FrameLayout(this);
+    const bg = new ImageView(this);
+    bg.setImageResource(R.drawable.grand_head);
+    bg.setScaleType(ImageView.ScaleType.FIT_XY);
+    f.addView(bg, new FrameLayout.LayoutParams(w, h));
+    f.setMinimumHeight(h);
+    f.setElevation(Ui.dp(this, 4));
+    this._cloudBadge = null;
+    if (Cloud.active(this)) {
+      const cb = this._cloudBadge = PalaceHome.text(this, SyncStatus.chip(this.db.pending(), Cloud.prefs(this).getString("last_error", "")), 15 * k, Color.WHITE, Typeface.DEFAULT, 80 * k);
+      cb.setOnClickListener({ onClick: (v) => { SyncStatus.dialog(this); } });
+      this.refreshCloudBadge();
+      PalaceHome.place(f, cb, k, this._actionLabel == null ? 488 : 343, 17, this._actionLabel == null ? 576 : 431, 54);
+    }
+    if (this._actionLabel != null) {
+      const a = PalaceHome.text(this, this._actionLabel, 15 * k, Color.WHITE, Typeface.DEFAULT, 118 * k);
+      const g = Ui.round(this, 0x26FFFFFF, 18);
+      g.setStroke(Math.max(1, Math.round(1.2 * k)), 0x99C8D2F0);
+      a.setBackground(g);
+      Ui.ripple(a, 0x44FFFFFF);
+      a.setOnClickListener(this._actionListener);
+      PalaceHome.place(f, a, k, 440, 17, 577, 54);
+    }
+    return f;
+  }
+
   header() {
+    if (this.grandHeaderOn) return this.grandHeader();
     const headerColors = this.headerColors;
     this.getWindow().setStatusBarColor(headerColors[0]);
     const h = Ui.h(this);
@@ -12424,119 +12521,169 @@ class Base extends Activity {
     return Ui.softPill(c, "In ward", Ui.PRIMARY);
   }
 
-  /** 10.39: the patient card in the user's "Female patients" picture; extra goes under the diagnosis, action at the bottom right. */
-  patientRow(p, extra = null, action = null) {
+  /**
+  * 10.52 (user's "Fever Ward" picture, for every ward): a soft card with the list number on a coloured ribbon (number 0 = no
+  * ribbon), a round avatar, name and age; the IP chip, Adm date and diagnosis; the ward pill, "Parent : M4" and the other pills;
+  * the action button (Mark Dengue in the fever ward) and a chevron. On phones the three parts stack.
+  */
+  patientRow(p, extra = null, action = null, number = 0) {
     const db = this.db;
-    const card = Ui.card(this);
-    card.setBackground(Ui.outline(this, Color.WHITE, 0xFFE2E8F0, 18));
+    let wide = this.getResources().getConfiguration().screenWidthDp >= 720;
+    let tint = number > 0 ? WardListDesign.RIBBONS[(number - 1) % WardListDesign.RIBBONS.length] : "F".equals(p.get("sex")) ? 0xFFDB2777 : 0xFF1D6FE0;
+    let card = Ui.card(this);
+    let cb = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [0xFFFFFFFF, 0xFFFDFBF7, Ui.mix(tint, Color.WHITE, 0.95)]);
+    cb.setCornerRadius(Ui.dp(this, 20));
+    cb.setStroke(Ui.dp(this, 1), 0xFFE6EBF3);
+    card.setBackground(cb);
+    card.setElevation(Ui.dp(this, 3));
     card.setOrientation(LinearLayout.HORIZONTAL);
     card.setBaselineAligned(false);
-    card.setPadding(0, 0, Ui.dp(this, 12), 0);
-    const stripe = new View(this);
-    stripe.setBackground(Ui.round(this, Ui.unitColor(p.get("location")), 3));
-    const sp = new LinearLayout.LayoutParams(Ui.dp(this, 6), ViewGroup.LayoutParams.MATCH_PARENT);
-    sp.setMargins(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 10));
-    card.addView(stripe, sp);
-
-    const body = Ui.v(this);
-    body.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 12));
-    const age = Ui.nz(p.get("age")).isEmpty() ? "" : p.get("age") + " y, ";
-    body.addView(Ui.tv(this, p.get("name") + "  ·  " + age + Base.sexLabel(p.get("sex")), 18, PatientRowDesign.NAVY, true));
-    const chips = Ui.h(this);
-    if (!Ui.nz(p.get("ip_no")).isEmpty()) chips.addView(PatientRowDesign.chip(this, R.drawable.ic_badge, "IP " + p.get("ip_no")));
-    if (chips.getChildCount() > 0) {
-      body.addView(chips);
-      Ui.margins(chips, 0, 6, 0, 0);
+    card.setPadding(0, 0, Ui.dp(this, 10), 0);
+    if (number > 0) {
+      let rib = Ui.tv(this, (number < 10 ? "0" : "") + number, 20, Color.WHITE, true);
+      rib.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
+      rib.setPadding(0, Ui.dp(this, 14), 0, 0);
+      let rg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [Ui.mix(tint, Color.WHITE, 0.15), tint, Ui.mix(tint, 0xFF000000, 0.2)]);
+      let r = Ui.dp(this, 20), big = Ui.dp(this, 34);
+      rg.setCornerRadii([r, r, big, big, Ui.dp(this, 8), Ui.dp(this, 8), r, r]);
+      rib.setBackground(rg);
+      rib.setShadowLayer(Ui.dp(this, 2), 0, Ui.dp(this, 1), 0x55000000);
+      card.addView(rib, new LinearLayout.LayoutParams(Ui.dp(this, wide ? 58 : 44), ViewGroup.LayoutParams.MATCH_PARENT));
+    } else {
+      let stripe = new View(this);
+      stripe.setBackground(Ui.round(this, Ui.unitColor(p.get("location")), 3));
+      let sp = new LinearLayout.LayoutParams(Ui.dp(this, 6), ViewGroup.LayoutParams.MATCH_PARENT);
+      sp.setMargins(Ui.dp(this, 6), Ui.dp(this, 10), 0, Ui.dp(this, 10));
+      card.addView(stripe, sp);
     }
-    body.addView(PatientRowDesign.hLine(this));
-    let line = "Adm " + NoticeDesign.date(p.get("admit_date"));
+
+    // avatar, name and age
+    let who = Ui.h(this);
+    who.setGravity(Gravity.CENTER_VERTICAL);
+    let av = new FrameLayout(this);
+    let ag = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [Ui.mix(tint, Color.WHITE, 0.92), Ui.mix(tint, Color.WHITE, 0.78)]);
+    ag.setCornerRadius(Ui.dp(this, 28));
+    ag.setStroke(Ui.dp(this, 2), Color.WHITE);
+    av.setBackground(ag);
+    av.setElevation(Ui.dp(this, 2));
+    let pi = new ImageView(this);
+    pi.setImageResource(R.drawable.ic_people);
+    pi.setColorFilter(tint);
+    av.addView(pi, new FrameLayout.LayoutParams(Ui.dp(this, 34), Ui.dp(this, 34), Gravity.CENTER));
+    let avs = wide ? 56 : 48;
+    let avl = new LinearLayout.LayoutParams(Ui.dp(this, avs), Ui.dp(this, avs));
+    avl.setMargins(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+    who.addView(av, avl);
+    let nmc = Ui.v(this);
+    let nm = Ui.tv(this, p.get("name"), 18, PatientRowDesign.NAVY, true);
+    nm.setMaxLines(2);
+    nmc.addView(nm);
+    let age = Ui.nz(p.get("age")).isEmpty() ? "" : p.get("age") + " y, ";
+    nmc.addView(Ui.tv(this, age + Base.sexLabel(p.get("sex")), 15, 0xFF1E3A5F, false));
+    who.addView(nmc, Ui.weight(1));
+
+    // IP, admission date, diagnosis
+    let det = Ui.v(this);
+    if (!Ui.nz(p.get("ip_no")).isEmpty()) {
+      let chips = Ui.h(this);
+      chips.addView(PatientRowDesign.chip(this, R.drawable.ic_badge, "IP " + p.get("ip_no")));
+      det.addView(chips);
+    }
+    let line = "Adm: " + NoticeDesign.date(p.get("admit_date"));
     if (!Ui.nz(p.get("outcome_date")).isEmpty()) line += "  →  " + NoticeDesign.date(p.get("outcome_date"));
-    body.addView(PatientRowDesign.line(this, R.drawable.ic_calendar, line, 1));
-    if (!Ui.nz(p.get("diagnosis")).isEmpty()) body.addView(PatientRowDesign.line(this, R.drawable.ic_heart, p.get("diagnosis"), 2));
-    if (extra != null) body.addView(extra);
-    card.addView(body, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
-    card.addView(PatientRowDesign.vLine(this));
+    det.addView(PatientRowDesign.line(this, R.drawable.ic_calendar, line, 1));
+    if (!Ui.nz(p.get("diagnosis")).isEmpty()) {
+      let dl = PatientRowDesign.line(this, R.drawable.ic_heart, p.get("diagnosis"), 2);
+      if (dl instanceof LinearLayout && dl.getChildCount() > 0) dl.getChildAt(0).setColorFilter(0xFFE11D48);
+      det.addView(dl);
+    }
+    if (extra != null) det.addView(extra);
 
-    const right = Ui.v(this);
-    right.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL);
-    right.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 10));
-    right.addView(PatientRowDesign.placePill(this, p));
-    if (Db.isSpecial(p.get("location")) && !Ui.nz(p.get("home_unit")).isEmpty() && Db.IN === p.get("status")) {
-      const par = PatientRowDesign.soft(this, "Parent : " + p.get("home_unit"));
-      right.addView(par);
-      Ui.margins(par, 0, 6, 0, 0);
-    }
-    if (!Ui.nz(p.get("bed")).isEmpty() && Db.IN === p.get("status")) {
-      const bd = PatientRowDesign.soft(this, "Bed " + p.get("bed"));
-      right.addView(bd);
-      Ui.margins(bd, 0, 6, 0, 0);
-    }
-    const tasks = p.get("id") == null ? 0 : Tasks.pending(db, Long.parseLong(p.get("id")));
-    if (tasks > 0) {
-      const tk = Ui.softPill(this, "⏳ " + tasks + (tasks === 1 ? " task" : " tasks"), Tasks.COLOR);
-      right.addView(tk);
-      Ui.margins(tk, 0, 4, 0, 0);
-    }
-    const cat = Ui.nz(p.get("category"));
-    if (Db.HEMOPHILIA === cat || Db.STROKE === cat) {
-      const cg = Ui.softPill(this, Db.HEMOPHILIA === cat ? "🩸 Hemophilia" : "🧠 Stroke", Db.HEMOPHILIA === cat ? Ui.PINK : Ui.PURPLE);
-      right.addView(cg);
-      Ui.margins(cg, 0, 4, 0, 0);
-    }
-    if (p.get("id") != null && Db.IN === p.get("status") && p.containsKey("admit_date") && Readmit.previous(db, p) != null) {
-      const ra = Ui.softPill(this, "↩ Readmitted", Readmit.COLOR);
-      right.addView(ra);
-      Ui.margins(ra, 0, 4, 0, 0);
-    }
-    if (p.get("id") != null && Db.IN === p.get("status") && !p.containsKey("at_loc")) {
-      const cd = Countdown.pill(this, db, Long.parseLong(p.get("id")));
-      if (cd != null) {
-        right.addView(cd);
-        Ui.margins(cd, 0, 4, 0, 0);
+    // the ward pill, parent unit, bed and the other pills
+    let pills = this.rowPills(p);
+    let chev = Ui.tv(this, "›", 30, PatientRowDesign.NAVY, false);
+    chev.setGravity(Gravity.CENTER);
+
+    if (wide) {
+      let inn = Ui.h(this);
+      inn.setGravity(Gravity.CENTER_VERTICAL);
+      inn.setBaselineAligned(false);
+      inn.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 12));
+      inn.addView(who, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.05));
+      inn.addView(PatientRowDesign.vLine(this));
+      inn.addView(det, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.6));
+      let gl = PatientRowDesign.vLine(this);
+      gl.setBackgroundColor(0x80E3C46A);
+      inn.addView(gl);
+      let right = Ui.v(this);
+      right.setGravity(Gravity.CENTER);
+      for (const v of pills) {
+        right.addView(v);
+        if (right.getChildCount() > 1) Ui.margins(v, 0, 6, 0, 0);
+        (v.getLayoutParams()).gravity = Gravity.CENTER_HORIZONTAL;
       }
-      if (p.containsKey("diagnosis") && RareCase.of(p) != null) {
-        const rr = Ui.softPill(this, "🦓 Rare", RareCase.COLOR);
-        right.addView(rr);
-        Ui.margins(rr, 0, 4, 0, 0);
+      inn.addView(right, new LinearLayout.LayoutParams(Ui.dp(this, 170), ViewGroup.LayoutParams.WRAP_CONTENT));
+      if (action != null) {
+        let al = PatientRowDesign.vLine(this);
+        al.setBackgroundColor(0x80E3C46A);
+        inn.addView(al);
+        inn.addView(action);
       }
+      inn.addView(chev, Ui.lp(Ui.dp(this, 28), ViewGroup.LayoutParams.WRAP_CONTENT));
+      card.addView(inn, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+    } else {
+      let inn = Ui.v(this);
+      inn.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 10));
+      let top = Ui.h(this);
+      top.setGravity(Gravity.CENTER_VERTICAL);
+      top.addView(who, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+      top.addView(chev, Ui.lp(Ui.dp(this, 22), ViewGroup.LayoutParams.WRAP_CONTENT));
+      inn.addView(top);
+      det.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), 0, 0);
+      inn.addView(det);
+      let fl = new Bands.Flow(this);
+      fl.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), 0, 0);
+      for (const v of pills) fl.addView(v);
+      if (action != null) fl.addView(action);
+      inn.addView(fl);
+      card.addView(inn, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
     }
-    if (p.get("id") != null && Db.IN === p.get("status") && "1" === p.get("quick")) {
-      const qk = Ui.softPill(this, "⚡ Fill details", FormActivity.QUICK_COLOR);
-      right.addView(qk);
-      Ui.margins(qk, 0, 4, 0, 0);
-    }
-    if (p.get("id") != null && Db.IN === p.get("status") && ExamCases.forPatient(db, Long.parseLong(p.get("id"))) != null) {
-      const ex = Ui.softPill(this, "🎓 Exam case", ExamCases.COLOR);
-      right.addView(ex);
-      Ui.margins(ex, 0, 4, 0, 0);
-    }
-    if (p.get("id") != null && Db.IN === p.get("status")) {
-      const ew = Ews.latest(db, Long.parseLong(p.get("id")));
-      if (ew != null && ew.flagged()) {
-        const nw = Ui.softPill(this, "NEWS " + ew.total + (ew.partial ? "*" : ""), ew.color);
-        right.addView(nw);
-        Ui.margins(nw, 0, 4, 0, 0);
-      }
-      const wf = Watch.check(db, Long.parseLong(p.get("id")), LocalDateTime.of(Dates.today(), Dates.time()), false);
-      if (!wf.isEmpty()) {
-        const wt = Ui.softPill(this, "⚠ Watch", Watch.anyRed(wf) ? Ui.RED : Watch.COLOR);
-        right.addView(wt);
-        Ui.margins(wt, 0, 4, 0, 0);
-      }
-    }
-    if ("1" === p.get("cmchis")) {
-      const cm = Ui.softPill(this, "CMCHIS", Ui.TEAL);
-      right.addView(cm);
-      Ui.margins(cm, 0, 4, 0, 0);
-    }
-    if (action != null) {
-      right.addView(action);
-      Ui.margins(action, 0, 8, 0, 0);
-    }
-    card.addView(right, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
-    Ui.ripple(card, Ui.alpha(Ui.PRIMARY, 0x22));
+    Ui.ripple(card, Ui.alpha(tint, 0x22));
     card.setOnClickListener(this.opener(PatientActivity, "id", p.get("id")));
     return card;
+  }
+
+  /** The pills on a patient card: ward, parent unit, bed, tasks, groups, readmission, countdown, rare, quick, exam, NEWS, watch, CMCHIS. */
+  rowPills(p) {
+    const db = this.db;
+    let out = [];
+    out.add(PatientRowDesign.placePill(this, p));
+    if (Db.isSpecial(p.get("location")) && !Ui.nz(p.get("home_unit")).isEmpty() && Db.IN.equals(p.get("status")))
+      out.add(PatientRowDesign.parent(this, "Parent : " + p.get("home_unit")));
+    if (!Ui.nz(p.get("bed")).isEmpty() && Db.IN.equals(p.get("status"))) out.add(PatientRowDesign.parent(this, "Bed " + p.get("bed")));
+    let tasks = p.get("id") == null ? 0 : Tasks.pending(db, Long.parseLong(p.get("id")));
+    if (tasks > 0) out.add(Ui.softPill(this, "⏳ " + tasks + (tasks === 1 ? " task" : " tasks"), Tasks.COLOR));
+    let cat = Ui.nz(p.get("category"));
+    if (Db.HEMOPHILIA.equals(cat) || Db.STROKE.equals(cat))
+      out.add(Ui.softPill(this, Db.HEMOPHILIA.equals(cat) ? "🩸 Hemophilia" : "🧠 Stroke", Db.HEMOPHILIA.equals(cat) ? Ui.PINK : Ui.PURPLE));
+    if (p.get("id") != null && Db.IN.equals(p.get("status")) && p.containsKey("admit_date") && Readmit.previous(db, p) != null)
+      out.add(Ui.softPill(this, "↩ Readmitted", Readmit.COLOR));
+    if (p.get("id") != null && Db.IN.equals(p.get("status")) && !p.containsKey("at_loc")) {
+      let cd = Countdown.pill(this, db, Long.parseLong(p.get("id")));
+      if (cd != null) out.add(cd);
+      if (p.containsKey("diagnosis") && RareCase.of(p) != null) out.add(Ui.softPill(this, "🦓 Rare", RareCase.COLOR));
+    }
+    if (p.get("id") != null && Db.IN.equals(p.get("status")) && "1".equals(p.get("quick"))) out.add(Ui.softPill(this, "⚡ Fill details", FormActivity.QUICK_COLOR));
+    if (p.get("id") != null && Db.IN.equals(p.get("status")) && ExamCases.forPatient(db, Long.parseLong(p.get("id"))) != null)
+      out.add(Ui.softPill(this, "🎓 Exam case", ExamCases.COLOR));
+    if (p.get("id") != null && Db.IN.equals(p.get("status"))) {
+      let ew = Ews.latest(db, Long.parseLong(p.get("id")));
+      if (ew != null && ew.flagged()) out.add(Ui.softPill(this, "NEWS " + ew.total + (ew.partial ? "*" : ""), ew.color));
+      let wf = Watch.check(db, Long.parseLong(p.get("id")), LocalDateTime.of(Dates.today(), Dates.time()), false);
+      if (!wf.isEmpty()) out.add(Ui.softPill(this, "⚠ Watch", Watch.anyRed(wf) ? Ui.RED : Watch.COLOR));
+    }
+    if ("1".equals(p.get("cmchis"))) out.add(Ui.softPill(this, "CMCHIS", Ui.TEAL));
+    return out;
   }
 
   emptyNote(s) {
@@ -14022,6 +14169,16 @@ class AccountActivity extends Base {
     }
     if (!waiting.isEmpty()) {
       box.addView(Ui.section(this, "Waiting for approval  ·  " + waiting.length));
+      // 10.58: everyone whose name matches one Students / Faculty entry, approved with one tap
+      const match = this.matched(waiting);
+      if (match.length > 0) {
+        const all = Ui.button(this, "✅  Approve all matched (" + match.length + ")", Ui.GREEN, { onClick: (v) => { this.approveMatched(match); } });
+        box.addView(all);
+        Ui.margins(all, 18, 6, 18, 4);
+        const why = Ui.muted(this, "Matched = the name they signed up with is on the Students or Faculty list. Check the list before you approve.");
+        why.setPadding(Ui.dp(this, 18), 0, Ui.dp(this, 18), Ui.dp(this, 4));
+        box.addView(why);
+      }
       for (const m of waiting) box.addView(this.memberRow(m));
     }
     box.addView(Ui.section(this, "Members  ·  " + rest.length));
@@ -14146,6 +14303,75 @@ class AccountActivity extends Base {
             "Remove", save);
         } else save.run();
         return true;
+      }
+    });
+  }
+
+  static roleFor(r) {
+    r = Ui.nz(r);
+    if (r === "Professor" || r === "Associate Professor") return "professor";
+    if (Db.isFaculty(r)) return "faculty";
+    if (r === "Postgraduate") return "pg";
+    if (r === "CRMI") return "crmi";
+    if (r.startsWith("MBBS")) return "student";
+    return "staff";
+  }
+
+  static key(name) {
+    return Posting.norm(Ui.nz(name).replace(/^\s*((prof|dr)\.?\s*)+/i, ""));
+  }
+
+  /** 10.58: waiting sign-ups whose name matches exactly one free list entry: [member, staff row, role]. */
+  matched(waiting) {
+    const taken = new Set();
+    for (let i = 0; i < this.members.length(); i++) {
+      const o = this.members.optJSONObject(i);
+      if (!o.isNull("staff_id") && o.optString("role") !== "blocked" && o.optString("role") !== "pending") taken.add(String(o.optLong("staff_id")));
+    }
+    const byKey = {};
+    for (const s of this.db.rows("SELECT id, name, role FROM staff WHERE " + Approvals.APPROVED_SQL)) {
+      const k = AccountActivity.key(s.get("name"));
+      if (k === "") continue;
+      (byKey[k] = byKey[k] || []).push(s);
+    }
+    const out = [], used = new Set();
+    for (const m of waiting) {
+      let l = null;
+      if (!m.isNull("staff_id")) {
+        const s = this.db.row("SELECT id, name, role FROM staff WHERE id=? AND " + Approvals.APPROVED_SQL, String(m.optLong("staff_id")));
+        if (s != null) l = [s];
+      }
+      if (l == null) l = byKey[AccountActivity.key(m.optString("name"))] || null;
+      if (l == null || l.length !== 1) continue;
+      const s = l[0];
+      const id = String(s.get("id"));
+      if (taken.has(id) || used.has(id)) continue;
+      used.add(id);
+      out.push([m, s, AccountActivity.roleFor(s.get("role"))]);
+    }
+    return out;
+  }
+
+  approveMatched(match) {
+    const sb = match.map(o => "• " + o[1].get("name") + "  →  " + Cloud.roleLabel(o[2])).join("\n");
+    Ui.confirm(this, "Approve " + match.length + (match.length == 1 ? " person?" : " people?"), sb, "Approve", {
+      run: () => {
+        this.bg("Approving…", {
+          run: () => {
+            let ok = 0, bad = "";
+            for (const o of match) {
+              try {
+                Cloud.setMember(this, o[0].getString("user_id"), o[2], Long.parseLong(String(o[1].get("id"))));
+                ok++;
+              } catch (e) {
+                bad += "\n" + o[1].get("name") + ": " + (e.getMessage ? e.getMessage() : String(e));
+              }
+            }
+            this.members = null;
+            Cloud.pollWaiting(this);
+            return ok + " approved." + (bad === "" ? "" : "\nNot approved:" + bad);
+          }
+        });
       }
     });
   }
@@ -17064,213 +17290,6 @@ class AntibiogramActivity extends Base {
   }
 }
 ;
-/* ---- app/Applause.js ---- */
-/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
-'use strict';
-/**
- * Faculty applause (10.17, user's pick 214): when an Assistant Professor, Professor or the HOD gives a 👍 to a PG's work, the PG
- * gets a golden pop-up with confetti and the sound of clapping the next time they open the app. Each like is shown once.
- */
-class Applause {
-  static GOLD = 0xFFF59E0B;
-  static DEEP = 0xFF92400E;
-  static PREFS = "applause";
-  static showing = false;
-  static RATE = 22050;
-
-  /** Shows the pop-up for likes not seen yet on this phone. The first time, older likes are only marked as seen. */
-  static check(a, db) {
-    if (Applause.showing) return;
-    const sp = a.getApplicationContext().getSharedPreferences(Applause.PREFS, Context.MODE_PRIVATE);
-    const mine = Kudos.toMe(a, db);
-    const seen = sp.getString("seen", "");
-    const fresh = [];
-    let all = "";
-    for (const k of mine) {
-      all += (all.length === 0 ? "" : ",") + k.get("id");
-      if (!("," + seen + ",").contains("," + k.get("id") + ",")) fresh.add(k);
-    }
-    const first = !sp.contains("seen");
-    sp.edit().putString("seen", all).apply();
-    if (first || fresh.isEmpty()) return;
-    Applause.show(a, fresh);
-  }
-
-  static show(a, likes) {
-    Applause.showing = true;
-    const root = new FrameLayout(a);
-    const card = Ui.v(a);
-    card.setGravity(Gravity.CENTER_HORIZONTAL);
-    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFFFFFBEB, 0xFFFEF3C7, 0xFFFDE68A]);
-    bg.setCornerRadius(Ui.dp(a, 24));
-    bg.setStroke(Ui.dp(a, 2), Applause.GOLD);
-    card.setBackground(bg);
-    card.setPadding(Ui.dp(a, 20), Ui.dp(a, 22), Ui.dp(a, 20), Ui.dp(a, 18));
-    const clap = Ui.tv(a, "👏", 64, Ui.TEXT, false);
-    clap.setGravity(Gravity.CENTER);
-    card.addView(clap);
-    const title = Ui.tv(a, "Applause!", 26, Applause.DEEP, true);
-    title.setGravity(Gravity.CENTER);
-    card.addView(title);
-    const sub = Ui.tv(a, likes.size() === 1 ? "Your faculty noticed your work" : "Your faculty noticed your work " + likes.size() + " times", 14, 0xFF78350F, false);
-    sub.setGravity(Gravity.CENTER);
-    card.addView(sub);
-    Ui.margins(sub, 0, 2, 0, 10);
-    for (let i = 0; i < Math.min(4, likes.size()); i++) {
-      const k = likes.get(i);
-      const row = Ui.h(a);
-      row.setGravity(Gravity.CENTER_VERTICAL);
-      row.setBackground(Ui.round(a, 0xB3FFFFFF, 14));
-      row.setPadding(Ui.dp(a, 12), Ui.dp(a, 8), Ui.dp(a, 12), Ui.dp(a, 8));
-      row.addView(Ui.tv(a, "👍", 20, Ui.TEXT, false));
-      const t = Ui.v(a);
-      t.setPadding(Ui.dp(a, 10), 0, 0, 0);
-      t.addView(Ui.tv(a, Ui.nz(k.get("by_name")).isEmpty() ? "A faculty member" : k.get("by_name"), 15, Applause.DEEP, true));
-      t.addView(Ui.tv(a, "liked your " + Ui.nz(k.get("what")), 13, 0xFF57534E, false));
-      row.addView(t, Ui.weight(1));
-      card.addView(row);
-      Ui.margins(row, 0, 6, 0, 0);
-    }
-    if (likes.size() > 4) {
-      const more = Ui.tv(a, "+ " + (likes.size() - 4) + " more", 13, Applause.DEEP, true);
-      more.setGravity(Gravity.CENTER);
-      card.addView(more);
-      Ui.margins(more, 0, 6, 0, 0);
-    }
-    const pts = Ui.tv(a, "+" + (Kudos.POINTS * likes.size()) + " points in Golden Honours", 13, 0xFF047857, true);
-    pts.setGravity(Gravity.CENTER);
-    card.addView(pts);
-    Ui.margins(pts, 0, 12, 0, 0);
-    const cp = new FrameLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT);
-    const m = Ui.dp(a, 8);
-    cp.setMargins(m, m, m, m);
-    root.addView(card, cp);
-    const conf = new Applause.Confetti(a);
-    root.addView(conf, new FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
-    const d = new AlertDialog.Builder(a).setView(root).setPositiveButton("Thank you 🙏", null)
-      .setNeutralButton("See all", { onClick: (dd, w) => { a.open(ArenaActivity); } }).create();
-    d.setOnDismissListener({
-      onDismiss: (dd) => {
-        Applause.showing = false;
-        conf.stop();
-      }
-    });
-    d.show();
-    // the clapping hands bounce while the sound plays
-    const bounce = ValueAnimator.ofFloat(0, 1);
-    bounce.setDuration(450);
-    bounce.setRepeatCount(4);
-    bounce.addUpdateListener({
-      onAnimationUpdate: (v) => {
-        const f = v.getAnimatedValue();
-        const s = 1 + 0.18 * Math.sin(f * Math.PI);
-        clap.setScaleX(s);
-        clap.setScaleY(s);
-      }
-    });
-    bounce.start();
-    conf.start();
-    Applause.play(a);
-  }
-
-  /** About two seconds of a small crowd clapping, made from short bursts of noise (no sound file needed). */
-  static clapping() {
-    const RATE = Applause.RATE;
-    const n = Math.floor(RATE * 2.2);
-    const buf = new Float32Array(n);
-    // each clapper claps about 4 times a second; the crowd swells and fades
-    for (let who = 0; who < 9; who++) {
-      let at = Math.random() * 0.25;
-      const gap = 0.21 + Math.random() * 0.08;
-      const loud = 0.35 + Math.random() * 0.4;
-      while (at < 2.0) {
-        const s0 = Math.floor(at * RATE);
-        const env = at < 0.3 ? at / 0.3 : at > 1.4 ? Math.max(0, (2.0 - at) / 0.6) : 1;
-        let prev = 0;
-        for (let i = 0; i < RATE * 0.03 && s0 + i < n; i++) {
-          const noise = Math.random() * 2 - 1;
-          // a crude band-pass: take away the slow part so the burst sounds like a slap, not a hiss
-          const hp = noise - prev * 0.6;
-          prev = noise;
-          buf[s0 + i] += hp * loud * env * Math.exp(-i / (RATE * 0.006));
-        }
-        at += gap + (Math.random() - 0.5) * 0.03;
-      }
-    }
-    for (let i = 0; i < n; i++) buf[i] = Math.max(-1, Math.min(1, buf[i] * 0.45));
-    return buf;
-  }
-
-  /** Plays the clapping (browsers need the page to have been touched once; otherwise it stays silent). */
-  static play(c) {
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      const ctx = new AC();
-      const pcm = Applause.clapping();
-      const b = ctx.createBuffer(1, pcm.length, Applause.RATE);
-      b.getChannelData(0).set(pcm);
-      const src = ctx.createBufferSource();
-      src.buffer = b;
-      src.connect(ctx.destination);
-      src.start();
-      setTimeout(() => { try { ctx.close(); } catch (ignored) { } }, 3000);
-    } catch (ignored) {
-      // the pop-up works without sound
-    }
-  }
-}
-
-/** Falling paper pieces in gold and bright colours over the card, for about four seconds. */
-Applause.Confetti = class extends View {
-  constructor(c) {
-    super(c);
-    this.COLORS = [0xFFF59E0B, 0xFFEF4444, 0xFF10B981, 0xFF3B82F6, 0xFFEC4899, 0xFF8B5CF6, 0xFFFACC15];
-    this.bits = [];
-    this.paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    this.anim = null;
-    this.t = 0;
-    // x (0-1), start y (-1..0), speed, size, sway phase, colour index, spin
-    for (let i = 0; i < 60; i++)
-      this.bits.push([Math.random(), -Math.random(), 0.5 + Math.random() * 0.7, 5 + Math.random() * 7, Math.random() * 6.28, Math.floor(Math.random() * this.COLORS.length), Math.random() * 360]);
-  }
-
-  start() {
-    this.anim = ValueAnimator.ofFloat(0, 1);
-    this.anim.setDuration(4200);
-    this.anim.addUpdateListener({
-      onAnimationUpdate: (v) => {
-        this.t = v.getAnimatedValue();
-        this.invalidate();
-      }
-    });
-    this.anim.start();
-  }
-
-  stop() {
-    if (this.anim != null) this.anim.cancel();
-  }
-
-  onDraw(cv) {
-    const w = this.getWidth(), h = this.getHeight();
-    const t = this.t;
-    if (w === 0 || t >= 1) return;
-    const dp = 1;
-    const alpha = t > 0.8 ? Math.trunc(255 * (1 - t) / 0.2) : 255;
-    for (const b of this.bits) {
-      const y = (b[1] + t * 2.2 * b[2]) * h;
-      if (y < -20 || y > h + 20) continue;
-      const x = b[0] * w + Math.sin(b[4] + t * 12) * 14 * dp;
-      this.paint.setColor(this.COLORS[b[5]]);
-      this.paint.setAlpha(Math.max(0, alpha));
-      cv.save();
-      cv.rotate(b[6] + t * 720, x, y);
-      cv.drawRect(x - b[3] * dp / 2, y - b[3] * dp / 4, x + b[3] * dp / 2, y + b[3] * dp / 4, this.paint);
-      cv.restore();
-    }
-  }
-};
-;
 /* ---- app/ApprovalActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -19097,7 +19116,6 @@ class BedBoardActivity extends Base {
     this.setTitle("Bed board");
     this.subtitle = "Free and occupied beds, ward by ward";
     this.headerColor(BedBoardActivity.COLOR);
-    this.headerAction("🖨 Ward list", { onClick: (v) => { WardList.print(this, this.ward); } });
   }
 
   onSaveInstanceState(out) {
@@ -19158,25 +19176,85 @@ class BedBoardActivity extends Base {
     return null;
   }
 
-  render() {
-    const page = Ui.v(this);
-    const chips = Ui.h(this);
-    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
-    for (const w of Db.CENSUS_WARDS) {
-      const c = Ui.chip(this, Db.shortName(w) + " · " + this.db.census(w, null), w.equals(this.ward), Ui.unitColor(w));
-      c.setOnClickListener({
-        onClick: (v) => { this.ward = w; this.render(); }
-      });
-      chips.addView(c);
-      Ui.margins(c, 0, 0, 6, 0);
-    }
-    page.addView(Ui.hscroll(this, chips));
+  /** 10.51 (user's picture): no plain header: the navy and gold picture band with the back circle sits at the top of the page. */
+  header() {
+    this.getWindow().setStatusBarColor(BedBoardActivity.NAVY_DEEP);
+    let v = Ui.v(this);
+    v.setLayoutParams(Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+    return v;
+  }
 
-    const secs = BedBoardActivity.sections(this.db, this.ward);
-    const inBed = new JMap();
-    const noBed = [];
+  static NAVY = 0xFF0B2342;
+  static NAVY_DEEP = 0xFF051226;
+  static GOLD = 0xFFF5C451;
+  static GOLD_DEEP = 0xFFC9971F;
+  static TEAL = 0xFF2DD4BF;
+  static FREE_GREEN = 0xFF4ADE80;
+  static NO_BED_RED = 0xFFF87171;
+
+  isWide() {
+    return this.getResources().getConfiguration().screenWidthDp >= 700;
+  }
+  render() {
+    this.pageBg = BedBoardActivity.NAVY_DEEP;
+    let w = this.getResources().getDisplayMetrics().widthPixels;
+    let page = Ui.v(this);
+    page.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFF0A2140, BedBoardActivity.NAVY_DEEP, 0xFF030B18]));
+    page.addView(TopBanner.make(this, R.drawable.bb_top, 1262, 172, w, "TVMCHMED, Tirunelveli Medical College Hospital. Bed Board",
+        TopBanner.pill(this, "🖨 Ward list", { onClick: (v) => { WardList.print(this, this.ward); }
+        })));
+    Ui.margins(page.getChildAt(0), 0, -8, 0, 0);
+    page.getChildAt(0).getLayoutParams().width = w;
+
+    // the ward tabs: home first, then every ward with its count; the open ward is gold
+    let tabs = Ui.h(this);
+    tabs.setPadding(Ui.dp(this, 10), Ui.dp(this, 8), Ui.dp(this, 10), Ui.dp(this, 8));
+    let home = Ui.v(this);
+    home.setGravity(Gravity.CENTER);
+    home.setBackground(this.tabBg(false));
+    home.setPadding(Ui.dp(this, 14), Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 6));
+    home.addView(TopBanner.icon(this, R.drawable.ic_home, Color.WHITE, 24));
+    home.setContentDescription("Home");
+    home.setOnClickListener({ onClick: (v) => { MainActivity.goTab(this, 0); }
+    });
+    tabs.addView(home, Ui.lp(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 46)));
+    for (const wd of Db.CENSUS_WARDS) {
+      let on = wd.equals(this.ward);
+      let t = Ui.v(this);
+      t.setGravity(Gravity.CENTER);
+      t.setMinimumWidth(Ui.dp(this, 54));
+      t.setPadding(Ui.dp(this, 10), Ui.dp(this, 3), Ui.dp(this, 10), Ui.dp(this, 3));
+      t.setBackground(this.tabBg(on));
+      let tc = on ? BedBoardActivity.NAVY_DEEP : Color.WHITE;
+      let n = Ui.tv(this, Db.shortName(wd), 13, tc, true);
+      n.setSingleLine(true);
+      n.setGravity(Gravity.CENTER);
+      t.addView(n);
+      let c = Ui.tv(this, String(this.db.census(wd, null)), 13, tc, true);
+      c.setGravity(Gravity.CENTER);
+      t.addView(c);
+      if (on) t.setElevation(Ui.dp(this, 4));
+      Ui.ripple(t, 0x33FFFFFF);
+      t.setOnClickListener({ onClick: (v) => { this.ward = wd; this.moving = null; this.render(); }
+      });
+      tabs.addView(t, Ui.lp(ViewGroup.LayoutParams.WRAP_CONTENT, Ui.dp(this, 46)));
+      Ui.margins(t, 6, 0, 0, 0);
+      t.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+      t.getLayoutParams().height = Ui.dp(this, 46);
+    }
+    // the open ward's tab is brought into view (IMCU and the special wards sit off the right edge on phones)
+    const hs = Ui.hscroll(this, tabs);
+    page.addView(hs);
+    hs.post({ run: () => {
+      const sel = tabs.getChildAt(Math.max(0, Db.CENSUS_WARDS.indexOf(this.ward)) + 1);
+      if (sel != null) hs.scrollTo(Math.max(0, sel.getLeft() - Ui.dp(this, 80)), 0);
+    } });
+
+    let secs = BedBoardActivity.sections(this.db, this.ward);
+    let inBed = new JMap();
+    let noBed = [];
     for (const p of this.db.rows("SELECT * FROM patients WHERE status='IN' AND location=? ORDER BY name", this.ward)) {
-      const k = BedBoardActivity.keyOf(p, secs);
+      let k = BedBoardActivity.keyOf(p, secs);
       if (k == null) noBed.add(p);
       else {
         if (!inBed.containsKey(k)) inBed.put(k, []);
@@ -19185,121 +19263,310 @@ class BedBoardActivity extends Base {
     }
     let beds = 0;
     for (const s of secs) beds += s.beds.size();
-    const occupied = inBed.size();
-    const sick = [];
+    let occupied = inBed.size();
+    let sick = [];
     for (const r of this.db.rows("SELECT patient_id FROM duty_sick WHERE date=?", Dates.admitDay().toString())) sick.add(Ui.nz(r.get("patient_id")));
 
-    const color = Ui.unitColor(this.ward);
-    const hero = Ui.card(this);
-    hero.setBackground(Glass.hero(this, Ui.shades(color), 20));
-    hero.addView(Ui.tv(this, Db.unitName(this.ward), 20, Color.WHITE, true));
-    const stats = Ui.statRow(this, this.white(String(occupied), "Occupied"), this.white(String(Math.max(0, beds - occupied)), "Free"),
-        this.white(String(noBed.size()), "No bed no."), this.white(String(beds), "Beds"));
-    hero.addView(stats);
-    Ui.margins(stats, 0, 8, 0, 0);
-    page.addView(hero);
+    page.addView(this.summary(occupied, Math.max(0, beds - occupied), noBed.size(), beds));
+
     if (this.moving != null) {
-      const mv = Ui.card(this);
-      mv.setBackground(Ui.round(this, 0xFFFEF3C7, 16));
-      mv.addView(Ui.tv(this, "Moving " + Ui.nz(this.moving.get("name")) + " (bed " + Ui.nz(this.moving.get("bed")) + ")", 15, 0xFF92400E, true));
-      mv.addView(Ui.muted(this, "Tap a free bed to move, or another patient to swap beds."));
-      const cancel = Ui.outlineButton(this, "Cancel", Ui.SLATE, { onClick: (v) => { this.moving = null; this.render(); } });
+      let mv = Ui.card(this);
+      let mg = Ui.round(this, 0xFF2A2410, 16);
+      mg.setStroke(Ui.dp(this, 1.5), BedBoardActivity.GOLD);
+      mv.setBackground(mg);
+      mv.addView(Ui.tv(this, "Moving " + Ui.nz(this.moving.get("name")) + " (bed " + Ui.nz(this.moving.get("bed")) + ")", 15, 0xFFFDE68A, true));
+      mv.addView(Ui.tv(this, "Tap a free bed to move, or another patient to swap beds.", 13, 0xCCFFFFFF, false));
+      let cancel = Ui.outlineButton(this, "Cancel", BedBoardActivity.GOLD, { onClick: (v) => { this.moving = null; this.render(); }
+      });
       mv.addView(cancel);
       Ui.margins(cancel, 0, 8, 0, 0);
       page.addView(mv);
-    } else if (inBed.size() > 1) page.addView(Ui.muted(this, "      Long-press a patient to pick them up, then tap a free bed or another patient."));
+    } else if (inBed.size() > 1) {
+      let hint = Ui.tv(this, "Long-press a patient to pick them up, then tap a free bed or another patient.", 12, 0x99FFFFFF, false);
+      hint.setPadding(Ui.dp(this, 18), Ui.dp(this, 2), Ui.dp(this, 18), Ui.dp(this, 2));
+      page.addView(hint);
+    }
 
-    for (const s of secs) {
+    let wide = this.isWide();
+    let avail = this.getResources().getConfiguration().screenWidthDp - (wide ? 170 : 40);
+    let cols = Math.max(2, Math.min(4, Math.floor(avail / 110)));
+    for (let si = 0; si < secs.size(); si++) {
+      let s = secs.get(si);
+      let gold = si % 2 === 1;
       let occ = 0;
       for (const b of s.beds) if (inBed.containsKey(BedBoardActivity.key(s, b))) occ++;
-      page.addView(Ui.heading(this, s.label + "  ·  " + occ + " / " + s.beds.size(), color));
-      const grid = Ui.v(this);
-      grid.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+      let panel = wide ? Ui.h(this) : Ui.v(this);
+      let pg = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+          gold ? [0xFF2B2612, 0xFF16180F, 0xFF231E0C] : [0xFF0E3A48, 0xFF0A2638, 0xFF0C3342]);
+      pg.setCornerRadius(Ui.dp(this, 18));
+      pg.setStroke(Ui.dp(this, 1.5), gold ? 0xCCD4A537 : 0xCC2DD4BF);
+      panel.setBackground(pg);
+      panel.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 8));
+      panel.setElevation(Ui.dp(this, 3));
+      panel.addView(this.wingLabel(s, occ, gold, wide));
+      let grid = Ui.v(this);
       let row = null;
       for (let i = 0; i < s.beds.size(); i++) {
-        if (i % 4 === 0) {
+        if (i % cols === 0) {
           row = Ui.h(this);
           grid.addView(row);
         }
-        const bed = s.beds.get(i);
-        const ps = inBed.get(BedBoardActivity.key(s, bed));
-        const lp = Ui.weight(1);
+        let bed = s.beds.get(i);
+        let ps = inBed.get(BedBoardActivity.key(s, bed));
+        let lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
         lp.setMargins(Ui.dp(this, 3), Ui.dp(this, 3), Ui.dp(this, 3), Ui.dp(this, 3));
-        row.addView(this.tile(s, bed, ps, sick, noBed, color), lp);
+        row.addView(this.tile(s, bed, ps, sick, noBed, gold), lp);
       }
-      const pad = s.beds.size() % 4 === 0 ? 0 : 4 - s.beds.size() % 4;
-      for (let i = 0; i < pad; i++) row.addView(new View(this), Ui.weight(1));
-      page.addView(grid);
+      let pad = s.beds.size() % cols === 0 ? 0 : cols - s.beds.size() % cols;
+      for (let i = 0; i < pad; i++) row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+      if (wide) panel.addView(grid, Ui.weight(1));
+      else panel.addView(grid);
+      page.addView(panel);
+      Ui.margins(panel, 10, 8, 10, 0);
     }
 
     if (!noBed.isEmpty()) {
-      page.addView(Ui.heading(this, "Without a bed number  ·  " + noBed.size(), Ui.ORANGE));
-      page.addView(Ui.muted(this, "      Tap a free bed above to put one of them in it."));
+      let nb = Ui.h(this);
+      nb.setGravity(Gravity.CENTER_VERTICAL);
+      nb.setPadding(Ui.dp(this, 16), Ui.dp(this, 16), Ui.dp(this, 16), Ui.dp(this, 2));
+      nb.addView(TopBanner.icon(this, R.drawable.ic_warn, BedBoardActivity.NO_BED_RED, 18));
+      let nt = Ui.tv(this, "  Without a bed number  ·  " + noBed.size(), 16, 0xFFFDE68A, true);
+      nb.addView(nt);
+      page.addView(nb);
+      let nh = Ui.tv(this, "Tap a free bed above to put one of them in it.", 12, 0x99FFFFFF, false);
+      nh.setPadding(Ui.dp(this, 18), 0, Ui.dp(this, 18), Ui.dp(this, 4));
+      page.addView(nh);
       for (const p of noBed) page.addView(this.patientRow(p));
     }
+    this.bottomBar = this.bedBar();
     this.setPage(page);
   }
 
-  white(v, l) {
-    const s = Ui.v(this);
+  tabBg(on) {
+    let g = TopBanner.grad(on ? [0xFFFDE68A, BedBoardActivity.GOLD, BedBoardActivity.GOLD_DEEP] : [0xFF1C3D66, 0xFF0F2547, 0xFF0A1B36], Ui.dp(this, 12));
+    g.setStroke(Ui.dp(this, 1), on ? 0xFFFFF3C4 : 0x6694A3B8);
+    return g;
+  }
+
+  /** The ward bar: photo, ward name in gold, then occupied, free, no bed number and beds. */
+  summary(occ, free, noBed, beds) {
+    let wide = this.isWide();
+    let bar = wide ? Ui.h(this) : Ui.v(this);
+    let g = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [0xFF10294D, 0xFF0A1D3A, 0xFF0F2A4F]);
+    g.setCornerRadius(Ui.dp(this, 18));
+    g.setStroke(Ui.dp(this, 1.5), 0x9938BDF8);
+    bar.setBackground(g);
+    bar.setGravity(Gravity.CENTER_VERTICAL);
+    bar.setPadding(Ui.dp(this, 8), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 8));
+    bar.setElevation(Ui.dp(this, 3));
+    let id = Ui.h(this);
+    id.setGravity(Gravity.CENTER_VERTICAL);
+    let ph = new ImageView(this);
+    ph.setImageResource(R.drawable.bb_ward);
+    ph.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    ph.setBackground(Ui.round(this, BedBoardActivity.GOLD, 12));
+    let pp = Ui.dp(this, 2);
+    ph.setPadding(pp, pp, pp, pp);
+    ph.setContentDescription("Ward");
+    id.addView(ph, Ui.lp(Ui.dp(this, wide ? 120 : 92), Ui.dp(this, wide ? 66 : 54)));
+    let nm = Ui.v(this);
+    nm.setPadding(Ui.dp(this, 12), 0, Ui.dp(this, 8), 0);
+    let big = Ui.tv(this, Db.shortName(this.ward), 24, BedBoardActivity.GOLD, true);
+    big.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+    big.setShadowLayer(Ui.dp(this, 6), 0, 0, 0x99F59E0B);
+    nm.addView(big);
+    let full = Ui.tv(this, BedBoardActivity.fullName(this.ward), 12, Color.WHITE, false);
+    nm.addView(full);
+    id.addView(nm, Ui.weight(1));
+    if (!wide) id.addView(TopBanner.icon(this, R.drawable.ic_heart, BedBoardActivity.GOLD, 26));
+    bar.addView(id, wide ? new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.3)
+        : Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    let stats = Ui.h(this);
+    stats.setGravity(Gravity.CENTER_VERTICAL);
+    stats.addView(this.stat(R.drawable.ic_bed, Color.WHITE, occ, "Occupied"), Ui.weight(1));
+    stats.addView(this.goldLine());
+    stats.addView(this.stat(R.drawable.ic_bed, BedBoardActivity.FREE_GREEN, free, "Free"), Ui.weight(1));
+    stats.addView(this.goldLine());
+    stats.addView(this.stat(R.drawable.ic_warn, BedBoardActivity.NO_BED_RED, noBed, "No bed no."), Ui.weight(1));
+    stats.addView(this.goldLine());
+    stats.addView(this.stat(R.drawable.ic_bed, Color.WHITE, beds, "Beds"), Ui.weight(1));
+    if (wide) {
+      bar.addView(this.goldLine());
+      bar.addView(stats, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2.4));
+      bar.addView(TopBanner.icon(this, R.drawable.ic_heart, BedBoardActivity.GOLD, 34));
+    } else {
+      bar.addView(stats);
+      Ui.margins(stats, 0, 8, 0, 0);
+    }
+    Ui.margins(bar, 10, 4, 10, 4);
+    return bar;
+  }
+
+  static fullName(code) {
+    if (Db.IMCU.equals(code)) return "Intensive Medical Care Unit";
+    if (Db.CCB.equals(code)) return "Critical Care Block";
+    let n = Db.unitName(code);
+    return n.equals(Db.shortName(code)) ? "Medicine ward" : n;
+  }
+
+  goldLine() {
+    let l = new View(this);
+    l.setBackgroundColor(0x80D4A537);
+    let p = new LinearLayout.LayoutParams(Ui.dp(this, 1), Ui.dp(this, 44));
+    p.setMargins(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
+    l.setLayoutParams(p);
+    return l;
+  }
+
+  stat(icon, color, n, label) {
+    let s = Ui.v(this);
     s.setGravity(Gravity.CENTER);
-    s.addView(Ui.tv(this, v, 20, Color.WHITE, true));
-    s.addView(Ui.tv(this, l, 11, 0xD9FFFFFF, false));
+    s.addView(TopBanner.icon(this, icon, color, 22));
+    let v = Ui.tv(this, String(n), 22, color, true);
+    v.setGravity(Gravity.CENTER);
+    s.addView(v);
+    let l = Ui.tv(this, label, 11, 0xE6FFFFFF, false);
+    l.setGravity(Gravity.CENTER);
+    l.setSingleLine(true);
+    s.addView(l);
     return s;
   }
 
-  tile(s, bed, ps, sick, noBed, color) {
-    const t = Ui.v(this);
+  /** The wing's name card: icon, name and occupied / beds in a gold-ringed pill. */
+  wingLabel(s, occ, gold, wide) {
+    let l = wide ? Ui.v(this) : Ui.h(this);
+    l.setGravity(Gravity.CENTER);
+    let ic = Db.IMCU.equals(this.ward) ? (s.label.startsWith("Tox") ? R.drawable.ic_warn : R.drawable.ic_shield)
+        : Db.CCB.equals(this.ward) ? R.drawable.ic_heart : "F".equals(s.sex) ? R.drawable.ic_people : R.drawable.ic_bed;
+    l.addView(TopBanner.icon(this, ic, BedBoardActivity.GOLD, wide ? 30 : 22));
+    let name = s.label.replace(" wing", " Wing").replace(" ward", " Ward");
+    let t = Ui.tv(this, name, wide ? 16 : 15, Color.WHITE, true);
     t.setGravity(Gravity.CENTER);
-    t.setMinimumHeight(Ui.dp(this, 70));
-    t.setPadding(Ui.dp(this, 4), Ui.dp(this, 6), Ui.dp(this, 4), Ui.dp(this, 6));
+    t.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 8), Ui.dp(this, 4));
+    if (wide) l.addView(t);
+    else l.addView(t, Ui.weight(1));
+    let c = Ui.tv(this, occ + " / " + s.beds.size(), 15, Color.WHITE, true);
+    c.setGravity(Gravity.CENTER);
+    let cg = Ui.round(this, 0x66000000, 16);
+    cg.setStroke(Ui.dp(this, 1.5), BedBoardActivity.GOLD);
+    c.setBackground(cg);
+    c.setPadding(Ui.dp(this, 14), Ui.dp(this, 3), Ui.dp(this, 14), Ui.dp(this, 3));
+    l.addView(c);
+    if (!wide) (t.getLayoutParams()).gravity = Gravity.CENTER_VERTICAL;
+    if (wide) {
+      l.setLayoutParams(Ui.lp(Ui.dp(this, 140), ViewGroup.LayoutParams.MATCH_PARENT));
+      let lg = Ui.round(this, 0x33000000, 16);
+      l.setBackground(lg);
+      l.setPadding(Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10));
+    } else {
+      t.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+      l.setPadding(Ui.dp(this, 6), Ui.dp(this, 2), Ui.dp(this, 2), Ui.dp(this, 6));
+    }
+    return l;
+  }
+
+  /** The bar at the bottom: this board, the ward's own page, live census, ward list, reports and settings. */
+  bedBar() {
+    let b = Ui.h(this);
+    b.setGravity(Gravity.CENTER_VERTICAL);
+    let g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xF20C2244, 0xFA061529]);
+    b.setBackground(g);
+    b.setPadding(Ui.dp(this, 6), Ui.dp(this, 4), Ui.dp(this, 6), Ui.dp(this, 6));
+    let line = new View(this);
+    let wrap = Ui.v(this);
+    line.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [0x00F5C451, BedBoardActivity.GOLD, 0x00F5C451]));
+    wrap.addView(line, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 1.5)));
+    wrap.addView(b);
+    let idle = 0xE6FFFFFF;
+    b.addView(TopBanner.navItem(this, R.drawable.ic_bed, "Bed Board", true, idle, { onClick: (v) => { if (this._scroll != null) this._scroll.smoothScrollTo(0, 0); }
+    }), Ui.weight(1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_chart, "Ward", false, idle, { onClick: (v) => { this.open(UnitActivity, "code", this.ward); }
+    }), Ui.weight(1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_people, "Occupancy", false, idle, { onClick: (v) => { this.open(LiveCensusActivity); }
+    }), Ui.weight(1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_clipboard, "Ward list", false, idle, { onClick: (v) => { WardList.print(this, this.ward); }
+    }), Ui.weight(1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_doc, "Reports", false, idle, { onClick: (v) => { this.open(ReportActivity); }
+    }), Ui.weight(1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_tune, "Settings", false, idle, { onClick: (v) => { this.open(SettingsActivity); }
+    }), Ui.weight(1));
+    return wrap;
+  }
+
+  tile(s, bed, ps, sick, noBed, gold) {
+    let t = Ui.h(this);
+    t.setGravity(Gravity.CENTER_VERTICAL);
+    t.setMinimumHeight(Ui.dp(this, 48));
+    t.setPadding(Ui.dp(this, 8), Ui.dp(this, 4), Ui.dp(this, 6), Ui.dp(this, 4));
+    let ink = gold ? 0xFF4A3A0E : 0xFF0D3440;
+    let mid = Ui.v(this);
+    mid.setGravity(Gravity.CENTER);
     if (ps == null) {
-      const g = Ui.round(this, Color.WHITE, 12);
-      g.setStroke(Ui.dp(this, 1.5), 0xFF86EFAC);
+      let g = TopBanner.grad(gold ? [0xFFFFFAEB, 0xFFF6E7B8, 0xFFEBD38C] : [0xFFF0FFF8, 0xFFCDF7E4, 0xFFA7EBCD], Ui.dp(this, 16));
+      g.setStroke(Ui.dp(this, 1), 0xCCFFFFFF);
       t.setBackground(g);
-      t.addView(Ui.tv(this, bed, 16, Ui.GREEN, true));
-      t.addView(Ui.tv(this, "Free", 11, Ui.GREEN, false));
-      t.setOnClickListener({
-        onClick: (v) => {
+      t.addView(TopBanner.icon(this, R.drawable.ic_bed, ink, 20));
+      let b = Ui.tv(this, bed, 15, 0xFF0B1F3A, true);
+      b.setGravity(Gravity.CENTER);
+      mid.addView(b);
+      let f = Ui.tv(this, "Free", 11, 0xFF15803D, true);
+      f.setGravity(Gravity.CENTER);
+      mid.addView(f);
+      t.addView(mid, Ui.weight(1));
+      let ok = Ui.tv(this, "✓", 12, Color.WHITE, true);
+      ok.setGravity(Gravity.CENTER);
+      ok.setBackground(TopBanner.grad([0xFF22C55E, 0xFF15803D], Ui.dp(this, 10)));
+      t.addView(ok, Ui.lp(Ui.dp(this, 20), Ui.dp(this, 20)));
+      t.setContentDescription("Bed " + bed + ", free");
+      t.setOnClickListener({ onClick: (v) => {
           if (this.moving != null) this.drop(s, bed, null);
           else this.placeDialog(s, bed, noBed);
         }
       });
     } else {
-      const p = ps.get(0);
-      const isSick = sick.contains(p.get("id"));
-      const fill = "F".equals(p.get("sex")) ? 0xFFFCE7F3 : 0xFFDBEAFE;
-      const g = Ui.round(this, fill, 12);
-      g.setStroke(Ui.dp(this, isSick ? 2.5 : 1), isSick ? Ui.RED : Ui.mix(color, Color.WHITE, 0.4));
-      t.setBackground(g);
-      t.addView(Ui.tv(this, bed + (ps.size() > 1 ? "  +" + (ps.size() - 1) : ""), 14, Ui.TEXT, true));
-      const first = Ui.nz(p.get("name")).trim();
-      const n = Ui.tv(this, first.length > 12 ? first.substring(0, 12) : first, 11, Ui.TEXT, false);
-      n.setSingleLine(true);
-      t.addView(n);
-      const tasks = Tasks.pending(this.db, Long.parseLong(p.get("id")));
-      t.addView(Ui.tv(this, (Ui.nz(p.get("age")).isEmpty() ? "" : p.get("age") + " ") + Ui.nz(p.get("sex")) + (isSick ? " · sick" : "") + (tasks > 0 ? " · ⏳" + tasks : ""),
-          10, isSick ? Ui.RED : Ui.MUTED, isSick));
-      if (this.moving != null && Ui.nz(this.moving.get("id")) === Ui.nz(p.get("id"))) {
-        const pg = Ui.round(this, 0xFFFEF3C7, 12);
-        pg.setStroke(Ui.dp(this, 3), 0xFFF59E0B);
-        t.setBackground(pg);
+      let p = ps.get(0);
+      let isSick = sick.contains(p.get("id"));
+      let fem = "F".equals(p.get("sex"));
+      let g = TopBanner.grad(fem ? [0xFFFFF1F7, 0xFFFBD5E8] : [0xFFEFF6FF, 0xFFC7DDFD], Ui.dp(this, 16));
+      g.setStroke(Ui.dp(this, isSick ? 2.5 : 1), isSick ? Ui.RED : 0xCCFFFFFF);
+      let picked = this.moving != null && Ui.nz(this.moving.get("id")).equals(p.get("id"));
+      if (picked) {
+        g = TopBanner.grad([0xFFFEF3C7, 0xFFFDE68A], Ui.dp(this, 16));
+        g.setStroke(Ui.dp(this, 3), 0xFFF59E0B);
       }
-      t.setOnClickListener({
-        onClick: (v) => {
+      t.setBackground(g);
+      t.addView(TopBanner.icon(this, R.drawable.ic_bed, fem ? 0xFF9D174D : 0xFF1E3A8A, 20));
+      let b = Ui.tv(this, bed + (ps.size() > 1 ? "  +" + (ps.size() - 1) : ""), 14, 0xFF0B1F3A, true);
+      b.setGravity(Gravity.CENTER);
+      mid.addView(b);
+      let first = Ui.nz(p.get("name")).trim();
+      let n = Ui.tv(this, first.length > 14 ? first.substring(0, 14) : first, 11, 0xFF0B1F3A, false);
+      n.setSingleLine(true);
+      n.setGravity(Gravity.CENTER);
+      mid.addView(n);
+      let tasks = Tasks.pending(this.db, Long.parseLong(p.get("id")));
+      let a = Ui.tv(this, (Ui.nz(p.get("age")).isEmpty() ? "" : p.get("age") + " ") + Ui.nz(p.get("sex")) + (isSick ? " · sick" : "") + (tasks > 0 ? " · ⏳" + tasks : ""),
+          10, isSick ? Ui.RED : 0xFF475569, isSick);
+      a.setGravity(Gravity.CENTER);
+      mid.addView(a);
+      t.addView(mid, Ui.weight(1));
+      let dot = new View(this);
+      dot.setBackground(Ui.round(this, isSick ? Ui.RED : fem ? 0xFFDB2777 : 0xFF2563EB, 5));
+      t.addView(dot, Ui.lp(Ui.dp(this, 10), Ui.dp(this, 10)));
+      t.setContentDescription("Bed " + bed + ", " + first);
+      t.setOnClickListener({ onClick: (v) => {
           if (this.moving != null) this.drop(s, bed, p);
           else this.bedMenu(s, bed, ps);
         }
       });
-      t.setOnLongClickListener({
-        onLongClick: (v) => {
+      t.setOnLongClickListener({ onLongClick: (v) => {
           this.moving = p;
           this.render();
           return true;
         }
       });
     }
-    for (let i = 0; i < t.getChildCount(); i++) if (t.getChildAt(i) instanceof TextView) t.getChildAt(i).setGravity(Gravity.CENTER);
+    t.setElevation(Ui.dp(this, 2));
     return t;
   }
 
@@ -44192,6 +44459,746 @@ class DupCheck {
   }
 }
 ;
+/* ---- app/DutyBoard.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * PG and CRMI notice boards (10.50, user asked): the duty roster of the PGs (or, on its own board, the CRMIs) is uploaded once
+ * with the wards it is for and the last day of the posting. It shows on the board and, until that day, on each of those
+ * wards' pages. Table rosters (synced); the photo or PDF goes through Attach (tbl rosters).
+ */
+class DutyBoard {
+  static TABLE = "rosters";
+  static PG = "PG";
+  static CRMI = "CRMI";
+  static PG_COLOR = 0xFF4F46E5;
+  static CRMI_COLOR = 0xFFEA580C;
+  static WARDS = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", Db.TRIAGE, Db.STEPDOWN, Db.FEVER, Db.IMCU, Db.CCB, Db.IDW, Db.GERI, Db.RHEUM, Db.KDP];
+
+  static color(board) { return DutyBoard.CRMI === board ? DutyBoard.CRMI_COLOR : DutyBoard.PG_COLOR; }
+  static title(board) { return DutyBoard.CRMI === board ? "CRMI notice board" : "PG notice board"; }
+  static label(board) { return (DutyBoard.CRMI === board ? "CRMI" : "PG") + " duty roster"; }
+  static who(board) { return DutyBoard.CRMI === board ? "CRMIs" : "PGs"; }
+
+  static pack(wards) { return wards.length === 0 ? "" : "," + wards.join(",") + ","; }
+
+  static unpack(s) {
+    const out = [];
+    for (const w of Ui.nz(s).split(",")) if (w.trim().length > 0) out.push(w.trim());
+    return out;
+  }
+
+  static wardNames(packed) {
+    return DutyBoard.unpack(packed).map((w) => Db.shortName(w)).join(", ");
+  }
+
+  static list(db, board, when) {
+    const t = Dates.todayIso();
+    if (when === "now") return db.rows("SELECT * FROM rosters WHERE board=? AND from_date<=? AND till>=? ORDER BY till, id DESC", board, t, t);
+    if (when === "coming") return db.rows("SELECT * FROM rosters WHERE board=? AND from_date>? ORDER BY from_date, id DESC", board, t);
+    return db.rows("SELECT * FROM rosters WHERE board=? AND till<? ORDER BY till DESC, id DESC LIMIT 30", board, t);
+  }
+
+  static forWard(db, ward) {
+    const t = Dates.todayIso();
+    return db.rows("SELECT * FROM rosters WHERE wards LIKE ? AND from_date<=? AND till>=? ORDER BY CASE board WHEN 'PG' THEN 0 ELSE 1 END, till, id DESC",
+      "%," + ward + ",%", t, t);
+  }
+
+  static countNow(db, board) {
+    const t = Dates.todayIso();
+    return db.num("SELECT COUNT(*) FROM rosters WHERE board=? AND from_date<=? AND till>=?", board, t, t);
+  }
+
+  static canEdit(c, r) {
+    if (!Cloud.active(c) || Cloud.isAdmin(c) || Intercom.isFaculty(Cloud.role(c))) return true;
+    const me = Approvals.me(c);
+    return !me.isEmpty() && me.equals(r.get("by_name"));
+  }
+
+  static save(db, c, old, board, title, body, wards, from, till) {
+    const cv = new ContentValues();
+    cv.put("board", board);
+    cv.put("title", title);
+    cv.put("body", body);
+    cv.put("wards", DutyBoard.pack(wards));
+    cv.put("from_date", from);
+    cv.put("till", till);
+    if (old == null) {
+      cv.put("by_name", Approvals.me(c));
+      cv.put("created", Dates.todayIso());
+      return db.insert(DutyBoard.TABLE, cv);
+    }
+    const id = Long.parseLong(old.get("id"));
+    db.update(DutyBoard.TABLE, cv, id);
+    return id;
+  }
+
+  static remove(db, r) {
+    for (const a of Attach.of(db, DutyBoard.TABLE, r.get("id"))) Attach.remove(db, a);
+    db.delete(DutyBoard.TABLE, Long.parseLong(r.get("id")));
+  }
+
+  /** ward != null on a ward's page: only that ward's names from a pasted roster. */
+  static card(a, db, r, onAdd, onEdit, ward) {
+    if (ward === undefined) ward = null;
+    const col = DutyBoard.color(r.get("board"));
+    const c = Ui.v(a);
+    c.setPadding(Ui.dp(a, 14), Ui.dp(a, 12), Ui.dp(a, 14), Ui.dp(a, 12));
+    c.setBackground(Ui.outline(a, Ui.mix(col, 0xFFFFFFFF, 0.93), Ui.mix(col, 0xFFFFFFFF, 0.55), 16));
+    const top = Ui.h(a);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    top.addView(Ui.softPill(a, "🗓  " + DutyBoard.label(r.get("board")), col));
+    const sp = new View(a);
+    top.addView(sp, new LinearLayout.LayoutParams(0, 1, 1));
+    if (onEdit != null) {
+      const ed = Ui.tv(a, "⋯", 22, Ui.MUTED, true);
+      ed.setPadding(Ui.dp(a, 10), 0, Ui.dp(a, 4), 0);
+      ed.setOnClickListener(onEdit);
+      top.addView(ed);
+    }
+    c.addView(top);
+    const t = Ui.tv(a, Ui.nz(r.get("title")).isEmpty() ? DutyBoard.label(r.get("board")) : r.get("title"), 16, Ui.TEXT, true);
+    c.addView(t);
+    Ui.margins(t, 0, 8, 0, 0);
+    c.addView(Ui.tv(a, "🏥  " + DutyBoard.wardNames(r.get("wards")), 14, Ui.mix(col, 0xFF000000, 0.25), true));
+    const till = Ui.nz(r.get("till"));
+    const past = !till.isEmpty() && till.compareTo(Dates.todayIso()) < 0;
+    c.addView(Ui.muted(a, Dates.nice(r.get("from_date")) + " to " + Dates.nice(till) + (past ? "  ·  posting over" : "  ·  shows on the ward till the last day")
+      + (Ui.nz(r.get("by_name")).isEmpty() ? "" : "  ·  by " + r.get("by_name"))));
+    const lines = DutyBoard.parseBody(r.get("body"));
+    if (lines.length > 0) {
+      const lb = DutyBoard.lineBlock(a, db, r.get("id"), lines, ward, col);
+      c.addView(lb);
+      Ui.margins(lb, 0, 4, 0, 0);
+    } else if (Ui.nz(r.get("body")) !== "") {
+      const b = Ui.tv(a, r.get("body"), 14, Ui.TEXT, false);
+      c.addView(b);
+      Ui.margins(b, 0, 6, 0, 0);
+    }
+    const files = Attach.of(db, DutyBoard.TABLE, r.get("id"));
+    if (files.length > 0 || onAdd != null) {
+      const st = Attach.strip(a, db, files, col, onAdd);
+      c.addView(st);
+      Ui.margins(st, 0, 8, 0, 0);
+    }
+    const lp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(Ui.dp(a, 12), Ui.dp(a, 6), Ui.dp(a, 12), Ui.dp(a, 6));
+    c.setLayoutParams(lp);
+    return c;
+  }
+
+  static wardCard(a, db, ward) {
+    const l = DutyBoard.forWard(db, ward);
+    if (l.length === 0) return null;
+    const box = Ui.v(a);
+    box.addView(Ui.heading(a, "Duty roster  ·  " + l.length, DutyBoard.PG_COLOR));
+    for (const r of l) {
+      const c = DutyBoard.card(a, db, r, null, null, ward);
+      c.setOnClickListener({ onClick: (v) => { a.open(DutyBoardActivity, "board", r.get("board")); } });
+      box.addView(c);
+    }
+    return box;
+  }
+
+  // ---------- 10.53: roster photo -> ChatGPT -> paste; the names go to each ward's page ----------
+
+  static prompt(board) {
+    const who = DutyBoard.CRMI === board ? "CRMIs (compulsory rotating medical interns)" : "PGs (postgraduates)";
+    return "These photos are the duty roster of the " + who + " of the Department of General Medicine (one or more pages). "
+      + "Copy every duty in it as plain text, one line per person per posting, and nothing else (no heading, no notes, no table borders):\n"
+      + "WARD | NAME | PHONE | FROM | TILL | SHIFT\n"
+      + "WARD must be one of: M1, M2, M3, M4, M5, M6, M7, Triage, Step-down, Fever, IMCU, CCB, ID ward, Geriatric, Rheumatology, Kandiyaperi "
+      + "(a unit written as M-1, Unit I or MU1 is M1).\n"
+      + "NAME as written, with Dr. PHONE: the mobile number if given, else leave it blank.\n"
+      + "FROM and TILL: the first and last date of that duty as DD-MM-YYYY (the same date twice for one day). "
+      + "If the roster gives only a month or a week, use its first and last date.\n"
+      + "SHIFT: Day, Night or 24 hours, or leave it blank.\n"
+      + "If one person is on several wards or dates, write one line for each.\n"
+      + "Example:\n"
+      + "M1 | Dr. A. Kumar | 9876543210 | 01-11-2026 | 15-11-2026 | Day\n"
+      + "CCB | Dr. B. Priya |  | 02-11-2026 | 02-11-2026 | Night";
+  }
+
+  static wardCode(cell) {
+    let n = Ui.nz(cell).toLowerCase().replace(/[^a-z0-9]/g, "");
+    if (n.endsWith("ward") && n.length > 4) n = n.substring(0, n.length - 4);
+    if (n.endsWith("unit") && n.length > 4 && !n.startsWith("unit")) n = n.substring(0, n.length - 4);
+    const m = /^(?:m|mu|unit|medicine|medicineunit|medunit|gm|medicalunit)(7|6|5|4|3|2|1|vii|vi|v|iv|iii|ii|i)$/.exec(n);
+    if (m) {
+      const k = ["i", "ii", "iii", "iv", "v", "vi", "vii"].indexOf(m[1]);
+      return "M" + (k >= 0 ? k + 1 : m[1]);
+    }
+    if (["imcu", "icu", "micu", "medicalicu", "intensivemedicalcare"].indexOf(n) >= 0) return Db.IMCU;
+    if (n === "triage" || n === "tri") return Db.TRIAGE;
+    if (["stepdown", "sdu", "stepdownunit", "sd"].indexOf(n) >= 0) return Db.STEPDOWN;
+    if (n === "fever") return Db.FEVER;
+    if (n === "ccb" || n === "criticalcare" || n === "criticalcareblock") return Db.CCB;
+    if (n === "id" || n === "idw" || n.startsWith("infectiousdisease") || n === "isolation") return Db.IDW;
+    if (n.startsWith("geri")) return Db.GERI;
+    if (n.startsWith("rheum")) return Db.RHEUM;
+    if (n === "kdp" || n.startsWith("kandiyaperi")) return Db.KDP;
+    return "";
+  }
+
+  static _iso(y, m, d) {
+    y = +y; m = +m; d = +d;
+    const t = new Date(Date.UTC(y, m - 1, d));
+    if (t.getUTCFullYear() !== y || t.getUTCMonth() !== m - 1 || t.getUTCDate() !== d) return null;
+    return y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+  }
+
+  static dates(cell) {
+    const out = [];
+    const c = Ui.nz(cell);
+    let m;
+    const ymd = /\b(\d{4})-(\d{1,2})-(\d{1,2})\b/g;
+    while ((m = ymd.exec(c))) { const v = DutyBoard._iso(m[1], m[2], m[3]); if (v) out.push(v); }
+    if (out.length) return out;
+    const dmy = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})\b/g;
+    while ((m = dmy.exec(c))) {
+      let y = +m[3];
+      if (y < 100) y += 2000;
+      const v = DutyBoard._iso(y, m[2], m[1]);
+      if (v) out.push(v);
+    }
+    return out;
+  }
+
+  static _shift(cell) {
+    const l = cell.toLowerCase().trim();
+    if (l.startsWith("night")) return "Night";
+    if (l.startsWith("24")) return "24 hours";
+    if (l.startsWith("day") && l.indexOf("night") < 0) return "Day";
+    return cell.length > 1 ? cell.substring(0, 1).toUpperCase() + cell.substring(1) : cell;
+  }
+
+  /** "WARD | NAME | PHONE | FROM | TILL | SHIFT" per line, columns in any order. skipped[0] counts lines not read. */
+  static parse(text, skipped) {
+    const out = [];
+    const SHIFT = /^(day|days|night|nights|24\s*h(ou)?rs?|24\s*x\s*7|24x7|full\s*day|morning|evening|day\s*&\s*night|duty)$/i;
+    for (const raw of Ui.nz(text).replace(/ /g, " ").split(/\r?\n/)) {
+      let line = raw.split("**").join("").split("`").join("").trim();
+      if (line === "" || line.replace(/[|:\-\s+=]/g, "") === "") continue;
+      const up = line.toUpperCase();
+      if (up.indexOf("WARD") >= 0 && up.indexOf("NAME") >= 0 && (up.indexOf("FROM") >= 0 || up.indexOf("TILL") >= 0 || up.indexOf("PHONE") >= 0)) continue;
+      if (line.startsWith("|")) line = line.substring(1);
+      if (line.endsWith("|")) line = line.substring(0, line.length - 1);
+      const cells = line.split(line.indexOf("|") >= 0 ? "|" : "\t").map(x => x.trim());
+      if (cells.length < 2) { if (skipped) skipped[0]++; continue; }
+      const l = { ward: "", name: "", phone: "", from: "", till: "", shift: "" };
+      const used = cells.map(() => false);
+      for (let k = 0; k < cells.length && l.ward === ""; k++) {
+        const w = DutyBoard.wardCode(cells[k]);
+        if (w !== "") { l.ward = w; used[k] = true; }
+      }
+      const ds = [];
+      for (let k = 0; k < cells.length; k++) {
+        if (used[k] || cells[k] === "") continue;
+        const c = cells[k];
+        const got = DutyBoard.dates(c);
+        if (got.length && !/[A-Za-z]{3,}/.test(c)) { ds.push(...got); used[k] = true; continue; }
+        const digits = c.replace(/[\s()+-]/g, "");
+        if (/^\d{10,13}$/.test(digits)) { l.phone = digits.length > 10 ? digits.substring(digits.length - 10) : digits; used[k] = true; continue; }
+        if (SHIFT.test(c)) { l.shift = DutyBoard._shift(c); used[k] = true; }
+      }
+      for (let k = 0; k < cells.length && l.name === ""; k++)
+        if (!used[k] && /[A-Za-z]{2,}/.test(cells[k])) { l.name = cells[k]; used[k] = true; }
+      if (l.ward === "" || l.name === "") { if (skipped) skipped[0]++; continue; }
+      if (ds.length) {
+        l.from = ds[0];
+        l.till = ds.length > 1 ? ds[1] : ds[0];
+        if (l.till < l.from) { const t = l.from; l.from = l.till; l.till = t; }
+      }
+      out.push(l);
+    }
+    return out;
+  }
+
+  static parseBody(body) { return DutyBoard.parse(body, null); }
+
+  static canonical(lines) {
+    return lines.map(l => Db.shortName(l.ward) + " | " + l.name + " | " + l.phone + " | " + DutyBoard.dmy(l.from) + " | " + DutyBoard.dmy(l.till) + " | " + l.shift).join("\n");
+  }
+
+  static dmy(iso) {
+    const p = Ui.nz(iso).split("-");
+    return p.length === 3 ? p[2] + "-" + p[1] + "-" + p[0] : Ui.nz(iso);
+  }
+
+  static wardsOf(lines) {
+    const seen = new Set(lines.map(l => l.ward));
+    return DutyBoard.WARDS.filter(w => seen.has(w));
+  }
+
+  static onDay(l, iso) { return l.from !== "" && l.from <= iso && l.till >= iso; }
+
+  static range(l) {
+    if (l.from === "") return "";
+    return l.from === l.till ? Dates.nice(l.from) : Dates.nice(l.from) + " to " + Dates.nice(l.till);
+  }
+
+  static nameKey(n) {
+    return Ui.nz(n).toLowerCase().replace(/[^a-z]/g, " ").trim().split(/\s+/).filter(t => t !== "" && t !== "dr").sort().join(" ");
+  }
+
+  static staffPhones(db) {
+    const m = new Map();
+    for (const s of db.rows("SELECT name, phone FROM staff WHERE phone IS NOT NULL AND phone<>''")) m.set(DutyBoard.nameKey(s.get("name")), s.get("phone"));
+    return m;
+  }
+
+  static lineBlock(a, db, id, lines, ward, col) {
+    const box = Ui.v(a);
+    const t = Dates.admitDay().toString();
+    const phones = DutyBoard.staffPhones(db);
+    const wards = ward != null ? [ward] : DutyBoard.wardsOf(lines);
+    for (const w of wards) {
+      const on = [], next = [];
+      for (const l of lines) {
+        if (l.ward !== w) continue;
+        if (DutyBoard.onDay(l, t)) on.push(l);
+        else if (ward != null && l.from > t) next.push(l);
+      }
+      const h = Ui.tv(a, (ward != null ? "On duty today" : Db.unitName(w)) + (on.length === 0 ? "" : "  ·  " + on.length), 13, Ui.mix(col, 0xFF000000, 0.2), true);
+      box.addView(h);
+      Ui.margins(h, 0, 8, 0, 0);
+      if (on.length === 0) box.addView(Ui.muted(a, "No one listed for today"));
+      for (const l of on) box.addView(DutyBoard.personLine(a, l, phones, true));
+      if (next.length) {
+        const nh = Ui.tv(a, "Next on duty", 12, Ui.MUTED, true);
+        box.addView(nh);
+        Ui.margins(nh, 0, 6, 0, 0);
+        for (let k = 0; k < next.length && k < 6; k++) box.addView(DutyBoard.personLine(a, next[k], phones, false));
+      }
+    }
+    if (ward == null) {
+      const open = DutyBoard.OPEN.has(id);
+      const tg = Ui.tv(a, open ? "▴  Hide the full roster" : "▾  Full roster  ·  " + lines.length + " duties", 13, col, true);
+      tg.setPadding(0, Ui.dp(a, 10), 0, Ui.dp(a, 4));
+      tg.setOnClickListener({ onClick: () => { if (open) DutyBoard.OPEN.delete(id); else DutyBoard.OPEN.add(id); a.render(); } });
+      box.addView(tg);
+      if (open) {
+        for (const w of DutyBoard.wardsOf(lines)) {
+          const h = Ui.tv(a, Db.unitName(w), 12, Ui.MUTED, true);
+          box.addView(h);
+          Ui.margins(h, 0, 6, 0, 0);
+          for (const l of lines) if (l.ward === w) box.addView(DutyBoard.personLine(a, l, phones, DutyBoard.onDay(l, t)));
+        }
+      }
+    }
+    return box;
+  }
+
+  static personLine(c, l, phones, today) {
+    const r = Ui.h(c);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(0, Ui.dp(c, 3), 0, Ui.dp(c, 3));
+    const t = Ui.v(c);
+    t.addView(Ui.tv(c, (today ? "●  " : "") + l.name, 14, today ? Ui.TEXT : Ui.MUTED, today));
+    const sub = (l.shift === "" ? "" : l.shift + "  ·  ") + DutyBoard.range(l);
+    if (sub !== "") t.addView(Ui.tv(c, sub, 12, Ui.MUTED, false));
+    r.addView(t, Ui.weight(1));
+    let ph = l.phone;
+    if (ph === "" && phones && phones.has(DutyBoard.nameKey(l.name))) ph = phones.get(DutyBoard.nameKey(l.name));
+    if (Ui.nz(ph) !== "") {
+      const call = Ui.softPill(c, "📞 Call", Ui.GREEN);
+      call.setOnClickListener({ onClick: () => { try { c.startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + ph))); } catch (ignored) {} } });
+      r.addView(call);
+    }
+    return r;
+  }
+
+  // ---------- 10.54: a ward's own "Duty today" from the pasted PG and CRMI rosters (IMCU, Fever ward, CCB) ----------
+
+  static onDuty(db, ward, board, iso) {
+    const out = [];
+    for (const r of db.rows("SELECT body FROM rosters WHERE board=? AND wards LIKE ? AND from_date<=? AND till>=? ORDER BY id DESC", board, "%," + ward + ",%", iso, iso))
+      for (const l of DutyBoard.parseBody(r.get("body"))) if (l.ward === ward && DutyBoard.onDay(l, iso)) out.push(l);
+    return out;
+  }
+
+  static shift(lines, night) {
+    return lines.filter(l => night ? l.shift !== "Day" : l.shift !== "Night");
+  }
+
+  static names(lines) {
+    const n = [];
+    for (const l of lines) if (n.indexOf(l.name) < 0) n.push(l.name);
+    return n.join(", ");
+  }
+
+  static nightNow() {
+    const t = Dates.time();
+    return t.isBefore(Dates.CHANGEOVER) || !t.isBefore(LocalTime.of(19, 30));
+  }
+
+  static dutyToday(a, db, ward) {
+    const iso = Dates.admitDay().toString();
+    const col = Ui.unitColor(ward);
+    const box = Ui.v(a);
+    box.addView(Ui.heading(a, Db.shortName(ward) + " duty today", col));
+    const card = Ui.card(a);
+    card.addView(Ui.muted(a, Dates.nice(iso) + "  ·  PGs and CRMIs in 12-hour shifts: 7:30 AM to 7:30 PM and 7:30 PM to 7:30 AM. "
+      + "Filled by itself from the rosters pasted on the PG and CRMI notice boards."));
+    const phones = DutyBoard.staffPhones(db);
+    const nightNow = DutyBoard.nightNow();
+    const slots = [[DutyBoard.PG, "0", "PG, day shift", "7:30 AM to 7:30 PM"], [DutyBoard.CRMI, "0", "CRMI, day shift", "7:30 AM to 7:30 PM"],
+      [DutyBoard.PG, "1", "PG, night shift", "7:30 PM to 7:30 AM"], [DutyBoard.CRMI, "1", "CRMI, night shift", "7:30 PM to 7:30 AM"]];
+    for (const s of slots) {
+      const night = s[1] === "1";
+      const who = DutyBoard.shift(DutyBoard.onDuty(db, ward, s[0], iso), night);
+      const head = Ui.h(a);
+      head.setGravity(Gravity.CENTER_VERTICAL);
+      head.setPadding(0, Ui.dp(a, 8), 0, 0);
+      head.addView(Ui.tv(a, s[2] + "  ·  " + s[3], 12, DutyBoard.color(s[0]), true), Ui.weight(1));
+      if (night === nightNow) head.addView(Ui.softPill(a, "On duty now", Ui.GREEN));
+      card.addView(head);
+      if (who.length === 0) card.addView(Ui.tv(a, "Not in the " + (s[0] === DutyBoard.PG ? "PG" : "CRMI") + " roster", 14, Ui.MUTED, false));
+      for (const l of who) card.addView(DutyBoard.personLine(a, l, phones, true));
+    }
+    const btns = Ui.h(a);
+    const pg = Ui.outlineButton(a, "PG notice board", DutyBoard.PG_COLOR, { onClick: () => { a.open(DutyBoardActivity, "board", DutyBoard.PG); } });
+    const cr = Ui.outlineButton(a, "CRMI notice board", DutyBoard.CRMI_COLOR, { onClick: () => { a.open(DutyBoardActivity, "board", DutyBoard.CRMI); } });
+    btns.addView(pg, Ui.weight(1));
+    btns.addView(cr, Ui.weight(1));
+    cr.getLayoutParams().leftMargin = Ui.dp(a, 8);
+    card.addView(btns);
+    Ui.margins(btns, 0, 10, 0, 0);
+    box.addView(card);
+    return box;
+  }
+}
+DutyBoard.MAX_PAGES = 4;
+DutyBoard.OPEN = new Set();
+;
+/* ---- app/DutyBoardActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** The PG notice board or the CRMI notice board (extra "board"): duty rosters by ward, each shown on its wards till the posting ends (10.50). */
+class DutyBoardActivity extends Base {
+  static REQ_FILE = 7340;
+  static REQ_SCAN = 7350;
+  constructor() { super(); this.board = DutyBoard.PG; this.attach = null; this.showPast = false; this.scanRels = []; this.waiting = false; this.offered = false; }
+
+  onCreate(b) {
+    super.onCreate(b);
+    this.board = DutyBoard.CRMI === this.getIntent().getStringExtra("board") ? DutyBoard.CRMI : DutyBoard.PG;
+    this.setTitle(DutyBoard.title(this.board));
+    this.subtitle = "Duty rosters of the " + DutyBoard.who(this.board) + ", shown on each ward till the posting ends";
+    this.headerColor(DutyBoard.color(this.board));
+    this.headerAction("+ Upload", { onClick: () => { this.editDialog(null); } });
+    this.attach = new Attach(this, DutyBoardActivity.REQ_FILE);
+    if (b != null) {
+      this.attach.restore(b);
+      this.showPast = b.getBoolean("past", false);
+      const sr = b.getStringArrayList ? b.getStringArrayList("scan") : null;
+      if (sr != null) this.scanRels = sr;
+      this.waiting = b.getBoolean("waiting", false);
+    }
+    this.attach.onAdded(this.added());
+  }
+
+  onSaveInstanceState(out) {
+    super.onSaveInstanceState(out);
+    this.attach.save(out);
+    out.putBoolean("past", this.showPast);
+    if (out.putStringArrayList) out.putStringArrayList("scan", this.scanRels);
+    out.putBoolean("waiting", this.waiting);
+  }
+
+  onWindowFocusChanged(has) {
+    super.onWindowFocusChanged(has);
+    if (!has || !this.waiting || this.offered) return;
+    const clip = this.clipText();
+    if (clip === "" || clip === DutyBoard.prompt(this.board).trim() || DutyBoard.parse(clip, null).length === 0) return;
+    this.offered = true;
+    this.pasteDialog(clip);
+  }
+
+  onActivityResult(req, res, data) {
+    super.onActivityResult(req, res, data);
+    if (req === DutyBoardActivity.REQ_SCAN) {
+      this.scanResult(res, data);
+      return;
+    }
+    this.attach.result(req, res, data);
+  }
+
+  added() {
+    return { added: (rel, name, pdf) => { this.render(); } };
+  }
+
+  render() {
+    const db = this.db;
+    const page = Ui.v(this);
+    const col = DutyBoard.color(this.board);
+    const hero = Ui.v(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(col), 20));
+    hero.setPadding(Ui.dp(this, 18), Ui.dp(this, 14), Ui.dp(this, 18), Ui.dp(this, 14));
+    hero.addView(Ui.tv(this, "📋  " + DutyBoard.title(this.board), 20, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, "Upload the " + DutyBoard.who(this.board) + "' duty roster once, choose the wards it is for and the last day of the posting. "
+      + "It shows on each of those wards' pages until that day, then moves to Past.", 13, 0xE6FFFFFF, false));
+    // 10.53: roster photo from the gallery -> ChatGPT copies it -> paste here -> names on each ward's page
+    const scan = Ui.button(this, "🖼  Roster photo from gallery → ChatGPT", 0xFFFFFFFF, { onClick: () => { this.scanPick(); } });
+    scan.setTextColor(col);
+    hero.addView(scan);
+    Ui.margins(scan, 0, 12, 0, 0);
+    const paste = Ui.button(this, this.waiting ? "📋  Paste ChatGPT's answer" : "📋  Paste the roster text", this.waiting ? Ui.GREEN : 0xFFFFFFFF,
+      { onClick: () => { Clipboard.refresh().then(() => this.pasteDialog(this.clipText())); } });
+    if (!this.waiting) paste.setTextColor(col);
+    hero.addView(paste);
+    Ui.margins(paste, 0, 8, 0, 0);
+    if (this.waiting && this.scanRels.length > 0)
+      hero.addView(Ui.tv(this, "In ChatGPT send the photo with the question, tap Copy under its answer, come back here and tap Paste.", 12, 0xE6FFFFFF, false));
+    const up = Ui.tv(this, "+  Or upload a roster file (PDF / picture) by hand", 13, 0xFFFFFFFF, true);
+    up.setGravity(Gravity.CENTER);
+    up.setPadding(0, Ui.dp(this, 10), 0, Ui.dp(this, 4));
+    up.setOnClickListener({ onClick: () => { this.editDialog(null); } });
+    hero.addView(up);
+    const hp = Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    hp.setMargins(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 4));
+    page.addView(hero, hp);
+
+    const now = DutyBoard.list(db, this.board, "now"), coming = DutyBoard.list(db, this.board, "coming"), past = DutyBoard.list(db, this.board, "past");
+    page.addView(Ui.heading(this, "On now  ·  " + now.length, col));
+    for (const r of now) page.addView(this.card(r));
+    if (now.length === 0) page.addView(this.emptyNote("No " + DutyBoard.who(this.board) + " duty roster on today. Tap + Upload."));
+    if (coming.length > 0) {
+      page.addView(Ui.heading(this, "Coming  ·  " + coming.length, col));
+      for (const r of coming) page.addView(this.card(r));
+    }
+    if (past.length > 0) {
+      const pt = Ui.outlineButton(this, this.showPast ? "Hide past rosters" : "Past rosters  ·  " + past.length, col, { onClick: () => { this.showPast = !this.showPast; this.render(); } });
+      page.addView(pt);
+      Ui.margins(pt, 12, 12, 12, 4);
+      if (this.showPast) for (const r of past) page.addView(this.card(r));
+    }
+    this.setPage(page);
+  }
+
+  // ---------- 10.53: roster photo -> ChatGPT -> paste ----------
+
+  scanPick() {
+    this.dropScan();
+    const i = new Intent(Intent.ACTION_GET_CONTENT);
+    i.setType("image/*");
+    i.addCategory(Intent.CATEGORY_OPENABLE);
+    i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+    try {
+      this.startActivityForResult(Intent.createChooser(i, "Choose the duty roster photo(s)"), DutyBoardActivity.REQ_SCAN);
+    } catch (e) {
+      Ui.toast(this, "No photo picker found");
+    }
+  }
+
+  dropScan() {
+    for (const rel of this.scanRels) { try { this.db.file(rel).delete(); } catch (ignored) {} }
+    this.scanRels = [];
+    this.waiting = false;
+    this.offered = false;
+  }
+
+  scanResult(res, data) {
+    const db = this.db;
+    if (res !== RESULT_OK || data == null) return;
+    try {
+      const uris = [];
+      if (data.getClipData() != null) {
+        for (let k = 0; k < data.getClipData().getItemCount(); k++) {
+          const u = data.getClipData().getItemAt(k).getUri();
+          if (u != null) uris.push(u);
+        }
+      } else if (data.getData() != null) uris.push(data.getData());
+      if (uris.length > DutyBoard.MAX_PAGES) Ui.toast(this, "Only the first " + DutyBoard.MAX_PAGES + " photos are sent");
+      for (let k = 0; k < uris.length && k < DutyBoard.MAX_PAGES; k++) {
+        const rel = Store.importUri(this, uris[k], Attach.DIR, "roster" + (k + 1));
+        const f = db.file(rel);
+        const jpg = f.exists() ? LabScan.jpeg(f) : null;
+        if (jpg == null) { f.delete(); continue; }
+        const jrel = rel.endsWith(".jpg") ? rel : rel.replace(/\.[A-Za-z0-9]+$/, "") + ".jpg";
+        const out = new FileOutputStream(db.file(jrel));
+        try { out.write(jpg); } finally { out.close(); }
+        if (jrel !== rel) f.delete();
+        this.scanRels.push(jrel);
+      }
+    } catch (e) {
+      Ui.toast(this, "Could not use the picture: " + (e && e.message));
+    }
+    if (this.scanRels.length === 0) {
+      Ui.toast(this, "Pick the roster as a photo (JPG or PNG)");
+      return;
+    }
+    this.chooseApp();
+  }
+
+  chooseApp() {
+    const apps = DischargeActivity.CHAT_APPS;
+    const items = apps.map((a, k) => a[0] + (k === 0 ? "  (recommended)" : ""));
+    new AlertDialog.Builder(this).setTitle("Which AI app reads the roster?")
+      .setItems(items, { onClick: (d, w) => { this.shareTo(apps[w]); } })
+      .setNegativeButton("Cancel", { onClick: (d, w) => { this.dropScan(); this.render(); } }).show();
+  }
+
+  shareTo(app) {
+    const prompt = DutyBoard.prompt(this.board);
+    const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+    if (cm != null) cm.setPrimaryClip(ClipData.newPlainText("Roster question", prompt));
+    const uris = this.scanRels.map(rel => DocProvider.uri(rel));
+    const i = new Intent(uris.length === 1 ? Intent.ACTION_SEND : Intent.ACTION_SEND_MULTIPLE);
+    i.setType("image/jpeg");
+    if (uris.length === 1) i.putExtra(Intent.EXTRA_STREAM, uris[0]);
+    else i.putExtra(Intent.EXTRA_STREAM, uris);
+    i.putExtra(Intent.EXTRA_TEXT, prompt);
+    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+    i.setPackage(app[1]);
+    this.waiting = true;
+    this.offered = false;
+    try {
+      this.startActivity(i);
+      Ui.toast(this, "In " + app[0] + " send the photo with the question (it is copied too), copy the answer and come back");
+    } catch (noApp) {
+      try {
+        i.setPackage(null);
+        this.startActivity(Intent.createChooser(i, "Send the roster to " + app[0]).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        Ui.toast(this, "Choose " + app[0] + ", send the photo, copy the answer and come back");
+      } catch (e) {
+        this.waiting = false;
+        Ui.toast(this, app[0] + " is not available here");
+      }
+    }
+    this.render();
+  }
+
+  clipText() {
+    try {
+      const cm = this.getSystemService(Context.CLIPBOARD_SERVICE);
+      if (cm != null && cm.hasPrimaryClip() && cm.getPrimaryClip().getItemCount() > 0) {
+        const t = cm.getPrimaryClip().getItemAt(0).coerceToText(this);
+        return t == null ? "" : String(t).trim();
+      }
+    } catch (ignored) {}
+    return "";
+  }
+
+  pasteDialog(clip) {
+    if (clip === DutyBoard.prompt(this.board).trim()) clip = "";
+    const f = new Form(this);
+    f.multi("text", "ChatGPT's answer: WARD | NAME | PHONE | FROM | TILL | SHIFT on each line", clip);
+    Ui.formDialog(this, "Paste the " + DutyBoard.label(this.board), f, "Read it", {
+      run: () => {
+        const skipped = [0];
+        const lines = DutyBoard.parse(f.get("text"), skipped);
+        if (lines.length === 0) {
+          Ui.toast(this, "No duty lines found. Each line needs a ward and a name, e.g. M1 | Dr. A. Kumar | 01-11-2026 | 15-11-2026");
+          return false;
+        }
+        this.previewDialog(lines, skipped[0]);
+        return true;
+      }
+    });
+  }
+
+  previewDialog(lines, skipped) {
+    const db = this.db;
+    let from = "", till = "";
+    for (const l of lines) {
+      if (l.from !== "" && (from === "" || l.from < from)) from = l.from;
+      if (l.till !== "" && (till === "" || l.till > till)) till = l.till;
+    }
+    if (from === "") from = Dates.todayIso();
+    if (till === "" || till < from) till = LocalDate.parse(from).plusDays(29).toString();
+    const wards = DutyBoard.wardsOf(lines);
+    const f = new Form(this);
+    const col = DutyBoard.color(this.board);
+    f.view.addView(Ui.tv(this, lines.length + (lines.length === 1 ? " duty" : " duties") + " in " + wards.length + (wards.length === 1 ? " ward" : " wards")
+      + (skipped > 0 ? "  ·  " + skipped + (skipped === 1 ? " line" : " lines") + " not read" : ""), 15, col, true));
+    let b = "";
+    for (const w of wards) {
+      b += (b === "" ? "" : "\n\n") + Db.unitName(w) + ":";
+      for (const l of lines) {
+        if (l.ward !== w) continue;
+        const sub = (l.shift === "" ? "" : l.shift + ", ") + DutyBoard.range(l);
+        b += "\n•  " + l.name + (sub === "" ? "" : "  (" + sub + ")");
+      }
+    }
+    const list = Ui.tv(this, b, 13, Ui.TEXT, false);
+    f.view.addView(list);
+    Ui.margins(list, 0, 6, 0, 10);
+    f.text("title", "Title", DutyBoard.label(this.board) + "  ·  " + Dates.nice(from) + " to " + Dates.nice(till), Form.TEXT);
+    f.date("from_date", "From (lines without dates use this)", from);
+    f.date("till", "Till (last day; the roster leaves the wards after it)", till);
+    if (this.scanRels.length > 0) f.view.addView(Ui.muted(this, "📎  " + this.scanRels.length + (this.scanRels.length === 1 ? " photo is" : " photos are") + " attached to the roster."));
+    Ui.formDialog(this, "Check the roster", f, "Save to the wards", {
+      run: () => {
+        const fr = f.get("from_date"), tl = f.get("till");
+        if (tl < fr) {
+          Ui.toast(this, "The last day is before the first");
+          return false;
+        }
+        for (const l of lines) if (l.from === "") { l.from = fr; l.till = tl; }
+        const id = DutyBoard.save(db, this, null, this.board, f.get("title").trim(), DutyBoard.canonical(lines), wards, fr, tl);
+        for (let k = 0; k < this.scanRels.length; k++) Attach.add(this, db, DutyBoard.TABLE, String(id), this.scanRels[k], "Roster photo " + (k + 1));
+        this.scanRels = [];
+        this.waiting = false;
+        this.offered = false;
+        Ui.toast(this, "Saved. Each ward's page now shows its " + DutyBoard.who(this.board) + " on duty.");
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  card(r) {
+    const can = DutyBoard.canEdit(this, r);
+    return DutyBoard.card(this, this.db, r,
+      can ? { onClick: () => { this.attach.choose(DutyBoard.TABLE, r.get("id"), this.added()); } } : null,
+      can ? { onClick: () => { this.editDialog(r); } } : null);
+  }
+
+  editDialog(r) {
+    const db = this.db;
+    const f = new Form(this);
+    f.text("title", "Title", r == null ? DutyBoard.label(this.board) : Ui.nz(r.get("title")), Form.TEXT);
+    f.heading("Wards it is for *");
+    const chosen = r == null ? [] : DutyBoard.unpack(r.get("wards"));
+    for (const w of DutyBoard.WARDS) f.check("w_" + w, Db.unitName(w), chosen.indexOf(w) >= 0);
+    f.date("from_date", "From", r == null ? Dates.todayIso() : r.get("from_date"));
+    f.date("till", "Till (last day of this posting) *", r == null ? Dates.today().plusDays(29).toString() : r.get("till"));
+    f.multi("body", "Details (optional: names by date, shift times, who to call)", r == null ? "" : Ui.nz(r.get("body")));
+    if (r != null) {
+      const del = Ui.outlineButton(this, "Remove this roster", Ui.RED, null);
+      f.view.addView(del);
+      Ui.margins(del, 0, 16, 0, 0);
+      del.setOnClickListener({
+        onClick: (v) => {
+          Ui.confirm(this, "Remove this roster?", "It goes from the board and from the wards' pages, with its files.", "Remove", {
+            run: () => { DutyBoard.remove(db, r); this.render(); }
+          });
+        }
+      });
+    }
+    Ui.formDialog(this, r == null ? "Upload " + DutyBoard.label(this.board) : "Edit roster", f, r == null ? "Save and attach" : "Save", {
+      run: () => {
+        const wards = [];
+        for (const w of DutyBoard.WARDS) if ("1" === f.get("w_" + w)) wards.push(w);
+        if (wards.length === 0) {
+          Ui.toast(this, "Tick at least one ward");
+          return false;
+        }
+        if (f.get("till").compareTo(f.get("from_date")) < 0) {
+          Ui.toast(this, "The last day is before the first");
+          return false;
+        }
+        const id = DutyBoard.save(db, this, r, this.board, f.get("title").trim(), f.get("body").trim(), wards, f.get("from_date"), f.get("till"));
+        this.render();
+        if (r == null) this.attach.choose(DutyBoard.TABLE, String(id), this.added());
+        return true;
+      }
+    });
+  }
+}
+;
 /* ---- app/DutyHours.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -50506,6 +51513,88 @@ class GoldenHourActivity extends Base {
   }
 }
 ;
+/* ---- app/GrandHome.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.68 (the user's two phone pictures): the "gold card" home for phones. The two pictures, joined into one (res grand_home.webp,
+ * 1024 wide; the HOD name, the admitting unit, the six numbers, the clock hands, the day and date, the tile icons and names and the
+ * PG leave line taken out), are the background, and the live parts sit at the pictures' places. Positions are in the pictures' own
+ * pixels (585 wide): the first picture's rows 160-1100 come first (y - 160), then the second picture's rows 34-1100 (y + 898).
+ * The header (grand_head) and the gold tab bar (grand_tabbar, grand_tab_on) come from the same pictures.
+ */
+class GrandHome {
+  static W = 585;
+  static H = 1998;
+  static HEAD_H = 118;
+  static GOLD = 0xFFF0C96A;
+  static STATUS = 0xFF01143E;
+
+  static a(y) { return y - 160; }
+  static b(y) { return y + 898; }
+
+  /** True when this phone shows the gold card home (tablets and wide windows keep the palace picture). */
+  static on(c) {
+    return PalaceHome.look(c) === "grand" && !Base.wide(c);
+  }
+
+  static iconOf(label) {
+    const i = GrandHome.ICON_LABELS.indexOf(label);
+    if (i >= 0) return i;
+    if (label === "PG notice board" || label === "CRMI notice board") return 7;
+    if (label === "MBBS students") return 3;
+    return -1;
+  }
+
+  /** A tile name on up to two lines, sized in picture pixels and shrunk until it fits. */
+  static label(c, s, sizePx, boxW) {
+    const t = new TextView(c);
+    t.setText(s);
+    t.setTextColor(0xFFFFFFFF);
+    t.setMaxLines(2);
+    t.setIncludeFontPadding(false);
+    t.setGravity(Gravity.CENTER);
+    t.setLineSpacing(0, 0.92);
+    const p = new Paint();
+    let sz = sizePx;
+    p.setTextSize(sz);
+    let longest = "";
+    for (const w of String(s).split(" ")) if (w.length > longest.length) longest = w;
+    while (sz > 6 && (p.measureText(longest) > boxW * 0.96 || p.measureText(s) > boxW * 1.85)) {
+      sz *= 0.94;
+      p.setTextSize(sz);
+    }
+    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, sz);
+    t.setShadowLayer(Math.max(1, sz * 0.12), 0, Math.max(1, sz * 0.06), 0xCC000000);
+    return t;
+  }
+
+  /** The clock in the second picture: centre (176, 180), the box 180 px wide around it. */
+  static hands(c) {
+    return new PalaceHome.Hands(c, R.drawable.grand_hub, 0.5, 0.5, 180, 50, 5.5, 70, 4.5, 74, 14, 8, true);
+  }
+}
+GrandHome.ICON_LABELS = ["Faculty", "Call duty", "PG leave", "Students", "MBBS clinical posting", "Flashcards",
+  "University questions", "Notice board", "Dashboard"];
+
+/** One gold icon from the picture (grand_icons.webp, 128 px cells). */
+GrandHome.Icon = class extends View {
+  constructor(c, idx) {
+    super(c);
+    this.idx = idx;
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    this.sprite = BitmapFactory.decodeResource(c.getResources(), R.drawable.grand_icons);
+    if (this.sprite && this.sprite.ready) this.sprite.ready.then(() => { if (this.isAttachedToWindow()) this.invalidate(); });
+  }
+  onDraw(cv) {
+    if (this.sprite == null) return;
+    const cell = 128, i = this.idx;
+    const s = Math.min(this.getWidth(), this.getHeight());
+    const l = (this.getWidth() - s) / 2, t = (this.getHeight() - s) / 2;
+    cv.drawBitmap(this.sprite, new Rect(i * cell, 0, i * cell + cell, cell), new Rect(l, t, l + s, t + s), this.p);
+  }
+};
+;
 /* ---- app/Guide.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -52892,6 +53981,20 @@ class HomeLayout {
     return HomeLayout.prefs(c).getInt("tap_" + label, 0);
   }
 
+  /** 10.59: a screen opened from anywhere counts for its section. */
+  static opened(c, screen) {
+    if (!screen || screen === "MainActivity") return;
+    const p = HomeLayout.prefs(c);
+    p.edit().putInt("scr_" + screen, p.getInt("scr_" + screen, 0) + 1).apply();
+  }
+
+  static uses(c, label) {
+    let t = HomeLayout.taps(c, label);
+    const s = HomeLayout.SCREENS.get(label);
+    if (s) t = Math.max(t, HomeLayout.prefs(c).getInt("scr_" + s, 0));
+    return t;
+  }
+
   static allOpen(c) {
     return HomeLayout.prefs(c).getBoolean("all_open", false);
   }
@@ -52927,9 +54030,9 @@ class HomeLayout {
   static picks(c, role, available, n) {
     const avail = Array.from(available);
     const d = HomeLayout.defaults(role);
-    const used = avail.filter(l => HomeLayout.taps(c, l) >= 3);
+    const used = avail.filter(l => HomeLayout.uses(c, l) >= 2);   // 10.59: opened twice is enough
     used.sort((x, y) => {
-      const t = HomeLayout.taps(c, y) - HomeLayout.taps(c, x);
+      const t = HomeLayout.uses(c, y) - HomeLayout.uses(c, x);
       if (t !== 0) return t;
       const a = d.indexOf(x), b = d.indexOf(y);
       return (a < 0 ? 99 : a) - (b < 0 ? 99 : b);
@@ -53045,6 +54148,9 @@ class HomeLayout {
   }
 }
 HomeLayout.YOURS = 8;
+
+/** 10.59: each section's screen. */
+HomeLayout.SCREENS = new Map();
 ;
 /* ---- app/Honours.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -55687,6 +56793,76 @@ Importer.Finding = class {
   }
 };
 ;
+/* ---- app/InCharge.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.50 (user asked): a special ward such as the Critical Care Block is taken over each month by an Assistant Professor and a
+ * Professor of one of the units. They stay on the staff list under their own unit; the ward keeps, per month, the ids of the
+ * faculty put in charge (settings incharge_<ward>_<yyyy-MM>, synced). They show on the ward's board and In-charge list that month.
+ */
+class InCharge {
+  static FACULTY_ROLES = ["Professor", "Associate Professor", "Assistant Professor"];
+
+  static facultyRole(role) {
+    for (const r of InCharge.FACULTY_ROLES) if (r === role) return true;
+    return false;
+  }
+
+  static key(ward, month) {
+    return "incharge_" + ward + "_" + month;
+  }
+
+  static month() {
+    return Dates.todayIso().substring(0, 7);
+  }
+
+  static ids(db, ward) {
+    const out = [];
+    for (const s of db.setting(InCharge.key(ward, InCharge.month()), "").split(",")) if (s.trim().length > 0) out.push(s.trim());
+    return out;
+  }
+
+  static faculty(db, ward) {
+    const out = [];
+    if (!Db.isSpecial(ward)) return out;
+    for (const id of InCharge.ids(db, ward)) {
+      const s = db.row("SELECT * FROM staff WHERE id=? AND " + Approvals.APPROVED_SQL, id);
+      if (s != null && ward !== s.get("unit")) out.push(s);
+    }
+    return out;
+  }
+
+  static has(db, ward, id) {
+    return InCharge.ids(db, ward).indexOf(String(id)) >= 0;
+  }
+
+  static add(db, ward, id) {
+    const l = InCharge.ids(db, ward);
+    if (l.indexOf(String(id)) < 0) l.push(String(id));
+    db.setSetting(InCharge.key(ward, InCharge.month()), l.join(","));
+  }
+
+  static remove(db, ward, id) {
+    const l = InCharge.ids(db, ward).filter((x) => x !== String(id));
+    db.setSetting(InCharge.key(ward, InCharge.month()), l.join(","));
+  }
+
+  static bare(name) {
+    return Posting.norm(Ui.nz(name).replace(/^\s*((prof|dr)\.?\s*)+/i, ""));
+  }
+
+  /** An existing faculty entry with this name (Dr./Prof., dots and spaces ignored), or null. */
+  static findFaculty(db, name) {
+    const n = InCharge.bare(name);
+    if (n.length === 0) return null;
+    for (const s of db.rows("SELECT * FROM staff WHERE role IN ('Professor','Associate Professor','Assistant Professor') AND " + Approvals.APPROVED_SQL)) {
+      if (InCharge.bare(s.get("name")) === n) return s;
+    }
+    return null;
+  }
+}
+;
 /* ---- app/Infusion.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -57271,6 +58447,276 @@ class IssuesActivity extends Base {
   }
 }
 ;
+/* ---- app/JournalFeed.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * New from the journals (10.62): once a day each phone asks PubMed (free, no key, nothing about the department is sent) for the
+ * newest research and review articles of the past week in the top general medicine journals, and keeps the last 150 on the phone.
+ * The abstract comes on demand. A member can then share one with the department (where faculty mark Must read) or on WhatsApp.
+ */
+class JournalFeed {
+  static JOURNALS = [
+    ["N Engl J Med", "NEJM", "New England Journal of Medicine"], ["Lancet", "Lancet", "The Lancet"], ["JAMA", "JAMA", "JAMA"], ["BMJ", "BMJ", "BMJ"], ["Ann Intern Med", "Annals", "Annals of Internal Medicine"],
+    ["JAMA Intern Med", "JAMA Intern Med", "JAMA Internal Medicine"], ["Lancet Infect Dis", "Lancet ID", "Lancet Infectious Diseases"], ["Lancet Diabetes Endocrinol", "Lancet D&E", "Lancet Diabetes & Endocrinology"],
+    ["J Assoc Physicians India", "JAPI", "Journal of the Association of Physicians of India"], ["Indian J Med Res", "IJMR", "Indian Journal of Medical Research"], ["Natl Med J India", "NMJI", "National Medical Journal of India"],
+    ["Indian J Crit Care Med", "IJCCM", "Indian Journal of Critical Care Medicine"],
+  ];
+  static KEEP = 150;
+  static MAX_FETCH = 80;
+  static EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
+
+  static prefs(c) {
+    return c.getApplicationContext().getSharedPreferences("journal_feed", Context.MODE_PRIVATE);
+  }
+
+  /** The PubMed search: the journals, the past week, with an abstract, no letters, comments, editorials or corrections. */
+  static term() {
+    const b = new StringBuilder("(");
+    for (let i = 0; i < JournalFeed.JOURNALS.length; i++) b.append(i === 0 ? "" : " OR ").append('"').append(JournalFeed.JOURNALS[i][0]).append("\"[ta]");
+    b.append(") AND hasabstract NOT (letter[pt] OR comment[pt] OR editorial[pt] OR news[pt] OR published erratum[pt] OR retraction of publication[pt])");
+    return b.toString();
+  }
+
+  static searchUrl() {
+    return JournalFeed.EUTILS + "esearch.fcgi?db=pubmed&retmode=json&sort=pub_date&datetype=edat&reldate=7&retmax=" + JournalFeed.MAX_FETCH
+      + "&term=" + Uri.encode(JournalFeed.term());
+  }
+
+  static idsOf(o) {
+    const out = [];
+    const r = o.optJSONObject("esearchresult");
+    const a = r == null ? null : r.optJSONArray("idlist");
+    if (a != null) for (let i = 0; i < a.length(); i++) out.add(a.optString(i));
+    return out;
+  }
+
+  /** The short name for a journal ("N Engl J Med" -> "NEJM"). */
+  static shortName(source) {
+    const s = Ui.nz(source).trim();
+    for (const j of JournalFeed.JOURNALS) if (j[0].equalsIgnoreCase(s)) return j[1];
+    return s;
+  }
+
+  /** The journal's proper name (PubMed gives "The New England journal of medicine"). */
+  static fullName(source, given) {
+    for (const j of JournalFeed.JOURNALS) if (j[0].equalsIgnoreCase(Ui.nz(source).trim())) return j[2];
+    return given;
+  }
+
+  /** One article from a PubMed summary. */
+  static item(r, pmid) {
+    const f = new JMap();
+    f.put("pmid", pmid);
+    f.put("title", Journals.clean(r.optString("title")).replaceAllRx("\\.$", ""));
+    const src = r.optString("source");
+    f.put("short", JournalFeed.shortName(src));
+    f.put("journal", JournalFeed.fullName(src, Journals.clean(r.optString("fulljournalname", src))));
+    f.put("date", Journals.clean(r.optString("pubdate")));
+    const names = [];
+    const au = r.optJSONArray("authors");
+    if (au != null) for (let i = 0; i < au.length(); i++) {
+      const a = au.optJSONObject(i);
+      if (a != null) names.add(a.optString("name"));
+    }
+    f.put("authors", Journals.authors(names));
+    let doi = "";
+    const ids = r.optJSONArray("articleids");
+    if (ids != null) for (let i = 0; i < ids.length(); i++) {
+      const x = ids.optJSONObject(i);
+      if (x != null && "doi".equals(x.optString("idtype"))) doi = x.optString("value");
+    }
+    f.put("doi", doi);
+    let type = "";
+    const pt = r.optJSONArray("pubtype");
+    if (pt != null) for (let i = 0; i < pt.length(); i++) {
+      const t = pt.optString(i);
+      if (t.equals("Randomized Controlled Trial") || t.equals("Meta-Analysis") || t.equals("Systematic Review") || t.equals("Review")
+        || t.equals("Practice Guideline") || t.equals("Guideline") || t.equals("Case Reports")) {
+        type = t;
+        break;
+      }
+    }
+    f.put("type", type);
+    f.put("subject", Journals.guessSubject(f.get("title"), f.get("journal"), ""));
+    return f;
+  }
+
+  static itemsOf(o, ids) {
+    const out = [];
+    const res = o.optJSONObject("result");
+    if (res == null) return out;
+    for (const id of ids) {
+      const r = res.optJSONObject(id);
+      if (r == null || r.has("error")) continue;
+      const it = JournalFeed.item(r, id);
+      if (!it.get("title").isEmpty()) out.add(it);
+    }
+    return out;
+  }
+
+  // ---------- the list kept on this phone ----------
+
+  static all(c) {
+    const out = [];
+    try {
+      const a = new JSONArray(JournalFeed.prefs(c).getString("items", "[]"));
+      for (let i = 0; i < a.length(); i++) {
+        const o = a.getJSONObject(i);
+        const m = new JMap();
+        const ks = o.names();
+        if (ks != null) for (let k = 0; k < ks.length(); k++) m.put(ks.getString(k), o.optString(ks.getString(k)));
+        out.add(m);
+      }
+    } catch (ignored) {
+      // a broken list starts again empty
+    }
+    return out;
+  }
+
+  static save(c, items) {
+    const a = new JSONArray();
+    for (let i = 0; i < items.size() && i < JournalFeed.KEEP; i++) {
+      const o = new JSONObject();
+      for (const k of items.get(i).keySet()) o.put(k, items.get(i).get(k));
+      a.put(o);
+    }
+    JournalFeed.prefs(c).edit().putString("items", a.toString()).apply();
+  }
+
+  /** New ones first; returns how many were new. */
+  static merge(c, got, today) {
+    const old = JournalFeed.all(c);
+    const have = new Set();
+    for (const m of old) have.add(m.get("pmid"));
+    const out = [];
+    for (const m of got) {
+      if (have.has(m.get("pmid"))) continue;
+      have.add(m.get("pmid"));
+      m.put("got", today);
+      out.add(m);
+    }
+    const n = out.size();
+    out.addAll(old);
+    JournalFeed.save(c, out);
+    return n;
+  }
+
+  static lastFetch(c) {
+    return JournalFeed.prefs(c).getString("last", "");
+  }
+
+  /** Fetches now; returns how many articles are new. */
+  static refresh(c) {
+    const ids = JournalFeed.idsOf(new JSONObject(Journals.fetch.get(JournalFeed.searchUrl())));
+    let got = [];
+    if (!ids.isEmpty())
+      got = JournalFeed.itemsOf(new JSONObject(Journals.fetch.get(JournalFeed.EUTILS + "esummary.fcgi?db=pubmed&retmode=json&id=" + TextUtils.join(",", ids))), ids);
+    const n = JournalFeed.merge(c, got, Dates.todayIso());
+    JournalFeed.prefs(c).edit().putString("last", Dates.todayIso() + " " + Dates.now()).putInt("new_today", n).apply();
+    return n;
+  }
+
+  /** Once a day, from 6 AM (the page itself fetches at any hour when it has nothing yet). */
+  static due(c) {
+    const last = JournalFeed.lastFetch(c);
+    if (last.isEmpty()) return true;
+    return !last.startsWith(Dates.todayIso()) && new Date().getHours() >= 6;
+  }
+
+  /** For the background job: fetch when due and tell the person about new articles (once a day, never more). */
+  static daily(c) {
+    if (!JournalFeed.due(c) || JournalFeed.prefs(c).getBoolean("off", false)) return;
+    try {
+      const first = JournalFeed.lastFetch(c).isEmpty();
+      const n = JournalFeed.refresh(c);
+      if (n > 0 && !first) Background.show(c, Background.N_JOURNAL, "📰 New in the journals today",
+        n === 1 ? "1 new article from NEJM, Lancet, JAMA, BMJ, JAPI and more" : n + " new articles from NEJM, Lancet, JAMA, BMJ, JAPI and more",
+        Journals.COLOR, JournalsActivity);   // the Journals page opens on New in the journals
+    } catch (ignored) {
+      // no internet now: tried again at the next background run
+    }
+  }
+
+  /** Articles matching the words, optionally from one journal (short name, or "" for all). */
+  static find(c, journal, query) {
+    const out = [];
+    const q = Ui.nz(query).trim().toLowerCase();
+    for (const m of JournalFeed.all(c)) {
+      if (!Ui.nz(journal).isEmpty() && !journal.equals(m.get("short"))) continue;
+      const hay = (Ui.nz(m.get("title")) + " " + Ui.nz(m.get("journal")) + " " + Ui.nz(m.get("short")) + " " + Ui.nz(m.get("authors"))
+        + " " + Ui.nz(m.get("subject")) + " " + Ui.nz(m.get("type"))).toLowerCase();
+      let ok = true;
+      for (const w of q.split(/\s+/)) if (!w.isEmpty() && !hay.contains(w)) ok = false;
+      if (ok) out.add(m);
+    }
+    return out;
+  }
+
+  static newToday(c) {
+    let n = 0;
+    const t = Dates.todayIso();
+    for (const m of JournalFeed.all(c)) if (t.equals(m.get("got"))) n++;
+    return n;
+  }
+
+  // ---------- the abstract, on demand ----------
+
+  /** The abstract from PubMed's XML, with its headings (BACKGROUND: ..., METHODS: ...). */
+  static abstractOf(xml) {
+    const b = new StringBuilder();
+    const re = /<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g;
+    let m;
+    while ((m = re.exec(Ui.nz(xml))) != null) {
+      const l = /Label="([^"]*)"/.exec(m[1]);
+      const label = l ? l[1] : "";
+      const text = Journals.clean(m[2].replace(/<[^>]+>/g, ""));
+      if (text.isEmpty()) continue;
+      if (b.length() > 0) b.append("\n\n");
+      if (!label.isEmpty()) b.append(label.substring(0, 1).toUpperCase()).append(label.substring(1).toLowerCase()).append(": ");
+      b.append(text);
+    }
+    return b.toString();
+  }
+
+  /** Fetches the abstract and keeps it with the article. */
+  static loadAbstract(c, pmid) {
+    let a = JournalFeed.abstractOf(Journals.fetch.get(JournalFeed.EUTILS + "efetch.fcgi?db=pubmed&retmode=xml&id=" + pmid));
+    if (a.isEmpty()) a = "No abstract on PubMed for this article.";
+    const items = JournalFeed.all(c);
+    for (const m of items) if (pmid.equals(m.get("pmid"))) m.put("abs", a);
+    JournalFeed.save(c, items);
+    return a;
+  }
+
+  static link(m) {
+    return "https://pubmed.ncbi.nlm.nih.gov/" + Ui.nz(m.get("pmid")) + "/";
+  }
+
+  /** The fields for sharing it with the department (the Share form fills from these). */
+  static forShare(m) {
+    const f = new JMap();
+    f.put("title", Ui.nz(m.get("title")));
+    f.put("journal", Ui.nz(m.get("journal")));
+    const d = Ui.nz(m.get("date"));
+    f.put("year", d.length >= 4 ? d.substring(0, 4) : d);
+    f.put("authors", Ui.nz(m.get("authors")));
+    f.put("doi", Ui.nz(m.get("doi")));
+    f.put("link", Ui.nz(m.get("doi")).isEmpty() ? JournalFeed.link(m) : "https://doi.org/" + m.get("doi"));
+    f.put("summary", Ui.nz(m.get("abs")).startsWith("No abstract") ? "" : Ui.nz(m.get("abs")));
+    return f;
+  }
+
+  static shareText(m) {
+    const b = new StringBuilder("📰 *").append(Ui.nz(m.get("title"))).append("*");
+    b.append("\n").append(Ui.nz(m.get("journal"))).append(Ui.nz(m.get("date")).isEmpty() ? "" : " (" + m.get("date") + ")");
+    if (!Ui.nz(m.get("authors")).isEmpty()) b.append("\n").append(m.get("authors"));
+    b.append("\n").append(Ui.nz(m.get("doi")).isEmpty() ? JournalFeed.link(m) : "https://doi.org/" + m.get("doi"));
+    b.append("\n\n— from TVMCHMED New in the journals");
+    return b.toString();
+  }
+}
+;
 /* ---- app/Journals.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -57500,18 +58946,21 @@ Journals.fetch = {
 class JournalsActivity extends Base {
   static REQ_PDF = 8801;
 
-  constructor() { super(); this.filter = "ALL"; this.query = ""; this.pendingLink = ""; this.list = null; }
+  static FEED = "FEED";
+
+  constructor() { super(); this.filter = "FEED"; this.query = ""; this.pendingLink = ""; this.feedJournal = ""; this.feedBusy = false; this.feedTried = false; this.list = null; }
 
   onCreate(b) {
     super.onCreate(b);
     this.setTitle("Latest journals");
-    this.subtitle = "Articles shared in the department";
+    this.subtitle = "New articles every morning, and ones shared in the department";
     this.headerColor(Journals.COLOR);
     this.headerAction("+ Share", { onClick: (v) => { this.add(); } });
     if (b != null) {
-      this.filter = Ui.nz(b.getString("filter", "ALL"));
+      this.filter = Ui.nz(b.getString("filter", JournalsActivity.FEED));
       this.query = Ui.nz(b.getString("query", ""));
       this.pendingLink = Ui.nz(b.getString("link", ""));
+      this.feedJournal = Ui.nz(b.getString("feedJournal", ""));
     }
   }
 
@@ -57520,6 +58969,7 @@ class JournalsActivity extends Base {
     out.putString("filter", this.filter);
     out.putString("query", this.query);
     out.putString("link", this.pendingLink);
+    out.putString("feedJournal", this.feedJournal);
   }
 
   render() {
@@ -57528,18 +58978,28 @@ class JournalsActivity extends Base {
     const hero = Ui.card(this);
     hero.setBackground(Glass.hero(this, Ui.shades(Journals.COLOR), 20));
     const n = db.num("SELECT COUNT(*) FROM " + Journals.TABLE), week = Journals.newThisWeek(db);
-    hero.addView(Ui.tv(this, n + (n === 1 ? " article" : " articles") + (week > 0 ? "  ·  " + week + " this week" : ""), 18, 0xFFFFFFFF, true));
-    hero.addView(Ui.tv(this, "Share the latest journal articles: paste the link, DOI or PubMed number and the title, journal, year and authors "
+    const feedN = JournalFeed.all(this).size();
+    hero.addView(Ui.tv(this, JournalsActivity.FEED.equals(this.filter) ? feedN + " articles from the top journals" + (JournalFeed.newToday(this) > 0 ? "  ·  " + JournalFeed.newToday(this) + " today" : "")
+      : n + (n === 1 ? " article" : " articles") + " shared" + (week > 0 ? "  ·  " + week + " this week" : ""), 18, 0xFFFFFFFF, true));
+    hero.addView(Ui.tv(this, JournalsActivity.FEED.equals(this.filter) ? "Every morning the newest research and reviews from NEJM, Lancet, JAMA, BMJ, Annals, JAPI, IJMR and more come in from PubMed. "
+            + "Read the abstract, send it on WhatsApp, or share it with the department." : "Share the latest journal articles: paste the link, DOI or PubMed number and the title, journal, year and authors "
       + "fill in by themselves; add the key points. Or attach the PDF.", 13, 0xE6FFFFFF, false));
     const add = Ui.button(this, "Share an article", Journals.COLOR, { onClick: (v) => { this.add(); } });
     hero.addView(add);
     Ui.margins(add, 0, 12, 0, 0);
+    const fresh = JournalFeed.newToday(this);
+    if (!JournalsActivity.FEED.equals(this.filter)) {
+      const feedBtn = Ui.button(this, "📰 New in the journals" + (fresh > 0 ? " · " + fresh + " today" : ""), 0xFF134E4A, { onClick: (v) => { this.filter = JournalsActivity.FEED; this.render(); } });
+      hero.addView(feedBtn);
+      Ui.margins(feedBtn, 0, 8, 0, 0);
+    }
     page.addView(hero);
 
     const chips = Ui.h(this);
     chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 2));
     const keys = [];
-    keys.add(["ALL", "All"]);
+    keys.add([JournalsActivity.FEED, "📰 New in the journals"]);
+    keys.add(["ALL", "Shared"]);
     keys.add([Journals.MUST, "📌 Must read"]);
     for (const s of Journals.subjects())
       if (s.equals(this.filter) || db.num("SELECT COUNT(*) FROM " + Journals.TABLE + " WHERE subject=?", s) > 0) keys.add([s, s]);
@@ -57549,6 +59009,7 @@ class JournalsActivity extends Base {
       chips.addView(c);
     }
     page.addView(Ui.hscroll(this, chips));
+    if (JournalsActivity.FEED.equals(this.filter)) this.feedTop(page);
 
     const search = new EditText(this);
     search.setHint("Search title, journal, author or points");
@@ -57573,6 +59034,10 @@ class JournalsActivity extends Base {
     const db = this.db;
     if (this.list == null) return;
     this.list.removeAllViews();
+    if (JournalsActivity.FEED.equals(this.filter)) {
+      this.fillFeed();
+      return;
+    }
     const js = Journals.find(db, this.filter, this.query);
     if (js.isEmpty()) {
       this.list.addView(this.emptyNote(db.num("SELECT COUNT(*) FROM " + Journals.TABLE) === 0 ? "No articles shared yet. Tap Share an article." : "No article matches."));
@@ -57656,6 +59121,137 @@ class JournalsActivity extends Base {
     } catch (e) {
       Ui.toast(this, "No browser to open the link");
     }
+  }
+
+  // ---------- 10.62: new in the journals (PubMed, once a day) ----------
+
+  feedTop(page) {
+    const chips = Ui.h(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 4), Ui.dp(this, 12), Ui.dp(this, 2));
+    const have = [];
+    for (const m of JournalFeed.all(this)) if (!have.contains(m.get("short"))) have.add(m.get("short"));
+    const keys = [];
+    keys.add(["", "All journals"]);
+    for (const j of JournalFeed.JOURNALS) if (have.contains(j[1]) || j[1].equals(this.feedJournal)) keys.add([j[1], j[1]]);
+    for (const k of keys) {
+      const c = Ui.chip(this, k[1], k[0].equals(this.feedJournal), Journals.COLOR);
+      c.setOnClickListener({ onClick: (v) => { this.feedJournal = k[0]; this.render(); } });
+      chips.addView(c);
+    }
+    page.addView(Ui.hscroll(this, chips));
+    const row = Ui.h(this);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    const last = JournalFeed.lastFetch(this);
+    const st = Ui.muted(this, this.feedBusy ? "Getting the newest articles from PubMed…"
+      : last.isEmpty() ? "Comes from PubMed every morning: NEJM, Lancet, JAMA, BMJ, Annals, JAPI, IJMR and more."
+      : "Updated " + (last.startsWith(Dates.todayIso()) ? "today " + last.substring(Math.min(11, last.length)) : Dates.nice(last.substring(0, 10)))
+      + " · past 7 days from PubMed");
+    row.addView(st, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+    if (!this.feedBusy) row.addView(Ui.outlineButton(this, "↻ Refresh", Journals.COLOR, { onClick: (v) => { this.refreshFeed(true); } }));
+    row.setPadding(Ui.dp(this, 14), Ui.dp(this, 4), Ui.dp(this, 14), 0);
+    page.addView(row);
+    if (!this.feedBusy && !this.feedTried && JournalFeed.due(this)) this.refreshFeed(false);
+  }
+
+  refreshFeed(asked) {
+    if (this.feedBusy) return;
+    this.feedBusy = true;
+    this.feedTried = true;
+    new Thread({ run: () => {
+      let n = -1;
+      let err = "";
+      try {
+        n = JournalFeed.refresh(this);
+      } catch (e) {
+        err = e.getMessage == null || e.getMessage() == null ? String(e) : e.getMessage();
+      }
+      const got = n;
+      const e2 = err;
+      this.runOnUiThread({ run: () => {
+        this.feedBusy = false;
+        if (this.isFinishing()) return;
+        if (got < 0) Ui.toast(this, "Could not reach PubMed (" + e2 + "). Try again later.");
+        else if (asked) Ui.toast(this, got === 0 ? "Nothing new since the last check" : got + (got === 1 ? " new article" : " new articles"));
+        if (JournalsActivity.FEED.equals(this.filter)) this.render();
+      } });
+    } }).start();
+  }
+
+  fillFeed() {
+    const fs = JournalFeed.find(this, this.feedJournal, this.query);
+    if (fs.isEmpty()) {
+      this.list.addView(this.emptyNote(this.feedBusy ? "Loading…" : JournalFeed.all(this).isEmpty() ? "No articles yet. Tap Refresh when you have internet." : "No article matches."));
+      return;
+    }
+    let shown = 0;
+    for (const m of fs) {
+      if (++shown > 60) {
+        this.list.addView(this.emptyNote("Showing the newest 60. Search or pick a journal to see more."));
+        break;
+      }
+      this.list.addView(this.feedCard(m));
+    }
+  }
+
+  feedCard(m) {
+    const card = Ui.card(this);
+    const pills = Ui.h(this);
+    pills.addView(Ui.softPill(this, Ui.nz(m.get("short")), Journals.COLOR));
+    if (!Ui.nz(m.get("type")).isEmpty()) {
+      const gap = new View(this);
+      pills.addView(gap, new LinearLayout.LayoutParams(Ui.dp(this, 6), 1));
+      pills.addView(Ui.softPill(this, m.get("type"), Ui.ORANGE));
+    }
+    if (Dates.todayIso().equals(m.get("got"))) {
+      const gap = new View(this);
+      pills.addView(gap, new LinearLayout.LayoutParams(Ui.dp(this, 6), 1));
+      pills.addView(Ui.softPill(this, "New today", Ui.RED));
+    }
+    card.addView(pills);
+    const title = Ui.tv(this, Ui.nz(m.get("title")), 16, Ui.TEXT, true);
+    card.addView(title);
+    Ui.margins(title, 0, 6, 0, 0);
+    card.addView(Ui.tv(this, (Ui.nz(m.get("journal")) + (Ui.nz(m.get("date")).isEmpty() ? "" : " · " + m.get("date"))).trim(), 13, Journals.COLOR, true));
+    if (!Ui.nz(m.get("authors")).isEmpty()) card.addView(Ui.muted(this, m.get("authors")));
+    const abs = Ui.body(this, Ui.nz(m.get("abs")));
+    abs.setVisibility(Ui.nz(m.get("abs")).isEmpty() ? View.GONE : View.VISIBLE);
+    card.addView(abs);
+    Ui.margins(abs, 0, 6, 0, 0);
+    const bs = [];
+    if (Ui.nz(m.get("abs")).isEmpty()) bs.add(Ui.button(this, "Abstract", Journals.COLOR, { onClick: (v) => {
+      v.setEnabled(false);
+      abs.setVisibility(View.VISIBLE);
+      abs.setText("Getting the abstract…");
+      new Thread({ run: () => {
+        let a;
+        try {
+          a = JournalFeed.loadAbstract(this, m.get("pmid"));
+          m.put("abs", a);
+        } catch (e) {
+          a = "Could not get the abstract now. Tap Open to read it on PubMed.";
+        }
+        const t = a;
+        this.runOnUiThread({ run: () => {
+          abs.setText(t);
+          v.setVisibility(View.GONE);
+        } });
+      } }).start();
+    } }));
+    bs.add(Ui.outlineButton(this, "Open", Journals.COLOR, { onClick: (v) => {
+      try {
+        this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(JournalFeed.link(m))));
+      } catch (e) {
+        Ui.toast(this, "No browser to open the link");
+      }
+    } }));
+    bs.add(Ui.outlineButton(this, "WhatsApp", Journals.COLOR, { onClick: (v) => { ReportActivity.shareText(this, JournalFeed.shareText(m)); } }));
+    const row = Ui.buttonRow(this, bs);
+    card.addView(row);
+    Ui.margins(row, 0, 8, 0, 0);
+    const share = Ui.outlineButton(this, "Share with the department", Journals.COLOR, { onClick: (v) => { this.form(JournalFeed.forShare(m), null); } });
+    card.addView(share);
+    Ui.margins(share, 0, 6, 0, 0);
+    return card;
   }
 
   // ---------- sharing an article ----------
@@ -64894,6 +66490,16 @@ class MainActivity extends Base {
     else super.onBackPressed();
   }
 
+  /** 10.51: the home tab another screen asked for (the bed board's home tab, the phone directory's Home and Updates). */
+  static pendingTab = -1;
+
+  static goTab(a, t) {
+    MainActivity.pendingTab = t;
+    const i = new Intent(a, MainActivity);
+    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    a.startActivity(i);
+  }
+
   switchTab(t) {
     if (this.current != null) this.scrollY[this.tab] = this.current.getScrollY();
     this.tab = t;
@@ -64907,7 +66513,12 @@ class MainActivity extends Base {
   }
 
   render() {
+    if (MainActivity.pendingTab >= 0) {
+      this.tab = MainActivity.pendingTab;
+      MainActivity.pendingTab = -1;
+    }
     const db = this.db, tab = this.tab;
+    this.grandHeaderOn = tab === 0 && GrandHome.on(this);   // 10.68: the gold card home's picture header
     if (tab === 0) {
       this.setTitle("TVMCHMED");
       this.subtitle = db.setting("dept", "") + " · TVMCH";
@@ -64959,6 +66570,7 @@ class MainActivity extends Base {
 
   /** 10.42 (user's picture): a bevelled gold bar with sapphires between the tabs; icons and names in deep brown. */
   tabBar() {
+    if (GrandHome.on(this)) return this.grandTabBar();
     const icons = [R.drawable.ic_home, R.drawable.ic_people, R.drawable.ic_hospital, R.drawable.ic_notice, R.drawable.ic_menu];
     const wrap = Ui.v(this);
     wrap.setPadding(Ui.dp(this, 10), Ui.dp(this, 6), Ui.dp(this, 10), Ui.dp(this, 10));
@@ -65216,21 +66828,35 @@ class MainActivity extends Base {
     // 10.42 (user's picture): the royal top with the department, medallion, clock and the member's sections
     const mods = this.modules();
     const byLabel = new JMap();
-    for (const m of mods) byLabel.put(m.label, m);
+    HomeLayout.SCREENS.clear();
+    for (const m of mods) {
+      byLabel.put(m.label, m);
+      HomeLayout.SCREENS.set(m.label, Base.Opener.screenOf(m.l));
+    }
     const mine = [];
     // ten gold tiles, two rows of five like the picture
     for (const l of HomeLayout.picks(this, Cloud.role(this), byLabel.keySet(), 10)) mine.push(byLabel.get(l));
     HomeLayout.shown.clear();
     for (const m of mine) HomeLayout.shown.add(m.label);
-    page.addView(this.royalHero(today, mine));
+    // 10.65: new or old home top (Settings, Look); 10.68: the gold card on phones
+    page.addView(GrandHome.on(this) ? this.grandHero(today, mine, page.getChildCount() === 0) : PalaceHome.on(this) ? this.palaceHero(today, mine) : this.royalHero(today, mine));
     const upd = Updates.available(this, db);
     if (upd != null) {
       page.addView(this.entryCard("Update", Ui.GREEN, "Version " + upd.optString("name") + " is available",
         (upd.optString("notes").isEmpty() ? "" : upd.optString("notes") + "\n") + "Tap to install. Your records stay on the phone.", null, this.opener(SettingsActivity, Updates.INSTALL, "1")));
     }
+    // 10.58: new sign-ups waiting, for the admin, HOD and Registrar: one tap to the Members list
+    const mw = Cloud.membersWaiting(this);
+    if (mw > 0) page.addView(this.entryCard("Members", Ui.AMBER, mw + (mw == 1 ? " new member is" : " new members are") + " waiting to join",
+      "Tap to approve. People whose name is on the Students or Faculty list can be approved together with one tap.", null, this.opener(AccountActivity)));
     if (Guide.showOnce(this)) this.open(GuideActivity);
-    // 10.17: a golden pop-up with clapping for a faculty 👍 not seen yet (user's pick 214)
-    Applause.check(this, db);
+    // 10.59: the Applause pop-up was removed (user asked)
+    // 10.59 (user asked): PG leave in its own section, right under the top, to open it at once
+    MedSphere.collect(db, this);   // 10.61: minutes from a meeting tab that was closed, and the Academics check-in
+    const ms = AdminControl.isHidden(db, "MedSphere") ? null : MedSphere.homeCard(this, db);
+    if (ms != null) page.addView(ms);
+    const pgl = AdminControl.isHidden(db, "PG leave") || GrandHome.on(this) ? null : PgLeaveActivity.homeCard(this, db);   // 10.68: the gold card has its own
+    if (pgl != null) page.addView(pgl);
     // 10.41: a flashing "new version" pop-up whenever the app is opened while an update is published
     UpdatePrompt.check(this, db);
 
@@ -65299,6 +66925,348 @@ class MainActivity extends Base {
 
     this.homeLater = Ui.v(this);
     page.addView(this.homeLater);
+  }
+
+  /**
+   * 10.65 (user's picture): the palace home top. The picture is the background (PalaceHome) and the live parts sit at its places:
+   * the HOD's name and photo, who admits today, the six numbers, the clock hands, the date and the member's nine sections.
+   */
+  palaceHero(today, mine) {
+    const db = this.db;
+    const iso = today.toString();
+    const screen = this.getResources().getDisplayMetrics().widthPixels;
+    const wrap = Ui.v(this);
+    wrap.setGravity(Gravity.CENTER_HORIZONTAL);
+    wrap.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 4));
+    let root, rootB, k, kB, off;
+    if (Base.wide(this)) {
+      // 10.67 (user): a tablet fills its whole width: the picture's top half and bottom half side by side, same height
+      const avail = screen - Ui.dp(this, 8);
+      const h = Math.round(avail / (PalaceHome.W * (1 / PalaceHome.LEFT_H + 1 / PalaceHome.RIGHT_H)));
+      k = h / PalaceHome.LEFT_H;
+      kB = h / PalaceHome.RIGHT_H;
+      off = PalaceHome.RIGHT_OFF;
+      const row = Ui.h(this);
+      root = new FrameLayout(this);
+      rootB = new FrameLayout(this);
+      const wa = Math.round(PalaceHome.W * k), wb = avail - wa;
+      const ba = new ImageView(this);
+      ba.setImageResource(R.drawable.palace_left);
+      ba.setScaleType(ImageView.ScaleType.FIT_XY);
+      root.addView(ba, new FrameLayout.LayoutParams(wa, h));
+      const bb = new ImageView(this);
+      bb.setImageResource(R.drawable.palace_right);
+      bb.setScaleType(ImageView.ScaleType.FIT_XY);
+      rootB.addView(bb, new FrameLayout.LayoutParams(wb, h));
+      row.addView(root, Ui.lp(wa, h));
+      row.addView(rootB, Ui.lp(wb, h));
+      wrap.addView(row, Ui.lp(avail, h));
+    } else {
+      const wpx = Math.min(screen - Ui.dp(this, 12), Ui.dp(this, 560));
+      k = wpx / PalaceHome.W;
+      kB = k;
+      off = 0;
+      const hpx = Math.round(PalaceHome.H * k);
+      root = new FrameLayout(this);
+      rootB = root;
+      const bg = new ImageView(this);
+      bg.setImageResource(R.drawable.palace_home);
+      bg.setScaleType(ImageView.ScaleType.FIT_XY);
+      root.addView(bg, new FrameLayout.LayoutParams(wpx, hpx));
+      wrap.addView(root, Ui.lp(wpx, hpx));
+    }
+
+    const rel = db.setting("hod_photo", "");
+    const has = !rel.isEmpty() && db.file(rel).exists();
+    if (has) {
+      const iv = new ImageView(this);
+      const d = Math.round(134 * k);
+      const bm = Ui.loadScaled(db.file(rel), d * 2);
+      if (bm != null) iv.setImageBitmap(Store.circle(bm, d));
+      PalaceHome.place(root, iv, k, 148, 326, 282, 460);
+    }
+    PalaceHome.place(root, PalaceHome.tap(this, "HOD photo", { onClick: (v) => {
+      if (!this.canEditHod()) {
+        if (has) Ui.showImage(this, db.file(rel));
+        return;
+      }
+      this.hodPhotoOptions(has, rel);
+    } }), k, 130, 305, 300, 480);
+    const hod = db.setting("hod", "");
+    if (!hod.isEmpty()) PalaceHome.place(root, PalaceHome.text(this, hod, 46 * k, PalaceHome.GOLD, true, 470 * k), k, 410, 336, 885, 388);
+
+    const adm = Ui.h(this);
+    adm.setGravity(Gravity.CENTER_VERTICAL);
+    const au = ArrayList(db.admittingUnits(Dates.dow(Dates.admitDay())));
+    if (au.isEmpty()) au.add("—");
+    const pill = PalaceHome.text(this, TextUtils.join(" · ", au), 25 * k, 0xFF3A2A08, true, 200 * k);
+    pill.setShadowLayer(0, 0, 0, 0);
+    pill.setBackground(Ui.gradient(this, [0xFFFBEBB5, 0xFFD9A83E], 18 * k));
+    pill.setPadding(Math.round(16 * k), Math.round(4 * k), Math.round(16 * k), Math.round(4 * k));
+    adm.addView(pill);
+    const bar = PalaceHome.text(this, "|", 24 * k, 0xFFD9B25A, false, 30 * k);
+    bar.setPadding(Math.round(12 * k), 0, Math.round(10 * k), 0);
+    adm.addView(bar);
+    adm.addView(PalaceHome.text(this, "New cases: Triage · Fever · IMCU", 22 * k, 0xFFFFFFFF, false, 190 * k));
+    PalaceHome.place(root, adm, k, 600, 447, 912, 485);
+
+    const nums = [String(db.totalInpatients()), String(db.events(Db.ADMIT, iso, iso, null, null)),
+      String(db.events(Db.DISCHARGE, iso, iso, null, null)), String(db.transfers(iso, iso, null, Db.IMCU)),
+      String(db.transfers(iso, iso, null, Db.CCB)), String(db.events(Db.DEATH, iso, iso, null, null))];
+    const cards = [[82, 504, 360], [372, 504, 651], [662, 504, 943], [82, 609, 360], [372, 609, 651], [662, 609, 943]];
+    for (let i = 0; i < 6; i++) {
+      const x0 = cards[i][0], y0 = cards[i][1], x1 = cards[i][2], w = x1 - x0;
+      const nx0 = x0 + Math.round(w * 0.40), nx1 = x1 - 16, ny0 = y0 + 8, ny1 = y0 + (i < 3 ? 56 : 60);
+      PalaceHome.place(root, PalaceHome.text(this, nums[i], 46 * k, 0xFFFFFFFF, true, (nx1 - nx0) * k), k, nx0, ny0, nx1, ny1);
+    }
+    PalaceHome.place(root, PalaceHome.tap(this, "Live census", this.opener(LiveCensusActivity)), k, 82, 504, 943, 710);
+
+    PalaceHome.place(rootB, new PalaceHome.Hands(this), kB, 98, 700 - off, 556, 1032 - off);
+    const day = today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH).toUpperCase();
+    const dayT = PalaceHome.text(this, day, 40 * kB, PalaceHome.GOLD, true, 200 * kB);
+    dayT.setLetterSpacing(0.06);
+    PalaceHome.place(rootB, dayT, kB, 640, 800 - off, 860, 846 - off);
+    const dmy = pad2(today.getDayOfMonth()) + "-" + pad2(today.getMonthValue()) + "-" + today.getYear();
+    PalaceHome.place(rootB, PalaceHome.text(this, dmy, 60 * kB, PalaceHome.GOLD, true, 270 * kB), kB, 610, 858 - off, 890, 922 - off);
+    PalaceHome.place(rootB, PalaceHome.tap(this, "Calendar", this.opener(CalendarActivity)), kB, 576, 748 - off, 914, 976 - off);
+
+    const tiles = [[82, 1040, 358, 1152], [380, 1040, 655, 1152], [678, 1040, 945, 1152], [82, 1170, 358, 1278], [380, 1170, 655, 1278],
+      [678, 1170, 945, 1278], [82, 1296, 358, 1408], [380, 1296, 655, 1408], [678, 1296, 945, 1408]];
+    for (let i = 0; i < mine.size() && i < 9; i++) {
+      const m = mine.get(i);
+      const b = tiles[i];
+      const t = Ui.v(this);
+      t.setGravity(Gravity.CENTER);
+      const ic = new ImageView(this);
+      ic.setImageResource(m.icon);
+      ic.setColorFilter(0xFFF2C55C);
+      t.addView(ic, Ui.lp(Math.round(50 * kB), Math.round(50 * kB)));
+      const l = PalaceHome.text(this, m.label, 27 * kB, 0xFFFFFFFF, false, (b[2] - b[0] - 30) * kB);
+      t.addView(l, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+      Ui.margins(l, 0, Math.round(6 * kB / this.getResources().getDisplayMetrics().density), 0, 0);
+      const f = new FrameLayout(this);
+      f.addView(t, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+      const badge = MainActivity.badgeOf(m.sub);
+      if (badge > 0) {
+        const bd = PalaceHome.text(this, badge > 99 ? "99+" : String(badge), 20 * kB, 0xFFFFFFFF, false, 60 * kB);
+        const g = Ui.round(this, 0xFFEF4444, 16 * kB);
+        g.setStroke(Math.max(1, Math.round(2 * kB)), 0xFFF8E7AE);
+        bd.setBackground(g);
+        bd.setPadding(Math.round(8 * kB), Math.round(3 * kB), Math.round(8 * kB), Math.round(3 * kB));
+        const bl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        bl.topMargin = Math.round(8 * kB);
+        bl.rightMargin = Math.round(12 * kB);
+        f.addView(bd, bl);
+      }
+      Ui.ripple(f, 0x33F5C451);
+      f.setContentDescription(m.label);
+      f.setOnClickListener({ onClick: (v) => {
+        HomeLayout.tapped(this, m.label);
+        call(m.l, 'onClick', v);
+      } });
+      f.setOnLongClickListener({ onLongClick: (v) => {
+        new AlertDialog.Builder(this).setTitle(m.label)
+          .setItems(["Remove from these icons", "Open"], { onClick: (d, which) => {
+            if (which === 1) { call(m.l, 'onClick', null); return; }
+            HomeLayout.pin(this, m.label, false);
+            this.render();
+          } }).show();
+        return true;
+      } });
+      PalaceHome.place(rootB, f, kB, b[0], b[1] - off, b[2], b[3] - off);
+    }
+    PalaceHome.place(root, PalaceHome.tap(this, "Menu", { onClick: (v) => { this.switchTab(4); } }), k, 48, 28, 138, 108);
+    PalaceHome.place(root, PalaceHome.tap(this, "Notice board", { onClick: (v) => { this.switchTab(3); } }), k, 884, 28, 974, 108);
+    return wrap;
+  }
+
+  /** 10.68 (user's picture): the gold tab bar from the picture; the open tab sits in the picture's glowing gold box. */
+  grandTabBar() {
+    const icons = [R.drawable.ic_home, R.drawable.ic_people, R.drawable.ic_hospital, R.drawable.ic_notice, R.drawable.ic_menu];
+    const side = Ui.dp(this, 6);
+    const w = this.getResources().getDisplayMetrics().widthPixels - 2 * side;
+    const h = Math.round(w * 228 / 1003);
+    const k = h / 228;
+    const wrap = Ui.v(this);
+    wrap.setPadding(side, Ui.dp(this, 2), side, Ui.dp(this, 6));
+    const bar = new FrameLayout(this);
+    const bg = new ImageView(this);
+    bg.setImageResource(R.drawable.grand_tabbar);
+    bg.setScaleType(ImageView.ScaleType.FIT_XY);
+    bar.addView(bg, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    const row = Ui.h(this);
+    const rl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+    rl.setMargins(Math.round(22 * k), Math.round(24 * k), Math.round(22 * k), Math.round(24 * k));
+    bar.addView(row, rl);
+    wrap.addView(bar, Ui.lp(w, h));
+    for (let i = 0; i < MainActivity.TAB_NAMES.length; i++) {
+      const idx = i;
+      const on = i === this.tab;
+      if (i > 0) {
+        const d = new View(this);
+        d.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0x00F3CF72, 0xFFF3CF72, 0x00F3CF72]));
+        const dl = new LinearLayout.LayoutParams(Math.max(1, Math.round(2.5 * k)), Math.round(100 * k));
+        dl.gravity = Gravity.CENTER_VERTICAL;
+        row.addView(d, dl);
+      }
+      const cell = new FrameLayout(this);
+      if (on) {
+        const sel = new ImageView(this);
+        sel.setImageResource(R.drawable.grand_tab_on);
+        sel.setScaleType(ImageView.ScaleType.FIT_XY);
+        cell.addView(sel, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+      }
+      const item = Ui.v(this);
+      item.setGravity(Gravity.CENTER);
+      cell.addView(item, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+      const ic = new ImageView(this);
+      ic.setImageResource(icons[i]);
+      ic.setColorFilter(0xFFF2C55C);
+      item.addView(ic, Ui.lp(Math.round(56 * k), Math.round(56 * k)));
+      const t = PalaceHome.text(this, MainActivity.TAB_NAMES[i], 34 * k, Color.WHITE, Typeface.DEFAULT, 160 * k);
+      if (on) t.setTypeface(Typeface.DEFAULT_BOLD);
+      item.addView(t, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+      t.getLayoutParams().topMargin = Math.round(8 * k);
+      Ui.ripple(item, 0x33F5C451);
+      item.setContentDescription(MainActivity.TAB_NAMES[i]);
+      item.setOnClickListener({ onClick: (v) => { if (idx !== this.tab) this.switchTab(idx); } });
+      row.addView(cell, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+    }
+    return wrap;
+  }
+
+  /**
+   * 10.68 (user's two phone pictures): the gold card home. The joined picture is the background (GrandHome) and the live parts
+   * sit at its places: the HOD's photo and name, who admits today, the six numbers, the clock hands, the day and date, the
+   * member's nine sections on the green tiles and the PG leave line.
+   */
+  grandHero(today, mine, first) {
+    const db = this.db;
+    const iso = today.toString();
+    const wpx = this.getResources().getDisplayMetrics().widthPixels;
+    const k = wpx / GrandHome.W;
+    const hpx = Math.round(GrandHome.H * k);
+    const A = GrandHome.a, B = GrandHome.b;
+    const root = new FrameLayout(this);
+    const bg = new ImageView(this);
+    bg.setImageResource(R.drawable.grand_home);
+    bg.setScaleType(ImageView.ScaleType.FIT_XY);
+    root.addView(bg, new FrameLayout.LayoutParams(wpx, hpx));
+    const lp = Ui.lp(wpx, hpx);
+    if (first) lp.topMargin = -Ui.dp(this, 8);
+    root.setLayoutParams(lp);
+
+    const rel = db.setting("hod_photo", "");
+    const has = !rel.isEmpty() && db.file(rel).exists();
+    if (has) {
+      const iv = new ImageView(this);
+      const d = Math.round(118 * k);
+      const bm = Ui.loadScaled(db.file(rel), d * 2);
+      if (bm != null) iv.setImageBitmap(Store.circle(bm, d));
+      PalaceHome.place(root, iv, k, 73, A(372), 191, A(490));
+    }
+    PalaceHome.place(root, PalaceHome.tap(this, "HOD photo", { onClick: (v) => {
+      if (!this.canEditHod()) {
+        if (has) Ui.showImage(this, db.file(rel));
+        return;
+      }
+      this.hodPhotoOptions(has, rel);
+    } }), k, 50, A(355), 215, A(510));
+    const hod = db.setting("hod", "");
+    if (!hod.isEmpty()) {
+      const ht = PalaceHome.text(this, hod, 29 * k, GrandHome.GOLD, Typeface.DEFAULT_BOLD, 290 * k);
+      ht.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+      PalaceHome.place(root, ht, k, 230, A(442), 540, A(480));
+    }
+
+    const au = ArrayList(db.admittingUnits(Dates.dow(Dates.admitDay())));
+    if (au.isEmpty()) au.add("—");
+    const pill = PalaceHome.text(this, TextUtils.join(" · ", au), 27 * k, 0xFF22160A, true, 80 * k);
+    pill.setShadowLayer(0, 0, 0, 0);
+    PalaceHome.place(root, pill, k, 289, A(541), 375, A(578));
+    PalaceHome.place(root, PalaceHome.tap(this, "Admitting today", this.opener(AdmissionDayActivity, "date", Dates.admitDay().toString())), k, 34, A(532), 552, A(590));
+
+    const nums = [String(db.totalInpatients()), String(db.events(Db.ADMIT, iso, iso, null, null)),
+      String(db.events(Db.DISCHARGE, iso, iso, null, null)), String(db.transfers(iso, iso, null, Db.IMCU)),
+      String(db.transfers(iso, iso, null, Db.CCB)), String(db.events(Db.DEATH, iso, iso, null, null))];
+    const cx = [120, 297, 472], ny = [649, 785];
+    for (let i = 0; i < 6; i++) {
+      const x = cx[i % 3], y = ny[Math.floor(i / 3)];
+      PalaceHome.place(root, PalaceHome.text(this, nums[i], 44 * k, 0xFFFFFFFF, true, 130 * k), k, x - 70, A(y), x + 70, A(y + 40));
+    }
+    PalaceHome.place(root, PalaceHome.tap(this, "Live census", this.opener(LiveCensusActivity)), k, 34, A(612), 552, A(866));
+
+    PalaceHome.place(root, GrandHome.hands(this), k, 86, B(90), 266, B(270));
+    const day = today.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.ENGLISH).toUpperCase();
+    const dayT = PalaceHome.text(this, day, 30 * k, GrandHome.GOLD, true, 170 * k);
+    dayT.setLetterSpacing(0.08);
+    PalaceHome.place(root, dayT, k, 350, B(121), 530, B(156));
+    const dmy = pad2(today.getDayOfMonth()) + "-" + pad2(today.getMonthValue()) + "-" + today.getYear();
+    PalaceHome.place(root, PalaceHome.text(this, dmy, 44 * k, 0xFFFAF6EC, true, 190 * k), k, 340, B(188), 540, B(232));
+    PalaceHome.place(root, PalaceHome.tap(this, "Calendar", this.opener(CalendarActivity)), k, 327, B(105), 550, B(280));
+
+    const tx = [54, 220, 383], tw = [150, 148, 148];
+    const ty = [366, 515, 661], th = [135, 134, 133];
+    for (let i = 0; i < mine.size() && i < 9; i++) {
+      const m = mine.get(i);
+      const x0 = tx[i % 3], x1 = x0 + tw[i % 3], y0 = B(ty[Math.floor(i / 3)]), y1 = y0 + th[Math.floor(i / 3)];
+      const f = new FrameLayout(this);
+      const gi = GrandHome.iconOf(m.label);
+      let ic;
+      if (gi >= 0) ic = new GrandHome.Icon(this, gi);
+      else {
+        ic = new ImageView(this);
+        ic.setImageResource(m.icon);
+        ic.setColorFilter(0xFFF2C55C);
+        ic.setPadding(Math.round(25 * k), Math.round(25 * k), Math.round(25 * k), Math.round(25 * k));
+      }
+      const il = new FrameLayout.LayoutParams(Math.round(96 * k), Math.round(96 * k), Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+      il.topMargin = Math.round(1 * k);
+      f.addView(ic, il);
+      const l = GrandHome.label(this, m.label, 20 * k, (x1 - x0 - 22) * k);
+      const ll = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(46 * k), Gravity.TOP);
+      ll.topMargin = Math.round(84 * k);
+      ll.leftMargin = ll.rightMargin = Math.round(10 * k);
+      f.addView(l, ll);
+      const badge = MainActivity.badgeOf(m.sub);
+      if (badge > 0) {
+        const bd = PalaceHome.text(this, badge > 99 ? "99+" : String(badge), 13 * k, 0xFFFFFFFF, false, 36 * k);
+        const g = Ui.round(this, 0xFFEF4444, 10 * k);
+        g.setStroke(Math.max(1, Math.round(1.2 * k)), 0xFFF8E7AE);
+        bd.setBackground(g);
+        bd.setPadding(Math.round(5 * k), Math.round(2 * k), Math.round(5 * k), Math.round(2 * k));
+        const bl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+        bl.topMargin = Math.round(8 * k);
+        bl.rightMargin = Math.round(10 * k);
+        f.addView(bd, bl);
+      }
+      Ui.ripple(f, 0x33F5C451);
+      f.setContentDescription(m.label);
+      f.setOnClickListener({ onClick: (v) => {
+        HomeLayout.tapped(this, m.label);
+        call(m.l, 'onClick', v);
+      } });
+      f.setOnLongClickListener({ onLongClick: (v) => {
+        new AlertDialog.Builder(this).setTitle(m.label)
+          .setItems(["Remove from these icons", "Open"], { onClick: (d, which) => {
+            if (which === 1) { call(m.l, 'onClick', null); return; }
+            HomeLayout.pin(this, m.label, false);
+            this.render();
+          } }).show();
+        return true;
+      } });
+      PalaceHome.place(root, f, k, x0, y0, x1, y1);
+    }
+
+    const pl = PgLeaveActivity.homeLine(this, db);
+    const line = PalaceHome.text(this, pl[0], 19 * k, 0xF2FFFFFF, Typeface.DEFAULT, 380 * k);
+    line.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+    PalaceHome.place(root, line, k, 144, B(944), 540, B(977));
+    const btn = PalaceHome.text(this, pl[1] + "  ›", 25 * k, 0xFF1A1206, Typeface.DEFAULT_BOLD, 420 * k);
+    btn.setShadowLayer(Math.max(1, k), 0, Math.max(1, k * 0.6), 0x66FFF6D0);
+    PalaceHome.place(root, btn, k, 60, B(994), 525, B(1038));
+    PalaceHome.place(root, PalaceHome.tap(this, "PG leave", this.opener(PgLeaveActivity)), k, 30, B(905), 555, B(1050));
+    return root;
   }
 
   /**
@@ -65418,7 +67386,13 @@ class MainActivity extends Base {
 
     const mid = Ui.v(this);
     mid.setGravity(Gravity.CENTER_HORIZONTAL);
-    mid.addView(RoyalHome.plaque(this, college, wide ? 15 : 17), Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    // 10.64 (user's picture): the gold TVMCHMED logo in place of the "Tirunelveli Medical College" plaque
+    const logo = new ImageView(this);
+    logo.setImageResource(R.drawable.tvmchmed_logo);
+    logo.setAdjustViewBounds(true);
+    logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    logo.setContentDescription("TVMCHMED · " + college);
+    mid.addView(logo, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     // 10.44 (user): the golden emblem picture in place of the 3D gold circle; tap it to see it large
     const med = RoyalHome.emblem(this, wide ? 240 : 250);
     mid.addView(med);
@@ -65427,7 +67401,17 @@ class MainActivity extends Base {
     const right = Ui.v(this);
     const cd = Ui.h(this);
     cd.setGravity(Gravity.CENTER);
-    cd.addView(new RoyalHome.Clock(this), Ui.lp(Ui.dp(this, wide ? 120 : 104), Ui.dp(this, wide ? 120 : 104)));
+    // 10.63 (user's picture): the royal TVMCHMED clock, larger so its details show; tap to see it big
+    const clock = new RoyalHome.Clock(this);
+    clock.setContentDescription("TVMCHMED clock");
+    clock.setOnClickListener({ onClick: (v) => {
+      const f = new FrameLayout(this);
+      f.setBackgroundColor(0xFF0B1230);
+      const sz = Math.min(this.getResources().getDisplayMetrics().widthPixels - Ui.dp(this, 48), Ui.dp(this, 460));
+      f.addView(new RoyalHome.Clock(this), new FrameLayout.LayoutParams(sz, sz, Gravity.CENTER));
+      new AlertDialog.Builder(this).setView(f).setPositiveButton("Close", null).show();
+    } });
+    cd.addView(clock, Ui.lp(Ui.dp(this, wide ? 200 : 176), Ui.dp(this, wide ? 200 : 176)));
     const dp = RoyalHome.datePlate(this, today);
     cd.addView(dp);
     Ui.margins(dp, 12, 0, 0, 0);
@@ -65448,6 +67432,16 @@ class MainActivity extends Base {
       const m = mine[i];
       const tl = RoyalHome.tile(this, m.icon, m.label, MainActivity.badgeOf(m.sub));
       tl.setOnClickListener({ onClick: (v) => { HomeLayout.tapped(this, m.label); call(m.l, 'onClick', v); } });
+      // 10.59: hold to take a section off these icons (another one you use comes in its place)
+      tl.setOnLongClickListener({ onLongClick: (v) => {
+        new AlertDialog.Builder(this).setTitle(m.label)
+          .setItems(["Remove from these icons", "Open"], (d, which) => {
+            if (which === 1) { call(m.l, 'onClick', null); return; }
+            HomeLayout.pin(this, m.label, false);
+            this.render();
+          }).show();
+        return true;
+      } });
       const lp = new LinearLayout.LayoutParams(0, Ui.dp(this, 100), 1);
       lp.setMargins(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
       tr.addView(tl, lp);
@@ -65457,6 +67451,11 @@ class MainActivity extends Base {
       lp.setMargins(Ui.dp(this, 4), 0, Ui.dp(this, 4), 0);
       tr.addView(new View(this), lp);
     }
+    // 10.59: these icons fill by themselves with the sections this member opens most
+    const how = Ui.tv(this, "Your most used sections  ·  hold any section to pin it here", 11, 0xFFF3D27A, false);
+    how.setGravity(Gravity.CENTER);
+    how.setPadding(0, Ui.dp(this, 8), 0, 0);
+    tiles.addView(how);
     right.addView(tiles);
     Ui.margins(tiles, 0, 12, 0, 0);
 
@@ -65917,6 +67916,10 @@ class MainActivity extends Base {
     m.add(new Module("Call duty", db.num("SELECT COUNT(*) FROM duty_sick WHERE date=?", dutyIso) + " sick cases" + (urgentOpen > 0 ? " · " + urgentOpen + " urgent" : ""), R.drawable.ic_moon, Ui.TEAL, this.opener(CallDutyActivity)));
     m.add(new Module("Import file", "Word · Excel · PDF", R.drawable.ic_upload, Ui.SKY, this.opener(ImportActivity)));
     m.add(new Module("VIP cases", db.num("SELECT COUNT(*) FROM vip_cases WHERE active='1'") + " in hospital", R.drawable.ic_star, Ui.AMBER, this.opener(VipActivity)));
+    // 10.50: the PGs' and the CRMIs' duty rosters, each shown on its wards till the posting ends
+    const rpg = DutyBoard.countNow(db, DutyBoard.PG), rcr = DutyBoard.countNow(db, DutyBoard.CRMI);
+    m.add(new Module("PG notice board", rpg > 0 ? rpg + " duty roster" + (rpg === 1 ? "" : "s") + " on" : "Upload the PG duty roster", R.drawable.ic_notice, DutyBoard.PG_COLOR, this.opener(DutyBoardActivity, "board", DutyBoard.PG)));
+    m.add(new Module("CRMI notice board", rcr > 0 ? rcr + " duty roster" + (rcr === 1 ? "" : "s") + " on" : "Upload the CRMI duty roster", R.drawable.ic_notice, DutyBoard.CRMI_COLOR, this.opener(DutyBoardActivity, "board", DutyBoard.CRMI)));
     m.add(new Module("PG leave", this.pgLeaveWaiting() + " awaiting", R.drawable.ic_mail, Ui.PURPLE, this.opener(PgLeaveActivity)));
     const swn = Swaps.waitingFor(db, this);
     m.add(new Module("Duty swaps", swn[0] + swn[1] > 0 ? (swn[0] + swn[1]) + " waiting" : "Swap a duty with a PG", R.drawable.ic_swap, Swaps.COLOR, this.opener(SwapsActivity)));
@@ -65950,6 +67953,7 @@ class MainActivity extends Base {
     m.add(new Module("Album", db.num("SELECT COUNT(*) FROM " + Album.TABLE) + " photos", R.drawable.ic_camera, Album.NAVY, this.opener(AlbumActivity)));
     m.add(new Module("Time machine", "Any past date and hour", R.drawable.ic_calendar, TimeMachine.COLOR, this.opener(TimeMachineActivity)));
     m.add(new Module("Due soon", "Countdown clocks", R.drawable.ic_task, Countdown.COLOR, this.opener(CountdownActivity)));
+    m.add(new Module("MedSphere", "Private video meetings", R.drawable.ic_video, MedSphere.COLOR, this.opener(MedSphereActivity)));
     m.add(new Module("Teaching moments", TeachPoints.recent(db, 7).length + " this week", R.drawable.ic_bulb, TeachPoints.COLOR, this.opener(TeachActivity)));
     m.add(new Module("Rare cases", RareCase.inWards(db).length + " in the wards", R.drawable.ic_star, RareCase.COLOR, this.opener(RareCaseActivity)));
     m.add(new Module("Bed board", db.totalInpatients() + " in beds", R.drawable.ic_bed, BedBoardActivity.COLOR, this.opener(BedBoardActivity)));
@@ -65981,7 +67985,7 @@ class MainActivity extends Base {
     ["Wards", "Census", "Live census", "Bed board", "Ward round", "Charts", "Tasks", "Pending results", "Missing notes", "7:30 checklist", "Due soon", "Search",
       "Triage ward", "Step-down", "TAEI ward", "Fever ward", "Critical care", "IMCU", "ID ward", "Geriatric", "Rheumatology", "Kandiyaperi",
       "Convict cases", "Obstetric physician", "Rare cases", "Time machine", "Wall screen"],
-    ["Duty & team", "DAP register", "Call duty", "Call over", "Handover", "VIP cases", "Intercom", "PG Connect", "Faculty chat", "Notice board",
+    ["Duty & team", "MedSphere", "DAP register", "Call duty", "Call over", "Handover", "VIP cases", "Intercom", "PG Connect", "Faculty chat", "Notice board", "PG notice board", "CRMI notice board",
       "Calendar", "Phone book", "Faculty", "Students", "Duty hours", "Duty swaps", "Incidents", "Shortages", "Album", "How to use"],
     ["Paperwork", "Approvals", "Sign-off queue", "PG leave", "Leave register", "Leave calendar", "NMC attendance", "Attendance", "CMCHIS", "DAMA forms", "Consent forms",
       "Death certificate", "Monthly report", "Reports", "Memo", "Verify a document", "Import file"],
@@ -66944,6 +68948,8 @@ class MainActivity extends Base {
     if (Approvals.canApproveAny(this)) this.menuItem(page, R.drawable.ic_approve, "Approvals", "New faculty and student entries waiting for approval", Ui.AMBER, this.opener(ApprovalActivity));
     if (Cloud.canSeeFaculty(this)) this.menuItem(page, R.drawable.ic_badge, "Faculty", "Professors, Associate and Assistant Professors: photos and documents", Ui.PRIMARY_DARK, this.opener(FacultyActivity));
     this.menuItem(page, R.drawable.ic_group, "Students", "PGs, CRMIs and MBBS (2nd year, prefinal, final)", Ui.SLATE, this.opener(StaffActivity));
+    this.menuItem(page, R.drawable.ic_notice, "PG notice board", "PG duty rosters, shown on each ward till the posting ends", DutyBoard.PG_COLOR, this.opener(DutyBoardActivity, "board", DutyBoard.PG));
+    this.menuItem(page, R.drawable.ic_notice, "CRMI notice board", "CRMI duty rosters, shown on each ward till the posting ends", DutyBoard.CRMI_COLOR, this.opener(DutyBoardActivity, "board", DutyBoard.CRMI));
     page.addView(Ui.heading(this, "App", Ui.SLATE));
     const cloudSub = !Cloud.signedIn(this) ? "Sign in to share records with every faculty member"
       : Cloud.active(this) ? Cloud.prefs(this).getString("email", "") + "  ·  " + Cloud.roleLabel(Cloud.role(this))
@@ -69606,6 +71612,624 @@ class MedSpeech {
     return n + b.length;
   }
 }
+;
+/* ---- app/MedSphere.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * MedSphere (10.60, user asked): the department's private video meetings with screen sharing, on LiveKit with end-to-end
+ * encryption. The Supabase function "medsphere" gives a pass only to approved members of the room and makes the room's key.
+ */
+class MedSphere {
+  static get ROOM_UNITS() { return ["M1", "M2", "M3", "M4", "M5", "M6", "M7", Db.IMCU, Db.CCB, Db.FEVER]; }
+
+  static manager(c) { return !Cloud.active(c) || Cloud.isManager(Cloud.role(c)); }
+
+  /** The admin and the Registrar enter every unit / ward room; the HOD is kept out of them (10.61, user asked). */
+  static allWards(c) { return MedSphere.manager(c) && Cloud.role(c) !== "hod"; }
+
+  static faculty(c) {
+    const r = Cloud.role(c);
+    return MedSphere.manager(c) || r === "faculty" || r === "professor";
+  }
+
+  static myUnit(db, c) {
+    const s = Number(Cloud.myStaff(c));
+    if (!(s > 0)) return "";
+    const r = db.row("SELECT unit FROM staff WHERE id=?", String(s));
+    return r == null ? "" : Ui.nz(r.get("unit"));
+  }
+
+  static unitRooms(db, c) {
+    const out = [], mine = MedSphere.myUnit(db, c);
+    for (const u of MedSphere.ROOM_UNITS) if (MedSphere.allWards(c) || u === mine) out.push(u);
+    return out;
+  }
+
+  static roomTitle(db, room) {
+    if (room === "dept") return "Department hall";
+    if (room.startsWith("unit-")) return Db.unitName(room.substring(5)) + " room";
+    if (room.startsWith("meet-")) {
+      const m = db.row("SELECT title FROM meetings WHERE id=?", room.substring(5));
+      return m == null ? "Meeting" : m.get("title");
+    }
+    return room;
+  }
+
+  static upcoming(db, c) {
+    const mine = MedSphere.myUnit(db, c), out = [];
+    for (const m of db.rows("SELECT * FROM meetings WHERE date>=? ORDER BY date, time", Dates.todayIso())) {
+      const a = Ui.nz(m.get("audience"));
+      if (a === "" || a === "ALL" || MedSphere.allWards(c) || a === mine) out.push(m);
+    }
+    return out;
+  }
+
+  /** 10.61 "Present a ward case": in-patients without name, IP number, phone or address, for the meeting page. */
+  static casesJson(db, c) {
+    const out = [];
+    try {
+      const mine = MedSphere.myUnit(db, c);
+      const ps = MedSphere.allWards(c) || mine === ""
+        ? db.rows("SELECT * FROM patients WHERE status='IN' ORDER BY location, bed LIMIT 80")
+        : db.rows("SELECT * FROM patients WHERE status='IN' AND (home_unit=? OR location=?) ORDER BY location, bed LIMIT 80", mine, mine);
+      for (const p of ps) {
+        const o = {
+          label: Ui.nz(p.get("age")) + (Ui.nz(p.get("sex")) === "" ? "" : " / " + p.get("sex")) + "  ·  " + Db.shortName(Ui.nz(p.get("location")))
+            + (Ui.nz(p.get("bed")) === "" ? "" : " bed " + p.get("bed")),
+          dx: Ui.nz(p.get("diagnosis")),
+        };
+        const ad = Ui.nz(p.get("admit_date")).substring(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(ad)) o.day = Math.round((new Date(Dates.todayIso()) - new Date(ad)) / 86400000) + 1;
+        const v = db.row("SELECT data, date, time FROM charts WHERE patient_id=? AND kind='VITALS' ORDER BY date DESC, time DESC LIMIT 1", p.get("id"));
+        if (v != null) {
+          const s = [];
+          try {
+            const d = JSON.parse(Ui.nz(v.get("data")) || "{}");
+            for (const [k, n, u] of [["hr", "HR", ""], ["sbp", "BP", ""], ["rr", "RR", ""], ["spo2", "SpO2", "%"], ["temp", "Temp", "°F"], ["avpu", "AVPU", ""], ["news", "NEWS2", ""]]) {
+              let val = d[k] == null ? "" : String(d[k]);
+              if (val === "") continue;
+              if (k === "sbp" && d.dbp) val += "/" + d.dbp;
+              s.push(n + " " + val + u);
+            }
+          } catch (e) { }
+          if (s.length) o.vitals = s.join("  ·  ") + "  (" + Ui.nz(v.get("time")) + ")";
+        }
+        const l = db.row("SELECT * FROM labs WHERE patient_id=? ORDER BY date DESC, time DESC LIMIT 1", p.get("id"));
+        if (l != null) {
+          const s = [];
+          for (const [k, n] of [["hb", "Hb"], ["wbc", "TC"], ["plt", "Plt"], ["urea", "Urea"], ["creat", "Creat"], ["na", "Na"], ["k", "K"], ["sugar", "Sugar"], ["bili", "Bili"]])
+            if (Ui.nz(l.get(k)) !== "") s.push(n + " " + l.get(k));
+          if (s.length) o.labs = s.join("  ·  ") + "  (" + Dates.nice(l.get("date")) + ")";
+        }
+        out.push(o);
+      }
+    } catch (e) { }
+    return JSON.stringify(out);
+  }
+
+  static audienceLabel(a) { return a == null || a === "" || a === "ALL" ? "Whole department" : Db.unitName(a); }
+
+  /** Asks the server for a pass to the room (network: call off the main thread). */
+  static pass(c, room) {
+    const body = new JSONObject().put("action", "join").put("room", room);
+    return new JSONObject(Cloud.json(c, "POST", "/functions/v1/medsphere", body).text());
+  }
+
+  static joined(db, c, room) {
+    const cv = new ContentValues();
+    cv.put("room", room);
+    cv.put("meeting_id", room.startsWith("meet-") ? room.substring(5) : "");
+    cv.put("day", Dates.todayIso());
+    cv.put("staff_id", String(Cloud.myStaff(c)));
+    cv.put("name", Approvals.me(c));
+    const d = new Date();
+    cv.put("joined", String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"));
+    cv.put("minutes", "0");
+    return db.insert("meeting_att", cv);
+  }
+
+  /** Records the minutes stayed; 30 minutes or more in a scheduled physicon, journal club or seminar also marks the member
+   *  present in that day's Academics session (10.61). Returns the session's topic, or null. */
+  static left(c, db, attId, minutes) {
+    if (!(attId > 0)) return null;
+    const cv = new ContentValues();
+    cv.put("minutes", String(minutes));
+    db.update("meeting_att", cv, attId);
+    if (minutes < MedSphere.ATTEND_MIN) return null;
+    try {
+      const a = db.row("SELECT room, day FROM meeting_att WHERE id=?", String(attId));
+      if (a == null || !Ui.nz(a.get("room")).startsWith("meet-")) return null;
+      const m = db.row("SELECT kind FROM meetings WHERE id=?", a.get("room").substring(5));
+      const code = m == null ? null : MedSphere.acadKind(m.get("kind"));
+      if (code == null) return null;
+      const s = db.row("SELECT id, topic FROM academics WHERE date=? AND kind=? ORDER BY id LIMIT 1", a.get("day"), code);
+      const me = SessionAttendance.me(c, db);
+      if (s == null || me == null) return null;
+      SessionAttendance.mark(db, c, s.get("id"), me, "MedSphere");
+      return Ui.nz(s.get("topic"));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static acadKind(kind) {
+    return kind === "Physicon" ? "CONF" : kind === "Journal club" ? "JC" : kind === "Seminar" ? "SYMP" : null;
+  }
+
+  /** Minutes from now to a meeting's start (negative once started); null when it is not today. */
+  static minutesTo(m) {
+    if (Dates.todayIso() !== m.get("date")) return null;
+    const x = /^(\d{1,2}):(\d{2})/.exec(Ui.nz(m.get("time")).trim());
+    if (!x) return null;
+    const now = new Date();
+    return Number(x[1]) * 60 + Number(x[2]) - (now.getHours() * 60 + now.getMinutes());
+  }
+
+  static soon(db, c) {
+    return MedSphere.upcoming(db, c).filter((m) => { const d = MedSphere.minutesTo(m); return d != null && d <= 30 && d >= -120; });
+  }
+
+  static when(m) {
+    const d = MedSphere.minutesTo(m);
+    return d <= 0 ? "Live now" : d === 1 ? "Starts in 1 min" : "Starts in " + d + " min";
+  }
+
+  /** Home banner (10.61): a meeting live now or starting soon, with one-tap Join. */
+  static homeCard(a, db) {
+    if (!Cloud.active(a)) return null;
+    const s = MedSphere.soon(db, a);
+    if (s.length === 0) return null;
+    const m = s[0];
+    const card = Ui.h(a);
+    card.setGravity(Gravity.CENTER_VERTICAL);
+    card.setBackground(Ui.gradient(a, [0xFF071233, MedSphere.COLOR, 0xFF12306E], 20));
+    card.setElevation(Ui.dp(a, 4));
+    card.setPadding(Ui.dp(a, 12), Ui.dp(a, 10), Ui.dp(a, 12), Ui.dp(a, 10));
+    const lp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 10), Ui.dp(a, 4));
+    card.setLayoutParams(lp);
+    const ic = new ImageView(a);
+    ic.setImageResource(R.drawable.medsphere_icon);
+    card.addView(ic, Ui.lp(Ui.dp(a, 44), Ui.dp(a, 44)));
+    const t = Ui.v(a);
+    t.setPadding(Ui.dp(a, 10), 0, Ui.dp(a, 8), 0);
+    const live = MedSphere.minutesTo(m) <= 0;
+    t.addView(Ui.tv(a, (live ? "🔴 " : "⏰ ") + MedSphere.when(m) + " · MedSphere", 12, live ? 0xFFFCA5A5 : MedSphere.CYAN, true));
+    t.addView(Ui.tv(a, Ui.nz(m.get("title")), 16, MedSphere.GOLD, true));
+    t.addView(Ui.tv(a, Ui.nz(m.get("kind")) + " · " + Ui.nz(m.get("time")) + (s.length > 1 ? " · +" + (s.length - 1) + " more" : ""), 12, 0xE6FFFFFF, false));
+    card.addView(t, Ui.weight(1));
+    card.addView(Ui.button(a, "Join", 0xFFC8932F, { onClick: () => a.open(MedSphereActivity, "join", "meet-" + m.get("id")) }));
+    card.setOnClickListener({ onClick: () => a.open(MedSphereActivity) });
+    return card;
+  }
+
+  static attendance(db, room, day) {
+    const out = [];
+    for (const r of db.rows("SELECT name, MIN(joined) AS j, MAX(CAST(minutes AS INTEGER)) AS m FROM meeting_att WHERE room=? AND day=? GROUP BY name ORDER BY j", room, day))
+      out.push(r.get("name") + "  ·  joined " + r.get("j") + ("0" === Ui.nz(r.get("m")) ? "" : "  ·  " + r.get("m") + " min"));
+    return out;
+  }
+
+  /** Minutes recorded by the meeting page in this browser (it runs in its own tab), picked up when MedSphere opens. */
+  static collect(db, c) {
+    let l = null;
+    try { l = JSON.parse(localStorage.getItem("medsphere_left") || "null"); } catch (e) { }
+    let j = null;
+    try { j = JSON.parse(localStorage.getItem("medsphere_att") || "null"); } catch (e) { }
+    if (!l || !j || l.room !== j.room) return;
+    try { localStorage.removeItem("medsphere_left"); localStorage.removeItem("medsphere_att"); } catch (e) { }
+    const acad = MedSphere.left(c, db, Number(j.att), Number(l.minutes) || 0);
+    if (acad != null) Ui.toast(c, "Marked present in Academics" + (acad === "" ? "" : ": " + acad));
+  }
+}
+MedSphere.COLOR = 0xFF0B1C4D;
+MedSphere.GOLD = 0xFFF5C451;
+MedSphere.CYAN = 0xFF22D3EE;
+MedSphere.KINDS = ["Unit discussion", "Physicon", "Journal club", "Department meeting", "Seminar", "Other"];
+MedSphere.ATTEND_MIN = 30;
+MedSphere.PAGE = 'medsphere.html';
+// the meeting tab reads the cases from this window (same site; nothing leaves the browser)
+window.MedSphereCases = () => { try { const a = App.top(); return MedSphere.casesJson(a.db, a); } catch (e) { return "[]"; } };
+;
+/* ---- app/MedSphereActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/** MedSphere (10.60): the department hall, the unit rooms and the scheduled meetings, each joined with one tap (opens in a new tab). */
+class MedSphereActivity extends Base {
+  onCreate(b) {
+    super.onCreate(b);
+    this.setTitle("MedSphere");
+    this.subtitle = "Private meetings · end-to-end encrypted";
+    this.headerColor(MedSphere.COLOR);
+    const go = this.getIntent().getStringExtra("join");   // the home banner's Join (called now, while the tap still counts for the new tab)
+    if (go && !b) this.join(go);
+  }
+
+  /** No plain header: the page draws its own dark top bar (10.61, user's picture). */
+  header() {
+    this.getWindow().setStatusBarColor(MedSphereActivity.BG_TOP);
+    const v = Ui.v(this);
+    v.setLayoutParams(Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+    return v;
+  }
+
+  wide() { return this.getResources().getConfiguration().screenWidthDp >= 600; }
+
+  render() {
+    MedSphere.collect(this.db, this);
+    const S = MedSphereActivity, db = this.db;
+    this.pageBg = S.BG_MID;
+    const page = Ui.v(this);
+    page.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [S.BG_TOP, S.BG_MID, S.BG_END]));
+    page.setPadding(0, 0, 0, Ui.dp(this, 24));
+    page.addView(this.topBar());
+    Ui.margins(page.getChildAt(0), 0, -8, 0, 0);
+
+    const w = this.getResources().getDisplayMetrics().widthPixels;
+    const hero = new ImageView(this);
+    hero.setImageResource(R.drawable.ms_hero);
+    hero.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    hero.setContentDescription("MedSphere. Where our department connects. Only approved members can join. Voice, video and shared screens are encrypted end to end.");
+    page.addView(hero, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Math.round(w * (this.wide() ? 220 : 290) / 1586)));
+
+    const body = Ui.v(this);
+    const side = Ui.dp(this, this.wide() ? 18 : 10);
+    body.setPadding(side, 0, side, 0);
+    page.addView(body);
+
+    if (!Cloud.active(this)) {
+      body.addView(this.note("MedSphere needs the shared database: sign in from Settings first."));
+      this.setPage(page);
+      return;
+    }
+
+    body.addView(this.heading("JOIN A SPACE"));
+    body.addView(this.roomCard(R.drawable.ms_hall, "Department Hall", "All department members", "dept", true));
+    const units = MedSphere.unitRooms(db, this);
+    let row = null, i = 0;
+    const cols = this.wide() ? 2 : 1;
+    for (const u of units) {
+      if (i % cols === 0) { row = Ui.h(this); body.addView(row); }
+      const bed = u === Db.IMCU || u === Db.CCB || u === Db.FEVER;
+      const card = this.roomCard(bed ? R.drawable.ms_bed : R.drawable.ms_group, S.roomName(u), Db.shortName(u) + " members", "unit-" + u, false);
+      const lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
+      lp.setMargins(i % cols === 0 ? 0 : Ui.dp(this, 6), 0, i % cols === cols - 1 ? 0 : Ui.dp(this, 6), 0);
+      row.addView(card, lp);
+      i++;
+    }
+    if (row != null && i % cols !== 0) row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+    if (units.length === 0) body.addView(this.note("Your unit room shows here once your account is linked to your name on the Students or Faculty list."));
+
+    const myUnit = MedSphere.myUnit(db, this);
+    if (myUnit !== "" || MedSphere.allWards(this)) {
+      const hud = this.glassButton("📞  Call a unit huddle now", S.GOLD_LINE);
+      hud.setOnClickListener({ onClick: () => this.huddle(myUnit) });
+      body.addView(hud);
+      Ui.margins(hud, 0, 12, 0, 0);
+    }
+
+    body.addView(this.heading("SCHEDULED MEETINGS"));
+    const sched = this.glass(false);
+    const up = MedSphere.upcoming(db, this);
+    if (up.length === 0) sched.addView(Ui.tv(this, "No meeting scheduled. " + (MedSphere.faculty(this) ? "Schedule one below." : "The faculty schedule them."), 13, S.SOFT, false));
+    for (const m of up) sched.addView(this.meetingRow(m));
+    if (MedSphere.faculty(this)) {
+      const add = this.glassButton("+  Schedule a meeting", S.CYAN);
+      add.setOnClickListener({ onClick: () => this.scheduleDialog() });
+      sched.addView(add);
+      Ui.margins(add, 0, 10, 0, 0);
+    }
+    body.addView(sched);
+
+    if (MedSphere.faculty(this)) {
+      const past = db.rows("SELECT room, day, COUNT(DISTINCT name) AS n FROM meeting_att GROUP BY room, day ORDER BY day DESC LIMIT 15");
+      if (past.length > 0) {
+        body.addView(this.heading("ATTENDANCE"));
+        const att = this.glass(false);
+        for (const r of past) {
+          const t = Ui.tv(this, Dates.nice(r.get("day")) + "  ·  " + MedSphere.roomTitle(db, r.get("room")) + "  ·  " + r.get("n") + " joined", 14, S.WHITE, false);
+          t.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
+          t.setOnClickListener({
+            onClick: () => {
+              const l = MedSphere.attendance(db, r.get("room"), r.get("day"));
+              new AlertDialog.Builder(this).setTitle(MedSphere.roomTitle(db, r.get("room")) + ", " + Dates.nice(r.get("day")))
+                  .setMessage(l.join("\n")).setPositiveButton("OK", null).show();
+            }
+          });
+          att.addView(t);
+        }
+        body.addView(att);
+      }
+    }
+    this.setPage(page);
+  }
+
+  static roomName(u) {
+    if (u.startsWith("M")) return u + " Unit Room";
+    if (u === Db.CCB) return "Critical Care Room";
+    if (u === Db.FEVER) return "Fever Ward Room";
+    return Db.shortName(u) + " Room";
+  }
+
+  topBar() {
+    const S = MedSphereActivity;
+    const bar = Ui.h(this);
+    bar.setGravity(Gravity.CENTER_VERTICAL);
+    bar.setBackgroundColor(S.BG_TOP);
+    bar.setPadding(Ui.dp(this, 6), Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 10));
+    const back = new ImageView(this);
+    back.setImageResource(R.drawable.ic_back);
+    back.setColorFilter(S.WHITE);
+    const bp = Ui.dp(this, 8);
+    back.setPadding(bp, bp, bp, bp);
+    back.setContentDescription("Back");
+    Ui.ripple(back, 0x33FFFFFF);
+    back.setOnClickListener({ onClick: () => this.finish() });
+    bar.addView(back, Ui.lp(Ui.dp(this, 40), Ui.dp(this, 40)));
+    const name = Ui.tv(this, "", 22, S.WHITE, true);
+    name.setText(Html.fromHtml('Med<font color="#F5C451">Sphere</font>'));
+    name.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 12), 0);
+    bar.addView(name);
+    if (this.wide()) {
+      const div = new View(this);
+      div.setBackgroundColor(0x55FFFFFF);
+      bar.addView(div, Ui.lp(Ui.dp(this, 1), Ui.dp(this, 26)));
+      const sub = Ui.tv(this, "Private meetings  •  end-to-end encrypted", 14, S.SOFT, false);
+      sub.setPadding(Ui.dp(this, 12), 0, 0, 0);
+      bar.addView(sub);
+    }
+    bar.addView(new View(this), Ui.weight(1));
+    const lock = Ui.tv(this, "🔒 Secure & Encrypted", 12.5, S.WHITE, true);
+    lock.setBackground(this.outline(0x1A22C55E, S.GREEN, 999, 1.5));
+    lock.setPadding(Ui.dp(this, 12), Ui.dp(this, 6), Ui.dp(this, 12), Ui.dp(this, 6));
+    bar.addView(lock);
+    return bar;
+  }
+
+  outline(fill, stroke, radius, width) {
+    const g = new GradientDrawable();
+    g.setColor(fill);
+    g.setCornerRadius(Ui.dp(this, radius));
+    g.setStroke(Ui.dp(this, width), stroke);
+    return g;
+  }
+
+  heading(s) {
+    const S = MedSphereActivity;
+    const h = Ui.h(this);
+    h.setGravity(Gravity.CENTER_VERTICAL);
+    h.setPadding(Ui.dp(this, 2), Ui.dp(this, 18), 0, Ui.dp(this, 10));
+    const bar = new View(this);
+    bar.setBackground(Ui.round(this, S.CYAN, 3));
+    h.addView(bar, Ui.lp(Ui.dp(this, 4), Ui.dp(this, 22)));
+    const t = Ui.tv(this, s, 17, S.WHITE, true);
+    t.setLetterSpacing(0.08);
+    t.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 12), 0);
+    h.addView(t);
+    const line = new View(this);
+    line.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [S.GOLD_LINE, 0x00E8B04A]));
+    h.addView(line, new LinearLayout.LayoutParams(0, Ui.dp(this, 2), 1));
+    return h;
+  }
+
+  glass(gold) {
+    const S = MedSphereActivity;
+    const c = Ui.v(this);
+    const g = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [S.CARD_A, S.CARD_B]);
+    g.setCornerRadius(Ui.dp(this, 18));
+    g.setStroke(Ui.dp(this, gold ? 2 : 1.3), gold ? S.GOLD_LINE : S.EDGE);
+    c.setBackground(g);
+    c.setElevation(Ui.dp(this, gold ? 8 : 4));
+    c.setPadding(Ui.dp(this, 14), Ui.dp(this, 12), Ui.dp(this, 14), Ui.dp(this, 12));
+    const lp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+    c.setLayoutParams(lp);
+    return c;
+  }
+
+  note(s) {
+    const c = this.glass(false);
+    c.addView(Ui.tv(this, s, 14, MedSphereActivity.SOFT, false));
+    return c;
+  }
+
+  glassButton(s, edge) {
+    const b = Ui.tv(this, s, 15, MedSphereActivity.WHITE, true);
+    b.setGravity(Gravity.CENTER);
+    b.setBackground(this.outline(0x2622D3EE, edge, 999, 2));
+    b.setPadding(Ui.dp(this, 16), Ui.dp(this, 11), Ui.dp(this, 16), Ui.dp(this, 11));
+    Ui.ripple(b, 0x3322D3EE);
+    return b;
+  }
+
+  joinButton(big, room) {
+    const S = MedSphereActivity;
+    const b = Ui.h(this);
+    b.setGravity(Gravity.CENTER);
+    b.setBackground(this.outline(0x2E22D3EE, S.CYAN, 999, 2));
+    const ph = Ui.dp(this, big ? 18 : 12), pv = Ui.dp(this, big ? 9 : 7);
+    b.setPadding(ph, pv, ph, pv);
+    const cam = new ImageView(this);
+    cam.setImageResource(R.drawable.ic_video);
+    cam.setColorFilter(S.CYAN);
+    b.addView(cam, Ui.lp(Ui.dp(this, big ? 24 : 20), Ui.dp(this, big ? 24 : 20)));
+    const t = Ui.tv(this, "Join room", big ? 16 : 14, S.WHITE, true);
+    t.setPadding(Ui.dp(this, 8), 0, 0, 0);
+    b.addView(t);
+    Ui.ripple(b, 0x4422D3EE);
+    b.setContentDescription("Join " + room);
+    b.setOnClickListener({ onClick: () => this.join(room) });
+    return b;
+  }
+
+  roomCard(icon, title, sub, room, hall) {
+    const S = MedSphereActivity;
+    const card = this.glass(hall);
+    card.setOrientation(LinearLayout.HORIZONTAL);
+    card.setGravity(Gravity.CENTER_VERTICAL);
+    if (hall) card.setPadding(Ui.dp(this, 14), Ui.dp(this, 16), Ui.dp(this, 14), Ui.dp(this, 16));
+    const ic = new ImageView(this);
+    ic.setImageResource(icon);
+    ic.setScaleType(ImageView.ScaleType.FIT_CENTER);
+    const narrow = !this.wide();
+    card.addView(ic, Ui.lp(Ui.dp(this, hall ? (narrow ? 64 : 92) : (narrow ? 44 : 54)), Ui.dp(this, hall ? (narrow ? 40 : 56) : (narrow ? 38 : 46))));
+    const div = new View(this);
+    div.setBackgroundColor(0x40FFFFFF);
+    const dl = Ui.lp(Ui.dp(this, 1), Ui.dp(this, hall ? 44 : 36));
+    dl.setMargins(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+    card.addView(div, dl);
+    const t = Ui.v(this);
+    t.addView(Ui.tv(this, title, hall ? (narrow ? 18 : 22) : (narrow ? 16 : 18), S.WHITE, true));
+    t.addView(Ui.tv(this, sub, hall ? 14 : 13, S.SOFT, false));
+    if (narrow) t.addView(Ui.tv(this, "● Available", 11.5, S.GREEN, false));
+    card.addView(t, Ui.weight(1));
+    if (!narrow) {
+      const av = Ui.tv(this, "", 13, S.SOFT, false);
+      av.setText(Html.fromHtml('<font color="#4ADE80">●</font>  Available'));
+      av.setPadding(Ui.dp(this, 6), 0, Ui.dp(this, 10), 0);
+      card.addView(av);
+      const d2 = new View(this);
+      d2.setBackgroundColor(0x40FFFFFF);
+      const d2l = Ui.lp(Ui.dp(this, 1), Ui.dp(this, 30));
+      d2l.setMargins(0, 0, Ui.dp(this, 12), 0);
+      card.addView(d2, d2l);
+    }
+    card.addView(this.joinButton(hall, room));
+    card.setOnClickListener({ onClick: () => this.join(room) });
+    return card;
+  }
+
+  meetingRow(m) {
+    const S = MedSphereActivity;
+    const row = Ui.h(this);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setPadding(0, Ui.dp(this, 8), 0, Ui.dp(this, 8));
+    const t = Ui.v(this);
+    t.addView(Ui.tv(this, ("Huddle" === m.get("kind") ? "📞 " : "") + m.get("title"), 15, S.WHITE, true));
+    const today = Dates.todayIso() === m.get("date");
+    t.addView(Ui.tv(this, Ui.nz(m.get("kind")) + "  ·  " + (today ? "Today" : Dates.nice(m.get("date"))) + " " + Ui.nz(m.get("time"))
+        + "  ·  " + MedSphere.audienceLabel(m.get("audience")) + ("1" === m.get("lobby") ? "  ·  waiting room" : "")
+        + (Ui.nz(m.get("by_name")) === "" ? "" : "  ·  by " + m.get("by_name")), 12.5, S.SOFT, false));
+    row.addView(t, Ui.weight(1));
+    row.addView(this.joinButton(false, "meet-" + m.get("id")));
+    const mine = String(Cloud.myStaff(this)) === m.get("by_staff") || MedSphere.manager(this);
+    if (mine) row.setOnLongClickListener({
+      onLongClick: () => {
+        Ui.confirm(this, "Cancel this meeting?", m.get("title"), "Cancel meeting", {
+          run: () => { this.db.delete("meetings", Number(m.get("id"))); this.render(); }
+        });
+        return true;
+      }
+    });
+    return row;
+  }
+
+  /** 10.61: an instant huddle: a meeting for the unit starting now; phones with instant alerts ring. */
+  huddle(unit) {
+    if (unit === "") {
+      const codes = MedSphere.ROOM_UNITS;
+      new AlertDialog.Builder(this).setTitle("Huddle for which unit?").setItems(codes.map((c) => Db.unitName(c)), { onClick: (d, k) => this.huddle(codes[k]) }).show();
+      return;
+    }
+    Ui.confirm(this, "Call a " + Db.shortName(unit) + " huddle now?", "Every " + Db.shortName(unit)
+        + " member gets a call alert on their phone and joins with one tap. Use it for urgent case talks.", "Call huddle", {
+      run: () => {
+        const cv = new ContentValues();
+        const d = new Date();
+        cv.put("title", Db.shortName(unit) + " huddle");
+        cv.put("kind", "Huddle");
+        cv.put("audience", unit);
+        cv.put("date", Dates.todayIso());
+        cv.put("time", String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"));
+        cv.put("by_name", Approvals.me(this));
+        cv.put("by_staff", String(Cloud.myStaff(this)));
+        cv.put("created", Dates.todayIso());
+        const id = this.db.insert("meetings", cv);
+        this.render();
+        this.join("meet-" + id);
+      }
+    });
+  }
+
+  scheduleDialog() {
+    const f = new Form(this);
+    f.text("title", "Title", "", Form.TEXT);
+    f.choice("kind", "Type", MedSphere.KINDS, MedSphere.KINDS, MedSphere.KINDS[0], null);
+    const mine = MedSphere.myUnit(this.db, this);
+    const labels = ["Whole department"], values = ["ALL"];
+    if (MedSphere.allWards(this) || mine !== "") for (const u of MedSphere.ROOM_UNITS) { labels.push(Db.unitName(u) + " only"); values.push(u); }
+    f.choice("audience", "Who can join", labels, values, mine === "" ? "ALL" : mine, null);
+    f.date("date", "Date", Dates.todayIso());
+    f.time("time", "Time", "14:00");
+    f.check("lobby", "Waiting room: the host lets people in", false);
+    Ui.formDialog(this, "Schedule a meeting", f, "Save", {
+      run: () => {
+        if (f.get("title").trim() === "") {
+          Ui.toast(this, "Enter a title, e.g. Journal club: SGLT2 inhibitors");
+          return false;
+        }
+        const cv = new ContentValues();
+        for (const k of ["title", "kind", "audience", "date", "time"]) cv.put(k, f.get(k).trim());
+        cv.put("lobby", "1" === f.get("lobby") ? "1" : "");
+        cv.put("by_name", Approvals.me(this));
+        cv.put("by_staff", String(Cloud.myStaff(this)));
+        cv.put("created", Dates.todayIso());
+        this.db.insert("meetings", cv);
+        Ui.toast(this, "Scheduled. Members see it in MedSphere.");
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  /** Gets the members-only pass from the server, then opens the meeting page in its own tab. */
+  join(room) {
+    let win = null;
+    try { win = window.open("", "_blank"); } catch (e) { }   // opened now, while the tap still counts, so pop-up blockers allow it
+    if (win) try { win.document.title = "MedSphere"; win.document.body.style.cssText = "background:#071233;color:#f5c451;font:16px sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"; win.document.body.textContent = "Connecting securely…"; } catch (e) { }
+    const pd = new ProgressDialog(this);
+    pd.setMessage("Connecting securely…");
+    pd.setCancelable(false);
+    pd.show();
+    new Thread({
+      run: () => {
+        let err = null, p = null;
+        try { Sync.push(this, this.db); } catch (ignored) { }
+        try {
+          p = MedSphere.pass(this, room);
+          if (p.has("error")) err = p.optString("error");
+        } catch (e) {
+          err = e && e.getMessage ? e.getMessage() : String(e);
+        }
+        this.runOnUiThread({
+          run: () => {
+            try { pd.dismiss(); } catch (ignored) { }
+            if (err != null) {
+              if (win) try { win.close(); } catch (e) { }
+              const m = err.indexOf("404") >= 0 || err.toLowerCase().indexOf("not found") >= 0
+                  ? "MedSphere is not switched on yet: the admin has to add the medsphere function and its keys in Supabase." : err;
+              new AlertDialog.Builder(this).setTitle("Could not join").setMessage(m).setPositiveButton("OK", null).show();
+              return;
+            }
+            const q = { u: p.optString("url"), t: p.optString("token"), k: p.optString("key"), n: p.optString("name"),
+              ti: p.optString("title", MedSphere.roomTitle(this.db, room)), h: p.optBoolean("host") ? "1" : "", r: room,
+              f: Cloud.url(this) + "/functions/v1/medsphere", a: Cloud.token(this), p: Cloud.key(this) };
+            const frag = Object.keys(q).map(k => k + "=" + encodeURIComponent(q[k] == null ? "" : q[k])).join("&");
+            const att = MedSphere.joined(this.db, this, room);
+            try { localStorage.setItem("medsphere_att", JSON.stringify({ room: room, att: att })); } catch (e) { }
+            const url = MedSphere.PAGE + "#" + frag;
+            if (win) win.location.href = url; else window.location.href = url;
+          }
+        });
+      }
+    }).start();
+  }
+}
+MedSphereActivity.BG_TOP = 0xFF0A1236; MedSphereActivity.BG_MID = 0xFF071030; MedSphereActivity.BG_END = 0xFF050A22;
+MedSphereActivity.CARD_A = 0xFF13306A; MedSphereActivity.CARD_B = 0xFF0B1D4A; MedSphereActivity.EDGE = 0x9944C8F2;
+MedSphereActivity.CYAN = 0xFF38D6F5; MedSphereActivity.GREEN = 0xFF4ADE80; MedSphereActivity.WHITE = 0xFFFFFFFF;
+MedSphereActivity.SOFT = 0xFFC9D6F5; MedSphereActivity.GOLD_LINE = 0xFFE8B04A;
 ;
 /* ---- app/Memo.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -73226,6 +75850,170 @@ class PageScan {
   }
 }
 ;
+/* ---- app/PalaceHome.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * The palace home top (10.65, the user's picture): the whole picture (res palace_home.webp, 1024 x 1536, with the HOD name,
+ * numbers, date, tiles and clock hands taken out) is the background, and the live parts are laid on it at the picture's own
+ * places. Members choose this or the old royal top in Settings, Look (home_look).
+ */
+class PalaceHome {
+  static W = 1024;
+  static H = 1536;
+  static LEFT_H = 770;
+  static RIGHT_H = 850;
+  static RIGHT_OFF = 686;
+  static GOLD = 0xFFF3CF72;
+
+  static prefs(c) {
+    return c.getApplicationContext().getSharedPreferences("look", Context.MODE_PRIVATE);
+  }
+
+  /**
+   * "grand" (10.68, the gold card for phones), "palace" or "royal". Once, on 10.68, a phone on the palace design moves to the
+   * new gold card (the user asked for it on phones); a phone that chose the old royal design keeps it.
+   */
+  static look(c) {
+    const p = PalaceHome.prefs(c);
+    if (!p.getBoolean("grand_v1", false)) {
+      const e = p.edit().putBoolean("grand_v1", true);
+      if (!"royal".equals(p.getString("home_look", "palace"))) e.putString("home_look", "grand");
+      e.apply();
+    }
+    const l = p.getString("home_look", "grand");
+    return l === "royal" || l === "palace" ? l : "grand";
+  }
+
+  /** True for the picture designs (gold card or palace), false for the old royal one. */
+  static on(c) {
+    return PalaceHome.look(c) !== "royal";
+  }
+
+  static set(c, look) {
+    PalaceHome.prefs(c).edit().putBoolean("grand_v1", true).putString("home_look", look).apply();
+  }
+
+  /** Puts a child at the picture's box (x0, y0)-(x1, y1), in picture pixels; k = screen pixels per picture pixel. */
+  static place(root, v, k, x0, y0, x1, y1) {
+    const lp = new FrameLayout.LayoutParams(Math.round((x1 - x0) * k), Math.round((y1 - y0) * k), Gravity.TOP | Gravity.LEFT);
+    lp.leftMargin = Math.round(x0 * k);
+    lp.topMargin = Math.round(y0 * k);
+    root.addView(v, lp);
+  }
+
+  /** One line of text sized in picture pixels, shrunk to fit its box width. */
+  static text(c, s, sizePx, color, serif, boxW) {
+    // 10.68: serif may be a Typeface itself
+    const tf = serif === true ? Typeface.create(Typeface.SERIF, Typeface.BOLD) : serif === false || serif == null ? Typeface.DEFAULT : serif;
+    const t = new TextView(c);
+    t.setText(s);
+    t.setTextColor(color);
+    t.setSingleLine(true);
+    t.setIncludeFontPadding(false);
+    t.setGravity(Gravity.CENTER);
+    t.setTypeface(tf);
+    const p = new Paint();
+    p.setTypeface(tf);
+    let sz = sizePx;
+    p.setTextSize(sz);
+    while (sz > 6 && p.measureText(s) > boxW * 0.96) {
+      sz *= 0.94;
+      p.setTextSize(sz);
+    }
+    t.setTextSize(TypedValue.COMPLEX_UNIT_PX, sz);
+    t.setShadowLayer(Math.max(1, sz * 0.12), 0, Math.max(1, sz * 0.06), 0xCC000000);
+    return t;
+  }
+
+  /** A see-through tap area. */
+  static tap(c, what, l) {
+    const v = new View(c);
+    v.setContentDescription(what);
+    v.setOnClickListener(l);
+    Ui.ripple(v, 0x22F5C451);
+    return v;
+  }
+}
+
+/** Live gold hands, a red seconds needle and the picture's ruby centre for the clock in the picture. */
+PalaceHome.Hands = class extends View {
+  /** The clock centre as fractions of the box; lengths in units where the box is base wide. 10.68: dark hands for a cream dial. */
+  constructor(c, hubRes, cxF, cyF, base, hourL, hourW, minL, minW, secL, secT, hubR, dark) {
+    super(c);
+    if (hubRes == null) { hubRes = R.drawable.palace_hub; cxF = 229 / 458; cyF = 160 / 332; base = 458; hourL = 56; hourW = 9; minL = 82; minW = 7; secL = 86; secT = 16; hubR = 15; dark = false; }
+    Object.assign(this, { cxF, cyF, base, hourL, hourW, minL, minW, secL, secT, hubR, dark: !!dark });
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    this.path = new Path();
+    this.box = new RectF();
+    this.hub = BitmapFactory.decodeResource(c.getResources(), hubRes);
+    if (this.hub && this.hub.ready) this.hub.ready.then(() => { if (this.isAttachedToWindow()) this.invalidate(); });
+  }
+  onDraw(cv) {
+    const p = this.p;
+    const w = this.getWidth(), h = this.getHeight();
+    if (w <= 0) return;
+    const cx = w * this.cxF, cy = h * this.cyF, u = w / this.base;
+    const now = new Date();
+    const sec = now.getSeconds(), min = now.getMinutes() + sec / 60, hr = (now.getHours() % 12) + min / 60;
+    this.hand(cv, cx, cy, hr / 12, u * this.hourL, u * this.hourW);
+    this.hand(cv, cx, cy, min / 60, u * this.minL, u * this.minW);
+    const a = Math.PI * 2 * sec / 60 - Math.PI / 2;
+    const ca = Math.cos(a), sa = Math.sin(a);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeCap(Paint.Cap.ROUND);
+    p.setStrokeWidth(Math.max(1, u * this.hourW * 0.2));
+    p.setColor(0xFFC0182B);
+    cv.drawLine(cx - u * this.secT * ca, cy - u * this.secT * sa, cx + u * this.secL * ca, cy + u * this.secL * sa, p);
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFFFFFFFF);
+    if (this.hub != null) {
+      const r = u * this.hubR;
+      this.box.set(cx - r, cy - r, cx + r, cy + r);
+      cv.drawBitmap(this.hub, null, this.box, p);
+    }
+    if (this.isAttachedToWindow()) this.postDelayed({ run: () => { if (this.isAttachedToWindow()) this.invalidate(); } }, 1000);
+  }
+  hand(cv, cx, cy, turn, len, wid) {
+    const p = this.p, path = this.path;
+    cv.save();
+    cv.translate(cx, cy);
+    cv.rotate(turn * 360);
+    path.reset();
+    path.moveTo(0, len * 0.16);
+    path.lineTo(-wid * 0.55, 0);
+    path.lineTo(-wid * 0.32, -len * 0.64);
+    path.lineTo(-wid * 1.6, -len * 0.72);
+    path.lineTo(-wid * 0.28, -len * 0.8);
+    path.lineTo(0, -len);
+    path.lineTo(wid * 0.28, -len * 0.8);
+    path.lineTo(wid * 1.6, -len * 0.72);
+    path.lineTo(wid * 0.32, -len * 0.64);
+    path.lineTo(wid * 0.55, 0);
+    path.close();
+    cv.save();
+    cv.translate(wid * 0.3, wid * 0.45);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(null);
+    p.setColor(0x80000000);
+    cv.drawPath(path, p);
+    cv.restore();
+    p.setColor(0xFFFFFFFF);
+    p.setShader(new LinearGradient(-wid * 1.6, 0, wid * 1.6, 0, this.dark ? [0xFF0B0A08, 0xFF3A3020, 0xFF15120C, 0xFF050403]
+      : [0xFF8A5E14, 0xFFFBE7A6, 0xFFE0A93C, 0xFF7A4E0E], null, Shader.TileMode.CLAMP));
+    cv.drawPath(path, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeJoin(Paint.Join.ROUND);
+    p.setStrokeWidth(Math.max(1, wid * (this.dark ? 0.2 : 0.14)));
+    p.setColor(this.dark ? 0xFFD9A93C : 0xFF4A2F06);
+    cv.drawPath(path, p);
+    p.setStyle(Paint.Style.FILL);
+    cv.restore();
+  }
+};
+;
 /* ---- app/PatientActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -74121,13 +76909,35 @@ class PatientRowDesign {
   }
 
   /** The red "+ Mark dengue" style button at the bottom of the right column. */
+  /** The big glossy action button of the fever ward picture ("Mark Dengue"). */
   static action(c, label, color, l) {
-    const t = Ui.tv(c, label, 13, Color.WHITE, true);
+    const t = Ui.tv(c, label, 15, Color.WHITE, true);
     t.setGravity(Gravity.CENTER);
-    t.setPadding(Ui.dp(c, 12), Ui.dp(c, 7), Ui.dp(c, 12), Ui.dp(c, 7));
-    t.setBackground(Ui.gradient(c, [Ui.mix(color, Color.WHITE, 0.12), Ui.mix(color, 0xFF000000, 0.12)], 16));
+    t.setPadding(Ui.dp(c, 18), Ui.dp(c, 10), Ui.dp(c, 18), Ui.dp(c, 10));
+    const g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [Ui.mix(color, Color.WHITE, 0.25), color, Ui.mix(color, 0xFF000000, 0.18)]);
+    g.setCornerRadius(Ui.dp(c, 24));
+    g.setStroke(Ui.dp(c, 1), 0x66FFFFFF);
+    t.setBackground(g);
+    t.setElevation(Ui.dp(c, 3));
     t.setOnClickListener(l);
     return t;
+  }
+
+  /** 10.52: "Parent : M4" or "Bed 5" with a small bed icon, as in the fever ward picture. */
+  static parent(c, s) {
+    const r = Ui.h(c);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(c, 10), Ui.dp(c, 4), Ui.dp(c, 12), Ui.dp(c, 4));
+    r.setBackground(Ui.round(c, 0xFFE3ECFA, 14));
+    const iv = new ImageView(c);
+    iv.setImageResource(R.drawable.ic_bed);
+    iv.setColorFilter(0xFF1E3A8A);
+    r.addView(iv, Ui.lp(Ui.dp(c, 18), Ui.dp(c, 18)));
+    const t = Ui.tv(c, s, 13, PatientRowDesign.NAVY, false);
+    t.setPadding(Ui.dp(c, 8), 0, 0, 0);
+    t.setSingleLine(true);
+    r.addView(t);
+    return r;
   }
 }
 ;
@@ -74490,6 +77300,17 @@ class People {
     return -1;
   }
 
+  /** a + the people of b not already in a, kept in board order. */
+  static merge(a, b) {
+    if (b.length === 0) return a;
+    const ids = new Set(a.map((s) => s.get("id")));
+    const all = a.slice();
+    for (const s of b) if (People.group(s.get("role")) !== 6 && !ids.has(s.get("id"))) { ids.add(s.get("id")); all.push(s); }
+    const out = [];
+    for (let g = 0; g < People.GROUPS.length; g++) for (const s of all) if (People.group(s.get("role")) === g) out.push(s);
+    return out;
+  }
+
   /** The members of a unit or special ward, in board order (PGs final year first). */
   static team(db, code) {
     const all = db.rows("SELECT * FROM staff WHERE unit=? AND " + Approvals.APPROVED_SQL + " ORDER BY name", code);
@@ -74521,6 +77342,10 @@ class People {
     let people = new ArrayList();
     // 10.27: MBBS students have their own card under the board, by year (Posting.unitCard)
     for (const s of People.team(db, teamOf)) if (People.group(s.get("role")) !== 6) people.add(s);
+    // 10.50 (user asked): the ID ward board is the in-charge unit's whole team, plus anyone posted to the ID ward itself;
+    // a ward like the CCB also shows the faculty of other units put in charge of it this month
+    if (teamOf !== code) people = People.merge(people, People.team(db, code));
+    people = People.merge(people, InCharge.faculty(db, code));
     Away.mirror(a, db);
     let th = People.theme(code);
     let card = Ui.card(a);
@@ -74596,6 +77421,9 @@ class People {
       card.addView(ch);
       Ui.margins(ch, 0, 8, 0, 0);
     }
+    // 10.56 (user asked): CCB, IMCU and Fever ward boards list today's in-charge faculty and duty PGs / CRMIs
+    const duty = People.dutyPanel(a, db, code);
+    if (duty !== null) card.addView(duty);
     let away = People.awayCard(a, db, people);
     if (away !== null) {
       card.addView(away);
@@ -74633,6 +77461,91 @@ class People {
     card.addView(foot);
     Ui.margins(foot, 0, 14, 0, 0);
     return outer;
+  }
+
+  // ---------- 10.56: "In charge & on duty today" on the CCB, IMCU and Fever ward boards ----------
+
+  static dutyWard(code) {
+    return Db.CCB === code || Db.IMCU === code || Db.FEVER === code;
+  }
+
+  static person(byName, name, role) {
+    const s = byName.get(DutyBoard.nameKey(name));
+    if (s) return s;
+    const m = new HashMap();
+    m.put("id", "0");
+    m.put("name", name.trim());
+    m.put("role", role);
+    return m;
+  }
+
+  static split(s) {
+    return Ui.nz(s).split(/[,;\/&\n]+/).map(n => n.trim()).filter(n => n.length > 0);
+  }
+
+  /** Today's in-charge Professor and Assistant Professor, then the duty PGs and CRMIs of the day and night shift. Null for other wards. */
+  static dutyPanel(a, db, code) {
+    if (!People.dutyWard(code)) return null;
+    const iso = Dates.admitDay().toString();
+    const byName = new HashMap();
+    for (const s of db.rows("SELECT * FROM staff WHERE " + Approvals.APPROVED_SQL)) byName.put(DutyBoard.nameKey(s.get("name")), s);
+    const ccb = Db.CCB === code ? db.row("SELECT * FROM ccb_duty WHERE date=? ORDER BY id DESC LIMIT 1", iso) : null;
+    const prof = [], ap = [];
+    const fac = [];
+    for (const s of db.rows("SELECT * FROM staff WHERE unit=? AND role IN ('Professor','Associate Professor','Assistant Professor') AND "
+        + Approvals.APPROVED_SQL + " ORDER BY name", code)) fac.push(s);
+    for (const s of InCharge.faculty(db, code)) fac.push(s);
+    if (ccb) {
+      for (const n of People.split(ccb.get("prof"))) fac.push(People.person(byName, n, "Professor"));
+      for (const n of People.split(ccb.get("ap"))) fac.push(People.person(byName, n, "Assistant Professor"));
+    }
+    const seen = new Set();
+    for (const s of fac) {
+      const k = DutyBoard.nameKey(s.get("name"));
+      if (seen.has(k)) continue;
+      seen.add(k);
+      if ("Assistant Professor" === s.get("role")) ap.push(s);
+      else prof.push(s);
+    }
+    const night = DutyBoard.nightNow();
+    const box = Ui.v(a);
+    const gl = People.groupHeading(a, "⭐", "In charge & on duty today");
+    box.addView(gl);
+    Ui.margins(gl, 0, 14, 0, 2);
+    box.addView(Ui.tv(a, Dates.nice(iso) + "  ·  shifts 7:30 AM to 7:30 PM and 7:30 PM to 7:30 AM", 11, 0xB3FFFFFF, false));
+    let n = 0;
+    n = People.dutyRow(a, box, "Professor in-charge", prof, false, n);
+    n = People.dutyRow(a, box, "Assistant Professor in-charge", ap, false, n);
+    const slots = [[DutyBoard.PG, "day_pg", "Duty PGs  ·  day", "Postgraduate"], [DutyBoard.PG, "night_pg", "Duty PGs  ·  night", "Postgraduate"],
+      [DutyBoard.CRMI, "day_crmi", "Duty CRMIs  ·  day", "CRMI"], [DutyBoard.CRMI, "night_crmi", "Duty CRMIs  ·  night", "CRMI"]];
+    for (const sl of slots) {
+      const isNight = sl[1].startsWith("night");
+      const names = ccb ? People.split(ccb.get(sl[1])) : [];
+      if (names.length === 0) for (const l of DutyBoard.shift(DutyBoard.onDuty(db, code, sl[0], iso), isNight)) if (names.indexOf(l.name) < 0) names.push(l.name);
+      const who = names.map(nm => People.person(byName, nm, sl[3]));
+      n = People.dutyRow(a, box, sl[2], who, isNight === night, n);
+    }
+    const hint = Ui.tv(a, "Duty names come by themselves from the rosters pasted on the PG and CRMI notice boards.", 11, 0x99FFFFFF, false);
+    box.addView(hint);
+    Ui.margins(hint, 0, 8, 0, 0);
+    return box;
+  }
+
+  static dutyRow(a, box, label, who, now, n) {
+    const h = Ui.h(a);
+    h.setGravity(Gravity.CENTER_VERTICAL);
+    h.addView(Ui.tv(a, label, 12, 0xFFF3D27A, true));
+    if (now) h.addView(Ui.tv(a, "  ● on duty now", 11, 0xFF4ADE80, true));
+    box.addView(h);
+    Ui.margins(h, 0, 10, 0, 4);
+    if (who.length === 0) {
+      box.addView(Ui.tv(a, "Not set", 13, 0x80FFFFFF, false));
+      return n;
+    }
+    const flow = new Bands.Flow(a);
+    for (const s of who) flow.addView(People.chip(a, s, People.NEON[n++ % People.NEON.length]));
+    box.addView(flow, Ui.lp(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+    return n;
   }
 
   /** A gold heading with its icon and a thin gold line running to the right. */
@@ -76569,6 +79482,79 @@ class PgLeaveActivity extends Base {
     return "Awaiting " + P.NODE_NAMES[s] + " approval";
   }
 
+  // ---------- 10.59 (user asked): PG leave in its own section on the home page ----------
+
+  static onHome(c) {
+    if (!Cloud.active(c)) return true;
+    const r = Cloud.role(c);
+    return r === "pg" || r === "faculty" || r === "professor" || Cloud.isManager(r);
+  }
+
+  static waitingForMe(a, db) {
+    let n = 0;
+    for (const r of db.rows("SELECT * FROM pg_leaves")) {
+      if (PgLeaveActivity.overall(r) !== "Awaiting approval") continue;
+      const st = PgLeaveActivity.stage(r);
+      if (st < PgLeaveActivity.HOD && PgLeaveActivity.canApprove(a, st)) n++;
+    }
+    return n;
+  }
+
+  /** 10.68: the PG leave line and button name for the gold card home: [line, button, waiting count]. */
+  static homeLine(a, db) {
+    const P = PgLeaveActivity;
+    const pg = !Cloud.active(a) || "pg" === Cloud.role(a);
+    const me = Cloud.myStaff(a);
+    const mine = me > 0 ? db.row("SELECT * FROM pg_leaves WHERE staff_id=? ORDER BY from_date DESC, id DESC LIMIT 1", String(me)) : null;
+    const wait = pg && Cloud.active(a) ? 0 : P.waitingForMe(a, db);
+    let line;
+    if (wait > 0) line = wait + (wait === 1 ? " leave is" : " leaves are") + " waiting for your approval";
+    else if (mine != null) line = "Your leave " + Dates.nice(mine.get("from_date")) + ": " + P.stageText(mine);
+    else line = pg ? "Apply for leave and follow each approval here" : "No leave waiting for you";
+    return [line, wait > 0 ? "Approve now" : pg ? "Apply or open PG leave" : "Open PG leave", String(wait)];
+  }
+
+  static homeCard(a, db) {
+    if (!PgLeaveActivity.onHome(a)) return null;
+    const P = PgLeaveActivity;
+    const pg = !Cloud.active(a) || "pg" === Cloud.role(a);
+    const me = Cloud.myStaff(a);
+    const mine = me > 0 ? db.row("SELECT * FROM pg_leaves WHERE staff_id=? ORDER BY from_date DESC, id DESC LIMIT 1", String(me)) : null;
+    const wait = pg && Cloud.active(a) ? 0 : P.waitingForMe(a, db);
+    const card = Ui.v(a);
+    card.setBackground(Ui.gradient(a, [P.NAVY, P.INK, P.SHEET], 20));
+    card.setElevation(Ui.dp(a, 4));
+    card.setPadding(Ui.dp(a, 14), Ui.dp(a, 12), Ui.dp(a, 14), Ui.dp(a, 12));
+    const lp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.setMargins(Ui.dp(a, 10), Ui.dp(a, 6), Ui.dp(a, 10), Ui.dp(a, 4));
+    card.setLayoutParams(lp);
+    const top = Ui.h(a);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    const ic = new ImageView(a);
+    ic.setImageResource(R.drawable.ic_mail);
+    ic.setColorFilter(P.GOLD);
+    top.addView(ic, Ui.lp(Ui.dp(a, 26), Ui.dp(a, 26)));
+    const tt = Ui.v(a);
+    tt.setPadding(Ui.dp(a, 10), 0, 0, 0);
+    tt.addView(Ui.tv(a, "PG leave", 18, P.GOLD, true));
+    let line;
+    if (wait > 0) line = wait + (wait == 1 ? " leave is" : " leaves are") + " waiting for your approval";
+    else if (mine != null) line = "Your leave " + Dates.nice(mine.get("from_date")) + ": " + P.stageText(mine);
+    else line = pg ? "Apply for leave and follow each approval here" : "No leave waiting for you";
+    tt.addView(Ui.tv(a, line, 13, 0xF2FFFFFF, false));
+    top.addView(tt, Ui.weight(1));
+    if (wait > 0) top.addView(Ui.softPill(a, String(wait), Ui.RED));
+    card.addView(top);
+    const btns = Ui.h(a);
+    if (pg) btns.addView(Ui.button(a, "+ Apply for leave", P.INDIGO, a.opener(PgLeaveFormActivity)), Ui.weight(1));
+    const open = Ui.button(a, wait > 0 ? "Approve now" : "Open PG leave", P.GOLD_DEEP, a.opener(PgLeaveActivity));
+    btns.addView(open, Ui.weight(1));
+    if (pg) open.getLayoutParams().leftMargin = Ui.dp(a, 8);
+    card.addView(btns);
+    Ui.margins(btns, 0, 10, 0, 0);
+    return card;
+  }
+
   /** The Leave Journey: a label box over four glowing steps joined by a gold line (dashed where still to come). */
   journey(r) {
     const P = PgLeaveActivity;
@@ -77521,7 +80507,7 @@ class PgLeaveFormActivity extends Base {
  * Faculty and students come from the staff list; the HOD's number from settings; admin, workers and other numbers from contacts.
  */
 class PhoneDirectoryActivity extends Base {
-  constructor() { super(); this.group = "All"; this.query = ""; this.list = null; }
+  constructor() { super(); this.group = "All"; this.query = ""; this.list = null; /** Groups folded shut by a tap on their navy bar. */ this.folded = new JSet(); }
 
   static COLOR = 0xFF2563EB;
   static CATS = ["ADMIN", "WORKER", "OTHER"];
@@ -77547,9 +80533,6 @@ class PhoneDirectoryActivity extends Base {
     this.setTitle("Phone directory");
     this.subtitle = "Faculty, students and workers";
     this.headerColor(PhoneDirectoryActivity.COLOR);
-    if (PhoneDirectoryActivity.canEdit(this)) this.headerAction("+ Add", {
-      onClick: (v) => { this.contactDialog(null); }
-    });
   }
 
   /** Faculty and the HOD, the admin add and correct numbers; everyone can look them up. */
@@ -77651,115 +80634,333 @@ class PhoneDirectoryActivity extends Base {
 
   // ---------- screen ----------
 
-  render() {
-    const P = PhoneDirectoryActivity;
-    const page = Ui.v(this);
-    const all = P.entries(this.db);
+  /** 10.51 (user's picture): no plain header: the royal blue picture band with the back circle sits at the top of the page. */
+  header() {
+    this.getWindow().setStatusBarColor(0xFF0A2A7A);
+    let v = Ui.v(this);
+    v.setLayoutParams(Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, 0));
+    return v;
+  }
 
-    const chips = Ui.h(this);
-    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), Ui.dp(this, 2));
-    const opts = [];
+  static ROYAL = 0xFF0B2A6F;
+  static ROYAL_DEEP = 0xFF071C4F;
+  static INK = 0xFF0B1F4D;
+  static LINK = 0xFF1D4ED8;
+  static GOLD = 0xFFF5C451;
+  static GROUP_ICONS = [R.drawable.ic_verified, R.drawable.ic_school, R.drawable.ic_school, R.drawable.ic_school, R.drawable.ic_people,
+      R.drawable.ic_badge, R.drawable.ic_group, R.drawable.ic_contacts, R.drawable.ic_phone];
+
+  static iconOf(g) {
+    for (let i = 0; i < PhoneDirectoryActivity.GROUPS.length; i++) if (PhoneDirectoryActivity.GROUPS[i].equals(g)) return PhoneDirectoryActivity.GROUP_ICONS[i];
+    return R.drawable.ic_group;
+  }
+  render() {
+    this.pageBg = 0xFFE6EEFB;
+    let w = this.getResources().getDisplayMetrics().widthPixels;
+    let page = Ui.v(this);
+    page.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+        [0xFFCFDDF7, 0xFFEAF1FC, 0xFFF4F7FD]));
+    let add = !PhoneDirectoryActivity.canEdit(this) ? null : TopBanner.pill(this, "+ Add", { onClick: (v) => { this.contactDialog(null); }
+    });
+    let top = TopBanner.make(this, R.drawable.pd_top, 1199, 204, w, "TVMCHMED Phone Directory: Faculty, Students, Staff", add);
+    page.addView(top);
+    Ui.margins(top, 0, -8, 0, 0);
+    top.getLayoutParams().width = w;
+    let all = PhoneDirectoryActivity.entries(this.db);
+
+    let chips = new Bands.Flow(this);
+    chips.setPadding(Ui.dp(this, 12), Ui.dp(this, 10), Ui.dp(this, 12), Ui.dp(this, 4));
+    let opts = [];
     opts.add("All");
-    for (const g of P.GROUPS) opts.add(g);
+    for (const g of PhoneDirectoryActivity.GROUPS) opts.add(g);
     for (const g of opts) {
       let n = 0;
       for (const e of all) if (g.equals("All") || g.equals(e.group)) n++;
-      if (n === 0 && !g.equals("All") && !g.equals(P.WORKERS)) continue;
-      const c = Ui.chip(this, g + "  " + n, g.equals(this.group), g.equals("All") ? P.COLOR : P.colorOf(g));
-      c.setOnClickListener({
-        onClick: (v) => { this.group = g; this.render(); }
+      if (n === 0 && !g.equals("All") && !g.equals(PhoneDirectoryActivity.WORKERS)) continue;
+      let c = this.chip(g, n, g.equals(this.group));
+      c.setOnClickListener({ onClick: (v) => { this.group = g; this.render(); }
       });
       chips.addView(c);
     }
-    page.addView(Ui.hscroll(this, chips));
+    page.addView(chips);
 
-    const search = new EditText(this);
-    search.setHint("Search name, post, unit or number");
+    let sr = Ui.h(this);
+    sr.setGravity(Gravity.CENTER_VERTICAL);
+    let box = Ui.h(this);
+    box.setGravity(Gravity.CENTER_VERTICAL);
+    let bg = Ui.round(this, 0xFFFFFFFF, 24);
+    bg.setStroke(Ui.dp(this, 1.5), 0xFFB9CDF0);
+    box.setBackground(bg);
+    box.setElevation(Ui.dp(this, 2));
+    box.setPadding(Ui.dp(this, 14), 0, Ui.dp(this, 10), 0);
+    box.addView(TopBanner.icon(this, R.drawable.ic_search, PhoneDirectoryActivity.LINK, 22));
+    let search = new EditText(this);
+    search.setHint("Search name, post, unit or number...");
     search.setSingleLine(true);
     search.setText(this.query);
-    search.setBackground(Glass.panel(this, 14));
-    search.setPadding(Ui.dp(this, 14), Ui.dp(this, 10), Ui.dp(this, 14), Ui.dp(this, 10));
+    search.setTextColor(PhoneDirectoryActivity.INK);
+    search.setHintTextColor(0xFF64748B);
+    search.setBackground(null);
+    search.setPadding(Ui.dp(this, 10), Ui.dp(this, 11), Ui.dp(this, 4), Ui.dp(this, 11));
     search.addTextChangedListener({
       beforeTextChanged: (s, a, b, c) => {},
       onTextChanged: (s, a, b, c) => {},
       afterTextChanged: (e) => { this.query = e.toString().trim(); this.fillList(); }
     });
-    page.addView(search);
-    Ui.margins(search, 12, 6, 12, 2);
+    box.addView(search, Ui.weight(1));
+    sr.addView(box, Ui.weight(1));
+    // the round navy button with a gold ring: pick a group from a list
+    let flt = TopBanner.icon(this, R.drawable.ic_tune, 0xFFFFFFFF, 46);
+    let fp = Ui.dp(this, 12);
+    flt.setPadding(fp, fp, fp, fp);
+    let fg = new GradientDrawable(
+        GradientDrawable.Orientation.TOP_BOTTOM, [0xFF1E40AF, PhoneDirectoryActivity.ROYAL_DEEP]);
+    fg.setCornerRadius(Ui.dp(this, 23));
+    fg.setStroke(Ui.dp(this, 2.5), PhoneDirectoryActivity.GOLD);
+    flt.setBackground(fg);
+    flt.setElevation(Ui.dp(this, 3));
+    flt.setContentDescription("Choose a group");
+    let pick = opts;
+    flt.setOnClickListener({ onClick: (v) => {
+        new AlertDialog.Builder(this).setTitle("Show")
+            .setItems(pick.slice(), { onClick: (d, which) => { this.group = pick.get(which); this.render(); }
+            }).setNegativeButton("Close", null).show();
+      }
+    });
+    sr.addView(flt);
+    Ui.margins(flt, 10, 0, 0, 0);
+    flt.getLayoutParams().width = Ui.dp(this, 46);
+    flt.getLayoutParams().height = Ui.dp(this, 46);
+    page.addView(sr);
+    Ui.margins(sr, 12, 6, 12, 4);
 
     this.list = Ui.v(this);
     page.addView(this.list);
     this.fillList();
+    this.bottomBar = this.bottomNav();
     this.setPage(page);
+  }
+
+  /** A counted chip: soft blue glass, gold when it is the one shown. */
+  chip(g, n, on) {
+    let c = Ui.h(this);
+    c.setGravity(Gravity.CENTER_VERTICAL);
+    let d = TopBanner.grad(on ? [0xFFFDE68A, 0xFFF6C445, 0xFFE0A21C] : [0xFFFFFFFF, 0xFFE3ECFB], Ui.dp(this, 20));
+    d.setStroke(Ui.dp(this, 1.5), on ? 0xFFC98A12 : 0xFFB9CDF0);
+    c.setBackground(d);
+    c.setElevation(Ui.dp(this, on ? 4 : 2));
+    c.setPadding(Ui.dp(this, 12), Ui.dp(this, 7), Ui.dp(this, 14), Ui.dp(this, 7));
+    c.addView(TopBanner.icon(this, g.equals("All") ? R.drawable.ic_group : PhoneDirectoryActivity.iconOf(g), on ? PhoneDirectoryActivity.INK : PhoneDirectoryActivity.ROYAL, 18));
+    let t = Ui.tv(this, "  " + (g.equals(PhoneDirectoryActivity.HOD) ? "HOD & Admin" : g), 13, PhoneDirectoryActivity.INK, on);
+    c.addView(t);
+    let k = Ui.tv(this, "  " + n, 14, PhoneDirectoryActivity.INK, true);
+    c.addView(k);
+    Ui.ripple(c, 0x332563EB);
+    return c;
+  }
+
+  fillList() {
+    this.list.removeAllViews();
+    let all = PhoneDirectoryActivity.entries(this.db);
+    let shown = 0;
+    for (const g of PhoneDirectoryActivity.GROUPS) {
+      if (!this.group.equals("All") && !this.group.equals(g)) continue;
+      let ins = [];
+      for (const e of all) if (e.group.equals(g) && PhoneDirectoryActivity.matches(e, this.query)) ins.add(e);
+      if (ins.isEmpty() && !(g.equals(PhoneDirectoryActivity.WORKERS) && this.group.equals(PhoneDirectoryActivity.WORKERS))) continue;
+      let shut = this.folded.contains(g) && this.query.isEmpty();
+      let card = Ui.v(this);
+      let cb = Ui.round(this, 0xFFFFFFFF, 18);
+      cb.setStroke(Ui.dp(this, 1.2), 0xFFE3C46A);
+      card.setBackground(cb);
+      card.setElevation(Ui.dp(this, 3));
+      // the navy bar: icon, name (count), chevron; a tap folds the group
+      let bar = Ui.h(this);
+      bar.setGravity(Gravity.CENTER_VERTICAL);
+      let bb = new GradientDrawable(
+          GradientDrawable.Orientation.LEFT_RIGHT, [PhoneDirectoryActivity.ROYAL_DEEP, 0xFF143C94, PhoneDirectoryActivity.ROYAL]);
+      let r = Ui.dp(this, 18);
+      bb.setCornerRadii(shut ? [r, r, r, r, r, r, r, r] : [r, r, r, r, 0, 0, 0, 0]);
+      bar.setBackground(bb);
+      bar.setPadding(Ui.dp(this, 16), Ui.dp(this, 11), Ui.dp(this, 16), Ui.dp(this, 11));
+      bar.addView(TopBanner.icon(this, PhoneDirectoryActivity.iconOf(g), PhoneDirectoryActivity.GOLD, 22));
+      let bt = Ui.tv(this, "  " + (g.equals(PhoneDirectoryActivity.HOD) ? "HOD & Admin" : g) + "  (" + ins.size() + ")", 17, 0xFFFFFFFF, true);
+      bt.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD_ITALIC));
+      bar.addView(bt, Ui.weight(1));
+      bar.addView(Ui.tv(this, shut ? "⌄" : "⌃", 20, PhoneDirectoryActivity.GOLD, true));
+      Ui.ripple(bar, 0x33FFFFFF);
+      bar.setOnClickListener({ onClick: (v) => {
+          if (!this.folded.remove(g)) this.folded.add(g);
+          this.fillList();
+        }
+      });
+      card.addView(bar);
+      if (!shut) {
+        let body = Ui.v(this);
+        body.setPadding(Ui.dp(this, 12), Ui.dp(this, 2), Ui.dp(this, 12), Ui.dp(this, 4));
+        for (let i = 0; i < ins.size(); i++) {
+          if (i > 0) {
+            let d = new View(this);
+            d.setBackgroundColor(0x55E3C46A);
+            body.addView(d, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, Ui.dp(this, 1))));
+          }
+          body.addView(this.row(ins.get(i)));
+        }
+        if (ins.isEmpty()) {
+          let m = Ui.muted(this, PhoneDirectoryActivity.canEdit(this) ? "No workers yet. Tap “+ Add” to add nurses, attenders, technicians and others." : "No workers added yet.");
+          m.setPadding(0, Ui.dp(this, 12), 0, Ui.dp(this, 12));
+          body.addView(m);
+        }
+        card.addView(body);
+      }
+      this.list.addView(card);
+      Ui.margins(card, 12, 10, 12, 0);
+      shown += ins.size();
+    }
+    if (shown === 0 && !this.query.isEmpty()) this.list.addView(this.emptyNote("No one matches “" + this.query + "”."));
+  }
+
+  row(e) {
+    let rw = Ui.h(this);
+    rw.setGravity(Gravity.CENTER_VERTICAL);
+    rw.setPadding(0, Ui.dp(this, 9), 0, Ui.dp(this, 9));
+    let wide = this.getResources().getConfiguration().screenWidthDp >= 600;
+    // the navy initials disc with a gold ring; the HOD's carries a gold star
+    let avf = new FrameLayout(this);
+    let av = Ui.tv(this, PhoneDirectoryActivity.initials(e.name), 16, 0xFFFFFFFF, true);
+    av.setGravity(Gravity.CENTER);
+    let ag = new GradientDrawable(
+        GradientDrawable.Orientation.TOP_BOTTOM, [0xFF1E40AF, PhoneDirectoryActivity.ROYAL_DEEP]);
+    ag.setCornerRadius(Ui.dp(this, 23));
+    ag.setStroke(Ui.dp(this, 2.5), PhoneDirectoryActivity.GOLD);
+    av.setBackground(ag);
+    avf.addView(av, new FrameLayout.LayoutParams(Ui.dp(this, 46), Ui.dp(this, 46)));
+    if ("hod".equals(e.src)) {
+      let star = TopBanner.icon(this, R.drawable.ic_star, PhoneDirectoryActivity.GOLD, 18);
+      avf.addView(star, new FrameLayout.LayoutParams(Ui.dp(this, 18), Ui.dp(this, 18), Gravity.BOTTOM | Gravity.END));
+    }
+    rw.addView(avf, new LinearLayout.LayoutParams(Ui.dp(this, 50), Ui.dp(this, 50)));
+    let t = Ui.v(this);
+    t.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 6), 0);
+    let nm = Ui.tv(this, e.name, 16, PhoneDirectoryActivity.INK, true);
+    t.addView(nm);
+    let pl = wide ? Ui.h(this) : Ui.v(this);
+    if (wide) pl.setGravity(Gravity.CENTER_VERTICAL);
+    if (!e.post.isEmpty()) {
+      let po = Ui.tv(this, e.post, 13.5, PhoneDirectoryActivity.LINK, false);
+      pl.addView(po);
+      if (wide) po.setPadding(0, 0, Ui.dp(this, 18), 0);
+    }
+    let ph = Ui.h(this);
+    ph.setGravity(Gravity.CENTER_VERTICAL);
+    ph.addView(TopBanner.icon(this, R.drawable.ic_phone, e.phone.isEmpty() ? 0xFF94A3B8 : PhoneDirectoryActivity.LINK, 15));
+    ph.addView(Ui.tv(this, "  " + (e.phone.isEmpty() ? "No number yet" : e.phone), e.phone.isEmpty() ? 13 : 15, e.phone.isEmpty() ? 0xFF64748B : PhoneDirectoryActivity.LINK, !e.phone.isEmpty()));
+    pl.addView(ph);
+    t.addView(pl);
+    rw.addView(t, Ui.weight(1));
+    if (!e.phone.isEmpty()) {
+      let call = this.greenPill(R.drawable.ic_phone, "Call", { onClick: (v) => {
+          try { this.startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + PhoneDirectoryActivity.dialable(e.phone)))); } catch (ignored) {}
+        }
+      });
+      rw.addView(call);
+      if (wide) {
+        let sep = new View(this);
+        sep.setBackgroundColor(0x80E3C46A);
+        let sl = new LinearLayout.LayoutParams(Ui.dp(this, 1), Ui.dp(this, 30));
+        sl.setMargins(Ui.dp(this, 10), 0, Ui.dp(this, 10), 0);
+        rw.addView(sep, sl);
+      }
+      let wa = this.greenPill(R.drawable.ic_chat, "WhatsApp", { onClick: (v) => {
+          try { this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/" + PhoneDirectoryActivity.whatsapp(e.phone)))); } catch (ignored) {}
+        }
+      });
+      rw.addView(wa);
+      if (!wide) Ui.margins(wa, 6, 0, 0, 0);
+    } else {
+      let sep = new View(this);
+      sep.setBackgroundColor(0x80E3C46A);
+      let sl = new LinearLayout.LayoutParams(Ui.dp(this, 1), Ui.dp(this, 36));
+      sl.setMargins(Ui.dp(this, 10), 0, Ui.dp(this, 14), 0);
+      rw.addView(sep, sl);
+      rw.addView(Ui.tv(this, "›", 26, 0xFFD4A537, true));
+    }
+    Ui.ripple(rw, 0x1A2563EB);
+    rw.setOnClickListener({ onClick: (v) => { this.detail(e); }
+    });
+    return rw;
+  }
+
+  /** The green glossy button of the picture, with a white icon. */
+  greenPill(icon, label, l) {
+    let narrow = this.getResources().getConfiguration().screenWidthDp < 420;
+    let p = Ui.h(this);
+    p.setGravity(Gravity.CENTER_VERTICAL);
+    let g = TopBanner.grad([0xFF34D96F, 0xFF16A34A, 0xFF0F7A37], Ui.dp(this, 20));
+    g.setStroke(Ui.dp(this, 1), 0x99FFFFFF);
+    p.setBackground(g);
+    p.setElevation(Ui.dp(this, 2));
+    p.setPadding(Ui.dp(this, narrow ? 8 : 12), Ui.dp(this, 7), Ui.dp(this, narrow ? 10 : 14), Ui.dp(this, 7));
+    p.addView(TopBanner.icon(this, icon, 0xFFFFFFFF, 16));
+    if (!(narrow && label.equals("WhatsApp"))) p.addView(Ui.tv(this, " " + label, 13, 0xFFFFFFFF, true));
+    else p.addView(Ui.tv(this, " WA", 13, 0xFFFFFFFF, true));
+    p.setContentDescription(label);
+    Ui.ripple(p, 0x44FFFFFF);
+    p.setOnClickListener(l);
+    return p;
+  }
+
+  /** Home, this directory, the gold dial-pad medallion, Updates (the notice board) and Settings. */
+  bottomNav() {
+    let f = new FrameLayout(this);
+    let b = Ui.h(this);
+    b.setGravity(Gravity.CENTER_VERTICAL);
+    b.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+        [0xF2143C94, 0xFA071C4F]));
+    b.setPadding(Ui.dp(this, 6), Ui.dp(this, 4), Ui.dp(this, 6), Ui.dp(this, 6));
+    let idle = 0xF2FFFFFF;
+    b.addView(TopBanner.navItem(this, R.drawable.ic_home, "Home", false, idle, { onClick: (v) => { MainActivity.goTab(this, 0); }
+    }), Ui.weight(1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_group, "Directory", true, idle, { onClick: (v) => { if (this._scroll != null) this._scroll.smoothScrollTo(0, 0); }
+    }), Ui.weight(1));
+    b.addView(new View(this), new LinearLayout.LayoutParams(Ui.dp(this, 76), 1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_notice, "Updates", false, idle, { onClick: (v) => { MainActivity.goTab(this, 3); }
+    }), Ui.weight(1));
+    b.addView(TopBanner.navItem(this, R.drawable.ic_tune, "Settings", false, idle, { onClick: (v) => { this.open(SettingsActivity); }
+    }), Ui.weight(1));
+    let bl = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+    bl.setMargins(0, Ui.dp(this, 16), 0, 0);
+    f.addView(b, bl);
+    let line = new View(this);
+    line.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+        [0x00F5C451, PhoneDirectoryActivity.GOLD, 0x00F5C451]));
+    let ll = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Ui.dp(this, 2), Gravity.TOP);
+    ll.setMargins(0, Ui.dp(this, 16), 0, 0);
+    f.addView(line, ll);
+    // the gold medallion in the middle opens the phone's dial pad
+    let med = TopBanner.icon(this, R.drawable.ic_phone, 0xFF5B3A06, 60);
+    let mp = Ui.dp(this, 15);
+    med.setPadding(mp, mp, mp, mp);
+    let mg = new GradientDrawable(
+        GradientDrawable.Orientation.TOP_BOTTOM, [0xFFFFF0B3, 0xFFF5C451, 0xFFB7791F]);
+    mg.setCornerRadius(Ui.dp(this, 30));
+    mg.setStroke(Ui.dp(this, 3), 0xFF0B2A6F);
+    med.setBackground(mg);
+    med.setElevation(Ui.dp(this, 6));
+    med.setContentDescription("Dial pad");
+    med.setOnClickListener({ onClick: (v) => {
+        try { this.startActivity(new Intent(Intent.ACTION_DIAL)); } catch (ignored) {}
+      }
+    });
+    f.addView(med, new FrameLayout.LayoutParams(Ui.dp(this, 60), Ui.dp(this, 60), Gravity.TOP | Gravity.CENTER_HORIZONTAL));
+    return f;
   }
 
   static colorOf(g) {
     const P = PhoneDirectoryActivity;
     for (let i = 0; i < P.GROUPS.length; i++) if (P.GROUPS[i].equals(g)) return P.GROUP_COLORS[i];
     return P.COLOR;
-  }
-
-  fillList() {
-    const P = PhoneDirectoryActivity;
-    this.list.removeAllViews();
-    const all = P.entries(this.db);
-    let shown = 0;
-    for (const g of P.GROUPS) {
-      if (!this.group.equals("All") && !this.group.equals(g)) continue;
-      const inn = [];
-      for (const e of all) if (e.group.equals(g) && P.matches(e, this.query)) inn.add(e);
-      if (inn.isEmpty() && !(g.equals(P.WORKERS) && this.group.equals(P.WORKERS))) continue;
-      this.list.addView(Ui.heading(this, g + "  (" + inn.size() + ")", P.colorOf(g)));
-      const card = Ui.card(this);
-      for (let i = 0; i < inn.size(); i++) {
-        if (i > 0) card.addView(Ui.divider(this));
-        card.addView(this.row(inn.get(i)));
-      }
-      if (inn.isEmpty()) card.addView(Ui.muted(this, P.canEdit(this) ? "No workers yet. Tap “+ Add” to add nurses, attenders, technicians and others." : "No workers added yet."));
-      this.list.addView(card);
-      shown += inn.size();
-    }
-    if (shown === 0 && !this.query.isEmpty()) this.list.addView(this.emptyNote("No one matches “" + this.query + "”."));
-  }
-
-  row(e) {
-    const P = PhoneDirectoryActivity;
-    const row = Ui.h(this);
-    row.setGravity(Gravity.CENTER_VERTICAL);
-    row.setPadding(0, Ui.dp(this, 7), 0, Ui.dp(this, 7));
-    const av = Ui.tv(this, P.initials(e.name), 14, Color.WHITE, true);
-    av.setGravity(Gravity.CENTER);
-    av.setBackground(Ui.round(this, P.colorOf(e.group), 19));
-    row.addView(av, new LinearLayout.LayoutParams(Ui.dp(this, 38), Ui.dp(this, 38)));
-    const t = Ui.v(this);
-    t.setPadding(Ui.dp(this, 10), 0, Ui.dp(this, 6), 0);
-    t.addView(Ui.tv(this, e.name, 15, Ui.TEXT, true));
-    if (!e.post.isEmpty()) t.addView(Ui.muted(this, e.post));
-    const ph = Ui.tv(this, e.phone.isEmpty() ? "No number yet" : e.phone, 14, e.phone.isEmpty() ? 0xFF94A3B8 : P.COLOR, !e.phone.isEmpty());
-    t.addView(ph);
-    row.addView(t, Ui.weight(1));
-    if (!e.phone.isEmpty()) {
-      const call = Ui.softPill(this, "Call", Ui.GREEN);
-      call.setOnClickListener({
-        onClick: (v) => {
-          try { this.startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + P.dialable(e.phone)))); } catch (ignored) {}
-        }
-      });
-      row.addView(call);
-      const wa = Ui.softPill(this, "WhatsApp", 0xFF16A34A);
-      wa.setOnClickListener({
-        onClick: (v) => {
-          try { this.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/" + P.whatsapp(e.phone)))); } catch (ignored) {}
-        }
-      });
-      row.addView(wa);
-      Ui.margins(wa, 6, 0, 0, 0);
-    }
-    Ui.ripple(row, Ui.alpha(P.colorOf(e.group), 0x1A));
-    row.setOnClickListener({
-      onClick: (v) => { this.detail(e); }
-    });
-    return row;
   }
 
   static initials(name) {
@@ -78687,6 +81888,27 @@ class Posting {
    * Adds the pasted students to the posting: each becomes (or stays) an MBBS student entry in the Students list with the
    * posting's year and their unit, and a member of the posting. Returns {added to the posting, already there, without a unit}.
    */
+  /** 10.59: the MBBS students of this posting who are in no other posting. */
+  static onlyHere(db, postingId) {
+    const out = [];
+    for (const m of db.rows("SELECT staff_id FROM posting_members WHERE posting_id=? AND staff_id NOT IN "
+        + "(SELECT staff_id FROM posting_members WHERE posting_id<>?)", String(postingId), String(postingId))) {
+      const s = db.row("SELECT role FROM staff WHERE id=?", m.get("staff_id"));
+      if (s != null && Ui.nz(s.get("role")).startsWith("MBBS") && out.indexOf(m.get("staff_id")) < 0) out.push(m.get("staff_id"));
+    }
+    return out;
+  }
+
+  /** 10.59 (user asked): removes a posting put in by mistake: its list, attendance and marks, and (if asked) the students only in it. */
+  static remove(db, postingId, students) {
+    const pid = String(postingId);
+    const only = students ? Posting.onlyHere(db, postingId) : [];
+    for (const t of ["posting_att", "posting_marks", "posting_members"])
+      for (const r of db.rows("SELECT id FROM " + t + " WHERE posting_id=?", pid)) db.delete(t, Long.parseLong(String(r.get("id"))));
+    db.delete("postings", Long.parseLong(pid));
+    for (const s of only) db.deleteStaff(Long.parseLong(String(s)));
+  }
+
   static importList(db, c, postingId, lines, defaultUnit) {
     const p = Posting.posting(db, postingId);
     const year = Ui.nz(p.get("year")).isEmpty() ? Db.MBBS_ROLES[0] : p.get("year");
@@ -79439,6 +82661,27 @@ class PostingActivity extends Base {
     });
   }
 
+  removeDialog(p) {
+    const db = this.db, id = this.id;
+    const n = Posting.count(db, id, null);
+    const only = Posting.onlyHere(db, id).length;
+    const items = only > 0
+      ? ["Remove the posting and its " + only + (only == 1 ? " student" : " students") + " (not in any other posting)", "Remove the posting only (keep the students' names)"]
+      : ["Remove the posting"];
+    new AlertDialog.Builder(this).setTitle("Remove " + Posting.label(p) + "?")
+      .setItems(items, (d, which) => {
+        const students = only > 0 && which === 0;
+        Ui.confirm(this, "Remove this posting order?", n + " students, their attendance and marks in this posting go from every phone."
+          + (students ? " Their names go from the Students list too." : "") + " This cannot be undone.", "Remove", {
+          run: () => {
+            Posting.remove(db, id, students);
+            Ui.toast(this, "Posting removed. Paste the right order on the posting list.");
+            this.finish();
+          }
+        });
+      }).setNegativeButton("Cancel", null).show();
+  }
+
   /** Paste the posting list: "Sl.No  Name  M-1" per line, as on the department's printed list. */
   pasteDialog(pid) {
     const f = new Form(this);
@@ -79507,6 +82750,10 @@ class PostingActivity extends Base {
       });
       hero.addView(show);
       Ui.margins(show, 0, 8, 0, 0);
+      // 10.59 (user asked): a posting order put in by mistake can be removed, then the right one pasted
+      const del = Ui.outlineButton(this, "Remove this posting order", Ui.RED, { onClick: (v) => { this.removeDialog(p); } });
+      hero.addView(del);
+      Ui.margins(del, 0, 8, 0, 0);
     }
     page.addView(hero);
 
@@ -86390,71 +89637,94 @@ RoyalHome.GoldBar = class extends Drawable {
 };
 
 /** The gold clock with Roman numerals and a faint gear train behind the hands; it ticks every second. */
+/**
+ * 10.63 (user's picture): the royal TVMCHMED clock. The picture (res royal_clock.webp, cut out, its painted hands removed) with
+ * live gold hands and the picture's own ruby centre (royal_clock_hub.webp) on top. Dial centre and sizes are fractions of the picture.
+ */
 RoyalHome.Clock = class extends View {
-  constructor(c) { super(c); this.p = new Paint(Paint.ANTI_ALIAS_FLAG); }
+  constructor(c) {
+    super(c);
+    this.p = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    this.face = BitmapFactory.decodeResource(c.getResources(), R.drawable.royal_clock);
+    this.hub = BitmapFactory.decodeResource(c.getResources(), R.drawable.royal_clock_hub);
+    this.box = new RectF();
+    this.path = new Path();
+    for (const b of [this.face, this.hub]) if (b && b.ready) b.ready.then(() => { if (this.isAttachedToWindow()) this.invalidate(); });
+  }
   onDraw(cv) {
-    const p = this.p;
-    const w = this.getWidth(), h = this.getHeight(), cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2;
-    if (R <= 0) return;
-    p.setColor(0xFFFFFFFF);
-    p.setStyle(Paint.Style.FILL);
-    p.setShader(new LinearGradient(cx - R, cy - R, cx + R, cy + R, [0xFFF3F4F6, 0xFF9CA3AF, 0xFFE5E7EB, 0xFF6B7280], null, Shader.TileMode.CLAMP));
-    cv.drawCircle(cx, cy, R * 0.98, p);
-    p.setShader(new LinearGradient(cx - R, cy - R, cx + R, cy + R, [0xFFFBEFC4, 0xFFC9962E, 0xFFF6DD95, 0xFF8A5E14], null, Shader.TileMode.CLAMP));
-    cv.drawCircle(cx, cy, R * 0.88, p);
-    p.setShader(new RadialGradient(cx, cy, R * 0.8, [0xFFFFFBF0, 0xFFF1E6CC, 0xFFD9C8A0], [0, 0.75, 1], Shader.TileMode.CLAMP));
-    cv.drawCircle(cx, cy, R * 0.8, p);
+    const p = this.p, C = RoyalHome.Clock;
+    const w = this.getWidth(), h = this.getHeight(), S = Math.min(w, h);
+    if (S <= 0) return;
+    const left = (w - S) / 2, top = (h - S) / 2;
+    this.box.set(left, top, left + S, top + S);
     p.setShader(null);
-    p.setStyle(Paint.Style.STROKE);
-    p.setStrokeWidth(Math.max(1, R * 0.02));
-    p.setColor(0x40A8771F);
-    for (const g of [[-0.18, 0.12, 0.2], [0.2, -0.1, 0.16], [0.05, 0.3, 0.12]]) {
-      const gx = cx + R * g[0], gy = cy + R * g[1], gr = R * g[2];
-      cv.drawCircle(gx, gy, gr, p);
-      for (let i = 0; i < 12; i++) {
-        const a = Math.PI * 2 * i / 12;
-        cv.drawLine(gx + gr * Math.cos(a), gy + gr * Math.sin(a), gx + gr * 1.18 * Math.cos(a), gy + gr * 1.18 * Math.sin(a), p);
-      }
-    }
-    p.setColor(0xFF2A2410);
-    for (let i = 0; i < 60; i++) {
-      const a = Math.PI * 2 * i / 60 - Math.PI / 2;
-      const r1 = R * 0.78, r2 = R * (i % 5 === 0 ? 0.71 : 0.75);
-      p.setStrokeWidth(Math.max(1, R * (i % 5 === 0 ? 0.025 : 0.012)));
-      cv.drawLine(cx + r1 * Math.cos(a), cy + r1 * Math.sin(a), cx + r2 * Math.cos(a), cy + r2 * Math.sin(a), p);
-    }
-    p.setStyle(Paint.Style.FILL);
-    p.setTextAlign(Paint.Align.CENTER);
-    p.setTextSize(R * 0.15);
-    p.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
-    for (let i = 0; i < 12; i++) {
-      const a = Math.PI * 2 * i / 12 - Math.PI / 2;
-      const rr = R * 0.58;
-      cv.drawText(RoyalHome.Clock.ROMAN[i], cx + rr * Math.cos(a), cy + rr * Math.sin(a) + R * 0.05, p);
-    }
+    p.setColor(0xFFFFFFFF);
+    if (this.face != null) cv.drawBitmap(this.face, null, this.box, p);
+    const cx = left + S * C.CX, cy = top + S * C.CY;
     const now = new Date();
     const sec = now.getSeconds(), min = now.getMinutes() + sec / 60, hr = (now.getHours() % 12) + min / 60;
-    this.hand(cv, cx, cy, hr / 12, R * 0.4, R * 0.06, 0xFF3A2A08);
-    this.hand(cv, cx, cy, min / 60, R * 0.6, R * 0.04, 0xFF3A2A08);
-    this.hand(cv, cx, cy, sec / 60, R * 0.66, R * 0.015, 0xFFB91C1C);
-    p.setColor(0xFFFFFFFF);
-    p.setShader(new LinearGradient(cx - R * 0.06, cy - R * 0.06, cx + R * 0.06, cy + R * 0.06, [0xFFFBEFC4, 0xFF8A5E14], null, Shader.TileMode.CLAMP));
-    cv.drawCircle(cx, cy, R * 0.06, p);
-    p.setShader(null);
-    if (this.isAttachedToWindow()) this.postDelayed({ run: () => { if (this.isAttachedToWindow()) this.invalidate(); } }, 1000);
-  }
-  hand(cv, cx, cy, turn, len, wid, color) {
-    const p = this.p;
-    const a = Math.PI * 2 * turn - Math.PI / 2;
+    this.hand(cv, cx, cy, hr / 12, S * 0.150, S * 0.024);
+    this.hand(cv, cx, cy, min / 60, S * 0.212, S * 0.018);
+    const a = Math.PI * 2 * sec / 60 - Math.PI / 2;
+    const ca = Math.cos(a), sa = Math.sin(a);
     p.setStyle(Paint.Style.STROKE);
     p.setStrokeCap(Paint.Cap.ROUND);
-    p.setStrokeWidth(wid);
-    p.setColor(color);
-    cv.drawLine(cx - len * 0.15 * Math.cos(a), cy - len * 0.15 * Math.sin(a), cx + len * Math.cos(a), cy + len * Math.sin(a), p);
+    p.setStrokeWidth(Math.max(1, S * 0.0045));
+    p.setColor(0xFFC0182B);
+    cv.drawLine(cx - S * 0.04 * ca, cy - S * 0.04 * sa, cx + S * 0.19 * ca, cy + S * 0.19 * sa, p);
     p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFFE8B04A);
+    cv.drawCircle(cx - S * 0.04 * ca, cy - S * 0.04 * sa, S * 0.008, p);
+    p.setColor(0xFFFFFFFF);
+    if (this.hub != null) {
+      this.box.set(cx - S * C.HUB, cy - S * C.HUB, cx + S * C.HUB, cy + S * C.HUB);
+      cv.drawBitmap(this.hub, null, this.box, p);
+    }
+    if (this.isAttachedToWindow()) this.postDelayed({ run: () => { if (this.isAttachedToWindow()) this.invalidate(); } }, 1000);
+  }
+  /** An ornate gold hand like the picture's: a tapered blade with an open diamond near the tip and a dark edge. */
+  hand(cv, cx, cy, turn, len, wid) {
+    const p = this.p, path = this.path;
+    cv.save();
+    cv.translate(cx, cy);
+    cv.rotate(turn * 360);
+    path.reset();
+    path.moveTo(0, len * 0.16);
+    path.lineTo(-wid * 0.55, 0);
+    path.lineTo(-wid * 0.32, -len * 0.64);
+    path.lineTo(-wid * 1.7, -len * 0.72);
+    path.lineTo(-wid * 0.28, -len * 0.8);
+    path.lineTo(0, -len);
+    path.lineTo(wid * 0.28, -len * 0.8);
+    path.lineTo(wid * 1.7, -len * 0.72);
+    path.lineTo(wid * 0.32, -len * 0.64);
+    path.lineTo(wid * 0.55, 0);
+    path.close();
+    cv.save();
+    cv.translate(wid * 0.35, wid * 0.5);
+    p.setStyle(Paint.Style.FILL);
+    p.setShader(null);
+    p.setColor(0x73000000);
+    cv.drawPath(path, p);
+    cv.restore();
+    p.setColor(0xFFFFFFFF);
+    p.setShader(new LinearGradient(-wid * 1.7, 0, wid * 1.7, 0, [0xFF8A5E14, 0xFFFBE7A6, 0xFFE0A93C, 0xFF7A4E0E], null, Shader.TileMode.CLAMP));
+    cv.drawPath(path, p);
+    p.setShader(null);
+    p.setStyle(Paint.Style.STROKE);
+    p.setStrokeJoin(Paint.Join.ROUND);
+    p.setStrokeWidth(Math.max(1, wid * 0.14));
+    p.setColor(0xFF4A2F06);
+    cv.drawPath(path, p);
+    p.setStyle(Paint.Style.FILL);
+    p.setColor(0xFF1B2347);
+    cv.drawCircle(0, -len * 0.72, wid * 0.32, p);
+    p.setColor(0xFFFBE7A6);
+    cv.drawCircle(0, -len * 0.28, wid * 0.38, p);
+    cv.restore();
   }
 };
-RoyalHome.Clock.ROMAN = ["XII", "I", "II", "III", "IIII", "V", "VI", "VII", "VIII", "IX", "X", "XI"];
+RoyalHome.Clock.CX = 0.5; RoyalHome.Clock.CY = 0.4043; RoyalHome.Clock.HUB = 0.031;
 ;
 /* ---- app/ScorecardActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -88316,6 +91586,29 @@ class SettingsActivity extends Base {
       if (i > 0) Ui.margins(c, 6, 0, 0, 0);
     }
     card.addView(Ui.hscroll(this, chips));
+    // 10.65: the home page design: the new palace picture or the old royal one (this phone only)
+    const hd = Ui.tv(this, "Home page design", 15, Ui.TEXT, true);
+    card.addView(hd);
+    Ui.margins(hd, 0, 12, 0, 0);
+    const hc = Ui.h(this);
+    // 10.68: the gold card (the user's phone pictures) joins the palace and the royal designs; a wide screen shows the palace for it
+    const look = PalaceHome.look(this);
+    const hk = ["grand", "palace", "royal"];
+    const hl = ["Gold card (newest)", "Palace", "Old theme (royal)"];
+    for (let i = 0; i < 3; i++) {
+      const pick = hk[i];
+      const c = Ui.chip(this, hl[i], pick === look, 0xFFB8860B);
+      c.setOnClickListener({ onClick: (v) => {
+        if (pick === PalaceHome.look(this)) return;
+        PalaceHome.set(this, pick);
+        Ui.toast(this, pick === "grand" ? (Base.wide(this) ? "Gold card on (phones; this wide screen shows the palace)" : "Gold card home on")
+          : pick === "palace" ? "Palace home on" : "Old home design on");
+        this.render();
+      } });
+      hc.addView(c);
+      if (i > 0) Ui.margins(c, 6, 0, 0, 0);
+    }
+    card.addView(Ui.hscroll(this, hc));
     const row = Ui.buttonRow(this, Ui.outlineButton(this, "What's new", Ui.PRIMARY, { onClick: (v) => {
       Intro.whatsNew(this, Intro.previous(Intro.previous(Intro.previous(Intro.appVersion(this)))));
     } }), Ui.outlineButton(this, "Show the tour", Ui.PRIMARY, { onClick: (v) => { Intro.tour(this, 0); } }));
@@ -90905,7 +94198,10 @@ class StaffActivity extends Base {
       return;
     }
     const f = new Form(a);
-    f.text("name", "Name *", s == null ? "Dr. " : s.get("name"), Form.TEXT);
+    // 10.50 (user asked): names already on the staff list come up while typing, so a unit's Assistant Professor or
+    // Professor taking over a ward such as the CCB for the month is picked, not added a second time
+    if (s == null) f.suggest("name", "Name * (type to pick someone already listed)", "Dr. ", db.staffNames(""));
+    else f.text("name", "Name *", s.get("name"), Form.TEXT);
     f.choice("role", "Designation", Db.ROLES, Db.ROLES, s == null ? "Assistant Professor" : s.get("role"), null);
     f.choice("unit", "Unit", S.UNIT_LABELS, S.UNIT_VALUES, s == null ? unit : s.get("unit"), null);
     f.text("phone", "Phone", s == null ? "" : s.get("phone"), Form.PHONE);
@@ -90940,8 +94236,26 @@ class StaffActivity extends Base {
           Ui.toast(a, Approvals.FACULTY_ONLY_NOTE);
           return false;
         }
-        if (s == null) db.insert("staff", cv);
-        else db.update("staff", cv, Long.parseLong(s.get("id")));
+        if (s == null) {
+          // 10.50: someone already listed is not added twice; faculty of a unit are put in charge of a special ward for the month
+          let same = InCharge.facultyRole(f.get("role")) ? InCharge.findFaculty(db, name) : null;
+          if (same == null) same = db.row("SELECT * FROM staff WHERE lower(trim(name))=lower(trim(?)) AND role=?", name, f.get("role"));
+          if (same != null && f.get("unit") !== same.get("unit")) {
+            if (Db.isSpecial(f.get("unit")) && InCharge.facultyRole(same.get("role"))) {
+              InCharge.add(db, f.get("unit"), same.get("id"));
+              Ui.toast(a, same.get("name") + " (" + Db.shortName(same.get("unit")) + ") is in charge of " + Db.shortName(f.get("unit")) + " for " + Dates.month(Dates.today()));
+              done.run();
+              return true;
+            }
+            Ui.toast(a, same.get("name") + " is already listed under " + Db.unitName(same.get("unit")) + ". Open them there to change the unit.");
+            return false;
+          }
+          if (same != null) {
+            Ui.toast(a, same.get("name") + " is already in this team");
+            return false;
+          }
+          db.insert("staff", cv);
+        } else db.update("staff", cv, Long.parseLong(s.get("id")));
         done.run();
         return true;
       }
@@ -95252,6 +98566,93 @@ class TimelineActivity extends Base {
   }
 }
 ;
+/* ---- app/TopBanner.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.51: a picture across the top of a screen (the bed board's navy and gold band, the phone directory's royal blue band, both from
+ * the user's design pictures), with a back circle at the left and an optional action pill at the right laid on it.
+ */
+class TopBanner {
+  /** The picture fills width w at its own shape (pw × ph pixels). */
+  static make(a, res, pw, ph, w, desc, right) {
+    const f = new FrameLayout(a);
+    const h = Math.round(w * ph / pw);
+    f.setLayoutParams(new LinearLayout.LayoutParams(w, h));
+    const pic = new ImageView(a);
+    pic.setImageResource(res);
+    pic.setScaleType(ImageView.ScaleType.FIT_XY);
+    pic.setContentDescription(desc);
+    f.addView(pic, new FrameLayout.LayoutParams(w, h));
+    const back = new ImageView(a);
+    back.setImageResource(R.drawable.ic_back);
+    back.setColorFilter(0xFFFFFFFF);
+    const bp = Ui.dp(a, 6);
+    back.setPadding(bp, bp, bp, bp);
+    back.setBackground(Ui.round(a, 0x6606123F, 16));
+    back.setContentDescription("Back");
+    Ui.ripple(back, 0x44FFFFFF);
+    back.setOnClickListener({ onClick: (v) => { a.finish(); } });
+    const bl = new FrameLayout.LayoutParams(Ui.dp(a, 32), Ui.dp(a, 32), Gravity.TOP | Gravity.START);
+    bl.setMargins(Ui.dp(a, 4), Ui.dp(a, 4), 0, 0);
+    f.addView(back, bl);
+    if (right != null) {
+      const rl = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
+      rl.setMargins(0, Ui.dp(a, 4), Ui.dp(a, 6), 0);
+      f.addView(right, rl);
+    }
+    return f;
+  }
+
+  /** A small dark glass pill with gold text, for the action laid on the picture. */
+  static pill(c, label, l) {
+    const t = Ui.tv(c, label, 12, 0xFFFDE68A, true);
+    const g = Ui.round(c, 0x9906123F, 14);
+    g.setStroke(Ui.dp(c, 1), 0xCCF5C451);
+    t.setBackground(g);
+    t.setPadding(Ui.dp(c, 10), Ui.dp(c, 5), Ui.dp(c, 10), Ui.dp(c, 5));
+    Ui.ripple(t, 0x44FFFFFF);
+    t.setOnClickListener(l);
+    return t;
+  }
+
+  /** A tinted icon of the given size. */
+  static icon(c, res, color, sizeDp) {
+    const iv = new ImageView(c);
+    iv.setImageResource(res);
+    iv.setColorFilter(color);
+    iv.setLayoutParams(new LinearLayout.LayoutParams(Ui.dp(c, sizeDp), Ui.dp(c, sizeDp)));
+    return iv;
+  }
+
+  static grad(colors, radiusPx) {
+    const g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
+    g.setCornerRadius(radiusPx);
+    return g;
+  }
+
+  /** A bottom bar item: icon over label, gold when it is this screen. */
+  static navItem(c, icon, label, on, idle, l) {
+    const it = Ui.v(c);
+    it.setGravity(Gravity.CENTER);
+    it.setPadding(Ui.dp(c, 2), Ui.dp(c, 6), Ui.dp(c, 2), Ui.dp(c, 6));
+    const col = on ? 0xFFFCD34D : idle;
+    it.addView(TopBanner.icon(c, icon, col, 22));
+    const t = Ui.tv(c, label, 10.5, col, on);
+    t.setGravity(Gravity.CENTER);
+    t.setSingleLine(true);
+    it.addView(t);
+    if (on) {
+      const g = TopBanner.grad([0x33FCD34D, 0x0DFCD34D], Ui.dp(c, 14));
+      g.setStroke(Ui.dp(c, 1), 0x80FCD34D);
+      it.setBackground(g);
+    }
+    Ui.ripple(it, 0x33FFFFFF);
+    it.setOnClickListener(l);
+    return it;
+  }
+}
+;
 /* ---- app/TopicNoteActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -96119,6 +99520,20 @@ class UnitActivity extends Base {
     super();
     this.code = null;
     this.wingTab = 0; this.toxFilter = 0; this.nonFilter = 0; this.feverTab = 0; this.dengueFilter = 0;
+    /** 10.52: the search text, the filter (0 everyone, 1 male, 2 female, 3 pending tasks, 4 today's sick list), the list box and its running number. */
+    this.query = ""; this.filt = 0; this.num = 0; this.box = null; this.sickToday = null;
+  }
+
+  /** 10.52 (user's fever ward picture): the cream band with the ward's icon, name, hospital and "+ Admit" (TAEI keeps its own header). */
+  header() {
+    if (Db.TAEI.equals(this.code)) return super.header();
+    this.getWindow().setStatusBarColor(0xFF0B2A6F);
+    let day = Ui.toInt(this.db.unit(this.code).get("admit_day"), 0);
+    let line = "Patients List  |  " + (day === 0 ? "Admits Every Day" : "Admits Every " + Dates.DAYS[day]);
+    let v = Ui.v(this);
+    v.addView(WardListDesign.band(this, this.code, line, this.opener(FormActivity, "kind", "patient", "unit", this.code)));
+    v.setElevation(Ui.dp(this, 3));
+    return v;
   }
 
   static CCB_BEDS = 12;
@@ -96144,59 +99559,46 @@ class UnitActivity extends Base {
     const head = db.unitHead(code);
     this.subtitle = (day === 0 ? "Admits every day" : "Admits every " + Dates.DAYS[day]) + (head.isEmpty() ? "" : "  ·  " + head);
     this.headerAction("+ Admit", this.opener(FormActivity, "kind", "patient", "unit", code));
+    this.pageBg = 0xFFF3F6FC;
+    this.sickToday = null;
     const page = Ui.v(this);
     // the unit's or ward's team first, with their photos (9.00)
     page.addView(People.board(this, db, code));
-    const mbbs = Posting.unitCard(this, db, code);
+    const mbbs = Posting.unitCard(this, db, Db.IDW === code ? db.rotationUnit() : code);   // 10.50: the in-charge unit's students too
     if (mbbs != null) page.addView(mbbs);
+    // 10.54: IMCU, Fever ward and CCB have their own Duty today + Duty roster sections further down
+    const ownDuty = Db.IMCU === code || Db.FEVER === code || Db.CCB === code;
+    const roster = ownDuty ? null : DutyBoard.wardCard(this, db, code);   // 10.50: the PG / CRMI duty roster for this ward, till the posting ends
+    if (roster != null) page.addView(roster);
 
-    // Census
-    const census = Ui.card(this);
-    census.setBackground(Glass.hero(this, Ui.shades(color), 20));
-    const m = db.census(code, "M"), f = db.census(code, "F");
-    let row;
-    if (Db.IMCU.equals(code)) {
-      const inn = db.rows("SELECT * FROM patients WHERE status='IN' AND location='IMCU'");
-      let tox = 0, non = 0, vent = 0;
-      for (const p of inn) {
-        const w = Db.imcuWing(p);
-        if (w.equals(Db.TOX)) tox++;
-        if (w.equals(Db.NONTOX)) non++;
-        if ("1".equals(p.get("vent"))) vent++;
-      }
-      row = Ui.statRow(this, this.whiteStat(tox + "/" + Db.TOX_BEDS, "Toxicology"), this.whiteStat(non + "/" + Db.NONTOX_BEDS, "Non-toxicology"),
-          this.whiteStat(String(vent), "Ventilator"));
-    } else if (Db.FEVER.equals(code)) {
-      const dengue = db.num("SELECT COUNT(*) FROM patients WHERE status='IN' AND location='FEVER' AND dengue='1'");
-      row = Ui.statRow(this, this.whiteStat(String(m + f), "In ward"), this.whiteStat(String(dengue), "Dengue +"),
-          this.whiteStat(String(m), "Male"), this.whiteStat(String(f), "Female"));
-    } else if (special) {
-      row = Ui.statRow(this, this.whiteStat(String(m + f), Db.CCB.equals(code) ? "of 12 beds" : "In ward"),
-          this.whiteStat(String(m), "Male"), this.whiteStat(String(f), "Female"));
-    } else {
-      row = Ui.statRow(this, this.whiteStat(String(m), "Male ward"), this.whiteStat(String(f), "Female ward"),
-          this.whiteStat(String(db.awayFrom(code)), "In special wards"));
-    }
-    census.addView(row);
-    if (Db.IMCU.equals(code)) census.addView(Ui.tv(this, (m + f) + " in IMCU (25 beds)  ·  male " + m + ", female " + f, 12, 0xD9FFFFFF, false));
-    else if (!Db.CCB.equals(code)) census.addView(Ui.tv(this, special ? "Typical load ~" + db.capacity(code) : "Typical census: male ~" + u.get("male_cap") + ", female ~" + u.get("female_cap"), 12, 0xD9FFFFFF, false));
+    // 10.52: the four stat cards and the bed board button
     const pend = Tasks.inWard(db, code);
-    const bb = Ui.outlineButton(this, "Bed board" + (pend > 0 ? "   ·   ⏳ " + pend + " pending tasks" : ""), Color.WHITE, this.opener(BedBoardActivity, "code", code));
-    bb.setBackground(Glass.frost(this, 14));
-    census.addView(bb);
-    Ui.margins(bb, 0, 10, 0, 0);
-    page.addView(census);
+    const bb = PatientRowDesign.action(this, "🛏  Bed board" + (pend > 0 ? "   ·   ⏳ " + pend + " pending tasks" : ""), 0xFF1E3A8A,
+        this.opener(BedBoardActivity, "code", code));
+    page.addView(bb, 0);
+    Ui.margins(bb, 16, 4, 16, 8);
+    page.addView(this.wardStats(), 0);
 
+    if (Db.IMCU === code || Db.FEVER === code) page.addView(DutyBoard.dutyToday(this, db, code));   // 10.54
     if (Db.CCB.equals(code)) {
       this.ccbDuty(page);
       this.bedBoard(page);
+    }
+    if (ownDuty) {
+      const wr = DutyBoard.wardCard(this, db, code);
+      if (wr != null) page.addView(wr);
+      else page.addView(this.emptyNote("No PG or CRMI duty roster for " + Db.shortName(code) + " yet. Paste it on the PG or CRMI notice board."));
     }
     if (Db.TAEI.equals(code)) page.addView(CallOverActivity.taeiCard(this, db));
     if (Db.IDW.equals(code) || (Db.isWardUnit(code) && code.equals(db.rotationUnit()))) page.addView(UnitActivity.rotationCard(this, db));
     if (Db.IMCU.equals(code)) {
       this.imcuSpecial(page);
-      this.imcuWings(page);
     }
+    // 10.52: the patient list: search, chips, filter, then the numbered cards
+    page.addView(this.searchRow());
+    this.box = Ui.v(this);
+    page.addView(this.box);
+    this.fillLists();
 
     // This month
     const t = Dates.today();
@@ -96214,8 +99616,20 @@ class UnitActivity extends Base {
     if (Db.isWardUnit(code)) this.callOverCard(page);
     this.staffCard(page);
 
+    page.addView(WardListDesign.wave(this));
+    this.setPage(page);
+  }
+
+  /** The ward's lists, numbered, filtered by the search box and the chips (redrawn as the search text changes). */
+  fillLists() {
+    const db = this.db, code = this.code;
+    this.box.removeAllViews();
+    this.num = 0;
+    const page = this.box;
+    const special = Db.isSpecial(code);
+    if (Db.IMCU.equals(code)) this.imcuWings(page);
     if (Db.IMCU.equals(code)) {
-      // the wing lists above replace the male / female lists
+      // the wing lists replace the male / female lists
     } else if (Db.FEVER.equals(code)) {
       this.feverSections(page);
     } else if (Db.IDW.equals(code)) {
@@ -96252,7 +99666,121 @@ class UnitActivity extends Base {
     }
     this.list(page, "Recently discharged or died", db.rows(
         "SELECT * FROM patients WHERE status<>'IN' AND id IN (SELECT patient_id FROM events WHERE type IN ('DISCHARGE','DEATH') AND from_loc=?) ORDER BY outcome_date DESC, id DESC LIMIT 20", code));
-    this.setPage(page);
+  }
+
+  filtering() {
+    return !this.query.isEmpty() || this.filt !== 0;
+  }
+
+  /** True when the patient passes the search text and the filter. */
+  pass(p) {
+    if (this.filt === 1 && !"M".equals(p.get("sex"))) return false;
+    if (this.filt === 2 && !"F".equals(p.get("sex"))) return false;
+    if (this.filt === 3 && Tasks.pending(this.db, Long.parseLong(p.get("id"))) === 0) return false;
+    if (this.filt === 4) {
+      if (this.sickToday == null) {
+        this.sickToday = new JSet();
+        for (const r of this.db.rows("SELECT patient_id FROM duty_sick WHERE date=?", Dates.admitDay().toString())) this.sickToday.add(Ui.nz(r.get("patient_id")));
+      }
+      if (!this.sickToday.contains(p.get("id"))) return false;
+    }
+    if (this.query.isEmpty()) return true;
+    let q = this.query.toLowerCase();
+    for (const k of ["name", "ip_no", "diagnosis", "bed"])
+      if (Ui.nz(p.get(k)).toLowerCase().includes(q)) return true;
+    return false;
+  }
+
+  /** The search box, the All / Male / Female chips (All / Fever / Dengue in the fever ward) and the Filter pill. */
+  searchRow() {
+    let wide = this.getResources().getConfiguration().screenWidthDp >= 720;
+    let fever = Db.FEVER.equals(this.code);
+    let r = wide ? Ui.h(this) : Ui.v(this);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 6));
+    let e = WardListDesign.search(this, "Search by name, IP number or diagnosis...", this.query);
+    e.addTextChangedListener({
+      beforeTextChanged: (s, a, b, c) => {},
+      onTextChanged: (s, a, b, c) => {},
+      afterTextChanged: (ed) => { this.query = ed.toString().trim(); this.fillLists(); }
+    });
+    let sb = WardListDesign.searchBox(this, e);
+    let track = WardListDesign.chipTrack(this);
+    let labels = fever ? ["All", "🌡 Fever", "🦟 Dengue"] : ["All", "♂ Male", "♀ Female"];
+    let on = fever ? this.feverTab : (this.filt <= 2 ? this.filt : -1);
+    for (let i = 0; i < labels.length; i++) {
+      let idx = i;
+      let c = WardListDesign.chip(this, labels[i], i === on);
+      c.setOnClickListener({ onClick: (v) => {
+          if (fever) this.feverTab = idx; else this.filt = idx;
+          this.render();
+        }
+      });
+      track.addView(c);
+    }
+    let fp = WardListDesign.filterPill(this, fever ? this.filt !== 0 : this.filt >= 3);
+    let opts = ["Everyone", "Male only", "Female only", "With pending tasks", "On today's sick list"];
+    fp.setOnClickListener({ onClick: (v) => {
+        new AlertDialog.Builder(this).setTitle("Show")
+            .setSingleChoiceItems(opts, this.filt, { onClick: (d, which) => {
+                this.filt = which;
+                d.dismiss();
+                this.render();
+              }
+            }).setNegativeButton("Close", null).show();
+      }
+    });
+    if (wide) {
+      r.addView(sb, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+      r.addView(track);
+      Ui.margins(track, 14, 0, 0, 0);
+      track.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+      r.addView(fp);
+      Ui.margins(fp, 12, 0, 0, 0);
+      fp.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+    } else {
+      r.addView(sb);
+      let row = Ui.h(this);
+      row.setGravity(Gravity.CENTER_VERTICAL);
+      row.addView(track);
+      row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+      row.addView(fp);
+      r.addView(row);
+      Ui.margins(row, 0, 10, 0, 0);
+    }
+    return r;
+  }
+
+  /** Total, admitted today and two ward-wise numbers (fever cases and dengue, IMCU wings and ventilator, unit's patients elsewhere, tasks). */
+  wardStats() {
+    let m = this.db.census(this.code, "M"), f = this.db.census(this.code, "F"), total = m + f;
+    let today = Dates.todayIso();
+    let adm = this.db.events(Db.ADMIT, today, today, Db.isWardUnit(this.code) ? "from_loc" : "to_loc", this.code);
+    let c1 = WardListDesign.stat(this, R.drawable.ic_group, 0xFF2563EB, "Total Patients", total + (Db.CCB.equals(this.code) ? " / " + UnitActivity.CCB_BEDS : ""));
+    let c2 = WardListDesign.stat(this, R.drawable.ic_bed, 0xFF16A34A, "Admitted Today", String(adm));
+    let c3, c4;
+    if (Db.FEVER.equals(this.code)) {
+      let dengue = this.db.num("SELECT COUNT(*) FROM patients WHERE status='IN' AND location='FEVER' AND dengue='1'");
+      c3 = WardListDesign.stat(this, R.drawable.ic_fever, 0xFFE11D48, "Fever Cases", String(total));
+      c4 = WardListDesign.stat(this, 0, 0xFFA855F7, "Marked Dengue", String(dengue));
+    } else if (Db.IMCU.equals(this.code)) {
+      let tox = 0, non = 0, vent = 0;
+      for (const p of this.db.rows("SELECT * FROM patients WHERE status='IN' AND location='IMCU'")) {
+        let w = Db.imcuWing(p);
+        if (w.equals(Db.TOX)) tox++;
+        if (w.equals(Db.NONTOX)) non++;
+        if ("1".equals(p.get("vent"))) vent++;
+      }
+      c3 = WardListDesign.stat(this, R.drawable.ic_warn, 0xFFE11D48, "Toxicology / Non-tox", tox + " / " + non);
+      c4 = WardListDesign.stat(this, R.drawable.ic_heart, 0xFFA855F7, "On Ventilator", String(vent));
+    } else if (Db.isWardUnit(this.code)) {
+      c3 = WardListDesign.stat(this, R.drawable.ic_people, 0xFFE11D48, "Male / Female", m + " / " + f);
+      c4 = WardListDesign.stat(this, R.drawable.ic_hospital, 0xFFA855F7, "In Special Wards", String(this.db.awayFrom(this.code)));
+    } else {
+      c3 = WardListDesign.stat(this, R.drawable.ic_people, 0xFFE11D48, "Male / Female", m + " / " + f);
+      c4 = WardListDesign.stat(this, R.drawable.ic_task, 0xFFA855F7, "Pending Tasks", String(Tasks.inWard(this.db, this.code)));
+    }
+    return WardListDesign.stats(this, c1, c2, c3, c4);
   }
 
   /**
@@ -96398,15 +99926,21 @@ class UnitActivity extends Base {
   groupList(page, group, code) {
     const rows = this.db.rows("SELECT * FROM patients WHERE status='IN' AND category=? AND (location=? OR (home_unit=? AND location IN " + Db.SPECIAL_SQL + ")) "
         + "ORDER BY admit_date DESC, id DESC", group, code, code);
-    page.addView(Ui.section(this, group + "  ·  " + rows.size()));
-    if (rows.isEmpty()) page.addView(this.emptyNote("No " + group.toLowerCase() + " patients in the unit"));
-    for (const p of rows) page.addView(this.patientRow(p));
+    const inn = [];
+    for (const p of rows) if (this.pass(p)) inn.add(p);
+    if (inn.isEmpty() && this.filtering()) return;
+    page.addView(Ui.section(this, group + "  ·  " + inn.size()));
+    if (inn.isEmpty()) page.addView(this.emptyNote("No " + group.toLowerCase() + " patients in the unit"));
+    for (const p of inn) page.addView(this.patientRow(p, null, null, ++this.num));
   }
 
   list(page, title, rows) {
-    page.addView(Ui.section(this, title + "  ·  " + rows.size()));
-    if (rows.isEmpty()) page.addView(this.emptyNote("None"));
-    for (const p of rows) page.addView(this.patientRow(p));
+    const inn = [];
+    for (const p of rows) if (this.pass(p)) inn.add(p);
+    if (inn.isEmpty() && this.filtering()) return;
+    page.addView(Ui.section(this, title + "  ·  " + inn.size()));
+    if (inn.isEmpty()) page.addView(this.emptyNote("None"));
+    for (const p of inn) page.addView(this.patientRow(p, null, null, Db.IN === p.get("status") ? ++this.num : 0));
   }
 
   /** The unit running the convict ward and the ID ward this month (M1 to M7 in turn), changeable by the admin. */
@@ -96487,7 +100021,15 @@ class UnitActivity extends Base {
       card.addView(head);
       if (r > 0) Ui.margins(head, 0, 10, 0, 0);
       for (const s of staff) card.addView(this.staffRow(s));
-      if (staff.isEmpty()) card.addView(Ui.muted(this, "Not added yet"));
+      // 10.50: a unit's faculty put in charge of this ward for the month (their own entry stays in their unit)
+      let borrowed = 0;
+      if (special) for (const s of InCharge.faculty(db, code)) {
+        const prof = "Assistant Professor" !== s.get("role");
+        if (prof !== (r === 0)) continue;
+        card.addView(this.inChargeRow(s));
+        borrowed++;
+      }
+      if (staff.isEmpty() && borrowed === 0) card.addView(Ui.muted(this, "Not added yet"));
     }
     const others = db.rows("SELECT * FROM staff WHERE unit=? AND " + Db.NOT_STUDENT + " AND role NOT IN ('Professor','Assistant Professor'" + (special ? "" : ",'Postgraduate','CRMI'") + ") ORDER BY role, id", code);
     if (!others.isEmpty()) {
@@ -96533,9 +100075,15 @@ class UnitActivity extends Base {
       row.setGravity(Gravity.CENTER_VERTICAL);
       row.setPadding(0, Ui.dp(this, 5), 0, Ui.dp(this, 5));
       const t = Ui.v(this);
-      const name = r == null ? "" : Ui.nz(r.get(s[0]));
-      t.addView(Ui.tv(this, name.isEmpty() ? "Not set" : name, 14, name.isEmpty() ? Ui.MUTED : Ui.TEXT, true));
-      t.addView(Ui.muted(this, s[1] + "  ·  " + s[2]));
+      let name = r == null ? "" : Ui.nz(r.get(s[0]));
+      let fromRoster = false;
+      if (name === "" && s[0] !== "prof" && s[0] !== "ap") {   // 10.54: from the pasted PG / CRMI roster
+        name = DutyBoard.names(DutyBoard.shift(DutyBoard.onDuty(db, Db.CCB, s[0].endsWith("crmi") ? DutyBoard.CRMI : DutyBoard.PG, iso), s[0].startsWith("night")));
+        fromRoster = name !== "";
+      }
+      if (name === "") t.addView(Ui.tv(this, "Not set", 14, Ui.MUTED, true));
+      else for (const nm of People.split(name)) t.addView(Ui.tv(this, (UnitActivity.ccbMax(s[0]) > 1 ? "•  " : "") + nm, 14, Ui.TEXT, true));   // 10.57: up to 3 PGs / 2 CRMIs
+      t.addView(Ui.muted(this, s[1] + "  ·  " + s[2] + (fromRoster ? "  ·  from the roster" : "")));
       row.addView(t, Ui.weight(1));
       if (UnitActivity.ccbOnNow(s[0])) row.addView(Ui.softPill(this, "On duty now", Ui.GREEN));
       card.addView(row);
@@ -96547,7 +100095,21 @@ class UnitActivity extends Base {
       card.addView(edit);
       Ui.margins(edit, 0, 8, 0, 0);
     }
+    // 10.57 (user asked): the PG and CRMI notice boards, as in the IMCU and Fever ward
+    const btns = Ui.h(this);
+    const pgb = Ui.outlineButton(this, "PG notice board", DutyBoard.PG_COLOR, { onClick: (v) => { this.open(DutyBoardActivity, "board", DutyBoard.PG); } });
+    const crb = Ui.outlineButton(this, "CRMI notice board", DutyBoard.CRMI_COLOR, { onClick: (v) => { this.open(DutyBoardActivity, "board", DutyBoard.CRMI); } });
+    btns.addView(pgb, Ui.weight(1));
+    btns.addView(crb, Ui.weight(1));
+    crb.getLayoutParams().leftMargin = Ui.dp(this, 8);
+    card.addView(btns);
+    Ui.margins(btns, 0, 10, 0, 0);
     page.addView(card);
+  }
+
+  /** 10.57: how many names a CCB slot takes: 3 PGs, 2 CRMIs, one faculty. */
+  static ccbMax(slot) {
+    return slot.endsWith("_pg") ? 3 : slot.endsWith("_crmi") ? 2 : 1;
   }
 
   ccbDutyDialog(iso) {
@@ -96560,13 +100122,22 @@ class UnitActivity extends Base {
     for (const s of UnitActivity.CCB_SLOTS) {
       const val = prev == null ? "" : Ui.nz(prev.get(s[0]));
       if (s[0].equals("prof") || s[0].equals("ap")) f.suggest(s[0], s[1] + " (" + s[2] + ")", val, fac);
-      else f.suggest(s[0], s[1] + " (" + s[2] + ")", r == null ? "" : val, juniors);
+      else {
+        const have = People.split(r == null ? "" : val);
+        const max = UnitActivity.ccbMax(s[0]);
+        for (let i = 0; i < max; i++) f.suggest(s[0] + "_" + i, s[1] + " " + (i + 1) + " (" + s[2] + ")", i < have.length ? have[i] : "", juniors);
+      }
     }
     Ui.formDialog(this, "CCB duty, " + Dates.nice(iso), f, "Save", {
       run: () => {
         const cv = new ContentValues();
         cv.put("date", iso);
-        for (const s of UnitActivity.CCB_SLOTS) cv.put(s[0], f.get(s[0]).trim());
+        for (const s of UnitActivity.CCB_SLOTS) {
+          if (s[0] === "prof" || s[0] === "ap") { cv.put(s[0], f.get(s[0]).trim()); continue; }
+          const names = [];
+          for (let i = 0; i < UnitActivity.ccbMax(s[0]); i++) if (f.get(s[0] + "_" + i).trim() !== "") names.push(f.get(s[0] + "_" + i).trim());
+          cv.put(s[0], names.join(", "));
+        }
         cv.put("by_name", CallDutyActivity.myName(this));
         if (r == null) db.insert("ccb_duty", cv);
         else db.update("ccb_duty", cv, Long.parseLong(r.get("id")));
@@ -96574,6 +100145,31 @@ class UnitActivity extends Base {
         return true;
       }
     });
+  }
+
+  /** A unit's faculty member in charge of this ward this month: tap to take them off for this month. */
+  inChargeRow(s) {
+    const row = Ui.h(this);
+    row.setPadding(0, Ui.dp(this, 6), 0, Ui.dp(this, 6));
+    const t = Ui.v(this);
+    t.addView(Ui.body(this, s.get("name")));
+    t.addView(Ui.muted(this, s.get("role") + "  ·  " + Db.unitName(s.get("unit")) + "  ·  in charge in " + Dates.month(Dates.today())));
+    row.addView(t, Ui.weight(1));
+    if (!Ui.nz(s.get("phone")).isEmpty()) {
+      const call = Ui.softPill(this, "Call", Ui.GREEN);
+      call.setOnClickListener({ onClick: (v) => { this.startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + s.get("phone")))); } });
+      row.addView(call);
+    }
+    Ui.ripple(row, Ui.alpha(Ui.PRIMARY, 0x1A));
+    row.setOnClickListener({
+      onClick: (v) => {
+        Ui.confirm(this, "Take " + s.get("name") + " off " + Db.shortName(this.code) + "?",
+          "They stay in " + Db.unitName(s.get("unit")) + "; only this month's " + Db.shortName(this.code) + " in-charge changes.", "Take off", {
+            run: () => { InCharge.remove(this.db, this.code, s.get("id")); this.render(); }
+          });
+      }
+    });
+    return row;
   }
 
   staffRow(s) {
@@ -96707,8 +100303,8 @@ class UnitActivity extends Base {
     page.addView(Ui.hscroll(this, chips));
     let shown = 0;
     for (const p of inWing) {
-      if (!UnitActivity.matches(p, filters[cur])) continue;
-      page.addView(this.patientRow(p));
+      if (!UnitActivity.matches(p, filters[cur]) || !this.pass(p)) continue;
+      page.addView(this.patientRow(p, null, null, ++this.num));
       page.addView(this.imcuTags(p));
       shown++;
     }
@@ -96717,7 +100313,8 @@ class UnitActivity extends Base {
     if (!unassigned.isEmpty()) {
       page.addView(Ui.section(this, "In IMCU, wing not set  ·  " + unassigned.size()));
       for (const p of unassigned) {
-        page.addView(this.patientRow(p));
+        if (!this.pass(p)) continue;
+        page.addView(this.patientRow(p, null, null, ++this.num));
         page.addView(this.imcuTags(p));
       }
     }
@@ -96848,25 +100445,8 @@ class UnitActivity extends Base {
     const dengue = [];
     for (const p of all) if (Db.isDengue(p)) dengue.add(p);
 
-    const seg = Ui.h(this);
-    seg.setBackground(Ui.round(this, 0xFFE2E8F0, 14));
-    seg.setPadding(Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4), Ui.dp(this, 4));
-    const labels = ["All fever cases · " + all.size(), "Dengue positive · " + dengue.size()];
-    for (let i = 0; i < 2; i++) {
-      const idx = i;
-      const t = Ui.tv(this, labels[i], 14, i === this.feverTab ? (i === 1 ? Ui.RED : color) : Ui.MUTED, true);
-      t.setGravity(Gravity.CENTER);
-      t.setPadding(0, Ui.dp(this, 9), 0, Ui.dp(this, 9));
-      if (i === this.feverTab) t.setBackground(Ui.round(this, 0xFFFFFFFF, 11));
-      t.setOnClickListener({
-        onClick: (v) => { this.feverTab = idx; this.render(); }
-      });
-      seg.addView(t, Ui.weight(1));
-    }
-    page.addView(seg);
-    Ui.margins(seg, 12, 14, 12, 4);
-
-    if (this.feverTab === 0) {
+    // 10.52: the All / Fever / Dengue chips above the list pick the tab (Fever = not marked dengue)
+    if (this.feverTab !== 2) {
       this.feverList(page, "Male patients", all, "M");
       this.feverList(page, "Female patients", all, "F");
       return;
@@ -96902,22 +100482,20 @@ class UnitActivity extends Base {
     page.addView(Ui.hscroll(this, chips));
     let shown = 0;
     for (const p of dengue) {
-      if (!UnitActivity.dengueMatches(p, filters[this.dengueFilter])) continue;
-      page.addView(this.patientRow(p, this.dengueTags(p), this.dengueButton(p)));
+      if (!UnitActivity.dengueMatches(p, filters[this.dengueFilter]) || !this.pass(p)) continue;
+      page.addView(this.patientRow(p, this.dengueTags(p), this.dengueButton(p), ++this.num));
       shown++;
     }
     if (shown === 0) page.addView(this.emptyNote(dengue.isEmpty() ? "No dengue positive cases. Mark a patient from the All fever cases tab." : "No patients here."));
   }
 
   feverList(page, title, all, sex) {
-    let n = 0;
-    for (const p of all) if (sex.equals(p.get("sex"))) n++;
-    page.addView(Ui.section(this, title + "  ·  " + n));
-    if (n === 0) page.addView(this.emptyNote("None"));
-    for (const p of all) {
-      if (!sex.equals(p.get("sex"))) continue;
-      page.addView(this.patientRow(p, this.dengueTags(p), this.dengueButton(p)));
-    }
+    const inn = [];
+    for (const p of all) if (sex.equals(p.get("sex")) && this.pass(p) && !(this.feverTab === 1 && Db.isDengue(p))) inn.add(p);
+    if (inn.isEmpty() && (this.filtering() || this.feverTab === 1)) return;
+    page.addView(Ui.section(this, title + "  ·  " + inn.size()));
+    if (inn.isEmpty()) page.addView(this.emptyNote("None"));
+    for (const p of inn) page.addView(this.patientRow(p, this.dengueTags(p), this.dengueButton(p), ++this.num));
   }
 
   static plateletLow(plt) {
@@ -96970,7 +100548,7 @@ class UnitActivity extends Base {
   /** "+ Mark dengue" (or "Edit dengue") at the bottom right of each fever ward card. */
   dengueButton(p) {
     const pos = Db.isDengue(p);
-    return PatientRowDesign.action(this, pos ? "✎ Edit dengue" : "+  Mark dengue", pos ? Ui.unitColor(Db.FEVER) : 0xFFDC2626, {
+    return PatientRowDesign.action(this, pos ? "✎  Edit Dengue" : "🦟  Mark Dengue", pos ? Ui.unitColor(Db.FEVER) : 0xFFDC2626, {
       onClick: (v) => { UnitActivity.dengueDialog(this, p, { run: () => { this.render(); } }); }
     });
   }
@@ -99999,6 +103577,247 @@ class WardList {
   }
 }
 ;
+/* ---- app/WardListDesign.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.52 (user's "Fever Ward" picture, for every ward): the cream and blue top band with the ward's glass icon, its name in two
+ * colours, "Patients List | Admits Every Day", the hospital picture and the orange "+ Admit" pill; four soft stat cards; the round
+ * search box with chips and a filter button; the gold and blue wave at the foot of the list.
+ */
+class WardListDesign {
+  static NAVY = 0xFF0B2A6F;
+  static AMBER = 0xFFD97706;
+  /** The list numbers' ribbon colours, in turn: blue, green, purple, gold, teal, rose. */
+  static RIBBONS = [0xFF1D6FE0, 0xFF16A34A, 0xFF7C3AED, 0xFFE09B12, 0xFF0D9488, 0xFFE11D48];
+
+  static titleCase(s) {
+    return s.split(" ").map(w => w === "" || w.charAt(0) !== w.charAt(0).toLowerCase() ? w : w.charAt(0).toUpperCase() + w.substring(1)).join(" ");
+  }
+
+  /** The top band. admit may be null (no "+ Admit"). */
+  static band(a, code, sub, admit) {
+    let wide = a.getResources().getConfiguration().screenWidthDp >= 720;
+    let w = a.getResources().getDisplayMetrics().widthPixels;
+    let h = Ui.dp(a, wide ? 104 : 84);
+    let f = new FrameLayout(a);
+    f.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [0xFFFFF6E6, 0xFFFDF3E7, 0xFFE8F1FE]));
+    f.setLayoutParams(new LinearLayout.LayoutParams(w, h));
+    // the hospital on the right, fading into the cream at its left edge
+    let hw = wide ? Math.round(h * 655 / 150) : Math.round(w * 0.42);
+    let hosp = new ImageView(a);
+    hosp.setImageResource(R.drawable.wl_hosp);
+    hosp.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    hosp.setContentDescription("Tirunelveli Medical College Hospital");
+    let hl = new FrameLayout.LayoutParams(hw, h, Gravity.END | Gravity.TOP);
+    hl.setMargins(0, 0, wide ? Ui.dp(a, 210) : 0, 0);
+    f.addView(hosp, hl);
+    let fade = new View(a);
+    fade.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT, [0xFFFDF4E6, 0x00FDF4E6]));
+    let fl = new FrameLayout.LayoutParams(Ui.dp(a, 60), h, Gravity.END | Gravity.TOP);
+    fl.setMargins(0, 0, hw - Ui.dp(a, 60) + (wide ? Ui.dp(a, 210) : 0), 0);
+    f.addView(fade, fl);
+    if (wide) {
+      let care = new ImageView(a);
+      care.setImageResource(R.drawable.wl_care);
+      care.setScaleType(ImageView.ScaleType.FIT_CENTER);
+      care.setContentDescription("Care today, healthier tomorrow");
+      let cl = new FrameLayout.LayoutParams(Ui.dp(a, 190), Ui.dp(a, 52), Gravity.END | Gravity.BOTTOM);
+      cl.setMargins(0, 0, Ui.dp(a, 10), Ui.dp(a, 4));
+      f.addView(care, cl);
+    }
+    // back, glass icon, name and line
+    let left = Ui.h(a);
+    left.setGravity(Gravity.CENTER_VERTICAL);
+    left.setPadding(Ui.dp(a, 4), 0, Ui.dp(a, 8), 0);
+    let back = new ImageView(a);
+    back.setImageResource(R.drawable.ic_back);
+    back.setColorFilter(WardListDesign.NAVY);
+    let bp = Ui.dp(a, 8);
+    back.setPadding(bp, bp, bp, bp);
+    back.setContentDescription("Back");
+    Ui.ripple(back, 0x220B2A6F);
+    back.setOnClickListener({ onClick: (v) => { a.finish(); }
+    });
+    left.addView(back, Ui.lp(Ui.dp(a, 40), Ui.dp(a, 40)));
+    let ic = Ui.iconBadge(a, PatientRowDesign.placeIcon(code), Ui.unitColor(code), wide ? 62 : 46);
+    ic.setElevation(Ui.dp(a, 4));
+    left.addView(ic);
+    let tx = Ui.v(a);
+    tx.setPadding(Ui.dp(a, 12), 0, 0, 0);
+    let nm = Ui.h(a);
+    let name = WardListDesign.titleCase(Db.unitName(code));
+    let sp = name.indexOf(' ');
+    let first = sp < 0 ? name : name.substring(0, sp), rest = sp < 0 ? "" : name.substring(sp);
+    let size = wide ? 34 : 24;
+    let t1 = Ui.tv(a, first, size, WardListDesign.AMBER, true);
+    t1.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+    t1.setShadowLayer(Ui.dp(a, 2), 0, Ui.dp(a, 1), 0x33B45309);
+    t1.setSingleLine(true);
+    nm.addView(t1);
+    if (!rest.isEmpty()) {
+      let t2 = Ui.tv(a, rest.trim(), size, WardListDesign.NAVY, true);
+      t2.setPadding(Ui.dp(a, wide ? 9 : 6), 0, 0, 0);
+      t2.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
+      t2.setSingleLine(true);
+      nm.addView(t2);
+    }
+    tx.addView(nm);
+    let s = Ui.tv(a, sub, wide ? 15 : 12.5, WardListDesign.NAVY, false);
+    s.setSingleLine(true);
+    s.setEllipsize(TextUtils.TruncateAt.END);
+    tx.addView(s);
+    if (wide) left.addView(tx);
+    else left.addView(tx, Ui.weight(1));
+    f.addView(left, new FrameLayout.LayoutParams(wide ? ViewGroup.LayoutParams.WRAP_CONTENT : w - hw + Ui.dp(a, 24), h, Gravity.START | Gravity.TOP));
+    if (admit != null) {
+      let ad = Ui.tv(a, "+ Admit", wide ? 16 : 13, Color.WHITE, true);
+      ad.setGravity(Gravity.CENTER);
+      let ag = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [0xFFFBBF24, 0xFFF59E0B, 0xFFD97706]);
+      ag.setCornerRadius(Ui.dp(a, 22));
+      ag.setStroke(Ui.dp(a, 1), 0x99FFFFFF);
+      ad.setBackground(ag);
+      ad.setElevation(Ui.dp(a, 4));
+      ad.setPadding(Ui.dp(a, wide ? 20 : 12), Ui.dp(a, wide ? 9 : 6), Ui.dp(a, wide ? 20 : 12), Ui.dp(a, wide ? 9 : 6));
+      Ui.ripple(ad, 0x44FFFFFF);
+      ad.setOnClickListener(admit);
+      let al = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.END | Gravity.TOP);
+      al.setMargins(0, Ui.dp(a, wide ? 14 : 8), Ui.dp(a, wide ? 16 : 8), 0);
+      f.addView(ad, al);
+    }
+    return f;
+  }
+
+  /** One soft stat card: icon tile, label and big number. icon 0 = the mosquito tile. */
+  static stat(c, icon, color, label, value) {
+    let k = Ui.h(c);
+    k.setGravity(Gravity.CENTER_VERTICAL);
+    let g = new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+        [Ui.mix(color, Color.WHITE, 0.9), Ui.mix(color, Color.WHITE, 0.96), Ui.mix(color, Color.WHITE, 0.82)]);
+    g.setCornerRadius(Ui.dp(c, 18));
+    g.setStroke(Ui.dp(c, 1.5), 0xCCFFFFFF);
+    k.setBackground(g);
+    k.setElevation(Ui.dp(c, 3));
+    k.setPadding(Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 10));
+    let tile = new FrameLayout(c);
+    let tg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, [Ui.mix(color, Color.WHITE, 0.8), Ui.mix(color, Color.WHITE, 0.62)]);
+    tg.setCornerRadius(Ui.dp(c, 14));
+    tile.setBackground(tg);
+    if (icon === 0) {
+      let mo = Ui.tv(c, "🦟", 22, Color.BLACK, false);
+      mo.setGravity(Gravity.CENTER);
+      let ring = new GradientDrawable();
+      ring.setShape(GradientDrawable.OVAL);
+      ring.setColor(Color.WHITE);
+      ring.setStroke(Ui.dp(c, 3), 0xFFE11D48);
+      mo.setBackground(ring);
+      tile.addView(mo, new FrameLayout.LayoutParams(Ui.dp(c, 38), Ui.dp(c, 38), Gravity.CENTER));
+    } else {
+      let iv = new ImageView(c);
+      iv.setImageResource(icon);
+      iv.setColorFilter(Ui.mix(color, 0xFF000000, 0.1));
+      tile.addView(iv, new FrameLayout.LayoutParams(Ui.dp(c, 32), Ui.dp(c, 32), Gravity.CENTER));
+    }
+    k.addView(tile, Ui.lp(Ui.dp(c, 52), Ui.dp(c, 52)));
+    let t = Ui.v(c);
+    t.setPadding(Ui.dp(c, 12), 0, 0, 0);
+    let l = Ui.tv(c, label, 13.5, WardListDesign.NAVY, false);
+    l.setMaxLines(2);
+    t.addView(l);
+    t.addView(Ui.tv(c, value, 26, 0xFF0B1F4D, true));
+    k.addView(t, Ui.weight(1));
+    return k;
+  }
+
+  /** Four stat cards: one row on tablets, two rows of two on phones. */
+  static stats(c, ...cards) {
+    let wide = c.getResources().getConfiguration().screenWidthDp >= 720;
+    let box = Ui.v(c);
+    box.setPadding(Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 4));
+    let row = null;
+    let per = wide ? cards.length : 2;
+    for (let i = 0; i < cards.length; i++) {
+      if (i % per === 0) {
+        row = Ui.h(c);
+        box.addView(row);
+      }
+      let lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1);
+      lp.setMargins(Ui.dp(c, 5), Ui.dp(c, 5), Ui.dp(c, 5), Ui.dp(c, 5));
+      row.addView(cards[i], lp);
+    }
+    return box;
+  }
+
+  /** The round white search box. */
+  static search(c, hint, text) {
+    let e = new EditText(c);
+    e.setHint(hint);
+    e.setSingleLine(true);
+    e.setText(text);
+    e.setTextColor(0xFF0B1F4D);
+    e.setHintTextColor(0xFF64748B);
+    e.setBackground(null);
+    e.setPadding(Ui.dp(c, 10), Ui.dp(c, 11), Ui.dp(c, 4), Ui.dp(c, 11));
+    return e;
+  }
+
+  static searchBox(c, e) {
+    let box = Ui.h(c);
+    box.setGravity(Gravity.CENTER_VERTICAL);
+    let bg = Ui.round(c, Color.WHITE, 24);
+    bg.setStroke(Ui.dp(c, 1.5), 0xFFDCE5F2);
+    box.setBackground(bg);
+    box.setElevation(Ui.dp(c, 2));
+    box.setPadding(Ui.dp(c, 16), 0, Ui.dp(c, 10), 0);
+    box.addView(TopBanner.icon(c, R.drawable.ic_search, 0xFF0B1F4D, 22));
+    box.addView(e, Ui.weight(1));
+    return box;
+  }
+
+  /** A chip of the segmented row: blue when on. icon 0 = none, -1 = the mosquito. */
+  static chip(c, label, on) {
+    let t = Ui.tv(c, label, 14, on ? Color.WHITE : 0xFF0B1F4D, on);
+    t.setGravity(Gravity.CENTER);
+    t.setPadding(Ui.dp(c, 16), Ui.dp(c, 8), Ui.dp(c, 16), Ui.dp(c, 8));
+    if (on) t.setBackground(TopBanner.grad([0xFF3B82F6, 0xFF1D4ED8], Ui.dp(c, 20)));
+    Ui.ripple(t, 0x222563EB);
+    return t;
+  }
+
+  static chipTrack(c) {
+    let t = Ui.h(c);
+    t.setGravity(Gravity.CENTER_VERTICAL);
+    let g = Ui.round(c, 0xFFF1F5FB, 24);
+    g.setStroke(Ui.dp(c, 1), 0xFFDCE5F2);
+    t.setBackground(g);
+    t.setPadding(Ui.dp(c, 4), Ui.dp(c, 4), Ui.dp(c, 4), Ui.dp(c, 4));
+    return t;
+  }
+
+  /** The white "Filter ⌄" pill. */
+  static filterPill(c, active) {
+    let t = Ui.tv(c, (active ? "● " : "") + "Filter ⌄", 14, active ? 0xFF1D4ED8 : 0xFF0B1F4D, true);
+    t.setGravity(Gravity.CENTER);
+    let g = Ui.round(c, Color.WHITE, 22);
+    g.setStroke(Ui.dp(c, 1.5), 0xFFDCE5F2);
+    t.setBackground(g);
+    t.setElevation(Ui.dp(c, 2));
+    t.setPadding(Ui.dp(c, 16), Ui.dp(c, 9), Ui.dp(c, 16), Ui.dp(c, 9));
+    Ui.ripple(t, 0x222563EB);
+    return t;
+  }
+
+  /** The gold and blue wave at the foot of the page. */
+  static wave(c) {
+    let w = c.getResources().getDisplayMetrics().widthPixels;
+    let iv = new ImageView(c);
+    iv.setImageResource(R.drawable.wl_wave);
+    iv.setScaleType(ImageView.ScaleType.FIT_XY);
+    iv.setLayoutParams(new LinearLayout.LayoutParams(w, Math.max(Ui.dp(c, 40), Math.round(w * 92 / 1492))));
+    return iv;
+  }
+}
+;
 /* ---- app/WardRoundActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -101966,7 +105785,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, AdmitDesign, Adpcm, Ai, AiReturn, AiRun, Album, AlbumActivity, Alerts, Antibiogram, AntibiogramActivity, Applause, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, Buzz, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisClaims, CmchisPackages, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Countdown, CountdownActivity, Crashes, CrashesActivity, Crest, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, GoldenHour, GoldenHourActivity, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Honours, HonoursActivity, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomHome, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, MyMonth, Mystery, MysteryActivity, Net, NightlyBackup, NmcAttendance, NmcAttendanceActivity, NoticeDesign, Notify, ObstetricActivity, OfflineShare, Opinions, OrderScan, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PatientActivity, PatientDesign, PatientPick, PatientRowDesign, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Posting, PostingActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, RareCase, RareCaseActivity, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, RoyalHome, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SickReport, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, StudentPortal, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilCard, TamilNote, Tasks, TasksActivity, TeachActivity, TeachPoints, TeachingActivity, Thesis, ThesisActivity, TimeMachine, TimeMachineActivity, TimelineActivity, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, UpdatePrompt, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, WaClass, Wall, WallActivity, WardDuty, WardList, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, AdmitDesign, Adpcm, Ai, AiReturn, AiRun, Album, AlbumActivity, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, Buzz, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisClaims, CmchisPackages, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Countdown, CountdownActivity, Crashes, CrashesActivity, Crest, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyBoard, DutyBoardActivity, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, GoldenHour, GoldenHourActivity, GrandHome, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Honours, HonoursActivity, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, InCharge, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomHome, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, JournalFeed, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, MedSphere, MedSphereActivity, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, MyMonth, Mystery, MysteryActivity, Net, NightlyBackup, NmcAttendance, NmcAttendanceActivity, NoticeDesign, Notify, ObstetricActivity, OfflineShare, Opinions, OrderScan, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PalaceHome, PatientActivity, PatientDesign, PatientPick, PatientRowDesign, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Posting, PostingActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, RareCase, RareCaseActivity, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, RoyalHome, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SickReport, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, StudentPortal, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilCard, TamilNote, Tasks, TasksActivity, TeachActivity, TeachPoints, TeachingActivity, Thesis, ThesisActivity, TimeMachine, TimeMachineActivity, TimelineActivity, TopBanner, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, UpdatePrompt, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, WaClass, Wall, WallActivity, WardDuty, WardList, WardListDesign, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
