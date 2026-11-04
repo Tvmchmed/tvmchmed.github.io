@@ -5975,7 +5975,7 @@ class Db extends SQLiteOpenHelper {
     "ENT", "Ophthalmology", "Neurosurgery", "Urology", "Cardiothoracic", "Emergency / casualty", "Dermatology", "Other"];
 
   static TABLES = ["units", "staff", "patients", "events", "classes", "academics", "cmchis", "settings",
-    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison", "death_reviews", "issues", "duel_scores", "mysteries", "mystery_guesses", "kudos", "fame", "code_blues", "counsel_logs", "shift_checks", "teach_points", "album_photos", "app_days", "nmc_marks", "postings", "posting_members", "posting_att", "posting_marks", "rosters", "meetings", "meeting_att"];
+    "notices", "attendance", "leaves", "dap", "callover", "kdp_op", "docs", "cmchis_cases", "pg_leaves", "faculty_leaves", "duty_roster", "alerts", "vip_cases", "duty_sick", "duty_notes", "ward_duty", "acad_files", "acad_attendance", "mcqs", "mcq_answers", "plex", "chats", "chat_messages", "chat_reads", "cal_events", "contacts", "opinions", "dissertations", "census", "charts", "spots", "spot_comments", "achievements", "chat_keys", "ccb_duty", "ob_duty", "og_cases", "handovers", "labs", "tasks", "logbook", "case_sheets", "quiz_sets", "learn_topics", "learn_points", "learn_likes", "pgc_msgs", "exam_cases", "exam_allots", "unit_moves", "imaging", "imaging_files", "audits", "swaps", "doubts", "doubt_answers", "mark_papers", "mark_rows", "doc_verify", "crashes", "learn_notes", "ecg_reads", "thesis_cases", "protocol_runs", "inv_sent", "cultures", "journals", "memos", "dama", "signoffs", "uq_questions", "uq_done", "ebooks", "crit_alerts", "flash", "attach", "away", "harrison", "death_reviews", "issues", "duel_scores", "mysteries", "mystery_guesses", "kudos", "fame", "code_blues", "counsel_logs", "shift_checks", "teach_points", "album_photos", "app_days", "nmc_marks", "postings", "posting_members", "posting_att", "posting_marks", "rosters", "meetings", "meeting_att", "absconds"];
   /** Tables kept on this phone only (in the backup file, never synced online). Case sheets are shared since 7.62. */
   static LOCAL_TABLES = [];
 
@@ -5987,7 +5987,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   constructor(c) {
-    super(c, "tvmchmed.db", null, 87);
+    super(c, "tvmchmed.db", null, 89);
     this.ctx = c;
   }
 
@@ -6492,6 +6492,16 @@ class Db extends SQLiteOpenHelper {
           + "status TEXT DEFAULT 'Open', action TEXT DEFAULT '', closed_by TEXT DEFAULT '', closed_on TEXT DEFAULT '')");
       Db.addColumn(db, "alerts", "audio", "TEXT DEFAULT ''");
     }
+    if (oldV < 89) {
+      // 10.71: patient absconding records (MLC and non-MLC), one per patient
+      let sql = "CREATE TABLE IF NOT EXISTS absconds(id INTEGER PRIMARY KEY, patient_id TEXT";
+      for (const c of Abscond.FIELDS) sql += ", " + c + " TEXT DEFAULT ''";
+      db.execSQL(sql + ", by_name TEXT DEFAULT '', saved_on TEXT DEFAULT '')");
+    }
+    if (oldV < 88) {
+      // 10.69: thesis cases that add themselves ("0" = switched off)
+      Db.addColumn(db, "dissertations", "auto_add", "TEXT DEFAULT ''");
+    }
     if (oldV < 87) {
       // 10.61: MedSphere waiting room ("1": the host lets people in). These blocks run newest first, so make the table here too.
       db.execSQL("CREATE TABLE IF NOT EXISTS meetings(id INTEGER PRIMARY KEY, title TEXT DEFAULT '', kind TEXT DEFAULT '', audience TEXT DEFAULT 'ALL', "
@@ -6741,6 +6751,7 @@ class Db extends SQLiteOpenHelper {
   }
 
   delete(table, id) {
+    this.forgetFilesOf(table, id);
     this.getWritableDatabase().delete(table, "id=?", [String(id)]);
     Sync.kick(this.ctx);
   }
@@ -7069,6 +7080,7 @@ class Db extends SQLiteOpenHelper {
     for (const r of this.rows("SELECT id FROM plex WHERE patient_id=?", String(id))) this.delete("plex", Long.parseLong(r.get("id")));
     for (const r of this.rows("SELECT id FROM imaging WHERE patient_id=?", String(id))) Imaging.delete(this, Long.parseLong(r.get("id")));
     for (const r of this.rows("SELECT id FROM dama WHERE patient_id=?", String(id))) this.delete("dama", Long.parseLong(r.get("id")));
+    for (const r of this.rows("SELECT id FROM absconds WHERE patient_id=?", String(id))) this.delete("absconds", Long.parseLong(r.get("id")));
     for (const r of this.rows("SELECT id FROM signoffs WHERE patient_id=?", String(id))) this.delete("signoffs", Long.parseLong(r.get("id")));
     this.delete("patients", id);
   }
@@ -7193,6 +7205,18 @@ class Db extends SQLiteOpenHelper {
   }
 
   /** Deletes a stored file here and, once shared, from the department's storage too. */
+  /** 10.74: the photo or file of a record being deleted goes from the shared storage too (a minute later, after Undo). */
+  forgetFilesOf(table, id) {
+    const col = Sync.fileCol(table);
+    if (col == null) return;
+    try {
+      const r = this.row("SELECT * FROM " + table + " WHERE id=?", String(id));
+      if (r == null) return;
+      Sync.forgetLater(this.ctx, table, col, r.get(col));
+      if (table === "ebooks") Sync.forgetLater(this.ctx, "ebooks", "cover", r.get("cover"));
+    } catch (e) {}
+  }
+
   forgetFile(rel) {
     if (rel == null || rel.isEmpty()) return;
     this.file(rel).delete();
@@ -7365,7 +7389,7 @@ class Db extends SQLiteOpenHelper {
 Db.SPEED_INDEXES = [["patients", "home_unit, status"], ["patients", "admit_date"], ["patients", "outcome_date"],
   ["patients", "ip_no"], ["events", "type, date"], ["events", "patient_id, type"], ["tasks", "patient_id, done"], ["labs", "patient_id"],
   ["imaging", "patient_id"], ["inv_sent", "patient_id, status"], ["crit_alerts", "status"], ["duty_sick", "date"], ["handovers", "day"],
-  ["signoffs", "status"], ["counsel_logs", "patient_id"], ["code_blues", "patient_id"], ["dama", "patient_id"], ["attendance", "date"],
+  ["signoffs", "status"], ["counsel_logs", "patient_id"], ["code_blues", "patient_id"], ["dama", "patient_id"], ["absconds", "patient_id"], ["attendance", "date"],
   ["academics", "date"], ["classes", "date"], ["leaves", "staff_id"], ["pg_leaves", "staff_id"], ["chat_messages", "time"], ["charts", "patient_id, kind"]];
 ;
 /* ---- app/Glass.js ---- */
@@ -9324,6 +9348,16 @@ class Cloud {
   /** Web: the same request as http() without blocking the page (used by Sync). */
   static async httpA(c, method, path, body, contentType, token, ...headers) {
     if (headers.length === 1 && Array.isArray(headers[0])) headers = headers[0];
+    if (path.startsWith("/storage/v1/object/")) {
+      const r = await R2.route(c, method, path, body, contentType); // 10.72: files go to Cloudflare R2 once the server has it
+      if (r != null) return r;
+    }
+    return Cloud.directA(c, method, path, body, contentType, token, headers);
+  }
+
+  /** Straight to Supabase, never R2. */
+  static async directA(c, method, path, body, contentType, token, ...headers) {
+    if (headers.length === 1 && Array.isArray(headers[0])) headers = headers[0];
     const hd = {};
     hd["apikey"] = Cloud.key(c);
     if (token != null) hd["Authorization"] = "Bearer " + token;
@@ -9594,6 +9628,167 @@ Cloud.Resp = class {
   text() { return jstr(this.body); }
 };
 ;
+/* ---- app/R2.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.72: photos and files in Cloudflare R2. Records stay in Supabase; only the file bytes go to R2.
+ * The R2 keys live on the server (Edge Function "files"); the browser asks it for a 15-minute link for one file.
+ * Every Storage request in Cloud.httpA comes through route(): new files go to R2, reads try R2 first and then the
+ * old Supabase copy, so files saved before the move still open.
+ */
+class R2 {
+  static prefs(c) {
+    return c.getSharedPreferences("r2", Context.MODE_PRIVATE);
+  }
+
+  /** True while the server hands out R2 links. Asked again every 6 hours (every 30 minutes while it is off). */
+  static async on(c) {
+    if (!Cloud.active(c)) return false;
+    const p = R2.prefs(c);
+    let on = p.getBoolean("on", false);
+    const now = System.currentTimeMillis();
+    if (now - p.getLong("checked", 0) < (on ? 6 * 3600000 : 30 * 60000)) return on;
+    try {
+      on = new JSONObject((await Cloud.jsonA(c, "POST", R2.FN, new JSONObject().put("op", "ping"))).text()).optBoolean("r2", false);
+    } catch (e) {
+      if (!(e instanceof Cloud.HttpError)) return on; // no internet: ask next time
+      on = false; // the function is not there yet (404) or not working
+    }
+    p.edit().putBoolean("on", on).putLong("checked", now).apply();
+    return on;
+  }
+
+  static forget(c) {
+    R2.prefs(c).edit().remove("checked").apply();
+  }
+
+  static where(c) {
+    return R2.prefs(c).getBoolean("on", false) ? "Cloudflare R2" : "Supabase Storage";
+  }
+
+  /** A 15-minute link from the server for one file: op is put, get or del. Null when R2 is not set up after all. */
+  static async link(c, op, rel) {
+    try {
+      const o = new JSONObject((await Cloud.jsonA(c, "POST", R2.FN, new JSONObject().put("op", op).put("path", rel))).text());
+      return o.optString("url", "");
+    } catch (e) {
+      if (e instanceof Cloud.HttpError && (e.code === 503 || e.code === 404)) {
+        R2.prefs(c).edit().putBoolean("on", false).putLong("checked", System.currentTimeMillis()).apply();
+        return null;
+      }
+      throw e;
+    }
+  }
+
+  /** A plain request to a link (no Supabase keys go to Cloudflare). */
+  static async raw(method, url, body, type) {
+    const hd = {};
+    if (body != null) hd["Content-Type"] = type == null ? "application/octet-stream" : type;
+    const x = await httpAsync(method, url, hd, body);
+    const r = new Cloud.Resp();
+    r.code = x.code;
+    r.body = x.body || new Uint8Array(0);
+    if (r.code >= 400) throw new Cloud.HttpError(r.code, r.code === 404 ? "Not found" : "File server error " + r.code);
+    return r;
+  }
+
+  /** Cloud.httpA's Storage requests. Null = let Supabase Storage answer (R2 off, or an old file not in R2). */
+  static async route(c, method, path, body, type) {
+    if (!(await R2.on(c))) return null;
+    if (path === R2.LIST && method === "POST") return R2.list(c, body);
+    const auth = path.startsWith(R2.AUTH);
+    if (!auth && !path.startsWith(R2.OBJ)) return null;
+    const rel = Uri.decode(path.substring(auth ? R2.AUTH.length : R2.OBJ.length));
+    if (method === "GET") {
+      const u = await R2.link(c, "get", rel);
+      if (u == null) return null;
+      try {
+        return await R2.raw("GET", u, null, null);
+      } catch (e) {
+        if (e instanceof Cloud.HttpError && e.code === 404) return null; // saved before the move: still in Supabase
+        throw e;
+      }
+    }
+    if (method === "POST" || method === "PUT") {
+      const u = await R2.link(c, "put", rel);
+      return u == null ? null : R2.raw("PUT", u, body, type);
+    }
+    if (method === "DELETE") {
+      const u = await R2.link(c, "del", rel);
+      if (u == null) return null;
+      const r = await R2.raw("DELETE", u, null, null);
+      try {
+        await Cloud.directA(c, "DELETE", R2.OBJ + Uri.encode(rel, "/"), null, null, await Cloud.tokenA(c));
+      } catch (e) {
+        // no old copy
+      }
+      return r;
+    }
+    return null;
+  }
+
+  /** One folder's files from R2 and from the old Supabase copy, in Supabase's list shape. */
+  static async list(c, body) {
+    const prefix = new JSONObject(new TextDecoder().decode(body)).optString("prefix", "");
+    const out = new JSONArray((await Cloud.jsonA(c, "POST", R2.FN, new JSONObject().put("op", "list").put("prefix", prefix))).text());
+    try {
+      const old = new JSONArray((await Cloud.directA(c, "POST", R2.LIST, body, "application/json", await Cloud.tokenA(c))).text());
+      for (let i = 0; i < old.length(); i++) out.put(old.get(i));
+    } catch (e) {
+      // Supabase list failed: R2 alone
+    }
+    const r = new Cloud.Resp();
+    r.code = 200;
+    r.body = jbytes(out.toString());
+    return r;
+  }
+
+  /** Every file under one Supabase folder, walking into sub folders. */
+  static async walk(c, prefix, out) {
+    for (let off = 0; ; off += 1000) {
+      const a = new JSONArray((await Cloud.directA(c, "POST", R2.LIST, jbytes(new JSONObject().put("prefix", prefix).put("limit", 1000).put("offset", off).toString()),
+        "application/json", await Cloud.tokenA(c))).text());
+      for (let i = 0; i < a.length(); i++) {
+        const o = a.getJSONObject(i);
+        const name = o.optString("name", "");
+        if (name.isEmpty() || name === ".emptyFolderPlaceholder") continue;
+        if (o.isNull("id")) await R2.walk(c, prefix + name + "/", out);
+        else out.push(prefix + name);
+      }
+      if (a.length() < 1000) return;
+    }
+  }
+
+  /** Admin: copies every old Supabase file to R2, checks the copy, then frees the Supabase space. */
+  static async moveAll(c, step) {
+    R2.forget(c);
+    if (!(await R2.on(c))) throw new IOException("R2 is not set up on the server yet");
+    const all = [];
+    await R2.walk(c, "", all);
+    let moved = 0, failed = 0;
+    for (let i = 0; i < all.length; i++) {
+      const rel = all[i];
+      step("Moving " + (i + 1) + " of " + all.length + ": " + rel);
+      try {
+        const b = (await Cloud.directA(c, "GET", R2.AUTH + Uri.encode(rel, "/"), null, null, await Cloud.tokenA(c))).body;
+        const put = await R2.link(c, "put", rel), get = await R2.link(c, "get", rel);
+        await R2.raw("PUT", put, b, DocProvider.mimeOf(rel));
+        if ((await R2.raw("GET", get, null, null)).body.length !== b.length) throw new IOException("copy size differs");
+        await Cloud.directA(c, "DELETE", R2.OBJ + Uri.encode(rel, "/"), null, null, await Cloud.tokenA(c));
+        moved++;
+      } catch (e) {
+        failed++;
+      }
+    }
+    return all.length === 0 ? "No old files left in Supabase" : moved + " files moved to R2" + (failed > 0 ? ", " + failed + " could not be moved (try again)" : "");
+  }
+}
+R2.FN = "/functions/v1/files";
+R2.OBJ = "/storage/v1/object/files/";
+R2.AUTH = "/storage/v1/object/authenticated/files/";
+R2.LIST = "/storage/v1/object/list/files";
+;
 /* ---- app/Store.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -9716,6 +9911,34 @@ class Store {
     if (bm == null) return null;
     Store.writeJpeg(bm, Db.get(c).file(rel), 86);
     return rel;
+  }
+
+  /** 10.73: JPEG photos only; scans for imaging (X-ray, CT, ECG) keep their full detail. */
+  static slimmable(rel) {
+    const r = String(rel).toLowerCase();
+    return (r.endsWith(".jpg") || r.endsWith(".jpeg")) && !r.startsWith("imaging/") && !r.startsWith("ebooks/");
+  }
+
+  /** Web: shrinks a photo in place before upload (at most SLIM_PX long side, JPEG SLIM_Q). Only replaces it when smaller. */
+  static async slim(f, rel) {
+    try {
+      if (!Store.slimmable(rel)) return;
+      const bytes = await VFS.read(f.rel());
+      if (bytes == null || bytes.length <= Store.SLIM_MIN) return;
+      const src = await createImageBitmap(new Blob([bytes], { type: "image/jpeg" }), { imageOrientation: "from-image" });
+      const k = Math.min(1, Store.SLIM_PX / Math.max(src.width, src.height));
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(src.width * k);
+      cv.height = Math.round(src.height * k);
+      cv.getContext("2d").drawImage(src, 0, 0, cv.width, cv.height);
+      const out = await new Promise((res) => cv.toBlob(res, "image/jpeg", Store.SLIM_Q / 100));
+      if (!out || out.size >= bytes.length) return;
+      await VFS.write(f.rel(), new Uint8Array(await out.arrayBuffer()));
+      Bitmaps.decoded.delete(VFS.norm(f.rel()));
+      VFS.setMeta(f.rel(), { w: cv.width, h: cv.height });
+    } catch (e) {
+      // keep the original
+    }
   }
 
   /** Re-saves a camera capture in place, scaled to at most maxPx. Returns false if it is not an image. */
@@ -9933,6 +10156,9 @@ class Store {
     return rel == null || rel.isEmpty() ? 0 : Db.get(c).file(rel).length();
   }
 }
+Store.SLIM_PX = 1800;
+Store.SLIM_Q = 80;
+Store.SLIM_MIN = 350 * 1024;
 ;
 /* ---- app/Lock.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -10769,10 +10995,38 @@ class Sync {
     }
   }
 
+  /** The column that names a table's shared file (null: the table has none). */
+  static fileCol(t) {
+    return t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : t.equals("ebooks") ? "file" : t.equals("attach") ? "file" : t.equals("harrison") ? "file" : t.equals("faculty_leaves") ? "cert" : t.equals("alerts") ? "audio" : t.equals("album_photos") ? "file" : null;
+  }
+
+  /** 10.74: a file whose record was deleted (or whose chat message was deleted for everyone) is erased from the shared storage
+   *  a minute later, once Undo can no longer bring the record back, and only if no other record still uses it. */
+  static forgetLater(c, table, col, rel) {
+    if (rel == null || rel === "" || !Sync.safeRel(rel)) return;
+    c.getSharedPreferences("files_gc", Context.MODE_PRIVATE).edit().putString(rel, table + "|" + col + "|" + System.currentTimeMillis()).apply();
+  }
+
+  static collectGarbage(c, db) {
+    const gp = c.getSharedPreferences("files_gc", Context.MODE_PRIVATE);
+    const now = System.currentTimeMillis();
+    const all = gp.getAll();
+    for (const rel of (all.keySet ? Array.from(all.keySet()) : Object.keys(all))) {
+      const v = String(all.get ? all.get(rel) : all[rel]).split("|");
+      try {
+        if (v.length < 3 || now - Number(v[2]) < 60000) continue;
+        if (!/^[a-z_]+$/.test(v[0]) || !/^[a-z_]+$/.test(v[1]) || db.num("SELECT COUNT(*) FROM " + v[0] + " WHERE " + v[1] + "=?", rel) === 0) db.forgetFile(rel);
+      } catch (x) {
+        // table gone: leave the file
+      }
+      gp.edit().remove(rel).apply();
+    }
+  }
+
   static fileOf(t, data) {
     if (t.equals("ebooks.cover")) return data.isNull("cover") ? "" : data.optString("cover", "");   // a Library book's front page
     if (t.equals("settings")) return "hod_photo".equals(data.optString("k")) && !data.isNull("v") ? data.optString("v", "") : "";
-    const col = t.equals("docs") ? "file" : t.equals("staff") ? "photo" : t.equals("notices") ? "image" : t.equals("pg_leaves") ? "letter" : t.equals("acad_files") ? "file" : t.equals("chat_messages") ? "file" : t.equals("spots") || t.equals("achievements") ? "image" : t.equals("imaging_files") ? "file" : t.equals("journals") ? "file" : t.equals("ebooks") ? "file" : t.equals("attach") ? "file" : t.equals("harrison") ? "file" : t.equals("faculty_leaves") ? "cert" : t.equals("alerts") ? "audio" : t.equals("album_photos") ? "file" : null;
+    const col = Sync.fileCol(t);;
     return col == null || data.isNull(col) ? "" : data.optString(col, "");
   }
 
@@ -10781,6 +11035,7 @@ class Sync {
     if (rel.isEmpty() || done.contains(rel) || !Sync.safeRel(rel)) return;
     const f = db.file(rel);
     if (!f.exists() || db.num("SELECT COUNT(*) FROM files_up WHERE rel=?", rel) > 0) return;
+    await Store.slim(f, rel); // 10.73: big photos are made smaller first, so R2's free 10 GB lasts
     try {
       await Cloud.httpA(c, "POST", "/storage/v1/object/files/" + Uri.encode(rel, "/"), await E2e.sealFile(c, rel, await Sync.readFile(f)),
         DocProvider.mimeOf(rel), await Cloud.tokenA(c), "x-upsert", "true");
@@ -10802,6 +11057,7 @@ class Sync {
   }
 
   static async pushDeletedFiles(c, db) {
+    Sync.collectGarbage(c, db);
     for (const r of db.rows("SELECT rel FROM files_del")) {
       const rel = r.get("rel");
       try {
@@ -11435,7 +11691,7 @@ class Background extends JobService {
   static JOB = 7300;
   static CHANNEL = "alerts";
   static PERIOD_MS = 15 * 60 * 1000;
-  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215; static N_ESCALATE = 7216; static N_BEDS = 7217; static N_DAPREPORT = 7218; static N_ISSUE = 7219; static N_KUDOS = 7220; static N_MONTH = 7221; static N_DUEL = 7222; static N_CODE = 7224; static N_TEACH = 7225; static N_RARE = 7226; static N_NMC = 7227; static N_MEET = 7228; static N_JOURNAL = 7229;
+  static N_ALERT = 7200; static N_WAITING = 7201; static N_HANDOVER = 7202; static N_UPDATE = 7203; static N_PGC = 7204; static N_EWS = 7205; static N_WATCH = 7206; static N_BRIEF = 7207; static N_RESULTS = 7209; static N_CONDUCT = 7210; static N_MEMO = 7211; static N_SIGNOFF = 7212; static N_CRIT = 7213; static N_OUTBREAK = 7214; static N_HARRISON = 7215; static N_ESCALATE = 7216; static N_BEDS = 7217; static N_DAPREPORT = 7218; static N_ISSUE = 7219; static N_KUDOS = 7220; static N_MONTH = 7221; static N_DUEL = 7222; static N_CODE = 7224; static N_TEACH = 7225; static N_RARE = 7226; static N_NMC = 7227; static N_MEET = 7228; static N_JOURNAL = 7229; static N_THESIS = 7230;
   /** Web: the repeating timer, started once. */
   static timer = null;
 
@@ -11718,6 +11974,20 @@ class Background extends JobService {
       // optional
     }
 
+    // 10.69: new admissions that fit the PG's own thesis join its data by themselves (ward and bed, never the name)
+    try {
+      const tc = Thesis.autoRun(c, db);
+      if (!tc.isEmpty()) {
+        Sync.kick(c);
+        const one = tc.get(tc.size() - 1)[1];
+        Background.show(c, Background.N_THESIS, tc.size() === 1 ? "📊 New thesis case" : "📊 " + tc.size() + " new thesis cases",
+            (tc.size() === 1 ? one : "Latest: " + one) + ". Added to your thesis data. See the patient while still admitted.", Thesis.COLOR,
+            new Intent(c, ThesisActivity).putExtra("diss", tc.get(tc.size() - 1)[0]));
+      }
+    } catch (ignored) {
+      // optional
+    }
+
     // early warning: a patient newly at a red NEWS2 (never names or numbers on the lock screen)
     try {
       if (SessionAttendance.canRun(c) || Cloud.isAdmin(c)) {
@@ -11897,6 +12167,12 @@ class Updates {
 
   /** What changed in recent versions, newest first, for the "What's new" list. */
   static CHANGES = [
+    ["10.74", "🗑️ Deleting a notice, spot, achievement, imaging picture or any other record with a photo or file now also erases that file from the shared storage (Cloudflare R2), a minute later so Undo still works. A file another record still uses is kept. A chat photo deleted for everyone is erased too."],
+    ["10.73", "🗜️ Big photos are made smaller before they are shared (at most 1800 pixels, still sharp enough to read orders and rosters), so they load faster and the free 10 GB of Cloudflare R2 lasts for years. X-ray, CT and ECG pictures in Imaging keep their full detail."],
+    ["10.72", "📸 Photos and files can now live in Cloudflare R2 (more free space, no download charges) while every record stays in Supabase. Once the admin sets up the \"files\" function with the R2 secrets, new photos and files go to R2 by themselves; files saved before still open. Admin: Settings → Photos and files → Move old files to R2."],
+    ["10.71", "🚪 Abscond report for patients who leave the ward without informing, MLC and non-MLC: last seen and found missing, condition and lines in place, search, relatives, unit, DAP, RMO / CMO, nursing and security informed with times, police intimation (always for MLC, and for a vulnerable non-MLC patient), belongings and signatures. MLC reports also print the intimation letter to the police. It is on the patient page and the case sheet, goes into the case sheet (summary) download, and there is an Abscond register under Paperwork."],
+    ["10.70", "🎥 MedSphere has its own section on the home page: the MedSphere picture, a meeting live now or the next one with Join, and one tap to the Department hall or your unit room. 🏥 Kandiyaperi Hospital now looks like the M1 to M7 wards inside: the cream ward band with + Admit, stat cards (patients, admitted today, male / female, OP today), bed board, team, search with All / Male / Female chips and a filter, and numbered patient cards. The OP register and the month's numbers follow below."],
+    ["10.69", "📊 Thesis data fills itself: when a patient whose diagnosis matches your thesis words is admitted in any unit, the case joins your thesis data with age, sex, labs, outcome and stay filled in, and you get a quiet notice with the ward and bed. The words are suggested from your dissertation title. The topic page shows cases collected against the sample size with a progress bar. Switch auto-add off on the thesis page if you pick cases by hand."],
     ["10.40", "📞 Intercom has its own section on the home page, under the ward census, with a living icon (golden phone, turning rainbow halo, ripples and orbiting dots), who is online and Open intercom / Keypad buttons. Calls themselves work in the Android app."],
     ["10.39", "🩺 New patient card look everywhere patients are listed: name and age in bold, an IP number chip (and bed), Adm date and diagnosis lines with icons, and on the right a big ward pill (Fever, IMCU, M3 ward…) with Parent : M5 under it. In the fever ward the red + Mark dengue button sits inside each card. 📞 Intercom: the Accept button on an incoming call now answers every time (the call screen was redrawing twice a second and swallowing the tap)."],
     ["10.38", "📢 New Notice Board look: megaphone header, search box, coloured cards by type (duty roster blue, class roster purple, order red, meeting teal, general orange) with a coloured left edge, round icon, date and a View PDF button, filter chips with counts and a This week count. On a tablet or the website the filters and This week sit in a side panel and smaller notices go two to a row."],
@@ -13641,6 +13917,530 @@ class AbgActivity extends Base {
     }
     box.addView(Ui.outlineButton(a, "🫁  ABG interpreter", Abg.COLOR, a.opener(AbgActivity, "id", String(pid))));
     return box;
+  }
+}
+;
+/* ---- app/Abscond.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.71 (user: "Design a format for documentation of patient absconding from the wards for both MLC and NMLC cases and incorporate in
+ * the case sheet for downloading"): one abscond record per patient (table absconds, synced). The printed report has the patient and
+ * admission, the MLC / non-MLC status, when the patient was last seen and found missing, the condition and lines left in, the search,
+ * who was informed and when (relatives, unit PG and Assistant Professor, DAP, RMO / CMO, nursing superintendent, security), the police
+ * intimation (always for MLC, and for a vulnerable non-MLC patient), belongings, and signatures. An MLC record also prints the
+ * intimation letter to the police. The same record is added to the case summary / discharge summary download.
+ */
+class Abscond {
+    static TABLE = "absconds";
+    static COLOR = 0xFF9A3412;
+    static MLC = "MLC";
+    static NMLC = "Non-MLC";
+    /** The discharge type an abscond is recorded under. */
+    static get DISCHARGE_TYPE() { return Db.DISCHARGE_TYPES[4]; }
+
+    static CONDITIONS = ["Stable", "Unstable", "Critical", "Not known"];
+    static DEVICES = ["IV cannula", "Urinary catheter", "Ryles tube", "Oxygen", "Central line", "Other"];
+    static VULNERABLE = ["Minor (under 18)", "Psychiatric illness", "Disoriented / delirium", "Elderly / dependent", "Under alcohol or drug effect", "Suicidal attempt / poisoning"];
+    static MODES = ["Phone", "In person", "SMS / WhatsApp", "Letter", "Not reachable"];
+    /** who is informed: key, label */
+    static INFORMED = [["inf_pg", "Unit duty PG"], ["inf_ap", "Unit Assistant Professor / Chief"], ["inf_dap", "DAP (Duty Assistant Professor)"],
+            ["inf_rmo", "RMO / CMO on duty"], ["inf_ns", "Nursing superintendent / ward sister"], ["inf_sec", "Hospital security"]];
+    static FIELDS = ["case_type", "mlc_no", "police_station", "date", "time", "last_date", "last_time", "last_seen_by", "noticed_by",
+            "condition", "devices", "pending", "search_by", "search_time", "search_result", "belongings", "rel_name", "rel_relation", "rel_phone", "rel_time", "rel_mode",
+            "inf_pg", "inf_ap", "inf_dap", "inf_rmo", "inf_ns", "inf_sec", "vulnerable", "police_time", "police_officer", "police_mode", "police_ref", "letter_sent",
+            "doctor", "designation", "reg_no", "nurse", "wit1", "notes"];
+
+    static forPatient(db, pid) {
+        return db.row("SELECT * FROM absconds WHERE patient_id=? ORDER BY id DESC LIMIT 1", String(pid));
+    }
+
+    static list(joined) {
+        return Arrays.asList(Ui.nz(joined).split("\\|"));
+    }
+
+    static mlc(p, d) {
+        if (d != null && !Ui.nz(d.get("case_type")).isEmpty()) return Abscond.MLC.equals(d.get("case_type"));
+        return Abscond.MLC.equals(Ui.nz(p.get("mlc")));   // the admission form's MLC / NMLC (its AR number is the MLC number)
+    }
+
+    /** Police must be told for every MLC, and for a non-MLC patient who is vulnerable. */
+    static policeNeeded(d) {
+        if (Abscond.MLC.equals(d.get("case_type"))) return true;
+        for (const v of Abscond.list(d.get("vulnerable"))) if (!v.trim().isEmpty()) return true;
+        return false;
+    }
+
+    /** What is still missing on a saved record (shown in amber on the screens). */
+    static missing(d) {
+        const b = new StringBuilder();
+        if (Ui.nz(d.get("rel_time")).isEmpty() && !"Not reachable".equals(d.get("rel_mode"))) b.append("relatives informed, ");
+        if (Ui.nz(d.get("inf_dap")).isEmpty()) b.append("DAP informed, ");
+        if (Ui.nz(d.get("inf_rmo")).isEmpty()) b.append("RMO / CMO informed, ");
+        if (Abscond.policeNeeded(d) && Ui.nz(d.get("police_time")).isEmpty()) b.append("police intimation, ");
+        if (Ui.nz(d.get("search_time")).isEmpty()) b.append("ward and campus search, ");
+        return b.length() === 0 ? "" : b.substring(0, b.length() - 2);
+    }
+
+    /** Shown on the patient screen and the case sheet: while admitted, or once an abscond record or an "Absconded" outcome exists. */
+    static show(db, p) {
+        if (Db.IN.equals(p.get("status"))) return true;
+        if (Abscond.forPatient(db, Long.parseLong(p.get("id"))) != null) return true;
+        return Ui.nz(p.get("outcome_note")).startsWith("Absconded");
+    }
+
+    /** The abscond card for the patient screen and the case sheet. */
+    static section(a, db, p) {
+        const pid = Long.parseLong(p.get("id"));
+        const box = Ui.v(a);
+        box.addView(Ui.heading(a, "Absconding (MLC / non-MLC)", Abscond.COLOR));
+        const d = Abscond.forPatient(db, pid);
+        const card = Ui.card(a);
+        if (d == null) {
+            card.addView(Ui.muted(a, "If the patient is found missing from the ward, record it here: last seen, search, who was informed and when, and the police intimation for an MLC. "
+                    + "It prints as the department's abscond report and goes into the case sheet download."));
+        } else {
+            card.addView(Ui.tv(a, "⚠ Absconded · " + Ui.nz(d.get("case_type")) + "  ·  noticed " + Dates.nice(Ui.nz(d.get("date"))) + " " + Ui.nz(d.get("time")), 15, Abscond.COLOR, true));
+            card.addView(Ui.muted(a, "Last seen " + Dates.nice(Ui.nz(d.get("last_date"))) + " " + Ui.nz(d.get("last_time"))
+                    + (Ui.nz(d.get("last_seen_by")).isEmpty() ? "" : " by " + d.get("last_seen_by"))));
+            if (Abscond.MLC.equals(d.get("case_type")) || Abscond.policeNeeded(d))
+                card.addView(Ui.muted(a, Ui.nz(d.get("police_time")).isEmpty() ? "Police: not yet informed" : "Police informed at " + d.get("police_time")
+                        + (Ui.nz(d.get("police_station")).isEmpty() ? "" : ", " + d.get("police_station"))));
+            const miss = Abscond.missing(d);
+            if (!miss.isEmpty()) card.addView(Ui.tv(a, "Still to record: " + miss, 13, 0xFF92400E, true));
+        }
+        Ui.ripple(card, Ui.alpha(Abscond.COLOR, 0x22));
+        card.setOnClickListener(a.opener(AbscondActivity, "id", String(pid)));
+        const open = Ui.outlineButton(a, d == null ? "🖊  Record absconding" : "Open abscond report", Abscond.COLOR, a.opener(AbscondActivity, "id", String(pid)));
+        card.addView(open);
+        Ui.margins(open, 0, 10, 0, 0);
+        box.addView(card);
+        return box;
+    }
+
+    // ---------------------------------------------------------------- the printed report
+
+    static NAVY = 0xFF1E3A5F; static TEAL = 0xFF1E7A85; static LABEL = 0xFFEEF4F7; static MUTE = 0xFF475569; static RED = 0xFFB91C1C; static AMBER_L = 0xFFFFF8E6;
+
+    static label(en) {
+        return new FormDoc.Cell(en).b().fill(Abscond.LABEL).size(7.5);
+    }
+
+    static val(s) {
+        return new FormDoc.Cell(Ui.nz(s)).size(8.5);
+    }
+
+    static frac(...w) {
+        let t = 0;
+        for (const x of w) t += x;
+        const out = new Array(w.length);
+        for (let i = 0; i < w.length; i++) out[i] = w[i] / t;
+        return out;
+    }
+
+    static when(date, time) {
+        const d = Ui.nz(date).isEmpty() ? "" : Dates.nice(date);
+        return (d + " " + Ui.nz(time)).trim();
+    }
+
+    static boxes(all, joined) {
+        const on = Abscond.list(joined);
+        const b = new Array(all.length).fill(false);
+        for (let i = 0; i < all.length; i++) b[i] = on.contains(all[i]);
+        return FormDoc.boxes(all, b);
+    }
+
+    /** The abscond report on its own (the abscond screen's download). */
+    static build(db, p, d) {
+        const f = new FormDoc();
+        f.upper = "";
+        f.college = "Tirunelveli Medical College Hospital";
+        f.address = "Tirunelveli";
+        f.dept = "Department of Medicine";
+        f.title = "PATIENT ABSCONDING REPORT (" + (Abscond.MLC.equals(d.get("case_type")) ? "MLC" : "NON-MLC") + ")";
+        f.footer = "Patient Absconding Report – Dept. of Medicine, Tirunelveli Medical College Hospital";
+        f.fileBase = "Abscond_" + Ui.nz(p.get("ip_no")).replaceAllRx("[^A-Za-z0-9]+", "_") + "_" + Ui.nz(d.get("date")).split("-").join("");
+        Abscond.addTo(f, db, p, d, false);
+        return f;
+    }
+
+    /** Adds the report (and, for an MLC, the police intimation letter) to a document; newPage starts it on a fresh page (case sheet download). */
+    static addTo(f, db, p, d, newPage) {
+        const mlc = Abscond.MLC.equals(d.get("case_type"));
+        const head = f.plain(Abscond.frac(1));
+        head.pageBefore = newPage;
+        head.row(18, new FormDoc.Cell("அனுமதியின்றி வார்டை விட்டு வெளியேறிய நோயாளி அறிக்கை\nPATIENT ABSCONDING REPORT").b().center().size(10).color(Abscond.NAVY));
+        const type = f.plain(Abscond.frac(1, 1, 1));
+        type.row(18, new FormDoc.Cell(FormDoc.box(mlc, "MLC (Medico-legal case)")).b().size(9).color(mlc ? Abscond.RED : Abscond.MUTE),
+                new FormDoc.Cell(FormDoc.box(!mlc, "Non-MLC")).b().size(9).color(!mlc ? Abscond.NAVY : Abscond.MUTE),
+                new FormDoc.Cell("IP No.: " + Ui.nz(p.get("ip_no"))).b().size(9));
+
+        const pt = f.block("Patient & Admission Details", Abscond.NAVY, Abscond.frac(1.1, 1.6, 1.1, 1.6));
+        const age = Ui.nz(p.get("age")) + (Ui.nz(p.get("age")).isEmpty() ? "" : " y") + " / " + Ui.nz(p.get("sex"));
+        pt.row(20, Abscond.label("Patient name"), Abscond.val(p.get("name")).span(3));
+        pt.row(20, Abscond.label("Age / Sex"), Abscond.val(age), Abscond.label("Contact number"), Abscond.val(p.get("phone")));
+        pt.row(20, Abscond.label("Ward / Bed"), Abscond.val(Db.unitName(Ui.nz(p.get("location"))) + (Ui.nz(p.get("bed")).isEmpty() ? "" : "  /  bed " + p.get("bed"))),
+                Abscond.label("Unit"), Abscond.val(Db.unitName(Ui.nz(p.get("home_unit")))));
+        pt.row(20, Abscond.label("Date of admission"), Abscond.val(Dates.nice(Ui.nz(p.get("admit_date")))), Abscond.label("Diagnosis"), Abscond.val(p.get("diagnosis")));
+        pt.row(20, Abscond.label("Address"), Abscond.val(p.get("address")).span(3));
+        if (mlc) pt.row(20, Abscond.label("MLC number"), Abscond.val(d.get("mlc_no")), Abscond.label("Police station (jurisdiction)"), Abscond.val(d.get("police_station")));
+
+        const ev = f.block("When the Patient Was Found Missing", Abscond.COLOR, Abscond.frac(1.1, 1.6, 1.1, 1.6));
+        ev.row(20, Abscond.label("Last seen in the ward"), Abscond.val(Abscond.when(d.get("last_date"), d.get("last_time"))), Abscond.label("Last seen by"), Abscond.val(d.get("last_seen_by")));
+        ev.row(20, Abscond.label("Found missing on"), Abscond.val(Abscond.when(d.get("date"), d.get("time")))
+                .b(), Abscond.label("Noticed by"), Abscond.val(d.get("noticed_by")));
+        ev.row(20, Abscond.label("Condition when last seen"), new FormDoc.Cell(Abscond.boxes(Abscond.CONDITIONS, d.get("condition"))).size(8).span(3));
+        ev.row(20, Abscond.label("Lines / devices in place"), new FormDoc.Cell(Abscond.boxes(Abscond.DEVICES, d.get("devices"))).size(8).span(3));
+        ev.row(22, Abscond.label("Treatment / investigations pending"), Abscond.val(d.get("pending")).span(3));
+
+        const sr = f.block("Search", Abscond.TEAL, Abscond.frac(1.1, 1.6, 1.1, 1.6));
+        sr.row(20, Abscond.label("Ward, toilets and campus searched by"), Abscond.val(d.get("search_by")), Abscond.label("Search time"), Abscond.val(d.get("search_time")));
+        sr.row(20, Abscond.label("Result of search"), Abscond.val(d.get("search_result")).span(3));
+        sr.row(20, Abscond.label("Belongings left in the ward"), Abscond.val(d.get("belongings")).span(3));
+
+        const inf = f.block("Information Given (time)", Abscond.NAVY, Abscond.frac(2.2, 1, 2.2, 1));
+        inf.row(22, Abscond.label("Relatives / attendant"), Abscond.val(Ui.nz(d.get("rel_name")) + (Ui.nz(d.get("rel_relation")).isEmpty() ? "" : " (" + d.get("rel_relation") + ")")
+                + (Ui.nz(d.get("rel_phone")).isEmpty() ? "" : ", " + d.get("rel_phone")) + (Ui.nz(d.get("rel_mode")).isEmpty() ? "" : " · " + d.get("rel_mode"))).span(2),
+                Abscond.val(d.get("rel_time")).b());
+        for (let i = 0; i < Abscond.INFORMED.length; i += 2)
+            inf.row(20, Abscond.label(Abscond.INFORMED[i][1]), Abscond.val(d.get(Abscond.INFORMED[i][0])).b(), Abscond.label(Abscond.INFORMED[i + 1][1]), Abscond.val(d.get(Abscond.INFORMED[i + 1][0])).b());
+
+        const police = Abscond.policeNeeded(d);
+        const pl = f.block(mlc ? "Police Intimation (compulsory for MLC)" : "Police Intimation (non-MLC: needed if the patient is vulnerable)", Abscond.RED,
+                Abscond.frac(1.1, 1.6, 1.1, 1.6));
+        if (!mlc) pl.row(20, Abscond.label("Vulnerable patient"), new FormDoc.Cell(Abscond.boxes(Abscond.VULNERABLE, d.get("vulnerable"))).size(8).span(3));
+        pl.row(20, Abscond.label("Police informed at"), Abscond.val(d.get("police_time")).b(), Abscond.label("Mode"), Abscond.val(d.get("police_mode")));
+        pl.row(20, Abscond.label("Officer / outpost"), Abscond.val(d.get("police_officer")), Abscond.label("CSR / GD / reference no."), Abscond.val(d.get("police_ref")));
+        pl.row(20, Abscond.label("Written intimation sent"), new FormDoc.Cell(FormDoc.box("1".equals(d.get("letter_sent")), "Yes") + "   " + FormDoc.box(!"1".equals(d.get("letter_sent")), "No")
+                + (police ? "" : "      (not required)")).size(8).span(3));
+
+        const sg = f.block("Recorded by", Abscond.TEAL, Abscond.frac(1.2, 1.6, 1.2, 1.4));
+        sg.keep = true;
+        sg.row(20, Abscond.label("Doctor (name)"), Abscond.val(d.get("doctor")), Abscond.label("Designation / Reg. no."), Abscond.val(Ui.nz(d.get("designation")) + (Ui.nz(d.get("reg_no")).isEmpty() ? "" : " / " + d.get("reg_no"))));
+        sg.row(20, Abscond.label("Staff nurse on duty"), Abscond.val(d.get("nurse")), Abscond.label("Witness"), Abscond.val(d.get("wit1")));
+        sg.row(30, Abscond.label("Signature of doctor"), Abscond.val("").bottom(), Abscond.label("Signature of staff nurse"), Abscond.val("").bottom());
+        sg.row(16, new FormDoc.Cell("Case sheet entry made, outcome recorded as “Absconded”, and the case sheet kept with the medical records"
+                + (mlc ? " and the MLC register" : "") + ".").size(7.5).fill(Abscond.AMBER_L).span(4));
+        if (!Ui.nz(d.get("notes")).isEmpty()) f.plain(Abscond.frac(1)).row(16, new FormDoc.Cell("Notes: " + d.get("notes")).size(8).color(Abscond.MUTE));
+
+        if (mlc || "1".equals(d.get("letter_sent"))) Abscond.letter(f, p, d);
+    }
+
+    /** The intimation letter to the police (MLC, or a non-MLC patient reported to them). */
+    static letter(f, p, d) {
+        const l = f.plain(Abscond.frac(1));
+        l.pageBefore = true;
+        l.keep = true;
+        const ps = Ui.nz(d.get("police_station")).isEmpty() ? "________________" : d.get("police_station");
+        l.row(18, new FormDoc.Cell("INTIMATION TO POLICE: PATIENT ABSCONDED").b().center().size(11).color(Abscond.RED));
+        l.row(40, new FormDoc.Cell("From\nThe Duty Medical Officer, Department of Medicine,\nTirunelveli Medical College Hospital, Tirunelveli.\n\n"
+                + "To\nThe Inspector / Sub-Inspector of Police,\n" + ps + " Police Station / Hospital Police Outpost.").size(9));
+        l.row(14, new FormDoc.Cell("Date: " + Abscond.when(d.get("date"), d.get("time"))).size(9).b());
+        const body = "Sir,\n\nSub: Absconding of an in-patient" + (Abscond.MLC.equals(d.get("case_type")) ? " (Medico-legal case, MLC No. " + Ui.nz(d.get("mlc_no")) + ")" : "") + " – intimation reg.\n\n"
+                + "This is to inform you that the patient " + Ui.nz(p.get("name")) + ", " + Ui.nz(p.get("age")) + (Ui.nz(p.get("age")).isEmpty() ? "" : " years, ") + Ui.nz(p.get("sex"))
+                + ", IP No. " + Ui.nz(p.get("ip_no")) + ", residing at " + (Ui.nz(p.get("address")).isEmpty() ? "________________" : p.get("address"))
+                + ", admitted on " + Dates.nice(Ui.nz(p.get("admit_date"))) + " in " + Db.unitName(Ui.nz(p.get("location"))) + (Ui.nz(p.get("bed")).isEmpty() ? "" : ", bed " + p.get("bed"))
+                + " with the diagnosis of " + Ui.nz(p.get("diagnosis")) + ", was last seen in the ward on " + Abscond.when(d.get("last_date"), d.get("last_time"))
+                + " and was found missing on " + Abscond.when(d.get("date"), d.get("time")) + ". The ward and the hospital campus were searched"
+                + (Ui.nz(d.get("search_result")).isEmpty() ? "" : " (" + d.get("search_result") + ")") + " and the patient could not be traced. "
+                + "The relatives" + (Ui.nz(d.get("rel_time")).isEmpty() ? " are being" : " were") + " informed. The patient left without the knowledge of the treating team and against medical advice.\n\n"
+                + "This is submitted for your information and necessary action.";
+        l.row(120, new FormDoc.Cell(body).size(9));
+        l.row(40, new FormDoc.Cell("\n\nSignature of the Duty Medical Officer\nName: " + Ui.nz(d.get("doctor")) + "\nDesignation: " + Ui.nz(d.get("designation"))
+                + "\n\nCopy to: RMO, TVMCH  ·  Medical records (with the case sheet)").size(9));
+        l.row(30, new FormDoc.Cell("Received by (police): name, rank, signature, date and time:\n\n").size(8.5).color(Abscond.MUTE).bottom());
+    }
+}
+;
+/* ---- app/AbscondActivity.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.71: patient absconding. With a patient id: that patient's abscond record (fill, edit, download the report, mark the patient as
+ * absconded). Without one: the abscond register of every record. See Abscond.
+ */
+class AbscondActivity extends Base {
+  constructor() {
+    super();
+    this.pid = 0;
+    /** The open form (for tests), wrapped so the Copilot never reads the relatives' or witnesses' names. */
+    this.editing = null;
+  }
+
+  onCreate(b) {
+    super.onCreate(b);
+    const id = this.getIntent().getStringExtra("id");
+    this.pid = id == null ? 0 : Long.parseLong(id);
+    this.setTitle(this.pid === 0 ? "Abscond register" : "Abscond report");
+    this.subtitle = "Patients who left the ward without informing (MLC and non-MLC)";
+    this.headerColor(Abscond.COLOR);
+  }
+
+  render() {
+    const page = Ui.v(this);
+    if (this.pid === 0) this.register(page);
+    else {
+      const p = this.db.row("SELECT * FROM patients WHERE id=?", String(this.pid));
+      if (p == null) {
+        this.finish();
+        return;
+      }
+      this.patient(page, p);
+    }
+    this.setPage(page);
+  }
+
+  whiteButton(s, l) {
+    const t = Ui.tv(this, s, 15, Abscond.COLOR, true);
+    t.setGravity(Gravity.CENTER);
+    t.setBackground(Ui.round(this, Color.WHITE, 12));
+    t.setPadding(0, Ui.dp(this, 11), 0, Ui.dp(this, 11));
+    t.setOnClickListener(l);
+    return t;
+  }
+
+  register(page) {
+    const db = this.db;
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Abscond.COLOR), 20));
+    const m0 = Dates.today().withDayOfMonth(1).toString();
+    const all = db.num("SELECT COUNT(*) FROM absconds"), month = db.num("SELECT COUNT(*) FROM absconds WHERE date>=?", m0),
+        mlc = db.num("SELECT COUNT(*) FROM absconds WHERE date>=? AND case_type=?", m0, Abscond.MLC);
+    hero.addView(Ui.tv(this, all + (all === 1 ? " abscond record" : " abscond records") + "  ·  " + month + " this month (" + mlc + " MLC)", 17, Color.WHITE, true));
+    hero.addView(Ui.tv(this, "Record an abscond from the patient's screen or case sheet. The report prints with the police intimation letter for MLC cases.", 13, 0xE6FFFFFF, false));
+    const f = this.whiteButton("🖊  Record for an admitted patient", { onClick: (v) => { this.pickPatient(); } });
+    hero.addView(f);
+    Ui.margins(f, 0, 12, 0, 0);
+    page.addView(hero);
+    const rows = db.rows("SELECT a.*, p.name, p.ip_no, p.location FROM absconds a LEFT JOIN patients p ON p.id=a.patient_id ORDER BY a.date DESC, a.id DESC LIMIT 200");
+    for (const r of rows) {
+      const miss = Abscond.missing(r);
+      page.addView(this.entryCard(Ui.nz(r.get("case_type")), Abscond.MLC === r.get("case_type") ? Ui.RED : Abscond.COLOR,
+        Ui.nz(r.get("name")) + (Ui.nz(r.get("ip_no")).isEmpty() ? "" : "  ·  IP " + r.get("ip_no")),
+        Db.shortName(Ui.nz(r.get("location"))) + "  ·  noticed " + Ui.nz(r.get("time")) + (miss.isEmpty() ? "  ·  complete" : "\nStill to record: " + miss),
+        Dates.nice(Ui.nz(r.get("date"))), this.opener(AbscondActivity, "id", Ui.nz(String(r.get("patient_id"))))));
+    }
+    if (rows.isEmpty()) page.addView(this.emptyNote("No abscond records yet."));
+  }
+
+  pickPatient() {
+    const rows = this.db.rows("SELECT * FROM patients WHERE status=? ORDER BY name", Db.IN);
+    if (rows.isEmpty()) {
+      Ui.toast(this, "No admitted patients");
+      return;
+    }
+    const items = [];
+    for (const r of rows)
+      items.push(Ui.nz(r.get("name")) + "  ·  " + Db.shortName(Ui.nz(r.get("location"))) + (Ui.nz(r.get("bed")).isEmpty() ? "" : " bed " + r.get("bed")));
+    new AlertDialog.Builder(this).setTitle("Abscond report for")
+      .setItems(items, {
+        onClick: (d, w) => { this.startActivity(new Intent(this, AbscondActivity).putExtra("id", String(rows.get(w).get("id")))); }
+      }).setNegativeButton("Cancel", null).show();
+  }
+
+  patient(page, p) {
+    const db = this.db, pid = this.pid;
+    this.setTitle("Abscond · " + p.get("name"));
+    const d = Abscond.forPatient(db, pid);
+    const inn = Db.IN === p.get("status");
+    const hero = Ui.card(this);
+    hero.setBackground(Glass.hero(this, Ui.shades(Abscond.COLOR), 20));
+    hero.addView(Ui.tv(this, Ui.nz(p.get("name")) + (Ui.nz(p.get("ip_no")).isEmpty() ? "" : "  ·  IP " + p.get("ip_no")), 17, Color.WHITE, true));
+    hero.addView(Ui.tv(this, (inn ? "In " + Db.shortName(Ui.nz(p.get("location"))) + (Ui.nz(p.get("bed")).isEmpty() ? "" : ", bed " + p.get("bed"))
+        : "Left on " + Dates.nice(Ui.nz(p.get("outcome_date")))) + "  ·  " + (Abscond.mlc(p, d) ? "MLC" : "Non-MLC") + "  ·  " + Ui.nz(p.get("diagnosis")), 13, 0xE6FFFFFF, false));
+    const fill = this.whiteButton(d == null ? "🖊  Record absconding" : "✎  Edit abscond report", { onClick: (v) => { this.edit(p, d); } });
+    hero.addView(fill);
+    Ui.margins(fill, 0, 12, 0, 0);
+    page.addView(hero);
+
+    if (d == null) {
+      page.addView(this.emptyNote("No abscond record. When the patient is found missing: search the ward and campus, inform the relatives, the unit, the DAP, the RMO / CMO and security, "
+        + "and the police for an MLC (or a vulnerable patient). Then record it here; it prints for the case sheet and the police."));
+      const steps = Ui.card(this);
+      steps.addView(Ui.tv(this, "Checklist", 15, Abscond.COLOR, true));
+      for (const s of ["1. Search the ward, toilets and campus with security", "2. Inform relatives (phone / in person)",
+        "3. Inform the unit duty PG, Assistant Professor and the DAP", "4. Inform the RMO / CMO and nursing superintendent",
+        "5. MLC: inform the police outpost / station and send the written intimation", "6. Record the time of each, mark the outcome “Absconded”"])
+        steps.addView(Ui.body(this, s));
+      page.addView(steps);
+    } else {
+      const miss = Abscond.missing(d);
+      if (!miss.isEmpty()) {
+        const w = Ui.card(this);
+        w.setBackground(Ui.round(this, Ui.alpha(Ui.AMBER, 0x22), 16));
+        w.addView(Ui.tv(this, "Still to record: " + miss, 14, 0xFF92400E, true));
+        page.addView(w);
+      }
+      const J = AbscondActivity.join;
+      const card = Ui.card(this);
+      card.addView(Ui.kv(this, "Case", d.get("case_type") + (Abscond.MLC === d.get("case_type") && !Ui.nz(d.get("mlc_no")).isEmpty() ? "  ·  MLC No. " + d.get("mlc_no") : "")));
+      card.addView(Ui.kv(this, "Last seen", Dates.nice(Ui.nz(d.get("last_date"))) + " " + Ui.nz(d.get("last_time")) + (Ui.nz(d.get("last_seen_by")).isEmpty() ? "" : " · " + d.get("last_seen_by"))));
+      card.addView(Ui.kv(this, "Found missing", Dates.nice(Ui.nz(d.get("date"))) + " " + Ui.nz(d.get("time")) + (Ui.nz(d.get("noticed_by")).isEmpty() ? "" : " · " + d.get("noticed_by"))));
+      card.addView(Ui.kv(this, "Condition", d.get("condition")));
+      card.addView(Ui.kv(this, "Lines / devices", Ui.nz(d.get("devices")).split("|").join(", ")));
+      card.addView(Ui.kv(this, "Search", J(d.get("search_time"), d.get("search_by"))));
+      card.addView(Ui.kv(this, "Relatives informed", J(d.get("rel_time"), J(d.get("rel_name"), d.get("rel_mode")))));
+      for (const k of Abscond.INFORMED) card.addView(Ui.kv(this, k[1], d.get(k[0])));
+      if (Abscond.policeNeeded(d)) {
+        card.addView(Ui.kv(this, "Police informed", J(Ui.nz(d.get("police_time")).isEmpty() ? "Not yet" : d.get("police_time"), J(d.get("police_station"), d.get("police_officer")))));
+        card.addView(Ui.kv(this, "Reference no.", d.get("police_ref")));
+      }
+      if (!Ui.nz(d.get("vulnerable")).isEmpty()) card.addView(Ui.kv(this, "Vulnerable", d.get("vulnerable").split("|").join(", ")));
+      card.addView(Ui.kv(this, "Recorded by", J(d.get("doctor"), d.get("designation"))));
+      if (!Ui.nz(d.get("notes")).isEmpty()) card.addView(Ui.kv(this, "Notes", d.get("notes")));
+      page.addView(card);
+    }
+
+    const acts = Ui.card(this);
+    if (d != null) acts.addView(Ui.button(this, "📄  Download report" + (Abscond.MLC === d.get("case_type") ? " + police letter" : ""), Abscond.COLOR, {
+      onClick: (v) => { this.chooseFile(p, d); }
+    }));
+    if (d != null && inn) {
+      const dis = Ui.button(this, "Mark the patient as absconded", Ui.SLATE, {
+        onClick: (v) => {
+          PatientActivity.abscondDischarge = pid;
+          const i = new Intent(this, PatientActivity).putExtra("id", String(pid));
+          i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+          this.startActivity(i);
+          this.finish();
+        }
+      });
+      acts.addView(dis);
+      Ui.margins(dis, 0, 8, 0, 0);
+    }
+    const cs = Ui.outlineButton(this, "Open the case sheet", Abscond.COLOR, this.opener(CaseSheetActivity, "id", String(pid)));
+    acts.addView(cs);
+    Ui.margins(cs, 0, 8, 0, 0);
+    if (d != null) {
+      const del = Ui.outlineButton(this, "Delete this abscond record", Ui.RED, {
+        onClick: (v) => {
+          Ui.confirm(this, "Delete abscond record?", "The record for " + p.get("name") + " will be removed.", "Delete", {
+            run: () => {
+              db.delete(Abscond.TABLE, Long.parseLong(d.get("id")));
+              this.render();
+            }
+          });
+        }
+      });
+      acts.addView(del);
+      Ui.margins(del, 0, 8, 0, 0);
+    }
+    page.addView(acts);
+  }
+
+  static join(a, b) {
+    a = Ui.nz(a);
+    b = Ui.nz(b);
+    return a.isEmpty() ? b : b.isEmpty() ? a : a + " · " + b;
+  }
+
+  static v(d, k, def) {
+    return d == null ? def : Ui.nz(d.get(k));
+  }
+
+  edit(p, d) {
+    const db = this.db, pid = this.pid, V = AbscondActivity.v;
+    const f = new Form(this);
+    this.editing = { form: f };
+    const mlc0 = Abscond.mlc(p, d);
+    f.choice("case_type", "Case", ["MLC", "Non-MLC"], [Abscond.MLC, Abscond.NMLC], mlc0 ? Abscond.MLC : Abscond.NMLC, {
+      changed: (value) => { AbscondActivity.mlcFields(f, Abscond.MLC === value); }
+    });
+    f.text("mlc_no", "MLC / AR number", V(d, "mlc_no", Ui.nz(p.get("ar_no"))), Form.PLAIN);
+    f.text("police_station", "Police station (jurisdiction)", V(d, "police_station", ""), Form.TEXT);
+    f.heading("When the patient was found missing");
+    f.date("last_date", "Last seen in the ward on", V(d, "last_date", Dates.todayIso()));
+    f.time("last_time", "Last seen at", V(d, "last_time", ""));
+    f.text("last_seen_by", "Last seen by (staff name)", V(d, "last_seen_by", ""), Form.TEXT);
+    f.date("date", "Found missing on", V(d, "date", Dates.todayIso()));
+    f.time("time", "Found missing at", V(d, "time", Dates.now()));
+    f.text("noticed_by", "Noticed by", V(d, "noticed_by", ""), Form.TEXT);
+    f.choice("condition", "Condition when last seen", Abscond.CONDITIONS, Abscond.CONDITIONS, V(d, "condition", Abscond.CONDITIONS[0]), null);
+    const dev = Abscond.list(V(d, "devices", ""));
+    for (let i = 0; i < Abscond.DEVICES.length; i++) f.check("dv" + i, "Had " + Abscond.DEVICES[i].toLowerCase() + " in place", dev.contains(Abscond.DEVICES[i]));
+    f.multi("pending", "Treatment / investigations pending", V(d, "pending", ""));
+    f.heading("Search");
+    f.text("search_by", "Ward, toilets and campus searched by", V(d, "search_by", "Ward staff and security"), Form.TEXT);
+    f.time("search_time", "Search done at", V(d, "search_time", ""));
+    f.text("search_result", "Result of search", V(d, "search_result", "Not traced"), Form.TEXT);
+    f.text("belongings", "Belongings left in the ward", V(d, "belongings", ""), Form.TEXT);
+    f.heading("Relatives informed");
+    f.text("rel_name", "Name", V(d, "rel_name", ""), Form.TEXT);
+    f.text("rel_relation", "Relationship", V(d, "rel_relation", ""), Form.TEXT);
+    f.text("rel_phone", "Phone", V(d, "rel_phone", Ui.nz(p.get("phone"))), Form.PHONE);
+    f.choice("rel_mode", "How", Abscond.MODES, Abscond.MODES, V(d, "rel_mode", Abscond.MODES[0]), null);
+    f.time("rel_time", "Informed at", V(d, "rel_time", ""));
+    f.heading("Hospital staff informed (time)");
+    for (const k of Abscond.INFORMED) f.time(k[0], k[1], V(d, k[0], ""));
+    f.heading("Police");
+    const vul = Abscond.list(V(d, "vulnerable", ""));
+    for (let i = 0; i < Abscond.VULNERABLE.length; i++) f.check("vu" + i, "Vulnerable: " + Abscond.VULNERABLE[i], vul.contains(Abscond.VULNERABLE[i]));
+    f.time("police_time", "Police informed at", V(d, "police_time", ""));
+    f.choice("police_mode", "How", Abscond.MODES, Abscond.MODES, V(d, "police_mode", Abscond.MODES[0]), null);
+    f.text("police_officer", "Officer / outpost informed", V(d, "police_officer", ""), Form.TEXT);
+    f.text("police_ref", "CSR / GD / reference number", V(d, "police_ref", ""), Form.PLAIN);
+    f.check("letter_sent", "Written intimation letter sent to the police", d == null ? mlc0 : "1" === d.get("letter_sent"));
+    f.heading("Recorded by");
+    f.text("doctor", "Doctor", V(d, "doctor", CallDutyActivity.myName(this)), Form.TEXT);
+    f.text("designation", "Designation", V(d, "designation", this.myDesignation()), Form.TEXT);
+    f.text("reg_no", "Registration no.", V(d, "reg_no", ""), Form.PLAIN);
+    f.text("nurse", "Staff nurse on duty", V(d, "nurse", ""), Form.TEXT);
+    f.text("wit1", "Witness", V(d, "wit1", ""), Form.TEXT);
+    f.multi("notes", "Notes", V(d, "notes", ""));
+    AbscondActivity.mlcFields(f, mlc0);
+    Ui.formDialog(this, "Abscond report · " + p.get("name"), f, "Save", {
+      run: () => {
+        const dv = [], vu = [];
+        for (let i = 0; i < Abscond.DEVICES.length; i++) if ("1" === f.get("dv" + i)) dv.push(Abscond.DEVICES[i]);
+        for (let i = 0; i < Abscond.VULNERABLE.length; i++) if ("1" === f.get("vu" + i)) vu.push(Abscond.VULNERABLE[i]);
+        const cv = new ContentValues();
+        cv.put("patient_id", String(pid));
+        for (const k of Abscond.FIELDS) {
+          if (k === "devices" || k === "vulnerable") continue;
+          if (f.has(k)) cv.put(k, f.get(k));
+        }
+        cv.put("devices", dv.join("|"));
+        cv.put("vulnerable", vu.join("|"));
+        cv.put("by_name", CallDutyActivity.myName(this));
+        cv.put("saved_on", Dates.todayIso() + " " + Dates.now());
+        if (d == null) db.insert(Abscond.TABLE, cv);
+        else db.update(Abscond.TABLE, cv, Long.parseLong(d.get("id")));
+        const saved = Abscond.forPatient(db, pid);
+        const miss = saved == null ? "" : Abscond.missing(saved);
+        Ui.toast(this, miss.isEmpty() ? "Abscond report saved" : "Saved. Still to record: " + miss);
+        this.render();
+        return true;
+      }
+    });
+  }
+
+  static mlcFields(f, mlc) {
+    f.show("mlc_no", mlc);
+    f.show("police_station", true);
+    for (let i = 0; i < Abscond.VULNERABLE.length; i++) f.show("vu" + i, !mlc);
+  }
+
+  myDesignation() {
+    const s = Cloud.myStaff(this);
+    if (s <= 0) return "";
+    const r = this.db.row("SELECT role FROM staff WHERE id=?", String(s));
+    return r == null ? "" : Ui.nz(r.get("role"));
+  }
+
+  chooseFile(p, d) {
+    new AlertDialog.Builder(this).setTitle("Abscond report")
+      .setItems(["PDF (open / print)", "PDF (share)", "Word"], {
+        onClick: (di, w) => {
+          try {
+            const f = Abscond.build(this.db, p, d);
+            const rel = w === 2 ? f.docx(this) : f.pdf(this);
+            if (w === 0) Store.openWith(this, rel);
+            else Store.share(this, rel, "Abscond report " + Ui.nz(p.get("name")));
+          } catch (e) {
+            Ui.toast(this, "Could not make the file: " + (e.getMessage ? e.getMessage() : e));
+          }
+        }
+      }).setNegativeButton("Cancel", null).show();
   }
 }
 ;
@@ -25074,6 +25874,8 @@ class CaseSheetActivity extends Base {
       lc.addView(likes);
       page.addView(lc);
     }
+    // 10.71: the abscond report sits on the case sheet (and goes into its download) once there is one, or while admitted
+    if (Abscond.show(this.db, this.p)) page.addView(Abscond.section(this, this.db, this.p));
     if (this.editable) page.addView(this.dictateCard());
     if (this.editable) page.addView(this.scanCard());
     const back = this.returnBanner();
@@ -30149,6 +30951,7 @@ class ChatActivity extends Base {
           Ui.confirm(this, "Delete for everyone?", Chat.preview(m), "Delete", {
             run: () => {
               const cv = new ContentValues();
+              Sync.forgetLater(this, "chat_messages", "file", m.get("file")); // 10.74: the photo goes from R2 too
               cv.put("deleted", "1");
               cv.put("text", "");
               cv.put("file", "");
@@ -40863,6 +41666,9 @@ class DischargeActivity extends Base {
     let rel;
     try {
       const f = DischargeForm.build(this.db, this.p, this.data);
+      // 10.71: an absconded patient's case sheet download carries the abscond report (and the police letter for an MLC)
+      const ab = Abscond.forPatient(this.db, this.id);
+      if (ab != null) Abscond.addTo(f, this.db, this.p, ab, true);
       f.signed = SignOff.printLine(this.db, this.p, SignOff.DISCHARGE);
       rel = pdf ? f.pdf(this) : f.docx(this);
     } catch (e) {
@@ -41620,6 +42426,22 @@ class DissertationActivity extends Base {
     const tf = Thesis.fields(d).length();
     const th = Ui.v(this);
     th.setPadding(Ui.dp(this, 12), Ui.dp(this, 8), Ui.dp(this, 12), 0);
+    // 10.69: cases collected against the target, and whether new admissions join by themselves
+    const tg = Thesis.target(d);
+    const tcard = Ui.card(this);
+    tcard.setBackground(Ui.outline(this, 0xFFF5F3FF, Thesis.COLOR, 14));
+    tcard.addView(Ui.tv(this, "📊  Thesis data", 15, Thesis.COLOR, true));
+    const big = Ui.tv(this, tc + (tg > 0 ? " of " + tg + " cases collected" : tc === 1 ? " case collected" : " cases collected"), 20, Ui.TEXT, true);
+    tcard.addView(big);
+    Ui.margins(big, 0, 4, 0, 0);
+    if (tg > 0) {
+      tcard.addView(Ui.bar(this, Math.min(tc, tg), tg, Thesis.COLOR));
+      tcard.addView(Ui.muted(this, (tc >= tg ? "Target reached" : (tg - tc) + " more to go") + "  ·  " + Math.min(100, idiv(tc * 100, tg)) + "%"));
+    }
+    const al = Ui.muted(this, (Thesis.autoOn(d) && !Thesis.words(d).isEmpty() && tf > 0 ? "⚡ " : "") + Thesis.autoLine(d));
+    tcard.addView(al);
+    Ui.margins(al, 0, 6, 0, 0);
+    page.addView(tcard);
     th.addView(Ui.button(this, "📊  Thesis data: " + (tf === 0 ? "make the form" : tc + (tc === 1 ? " case" : " cases") + ", master chart, statistics"), Thesis.COLOR,
         this.opener(ThesisActivity, "diss", String(this.id))));
     page.addView(th);
@@ -59396,12 +60218,28 @@ class JournalsActivity extends Base {
 /* ---- app/KdpActivity.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
-/** Kandiyaperi Hospital: the peripheral hospital's daily outpatients and its inpatients. */
+/**
+ * Kandiyaperi Hospital: the peripheral hospital's daily outpatients and its inpatients.
+ * 10.70 (user asked): the inside looks like the M1 to M7 wards: cream band with "+ Admit", team board, the four stat cards, bed board,
+ * search with All / Male / Female chips and a filter, numbered patient cards, then the OP register and the month, and the wave footer.
+ */
 class KdpActivity extends Base {
   constructor() {
     super();
     this.day = null;
     this.newM = null; this.newF = null; this.review = null; this.doctor = null; this.notes = null;
+    this.query = "";
+    this.filt = 0; this.num = 0;
+    this.box = null;
+  }
+
+  /** 10.70: the cream ward band of M1 to M7, with the hospital picture and "+ Admit". */
+  header() {
+    this.getWindow().setStatusBarColor(0xFF0B2A6F);
+    const v = Ui.v(this);
+    v.addView(WardListDesign.band(this, Db.KDP, this.getResources().getConfiguration().screenWidthDp >= 720 ? "Patients List  |  Peripheral hospital · OP & IP" : "Hospital  |  Patients List", this.opener(FormActivity, "kind", "patient", "unit", Db.KDP)));
+    v.setElevation(Ui.dp(this, 3));
+    return v;
   }
 
   onCreate(b) {
@@ -59420,18 +60258,35 @@ class KdpActivity extends Base {
   render() {
     const db = this.db;
     const color = Ui.unitColor(Db.KDP);
+    this.pageBg = 0xFFF3F6FC;
     const page = Ui.v(this);
     const m0 = Dates.monthStart(Dates.today()).toString(), m1 = Dates.todayIso();
 
-    const hero = Ui.card(this);
-    hero.setBackground(Glass.hero(this, Ui.shades(color), 20));
+    // like the M1 to M7 wards: the four stat cards, the bed board, the team, then the patient list
     const m = db.census(Db.KDP, "M"), f = db.census(Db.KDP, "F");
-    const opMonth = db.num("SELECT SUM(new_m + new_f + review) FROM kdp_op WHERE date BETWEEN ? AND ?", m0, m1);
-    hero.addView(Ui.statRow(this, this.ws(String(m + f), "Inpatients"), this.ws(String(m), "Male"), this.ws(String(f), "Female"),
-        this.ws(String(opMonth), "OP this month")));
+    const today = Dates.todayIso();
+    const opToday = db.row("SELECT * FROM kdp_op WHERE date=?", today);
+    const opT = opToday == null ? 0 : Ui.toInt(opToday.get("new_m"), 0) + Ui.toInt(opToday.get("new_f"), 0) + Ui.toInt(opToday.get("review"), 0);
+    page.addView(WardListDesign.stats(this,
+        WardListDesign.stat(this, R.drawable.ic_group, 0xFF2563EB, "Total Patients", String(m + f)),
+        WardListDesign.stat(this, R.drawable.ic_bed, 0xFF16A34A, "Admitted Today", String(db.events(Db.ADMIT, today, today, "to_loc", Db.KDP))),
+        WardListDesign.stat(this, R.drawable.ic_people, 0xFFE11D48, "Male / Female", m + " / " + f),
+        WardListDesign.stat(this, R.drawable.ic_hospital, 0xFFA855F7, "OP Today", String(opT))));
+    const bb = PatientRowDesign.action(this, "🛏  Bed board" + (Tasks.inWard(db, Db.KDP) > 0 ? "   ·   ⏳ " + Tasks.inWard(db, Db.KDP) + " pending tasks" : ""), 0xFF1E3A8A,
+        this.opener(BedBoardActivity, "code", Db.KDP));
+    page.addView(bb);
+    Ui.margins(bb, 16, 4, 16, 8);
+    page.addView(People.board(this, db, Db.KDP));
     const head = db.unitHead(Db.KDP);
-    if (!head.isEmpty()) hero.addView(Ui.tv(this, "In-charge: " + head, 12, 0xD9FFFFFF, false));
-    page.addView(hero);
+    if (!head.isEmpty()) {
+      const hd = Ui.muted(this, "In-charge: " + head);
+      hd.setPadding(Ui.dp(this, 16), 0, Ui.dp(this, 16), 0);
+      page.addView(hd);
+    }
+    page.addView(this.searchRow());
+    this.box = Ui.v(this);
+    page.addView(this.box);
+    this.fillLists();
 
     // Outpatient entry
     page.addView(Ui.heading(this, "Outpatients", color));
@@ -59490,25 +60345,103 @@ class KdpActivity extends Base {
       page.addView(hist);
     }
 
-    // Inpatients
-    page.addView(Ui.heading(this, Dates.month(Dates.today()) + " inpatients", color));
+    // This month, as on the M1 to M7 pages
+    const opMonth = db.num("SELECT SUM(new_m + new_f + review) FROM kdp_op WHERE date BETWEEN ? AND ?", m0, m1);
+    page.addView(Ui.heading(this, Dates.month(Dates.today()) + " so far", color));
     const st = Ui.card(this);
     st.addView(Ui.statRow(this,
         Ui.stat(this, String(db.events(Db.ADMIT, m0, m1, "to_loc", Db.KDP)), "Admitted", color),
         Ui.stat(this, String(db.events(Db.DISCHARGE, m0, m1, "from_loc", Db.KDP)), "Discharged", Ui.GREEN),
         Ui.stat(this, String(db.transfers(m0, m1, Db.KDP, null)), "Sent to TVMCH", Ui.ORANGE),
-        Ui.stat(this, String(db.events(Db.DEATH, m0, m1, "from_loc", Db.KDP)), "Deaths", Ui.SLATE)));
+        Ui.stat(this, String(db.events(Db.DEATH, m0, m1, "from_loc", Db.KDP)), "Deaths", Ui.SLATE),
+        Ui.stat(this, String(opMonth), "OP", Ui.PRIMARY)));
     page.addView(st);
-    const ips = db.rows("SELECT * FROM patients WHERE status='IN' AND location='KDP' ORDER BY sex, CAST(bed AS INTEGER), admit_date DESC");
-    page.addView(Ui.section(this, "In ward now  ·  " + ips.size()));
-    if (ips.isEmpty()) page.addView(this.emptyNote("No inpatients. Use “+ Admit” to add one."));
-    for (const p of ips) page.addView(this.patientRow(p));
-    const recent = db.rows("SELECT * FROM patients WHERE status<>'IN' AND id IN (SELECT patient_id FROM events WHERE type IN ('DISCHARGE','DEATH') AND from_loc='KDP') ORDER BY outcome_date DESC LIMIT 15");
-    if (!recent.isEmpty()) {
-      page.addView(Ui.section(this, "Recently discharged or died"));
-      for (const p of recent) page.addView(this.patientRow(p));
-    }
+    page.addView(WardListDesign.wave(this));
     this.setPage(page);
+  }
+
+  /** 10.70: the male and female lists, numbered, filtered by the search box and the chips (redrawn as the search text changes). */
+  fillLists() {
+    this.box.removeAllViews();
+    this.num = 0;
+    this.list("Male ward", this.db.rows("SELECT * FROM patients WHERE status='IN' AND location='KDP' AND sex='M' ORDER BY CAST(bed AS INTEGER), admit_date DESC"));
+    this.list("Female ward", this.db.rows("SELECT * FROM patients WHERE status='IN' AND location='KDP' AND sex<>'M' ORDER BY CAST(bed AS INTEGER), admit_date DESC"));
+    this.list("Recently discharged or died", this.db.rows("SELECT * FROM patients WHERE status<>'IN' AND id IN (SELECT patient_id FROM events WHERE type IN ('DISCHARGE','DEATH') AND from_loc='KDP') ORDER BY outcome_date DESC LIMIT 15"));
+  }
+
+  list(title, rows) {
+    const inn = [];
+    for (const p of rows) if (this.pass(p)) inn.add(p);
+    const filtering = !this.query.isEmpty() || this.filt !== 0;
+    if (inn.isEmpty() && filtering) return;
+    this.box.addView(Ui.section(this, title + "  ·  " + inn.size()));
+    if (inn.isEmpty()) this.box.addView(this.emptyNote("None"));
+    for (const p of inn) this.box.addView(this.patientRow(p, null, null, Db.IN === p.get("status") ? ++this.num : 0));
+  }
+
+  pass(p) {
+    if (this.filt === 1 && !("M" === p.get("sex"))) return false;
+    if (this.filt === 2 && !("F" === p.get("sex"))) return false;
+    if (this.filt === 3 && Tasks.pending(this.db, Long.parseLong(p.get("id"))) === 0) return false;
+    if (this.query.isEmpty()) return true;
+    const q = this.query.toLowerCase();
+    for (const k of ["name", "ip_no", "diagnosis", "bed"])
+      if (Ui.nz(String(p.get(k) == null ? "" : p.get(k))).toLowerCase().contains(q)) return true;
+    return false;
+  }
+
+  /** The search box, the All / Male / Female chips and the Filter pill, as on the M1 to M7 pages. */
+  searchRow() {
+    const wide = this.getResources().getConfiguration().screenWidthDp >= 720;
+    const r = wide ? Ui.h(this) : Ui.v(this);
+    r.setGravity(Gravity.CENTER_VERTICAL);
+    r.setPadding(Ui.dp(this, 14), Ui.dp(this, 8), Ui.dp(this, 14), Ui.dp(this, 6));
+    const e = WardListDesign.search(this, "Search by name, IP number or diagnosis...", this.query);
+    e.addTextChangedListener({
+      beforeTextChanged: (s, a, b, c) => {},
+      onTextChanged: (s, a, b, c) => {},
+      afterTextChanged: (ed) => { this.query = ed.toString().trim(); this.fillLists(); }
+    });
+    const sb = WardListDesign.searchBox(this, e);
+    const track = WardListDesign.chipTrack(this);
+    const labels = ["All", "♂ Male", "♀ Female"];
+    for (let i = 0; i < labels.length; i++) {
+      const idx = i;
+      const c = WardListDesign.chip(this, labels[i], i === this.filt);
+      c.setOnClickListener({ onClick: (v) => { this.filt = idx; this.render(); } });
+      track.addView(c);
+    }
+    const fp = WardListDesign.filterPill(this, this.filt >= 3);
+    const opts = ["Everyone", "Male only", "Female only", "With pending tasks"];
+    fp.setOnClickListener({ onClick: (v) => {
+        new AlertDialog.Builder(this).setTitle("Show")
+            .setSingleChoiceItems(opts, this.filt, { onClick: (d, which) => {
+                this.filt = which;
+                d.dismiss();
+                this.render();
+              }
+            }).setNegativeButton("Close", null).show();
+      }
+    });
+    if (wide) {
+      r.addView(sb, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+      r.addView(track);
+      Ui.margins(track, 14, 0, 0, 0);
+      track.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+      r.addView(fp);
+      Ui.margins(fp, 12, 0, 0, 0);
+      fp.getLayoutParams().width = ViewGroup.LayoutParams.WRAP_CONTENT;
+    } else {
+      r.addView(sb);
+      const row = Ui.h(this);
+      row.setGravity(Gravity.CENTER_VERTICAL);
+      row.addView(track);
+      row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+      row.addView(fp);
+      r.addView(row);
+      Ui.margins(row, 0, 10, 0, 0);
+    }
+    return r;
   }
 
   numField(row, label, val) {
@@ -66868,6 +67801,8 @@ class MainActivity extends Base {
     page.addView(wide ? this.twoCols(duty, census, 1, 1) : this.stack(duty, census));
     // 10.40: the intercom in its own section, just under the day's work and the ward census (user asked)
     if (Intercom.available(this) && !AdminControl.isHidden(db, "Intercom")) page.addView(IntercomHome.card(this));
+    // 10.70: MedSphere in its own section, under the intercom (user asked)
+    if (!AdminControl.isHidden(db, "MedSphere")) page.addView(MedSphereHome.card(this, db));
     // 10.20: NMC biometric attendance for faculty: open the AEBAS app at check-in and check-out time
     for (const card of [NmcAttendance.homeCard(this, db), Ews.homeCard(this, db), Docs.homeCard(this, db)]) if (card != null) duty.addView(card);
     // the other things waiting today, after the three the user named
@@ -67866,6 +68801,8 @@ class MainActivity extends Base {
     m.add(new Module("Golden-hour scores", GoldenHour.homeLine(db), R.drawable.ic_trophy, GoldenHour.COLOR, this.opener(GoldenHourActivity)));
     const dm = db.num("SELECT COUNT(*) FROM dama WHERE date>=?", Dates.today().withDayOfMonth(1).toString());
     m.add(new Module("DAMA forms", dm > 0 ? dm + " this month · blank form" : "Against advice · blank form", R.drawable.ic_doc, Dama.COLOR, this.opener(DamaActivity)));
+    const ab = db.num("SELECT COUNT(*) FROM absconds WHERE date>=?", Dates.today().withDayOfMonth(1).toString());
+    m.add(new Module("Abscond register", ab > 0 ? ab + " this month · MLC / non-MLC" : "Left without informing · MLC / non-MLC", R.drawable.ic_doc, Abscond.COLOR, this.opener(AbscondActivity)));
     m.add(new Module("Death certificate", "MCCD Form 4 helper", R.drawable.ic_doc, Mccd.COLOR, {
       onClick: (v) => { MccdActivity.pick(this); }
     }));
@@ -67987,7 +68924,7 @@ class MainActivity extends Base {
       "Convict cases", "Obstetric physician", "Rare cases", "Time machine", "Wall screen"],
     ["Duty & team", "MedSphere", "DAP register", "Call duty", "Call over", "Handover", "VIP cases", "Intercom", "PG Connect", "Faculty chat", "Notice board", "PG notice board", "CRMI notice board",
       "Calendar", "Phone book", "Faculty", "Students", "Duty hours", "Duty swaps", "Incidents", "Shortages", "Album", "How to use"],
-    ["Paperwork", "Approvals", "Sign-off queue", "PG leave", "Leave register", "Leave calendar", "NMC attendance", "Attendance", "CMCHIS", "DAMA forms", "Consent forms",
+    ["Paperwork", "Approvals", "Sign-off queue", "PG leave", "Leave register", "Leave calendar", "NMC attendance", "Attendance", "CMCHIS", "DAMA forms", "Abscond register", "Consent forms",
       "Death certificate", "Monthly report", "Reports", "Memo", "Verify a document", "Import file"],
     ["AI assistant", "Ask TVMCHMED", "Morning brief", "Department memory", "Viva coach", "Virtual patient", "AI OSCE", "Debate partner", "Wrapped"],
     ["HOD & admin", "HOD desk", "Dashboard", "Clinical audit", "Unit scorecard", "Mortality review", "Conduct reports", "Crash reports"]];
@@ -72231,6 +73168,127 @@ MedSphereActivity.CARD_A = 0xFF13306A; MedSphereActivity.CARD_B = 0xFF0B1D4A; Me
 MedSphereActivity.CYAN = 0xFF38D6F5; MedSphereActivity.GREEN = 0xFF4ADE80; MedSphereActivity.WHITE = 0xFFFFFFFF;
 MedSphereActivity.SOFT = 0xFFC9D6F5; MedSphereActivity.GOLD_LINE = 0xFFE8B04A;
 ;
+/* ---- app/MedSphereHome.js ---- */
+/* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
+'use strict';
+/**
+ * 10.70 (user: "Add a separate section in the homepage for medsphere"): MedSphere's own home section, in its navy and gold,
+ * under the intercom: the MedSphere picture, a meeting live now or the next one, and one tap to the department hall,
+ * the member's own unit room, or MedSphere itself.
+ */
+class MedSphereHome {
+  static card(a, db) {
+    const card = Ui.v(a);
+    const bg = new GradientDrawable(GradientDrawable.Orientation.TL_BR, [0xFF0A1236, MedSphere.COLOR, 0xFF12306E]);
+    bg.setCornerRadius(Ui.dp(a, 24));
+    bg.setStroke(Ui.dp(a, 1), 0x66E8B04A);
+    card.setBackground(bg);
+    card.setClipToOutline(true);
+    card.setPadding(0, 0, 0, Ui.dp(a, 14));
+    const cp = Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    cp.setMargins(Ui.dp(a, 12), Ui.dp(a, 10), Ui.dp(a, 12), Ui.dp(a, 6));
+    card.setLayoutParams(cp);
+
+    // the MedSphere picture across the top (the whole picture on phones, as on the MedSphere page)
+    const w = a.getResources().getDisplayMetrics().widthPixels - Ui.dp(a, 24);
+    const hero = new ImageView(a);
+    hero.setImageResource(R.drawable.ms_hero);
+    hero.setScaleType(ImageView.ScaleType.CENTER_CROP);
+    hero.setContentDescription("MedSphere. Where our department connects.");
+    card.addView(hero, Ui.lp(ViewGroup.LayoutParams.MATCH_PARENT, Math.max(Ui.dp(a, 70), Math.round(w * (Base.wide(a) ? 160 : 290) / 1586))));
+
+    const body = Ui.v(a);
+    body.setPadding(Ui.dp(a, 16), Ui.dp(a, 12), Ui.dp(a, 16), 0);
+    const top = Ui.h(a);
+    top.setGravity(Gravity.CENTER_VERTICAL);
+    const ic = new ImageView(a);
+    ic.setImageResource(R.drawable.medsphere_icon);
+    top.addView(ic, Ui.lp(Ui.dp(a, 52), Ui.dp(a, 52)));
+    const t = Ui.v(a);
+    t.setPadding(Ui.dp(a, 12), 0, 0, 0);
+    const k = Ui.tv(a, "MEDSPHERE", 11, MedSphere.GOLD, true);
+    k.setLetterSpacing(0.18);
+    t.addView(k);
+    t.addView(Ui.tv(a, "Private video meetings", 19, Color.WHITE, true));
+    t.addView(Ui.tv(a, "🔒 Encrypted · members only · no recording", 12, 0xB3FFFFFF, false));
+    top.addView(t, Ui.weight(1));
+    body.addView(top);
+
+    // a meeting live now, or the next one
+    const m = MedSphereHome.next(db, a);
+    if (m != null) {
+      const d = MedSphere.minutesTo(m);
+      const live = d != null && d !== Integer.MIN_VALUE && d <= 0;
+      const soon = d != null && d !== Integer.MIN_VALUE && d <= 30 && d >= -120;
+      const mr = Ui.h(a);
+      mr.setGravity(Gravity.CENTER_VERTICAL);
+      mr.setBackground(Ui.outline(a, 0x1422D3EE, live ? 0x99FCA5A5 : 0x6622D3EE, 16));
+      mr.setPadding(Ui.dp(a, 12), Ui.dp(a, 10), Ui.dp(a, 10), Ui.dp(a, 10));
+      const mt = Ui.v(a);
+      mt.addView(Ui.tv(a, soon ? (live ? "🔴 " : "⏰ ") + MedSphere.when(m) : "📅 Next meeting · " + MedSphereHome.day(m), 12, live ? 0xFFFCA5A5 : MedSphere.CYAN, true));
+      mt.addView(Ui.tv(a, Ui.nz(m.get("title")), 16, MedSphere.GOLD, true));
+      mt.addView(Ui.tv(a, Ui.nz(m.get("kind")) + (Ui.nz(m.get("time")).isEmpty() ? "" : " · " + m.get("time")) + " · " + MedSphere.audienceLabel(Ui.nz(m.get("audience"))), 12, 0xE6FFFFFF, false));
+      mr.addView(mt, Ui.weight(1));
+      if (soon) mr.addView(MedSphereHome.pill(a, "Join", MedSphere.GOLD, true, MedSphereHome.join(a, "meet-" + m.get("id"))));
+      body.addView(mr);
+      Ui.margins(mr, 0, 12, 0, 0);
+    } else {
+      const none = Ui.tv(a, "No meetings scheduled. Start one any time from MedSphere.", 13, 0xCCFFFFFF, false);
+      body.addView(none);
+      Ui.margins(none, 0, 10, 0, 0);
+    }
+
+    // one tap to a room
+    const row = Ui.h(a);
+    row.setPadding(0, Ui.dp(a, 12), 0, 0);
+    row.addView(MedSphereHome.pill(a, "🎥  Open MedSphere", MedSphere.GOLD, true, a.opener(MedSphereActivity)), Ui.weight(1));
+    row.addView(new View(a), Ui.lp(Ui.dp(a, 8), 1));
+    row.addView(MedSphereHome.pill(a, "🏛  Dept hall", MedSphere.CYAN, false, MedSphereHome.join(a, "dept")), Ui.weight(0.8));
+    const units = MedSphere.unitRooms(db, a);
+    if (units.size() === 1) {
+      row.addView(new View(a), Ui.lp(Ui.dp(a, 8), 1));
+      row.addView(MedSphereHome.pill(a, Db.shortName(units.get(0)) + " room", MedSphere.CYAN, false, MedSphereHome.join(a, "unit-" + units.get(0))), Ui.weight(0.7));
+    }
+    body.addView(row);
+    card.addView(body);
+    Ui.ripple(card, 0x22F5C451);
+    card.setOnClickListener(a.opener(MedSphereActivity));
+    return card;
+  }
+
+  /** A meeting live now or starting soon first, else the next scheduled one; null when none. */
+  static next(db, c) {
+    const s = MedSphere.soon(db, c);
+    if (!s.isEmpty()) return s.get(0);
+    for (const m of MedSphere.upcoming(db, c)) {
+      const d = MedSphere.minutesTo(m);
+      if (d == null || d === Integer.MIN_VALUE || d > 0) return m;   // later today or another day
+    }
+    return null;
+  }
+
+  static day(m) {
+    const iso = Ui.nz(m.get("date"));
+    if (iso === Dates.todayIso()) return "Today";
+    if (iso === Dates.today().plusDays(1).toString()) return "Tomorrow";
+    return Dates.nice(iso);
+  }
+
+  static join(a, room) {
+    return { onClick: (v) => { a.startActivity(new Intent(a, MedSphereActivity).putExtra("join", room)); } };
+  }
+
+  static pill(c, s, color, filled, l) {
+    const t = Ui.tv(c, s, 14, filled ? 0xFF061433 : color, true);
+    t.setGravity(Gravity.CENTER);
+    t.setSingleLine(true);
+    t.setPadding(Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 10), Ui.dp(c, 10));
+    t.setBackground(filled ? Ui.gradient(c, [Ui.mix(color, Color.WHITE, 0.2), color], 22) : Ui.outline(c, 0x14FFFFFF, Ui.alpha(color, 0x99), 22));
+    t.setOnClickListener(l);
+    return t;
+  }
+}
+;
 /* ---- app/Memo.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 'use strict';
@@ -76185,6 +77243,7 @@ class PatientActivity extends Base {
     page.addView(PillCardActivity.patientButton(this, db, id));
     page.addView(TamilCard.patientButton(this, db, id));
     if (Dama.show(db, p)) page.addView(Dama.section(this, db, id));
+    if (Abscond.show(db, p)) page.addView(Abscond.section(this, db, p));   // 10.71
     if (Db.DIED.equals(p.get("status"))) page.addView(MccdActivity.patientCard(this, db, id));
 
     const ops = db.rows("SELECT * FROM opinions WHERE patient_id=? ORDER BY date DESC, id DESC", String(id));
@@ -76340,7 +77399,7 @@ class PatientActivity extends Base {
         Ui.confirm(this, "Delete record?", "This removes " + p.get("name") + " and their whole timeline from all counts.", "Delete", {
           run: () => {
             const sid = String(id);
-            const snap = this.stepSnap().rowsWhere(db, "plex", "patient_id=?", sid).rowsWhere(db, "dama", "patient_id=?", sid).rowsWhere(db, "signoffs", "patient_id=?", sid);
+            const snap = this.stepSnap().rowsWhere(db, "plex", "patient_id=?", sid).rowsWhere(db, "dama", "patient_id=?", sid).rowsWhere(db, "absconds", "patient_id=?", sid).rowsWhere(db, "signoffs", "patient_id=?", sid);
             db.deletePatient(id);
             Undo.offer(this, "Deleted " + Ui.nz(p.get("name")) + " (X-ray and photos cannot come back)", snap);
             this.finish();
@@ -76370,6 +77429,10 @@ class PatientActivity extends Base {
     if (PatientActivity.damaDischarge === id) {
       PatientActivity.damaDischarge = 0;
       if (inn) this.discharge(Dama.DISCHARGE_TYPE);
+    }
+    if (PatientActivity.abscondDischarge === id) {
+      PatientActivity.abscondDischarge = 0;
+      if (inn) this.discharge(Abscond.DISCHARGE_TYPE);
     }
   }
 
@@ -76461,6 +77524,8 @@ class PatientActivity extends Base {
         db.addEvent(id, f.get("date"), f.get("time"), Db.DISCHARGE, p.get("location"), "", note);
         if (Dama.DISCHARGE_TYPE.equals(f.get("type")) && Dama.forPatient(db, id) == null)
           Ui.toast(this, "Discharged. Fill the DAMA form below for the signatures.");
+        if (Abscond.DISCHARGE_TYPE.equals(f.get("type")) && Abscond.forPatient(db, id) == null)
+          Ui.toast(this, "Marked absconded. Fill the abscond report below (MLC: police intimation).");
         this.render();
         Undo.offer(this, "Discharged " + Ui.nz(p.get("name")), snap);
         return true;
@@ -76522,6 +77587,8 @@ class PatientActivity extends Base {
 }
 /** Set by the DAMA form's "Discharge as DAMA": the patient screen opens the discharge with that type chosen. */
 PatientActivity.damaDischarge = 0;
+/** 10.71: set by the abscond screen: open the discharge form with "Absconded" chosen. */
+PatientActivity.abscondDischarge = 0;
 ;
 /* ---- app/PatientDesign.js ---- */
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
@@ -91117,6 +92184,54 @@ class SettingsActivity extends Base {
     bk.addView(now);
     Ui.margins(now, 0, 8, 0, 0);
     this.adminBox.addView(bk);
+    this.filesCard();
+  }
+
+  /** 10.72: where photos and files are kept, and (admin) moving the old Supabase files to Cloudflare R2. */
+  filesCard() {
+    const fc = Ui.card(this);
+    fc.addView(Ui.tv(this, "Photos and files", 15, Ui.TEXT, true));
+    const r2 = R2.prefs(this).getBoolean("on", false);
+    fc.addView(Ui.tv(this, "Kept in " + R2.where(this), 13, r2 ? Ui.GREEN : Ui.MUTED, true));
+    fc.addView(Ui.muted(this, r2 ? "New photos and files go to Cloudflare R2; records stay in Supabase. Files saved before the move still open from Supabase until they are moved."
+      : "Set up the \"files\" function with the R2 secrets on the server, then tap Check again. Every phone switches by itself within 30 minutes."));
+    const status = Ui.muted(this, "");
+    const chk = Ui.outlineButton(this, "Check again", Ui.PRIMARY, {
+      onClick: async (v) => {
+        status.setText("Asking the server…");
+        R2.forget(this);
+        const on = await R2.on(this);
+        Ui.toast(this, on ? "Files now go to Cloudflare R2" : "R2 is not set up on the server yet");
+        this.fillAdmin();
+      }
+    });
+    fc.addView(chk);
+    Ui.margins(chk, 0, 8, 0, 0);
+    if (r2 && Cloud.isOwner(this)) {
+      const mv = Ui.outlineButton(this, "Move old files to R2", 0xFFF38020, {
+        onClick: (v) => {
+          new AlertDialog.Builder(this).setTitle("Move old files to R2?")
+            .setMessage("Each old photo and file is copied to Cloudflare R2, the copy is checked, and only then is it removed from Supabase Storage to free the space. Keep this page open with internet till it finishes; you can run it again any time.")
+            .setPositiveButton("Move", { onClick: (d, w) => { this.moveOld(status); } }).setNegativeButton("Cancel", null).show();
+        }
+      });
+      fc.addView(mv);
+      Ui.margins(mv, 0, 8, 0, 0);
+    }
+    fc.addView(status);
+    this.adminBox.addView(fc);
+  }
+
+  async moveOld(status) {
+    status.setText("Listing the old files…");
+    let msg;
+    try {
+      msg = await R2.moveAll(this, (line) => status.setText(line));
+    } catch (e) {
+      msg = "Could not move: " + e.getMessage();
+    }
+    status.setText(msg);
+    Ui.toast(this, msg);
   }
 
   /** Ticks for every home section; ticked ones are hidden for everyone. */
@@ -96279,7 +97394,7 @@ class SyncListActivity extends Base {
     ["notices", "Notices"], ["attendance", "Attendance"], ["leaves", "Leave"], ["pg_leaves", "PG leave"], ["faculty_leaves", "Faculty leave"],
     ["dap", "DAP register"], ["duty_roster", "Duty roster"], ["duty_sick", "Sick list"], ["handovers", "Handover"], ["chat_messages", "Chat messages"],
     ["cmchis_cases", "CMCHIS"], ["academics", "Academics"], ["classes", "Classes"], ["acad_attendance", "Students attended"], ["staff", "Staff and students"],
-    ["code_blues", "Code blue records"], ["counsel_logs", "Relatives counselled"], ["dama", "DAMA forms"], ["signoffs", "Sign-off queue"],
+    ["code_blues", "Code blue records"], ["counsel_logs", "Relatives counselled"], ["dama", "DAMA forms"], ["absconds", "Abscond reports"], ["signoffs", "Sign-off queue"],
     ["crit_alerts", "Critical lab alerts"], ["inv_sent", "Results awaited"], ["shift_checks", "7:30 AM checks"], ["settings", "Settings"]];
 
   static label(tbl) {
@@ -97500,6 +98615,136 @@ class Thesis {
     return n;
   }
 
+  // ---------------------------------------------------------------- 10.69: cases that add themselves
+
+  /** title words (regex) -> the diagnosis words that find such patients in the wards */
+  static TOPIC_WORDS = [
+            ["dengue", "dengue|dhf|dss"], ["scrub|tsutsugamushi", "scrub typhus|tsutsugamushi"], ["rickettsi", "rickettsial|scrub typhus"],
+            ["leptospir|weil", "leptospirosis|lepto|weil"], ["malaria|vivax|falciparum", "malaria|vivax|falciparum"], ["typhoid|enteric", "typhoid|enteric fever"],
+            ["melioid", "melioidosis"], ["sepsis|septic", "sepsis|septic shock|septicemia"],
+            ["snake|envenom|viper", "snake bite|snakebite|envenomation|viper"], ["organophosph|\\bop\\b", "op poisoning|organophosph|op compound"],
+            ["paraquat", "paraquat"], ["oleander", "oleander"], ["rodenticide|rat poison|yellow phosphorus", "rodenticide|rat poison|yellow phosphorus"],
+            ["stroke|cerebrovascular|\\bcva\\b", "stroke|cva|cerebrovascular|cerebral infarct|intracerebral"],
+            ["myocardial|stemi|coronary|\\bacs\\b", "stemi|acute coronary|myocardial infarction|unstable angina"],
+            ["heart failure|cardiac failure|\\bchf\\b", "heart failure|chf|ccf|cardiac failure"], ["atrial fibrillation", "atrial fibrillation"],
+            ["rheumatic", "rheumatic|rhd"], ["endocarditis", "endocarditis"], ["pulmonary embol", "pulmonary embolism"], ["\\bdvt\\b|venous thromb", "dvt|deep vein"],
+            ["ketoacidosis|\\bdka\\b", "dka|ketoacidosis"], ["diabet|\\bt2dm\\b", "diabetes|t2dm|t1dm|diabetic|dka"],
+            ["hypertens", "hypertension|htn"], ["thyro", "hypothyroid|hyperthyroid|thyrotoxicosis"],
+            ["cirrhosis|chronic liver|\\bcld\\b", "cirrhosis|cld|chronic liver disease|dcld"], ["hepatic encephalopathy", "hepatic encephalopathy"],
+            ["pancreatit", "pancreatitis"], ["upper gi|haematemesis|hematemesis|variceal", "ugi bleed|upper gi bleed|hematemesis|haematemesis|variceal"],
+            ["\\baki\\b|acute kidney", "aki|acute kidney injury"], ["\\bckd\\b|chronic kidney", "ckd|chronic kidney disease"],
+            ["copd|obstructive pulmonary", "copd|aecopd"], ["asthma", "asthma"], ["pneumonia|lrti", "pneumonia|lrti"],
+            ["tubercul|\\btb\\b|koch", "tuberculosis|ptb|eptb|koch"], ["pleural effusion", "pleural effusion"],
+            ["\\bhiv\\b|retroviral", "hiv|rvd|retroviral"], ["covid", "covid"], ["influenza|h1n1", "influenza|h1n1"],
+            ["anaemia|anemia", "anaemia|anemia"], ["thrombocytopen", "thrombocytopenia"], ["hyponatr", "hyponatremia|hyponatraemia"],
+            ["hypokal", "hypokalemia|hypokalaemia"], ["seizure|epilep", "seizure|epilepsy|status epilepticus"], ["meningit", "meningitis"],
+            ["encephalit", "encephalitis"], ["guillain|\\bgbs\\b", "gbs|guillain"], ["lupus|\\bsle\\b", "sle|lupus"], ["rheumatoid", "rheumatoid"],
+            ["alcohol", "alcohol"],
+            // broad words: only when nothing more exact is in the title
+            ["febrile|fever", "fever|febrile", "broad"], ["poison", "poisoning", "broad"]];
+
+  /** Auto-add is on unless the PG or a faculty member switched it off ("0"). */
+  static autoOn(d) {
+    return !("0" === Ui.nz(d.get("auto_add")));
+  }
+
+  /** Whether this dissertation is the signed-in PG's own (their name is on its PG line). */
+  static mine(c, db, d) {
+    const me = Reminders.myName(c, db);
+    return !me.isEmpty() && Reminders.anyLine(d.get("pg"), Reminders.tokens(me), "");
+  }
+
+  /** Diagnosis words suggested from the dissertation title ("Thrombocytopenia in dengue" -> thrombocytopenia|dengue|dhf|dss), or "". */
+  static suggestWords(title) {
+    const t = Ui.nz(title).toLowerCase();
+    const out = [];
+    for (const w of Thesis.TOPIC_WORDS)
+      if ((w.length < 3 || out.length === 0) && Pattern.compile(w[0]).matcher(t).find()) for (const x of w[1].jsplit("\\|")) if (out.indexOf(x) < 0) out.push(x);
+    return out.join("|");
+  }
+
+  /** The words that find cases: the saved ones, else none (suggestions are only offered, never used by themselves). */
+  static words(d) {
+    return Ui.nz(d.get("match_words")).trim();
+  }
+
+  /** What the topic page and the thesis page say about auto-add. */
+  static autoLine(d) {
+    if (Thesis.fields(d).length() === 0) return "Make the data form first, then new admissions are added by themselves.";
+    if (Thesis.words(d).isEmpty()) return "Set the diagnosis words that find your cases, then new admissions are added by themselves.";
+    if (!Thesis.autoOn(d)) return "Auto-add is off. Cases are added by hand.";
+    return "New admissions with " + Thesis.words(d).split("|").join(", ") + " are added by themselves.";
+  }
+
+  /**
+   * 10.69 (user asked): runs on the PG's own phone in the background job. Every new admission (from the day auto-add first ran on this phone)
+   * whose diagnosis has one of the thesis words becomes a case, with the ward facts filled in. A case the PG deletes is never added again.
+   * Returns {dissertation id, "M3 bed 14 (dengue fever)"} for each case added.
+   */
+  static autoRun(c, db) {
+    const added = [];
+    const pr = c.getSharedPreferences("thesis_auto", Context.MODE_PRIVATE);
+    const e = pr.edit();
+    const by = Reminders.myName(c, db);
+    if (by.isEmpty()) return added;
+    for (const d of db.rows("SELECT * FROM dissertations")) {
+      if (!Thesis.autoOn(d) || Thesis.fields(d).length() === 0 || Thesis.words(d).isEmpty() || !Thesis.mine(c, db, d)) continue;
+      const id = String(d.get("id")), sk = "since_" + id, seenK = "seen_" + id;
+      if (!pr.contains(sk)) {
+        e.putString(sk, Dates.todayIso());
+        continue;
+      }
+      const since = pr.getString(sk, Dates.todayIso());
+      const seen = [];
+      for (const x of pr.getString(seenK, "").split(",")) if (!x.isEmpty()) seen.push(x);
+      const f = Thesis.fields(d);
+      let any = false;
+      for (const p of Thesis.suggestions(db, d)) {
+        const pid = String(p.get("id"));
+        if (Ui.nz(p.get("admit_date")).compareTo(since) < 0 || seen.indexOf(pid) >= 0) continue;
+        Thesis.saveCase(db, Long.parseLong(id), 0, Long.parseLong(pid), Thesis.prefill(db, f, p), by);
+        seen.push(pid);
+        added.push([id, Protocols.where(p) + " (" + Ui.nz(p.get("diagnosis")) + ")"]);
+        any = true;
+      }
+      // every patient already in the thesis counts as seen, so a case deleted by hand stays deleted
+      for (const tc of Thesis.cases(db, Long.parseLong(id))) {
+        const pid = Ui.nz(String(tc.get("patient_id") == null ? "" : tc.get("patient_id")));
+        if (!("0" === pid) && !pid.isEmpty() && seen.indexOf(pid) < 0) seen.push(pid);
+      }
+      while (seen.length > 400) seen.shift();
+      e.putString(seenK, seen.join(","));
+      if (any) Thesis.dedupe(db, Long.parseLong(id));
+    }
+    e.apply();
+    return added;
+  }
+
+  /** Two phones of the same PG may add the same patient before they sync: keep the first case of each patient. */
+  static dedupe(db, dissId) {
+    const have = new JSet();
+    let gone = false;
+    for (const c of db.rows("SELECT id, patient_id FROM thesis_cases WHERE diss_id=? ORDER BY id", String(dissId))) {
+      const pid = Ui.nz(String(c.get("patient_id") == null ? "" : c.get("patient_id")));
+      if (pid.isEmpty() || "0" === pid) continue;
+      if (have.contains(pid)) {
+        db.delete("thesis_cases", Long.parseLong(c.get("id")));
+        gone = true;
+      } else have.add(pid);
+    }
+    if (gone) {
+      const dv = new ContentValues();
+      dv.put("collected", String(db.num("SELECT COUNT(*) FROM thesis_cases WHERE diss_id=?", String(dissId))));
+      db.update("dissertations", dv, dissId);
+    }
+  }
+
+  /** The target from the sample size ("60", "n = 60 patients"), or 0. */
+  static target(d) {
+    const m = /\d+/.exec(Ui.nz(d.get("sample_size")));
+    return m ? parseInt(m[0], 10) : 0;
+  }
+
   // ---------------------------------------------------------------- AI field suggestions
 
   static aiSystem() {
@@ -97755,12 +99000,15 @@ class ThesisActivity extends Base {
     hero.setBackground(Glass.hero(this, Ui.shades(Thesis.COLOR), 20));
     hero.addView(Ui.tv(this, Ui.nz(d.get("title")).isEmpty() ? "Thesis topic not entered yet" : d.get("title"), 17, Color.WHITE, true));
     hero.addView(Ui.tv(this, Ui.nz(d.get("pg")) + (Ui.nz(d.get("guide")).isEmpty() ? "" : "  ·  Guide " + d.get("guide")), 13, 0xE6FFFFFF, false));
-    let target = 0;
-    try { target = Integer.parseInt(Ui.nz(d.get("sample_size")).replaceAllRx("[^0-9]", "")); } catch (ignored) { }
+    const target = Thesis.target(d);
     const n = Ui.tv(this, cases.size() + (target > 0 ? " of " + target + " cases" : cases.size() === 1 ? " case" : " cases"), 22, Color.WHITE, true);
     hero.addView(n);
     Ui.margins(n, 0, 8, 0, 0);
     if (target > 0) hero.addView(Ui.bar(this, Math.min(cases.size(), target), target, 0xFFFFFFFF));
+    // 10.69: whether new admissions join by themselves
+    const al = Ui.tv(this, (Thesis.autoOn(d) && !Thesis.words(d).isEmpty() && fields.length() > 0 ? "⚡ " : "") + Thesis.autoLine(d), 13, 0xE6FFFFFF, false);
+    hero.addView(al);
+    Ui.margins(al, 0, 8, 0, 0);
     page.addView(hero);
 
     if (edit) {
@@ -97857,6 +99105,40 @@ class ThesisActivity extends Base {
           });
       fc.addView(mw);
       Ui.margins(mw, 0, 6, 0, 0);
+      // 10.69: words suggested from the title, and auto-add on or off
+      const sug = Thesis.suggestWords(d.get("title"));
+      if (Thesis.words(d).isEmpty() && !sug.isEmpty()) {
+        const use = Ui.button(this, "Use " + sug.split("|").join(", ") + " (from your title)", Thesis.COLOR, {
+          onClick: (v) => {
+            const cv = new ContentValues();
+            cv.put("match_words", sug);
+            this.db.update("dissertations", cv, this.dissId);
+            Ui.toast(this, "Saved. New admissions with these words join your thesis.");
+            this.render();
+          }
+        });
+        fc.addView(use);
+        Ui.margins(use, 0, 6, 0, 0);
+      }
+      const ar = Ui.h(this);
+      ar.setGravity(Gravity.CENTER_VERTICAL);
+      const at = Ui.v(this);
+      at.addView(Ui.tv(this, "Add new admissions by themselves", 15, Ui.TEXT, true));
+      at.addView(Ui.muted(this, "On the PG's phone: a matching admission joins the thesis with the ward facts filled in, and the PG gets a quiet notice with the ward and bed."));
+      ar.addView(at, Ui.weight(1));
+      const sw = new Switch(this);
+      sw.setChecked(Thesis.autoOn(d));
+      sw.setOnCheckedChangeListener({
+        onCheckedChanged: (b, v) => {
+          const cv = new ContentValues();
+          cv.put("auto_add", v ? "1" : "0");
+          this.db.update("dissertations", cv, this.dissId);
+          this.render();
+        }
+      });
+      ar.addView(sw);
+      fc.addView(ar);
+      Ui.margins(ar, 0, 10, 0, 0);
     }
     page.addView(fc);
 
@@ -98051,7 +99333,9 @@ class ThesisActivity extends Base {
 
   matchDialog() {
     const form = new Form(this);
-    form.text("w", "Diagnosis words, separated by / (e.g. dengue / DHF)", Ui.nz(this.diss().get("match_words")).split("|").join(" / "), Form.PLAIN);
+    const d0 = this.diss();
+    const w0 = Ui.nz(d0.get("match_words")).isEmpty() ? Thesis.suggestWords(d0.get("title")) : d0.get("match_words");   // 10.69: suggested from the title
+    form.text("w", "Diagnosis words, separated by / (e.g. dengue / DHF)", w0.split("|").join(" / "), Form.PLAIN);
     Ui.formDialog(this, "Find my cases", form, "Save", {
       run: () => {
         const cv = new ContentValues();
@@ -103649,7 +104933,10 @@ class WardListDesign {
     let name = WardListDesign.titleCase(Db.unitName(code));
     let sp = name.indexOf(' ');
     let first = sp < 0 ? name : name.substring(0, sp), rest = sp < 0 ? "" : name.substring(sp);
-    let size = wide ? 34 : 24;
+    // 10.70: a long name (Kandiyaperi Hospital) keeps only its first word on a phone, a little smaller, so it is not cut
+    let longName = !wide && name.length > 14;
+    if (longName) rest = "";
+    let size = wide ? 34 : longName ? 22 : 24;
     let t1 = Ui.tv(a, first, size, WardListDesign.AMBER, true);
     t1.setTypeface(Typeface.create(Typeface.SERIF, Typeface.BOLD));
     t1.setShadowLayer(Ui.dp(a, 2), 0, Ui.dp(a, 1), 0x33B45309);
@@ -105785,7 +107072,7 @@ class Ws {
 /* ---- app/_classes.js ---- */
 /* generated by tools/build.py */
 'use strict';
-const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, AdmitDesign, Adpcm, Ai, AiReturn, AiRun, Album, AlbumActivity, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, Buzz, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisClaims, CmchisPackages, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Countdown, CountdownActivity, Crashes, CrashesActivity, Crest, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyBoard, DutyBoardActivity, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, GoldenHour, GoldenHourActivity, GrandHome, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Honours, HonoursActivity, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, InCharge, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomHome, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, JournalFeed, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, MedSphere, MedSphereActivity, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, MyMonth, Mystery, MysteryActivity, Net, NightlyBackup, NmcAttendance, NmcAttendanceActivity, NoticeDesign, Notify, ObstetricActivity, OfflineShare, Opinions, OrderScan, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PalaceHome, PatientActivity, PatientDesign, PatientPick, PatientRowDesign, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Posting, PostingActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, RareCase, RareCaseActivity, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, RoyalHome, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SickReport, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, StudentPortal, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilCard, TamilNote, Tasks, TasksActivity, TeachActivity, TeachPoints, TeachingActivity, Thesis, ThesisActivity, TimeMachine, TimeMachineActivity, TimelineActivity, TopBanner, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, UpdatePrompt, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, WaClass, Wall, WallActivity, WardDuty, WardList, WardListDesign, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
+const APP_CLASSES = [Ui, Dates, Copyright, AdminControl, Db, Glass, Slab, Bands, Form, Cloud, R2, Store, Lock, E2e, DocProvider, Approvals, Sync, Reminders, Background, Updates, Base, Abg, AbgActivity, Abscond, AbscondActivity, AcademicActivity, AccountActivity, AchievementEditActivity, AchievementsActivity, AdmissionDayActivity, AdmitDesign, Adpcm, Ai, AiReturn, AiRun, Album, AlbumActivity, Alerts, Antibiogram, AntibiogramActivity, ApprovalActivity, Arena, ArenaActivity, Ask, AskActivity, Attach, AttendanceActivity, Away, Backup, Beacon, BedBoardActivity, Buzz, CalendarActivity, CallActivity, CallDutyActivity, CallOverActivity, CasePresentation, CasePresentationActivity, CaseReport, CaseReportActivity, CaseScan, CaseSheet, CaseSheetActivity, Census, CensusActivity, ChartActivity, Charts, ChartsActivity, Chat, ChatActivity, ChatListActivity, CheckinActivity, ClinicalAudit, ClinicalAuditActivity, CmchisActivity, CmchisClaims, CmchisPackages, CmchisStages, CodeBlue, CodeBlueActivity, CompetencyActivity, Conduct, ConductActivity, Consent, ConsentActivity, ConvictActivity, Copilot, Counsel, Countdown, CountdownActivity, Crashes, CrashesActivity, Crest, CriticalLabs, CriticalLabsActivity, CultureActivity, Dama, DamaActivity, DapActivity, DapDuty, DapReportActivity, Dashboard, DashboardActivity, DeathReview, DeathReviewActivity, SimActivity, DebateActivity, DeptMemory, Diagnoses, Dictation, DietScan, DischargeActivity, DischargeAi, DischargeForm, DissertationActivity, DocVerify, Docs, DocsActivity, DoubtBubble, Doubts, DoubtsActivity, DrugCheck, DrugCheckUi, Drugs, Duel, DuelActivity, DuelBank, DupCheck, DutyBoard, DutyBoardActivity, DutyHours, DutyHoursActivity, Ecg, EcgActivity, Ews, ExamCases, ExamCasesActivity, ExamPlan, ExamPlanActivity, Extract, FacultyActivity, FacultyProfileActivity, Fame, FameActivity, Flash, FlashActivity, FormActivity, FormDoc, Gold, GoldenHour, GoldenHourActivity, GrandHome, Guide, GuideActivity, Guidelines, HandoverActivity, Harrison, HarrisonActivity, Hod, HodDeskActivity, HomeLayout, Honours, HonoursActivity, Icd11, Imaging, ImagingActivity, ImcuSpecialActivity, ImportActivity, Importer, InCharge, Infusion, InfusionActivity, Intercom, IntercomActivity, IntercomHome, IntercomNotes, IntercomService, Intro, Issues, IssuesActivity, JournalFeed, Journals, JournalsActivity, KdpActivity, KidneyDose, KidneyDoseActivity, Kudos, LabScan, Labs, LabsActivity, League, LeagueActivity, Learning, LearningActivity, LeaveCalendarActivity, LeaveForm, LeaveRegisterActivity, LeaveRules, Library, LibraryActivity, LibraryService, Live, LiveCensusActivity, LiveQuizActivity, LiveScanActivity, LockActivity, Logbook, LogbookActivity, Look, MainActivity, MarkSheetActivity, MbbsMarks, MbbsMarksActivity, Mccd, MccdActivity, Mcq, McqActivity, McqEditActivity, McqMaker, McqQuestionActivity, McqScan, MedSpeech, MedSphere, MedSphereActivity, MedSphereHome, Memo, MemoActivity, MemoryActivity, MonthlyReport, MorningBrief, MorningBriefActivity, MyMonth, Mystery, MysteryActivity, Net, NightlyBackup, NmcAttendance, NmcAttendanceActivity, NoticeDesign, Notify, ObstetricActivity, OfflineShare, Opinions, OrderScan, OsceActivity, Outbreak, OutbreakActivity, PageJudge, PageScan, PalaceHome, PatientActivity, PatientDesign, PatientPick, PatientRowDesign, PatientTimeline, PendingWorkActivity, People, PgChatActivity, PgConnect, PgConnectActivity, PgLeaveActivity, PgLeaveFormActivity, PhoneDirectoryActivity, PillCard, PillCardActivity, Places, Posting, PostingActivity, Pptx, PresentationsActivity, ProtocolActivity, Protocols, Qr, QuestionBank, QuestionBankActivity, Quiz, QuizEditActivity, QuizHostActivity, QuizPlayActivity, QuizScan, RareCase, RareCaseActivity, Readmit, Realtime, ReportActivity, Results, ResultsActivity, Roster, RosterFormActivity, RoyalHome, ScorecardActivity, Scores, ScoresActivity, Scribe, SearchActivity, SessionAttendance, SettingsActivity, ShareInActivity, ShiftCheck, ShiftCheckActivity, SickReport, SignOff, SignOffActivity, Sim, SmartHandover, SpotActivity, SpotEditActivity, Spots, StaffActivity, Stats, StudentAttendance, StudentAttendanceActivity, StudentPortal, SummaryExport, Swaps, SwapsActivity, SyncListActivity, SyncStatus, TamilCard, TamilNote, Tasks, TasksActivity, TeachActivity, TeachPoints, TeachingActivity, Thesis, ThesisActivity, TimeMachine, TimeMachineActivity, TimelineActivity, TopBanner, TopicNoteActivity, TopicNotes, TopicNotesActivity, Undo, UnitActivity, UnitMoves, UpdatePrompt, VerifyActivity, ViewerActivity, VipActivity, VirtualPatientActivity, VirtualRounds, VirtualRoundsActivity, Viva, VivaActivity, VoiceInput, WaAdmit, WaClass, Wall, WallActivity, WardDuty, WardList, WardListDesign, WardRoundActivity, Watch, WatchActivity, WeekAcademicsActivity, WhatsApp, Wrapped, WrappedActivity, Ws];
 ;
 /* TVMCHMED - Copyright (c) 2026 Dr. S. Rajkumar. All rights reserved. Proprietary: copying, cloning or AI-assisted recreation without written permission is prohibited. See LICENSE.txt. */
 // Starts the website: loads SQLite and the saved database and files, sets up every screen class, then opens the home screen
