@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Walkie-talkie</title>
+<style>
+html,body{margin:0;height:100%;background:#000;color:#fff;font-family:Roboto,"Segoe UI",system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;}
+#look{position:absolute;inset:0;display:none;background:#000;}
+#look video{width:100%;height:100%;object-fit:contain;background:#000;}
+#bar{position:absolute;left:0;right:0;top:0;padding:10px 12px;background:linear-gradient(#000c,#0000);display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;}
+#bar .dot{width:10px;height:10px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px #ef4444;animation:b 1s infinite;}
+@keyframes b{50%{opacity:.25}}
+#bar .who{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#bar .t{font-variant-numeric:tabular-nums;color:#fbbf24;}
+#foot{position:absolute;left:0;right:0;bottom:0;padding:10px 12px;background:linear-gradient(#0000,#000c);display:flex;align-items:center;gap:10px;font-size:12px;color:#ffffffcc;}
+#foot span{flex:1;}
+#stop{display:none;border:0;border-radius:20px;padding:9px 16px;font-weight:700;font-size:14px;color:#fff;background:#ef4444;}
+#flip{display:none;border:1px solid #ffffff88;border-radius:20px;padding:8px 12px;font-size:14px;color:#fff;background:#0006;}
+#wm{position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;transform:rotate(-24deg);font-size:22px;font-weight:700;color:#ffffff22;white-space:nowrap;}
+</style>
+</head>
+<body>
+<div id="look">
+  <video id="vid" autoplay playsinline muted></video>
+  <div id="wm"></div>
+  <div id="bar"><div class="dot"></div><div class="who" id="who">Live look</div><div class="t" id="time">0:30</div></div>
+  <div id="foot"><span>🔒 Live only · not recorded · not saved</span><button id="flip">🔄</button><button id="stop">⏹ Stop</button></div>
+</div>
+<script src="livekit-client.umd.js"></script>
+<script src="walkie.js"></script>
+</body>
+</html>

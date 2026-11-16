@@ -25,7 +25,7 @@ body {
 .page.hidden { display: none; }
 .page > .root { flex: 1 1 auto; min-height: 0; width: 100%; }
 .page.secure { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-.page.secure * { -webkit-user-select: none !important; user-select: none !important; }
+.page.secure * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; -webkit-user-drag: none !important; }
 
 /* ----- views ----- */
 .v { box-sizing: border-box; position: relative; flex: 0 0 auto; min-width: 0; }
